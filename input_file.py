@@ -18,6 +18,7 @@
 
 import csv
 
+
 class UnsupportedFileTypeError(Exception):
     """
         Exception indicating the file is unsupported
@@ -39,11 +40,12 @@ def identify_file(file_path):
         raise UnsupportedFileTypeError
 
 def isfloat(value):
-  try:
-    float(value)
-    return True
-  except ValueError:
-    return False
+    try:
+        float(value)
+        return True
+    except ValueError:
+        return False
+
 
 def identify_columns_maccor_excel(file_path):
     """
@@ -118,6 +120,7 @@ def identify_columns_maccor_text(file_type, file_path):
         print(columns_with_data)
         return columns_with_data
 
+
 def identify_columns(file_type, file_path):
     """
         Identifies which columns are present in the file and which have data
@@ -129,6 +132,7 @@ def identify_columns(file_type, file_path):
             return identify_columns_maccor_text(file_type, file_path)
     else:
         raise UnsupportedFileTypeError
+
 
 class InputFile:
     """
