@@ -20,6 +20,17 @@ import csv
 import maya
 import battery_exceptions
 
+
+class LogFilter(object):
+    def write(self, *args):
+        if(len(args) != 1 or not ( args[0] == '\n' or args[0] ==
+        'WARNING *** OLE2 inconsistency: SSCS size is 0 but SSAT size is non-zero')):
+            print(''.join(args))
+    def writelines(self, *args):
+        pass
+    def close(self, *args):
+        pass
+
 def isfloat(value):
     try:
         float(value)
@@ -33,7 +44,9 @@ def identify_columns_maccor_excel(file_path):
         Identifies columns in a maccor excel file"
     """
     import xlrd
-    with xlrd.open_workbook(file_path, on_demand=True) as wbook:
+    with xlrd.open_workbook(file_path,
+                            on_demand=True,
+                            logfile=LogFilter()) as wbook:
         sheet = wbook.sheet_by_index(0)
         column_has_data = [False for col in range(0, sheet.ncols)]
         headers = []
@@ -120,7 +133,9 @@ def load_metadata_maccor_excel(file_path):
     """
     import xlrd
     metadata = {}
-    with xlrd.open_workbook(file_path, on_demand=True) as wbook:
+    with xlrd.open_workbook(file_path,
+                            on_demand=True,
+                            logfile=LogFilter()) as wbook:
         sheet = wbook.sheet_by_index(0)
         col = 0
         while col < sheet.ncols:

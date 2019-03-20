@@ -19,7 +19,6 @@
 import battery_exceptions
 import maccor_functions
 
-import maccor_functions
 
 def load_metadata(file_type, file_path):
     """
@@ -48,6 +47,7 @@ def identify_columns(file_type, file_path):
     else:
         raise battery_exceptions.UnsupportedFileTypeError
 
+
 def identify_file(file_path):
     """
         Returns a string identifying the type of the input file
@@ -60,6 +60,7 @@ def identify_file(file_path):
         return "TSV-MACCOR"
     else:
         raise battery_exceptions.UnsupportedFileTypeError
+
 
 class InputFile:
     """
