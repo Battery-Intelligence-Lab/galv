@@ -68,7 +68,41 @@ class InputFile:
     """
 
     def __init__(self, file_path):
+        self.file_path = file_path
         self.type = identify_file(file_path)
         self.columns_with_data = identify_columns(self.type, file_path)
         self.metadata = load_metadata(self.type, file_path)
+
+    def get_desired_data(self, standardized_columns):
+        """
+            Given a list of standard column names return a dict with a key
+            for each standard column present in the file and a value for each
+            key that is a list of data that mapped to that standard column
+        """
+        available_columns = self.get_column_to_standard_column_mapping(
+                                    standardized_columns)
+        if "MACCOR" in self.type:
+            if "EXCEL" in self.type:
+                return maccor_functions.load_data_maccor_excel(self.file_path,
+                                                               available_columns)
+            else:
+                return maccor_functions.load_data_maccor_text(self.type,
+                                                               self.file_path,
+                                                               available_columns)
+        else:
+            raise battery_exceptions.UnsupportedFileTypeError
+
+    def get_column_to_standard_column_mapping(self, standardized_columns):
+        """
+            Given a list of standard column names return a dict with a key
+            of the column name in the file that maps to the standard column
+            name in the value. Only return values where a valid mapping exists
+        """
+        fullmap = {}
+        if 'MACCOR' in self.type:
+            fullmap = maccor_functions.get_maccor_column_to_standard_column_mapping(standardized_columns)
+        available_columns = {key for key, value in
+                             self.columns_with_data.items() if value}
+        matching_columns = available_columns & set(fullmap.keys())
+        return {key: fullmap[key] for key in matching_columns}
 

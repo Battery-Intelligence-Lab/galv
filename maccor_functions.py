@@ -15,7 +15,6 @@
 #
 # @author Luke Pitt.
 #
-
 import csv
 import maya
 import battery_exceptions
@@ -30,6 +29,16 @@ class LogFilter(object):
         pass
     def close(self, *args):
         pass
+
+def get_maccor_column_to_standard_column_mapping(standardized_columns):
+    """
+        Given a list of standard column names return a dict with a key
+        of the column name in the file that maps to the standard column
+        name in the value. Only return values where a valid mapping exists
+    """
+    return {'TestTime': 'timestamp',
+            'Volts': 'V',
+            'Amps': 'A'}
 
 def isfloat(value):
     try:
@@ -60,7 +69,7 @@ def identify_columns_maccor_excel(file_path):
         print(headers)
         print(numeric_columns)
         for sheet_id in range(0, wbook.nsheets):
-            print('Loading sheet ' + str(sheet_id))
+            print('Loading sheet... ' + str(sheet_id))
             sheet = wbook.sheet_by_index(sheet_id)
             for row in range(2, sheet.nrows):
                 for column in numeric_columns[:]:
@@ -179,3 +188,58 @@ def load_metadata_maccor_text(file_type, file_path):
         metadata[key] = maya.parse(second[1]).datetime()
     print(metadata)
     return metadata
+
+
+def load_data_maccor_excel(file_path, columns):
+    """
+        Load metadata  in a maccor excel file"
+    """
+    import xlrd
+    with xlrd.open_workbook(file_path,
+                            on_demand=True,
+                            logfile=LogFilter()) as wbook:
+        sheet = wbook.sheet_by_index(0)
+        columns_of_interest = []
+        column_names = []
+        for col in range(0, sheet.ncols):
+            column_name = sheet.cell_value(1, col)
+            column_names.append(column_name)
+            if column_name in columns:
+                columns_of_interest.append(col)
+        columns_data = [[] for i in columns_of_interest]
+        for sheet_id in range(0, wbook.nsheets):
+            print('Loading sheet...' + str(sheet_id))
+            sheet = wbook.sheet_by_index(sheet_id)
+            for row in range(2, sheet.nrows):
+                for i in range(len(columns_of_interest)):
+                    columns_data[i].append(
+                        sheet.cell_value(row, columns_of_interest[i]))
+            print('Unloading sheet ' + str(sheet_id))
+            wbook.unload_sheet(sheet_id)
+        return {column_names[columns_of_interest[i]]: columns_data[i]
+                for i in range(len(columns_data))}
+
+
+def load_data_maccor_text(file_type, file_path, columns):
+    """
+        Load adata in a maccor csv or tsv file"
+    """
+    with open(file_path, 'rb') as csvfile:
+        first = csvfile.readline()
+        second = csvfile.readline()
+        reader = None
+        if 'CSV' in file_type:
+            reader = csv.reader(csvfile, delimiter=',')
+        elif 'TSV' in file_type:
+            reader = csv.reader(csvfile, delimiter='\t')
+        columns_of_interest = []
+        column_names = reader.next()
+        for col in range(len(column_names)):
+            if column_names[col] in columns:
+                columns_of_interest.append(col)
+        columns_data = [[] for i in columns_of_interest]
+        for row in reader:
+            for i in range(len(columns_of_interest)):
+                    columns_data[i].append(row[columns_of_interest[i]])
+        return {column_names[columns_of_interest[i]]: columns_data[i]
+                for i in range(len(columns_data))}
