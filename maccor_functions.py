@@ -30,15 +30,17 @@ class LogFilter(object):
     def close(self, *args):
         pass
 
-def get_maccor_column_to_standard_column_mapping(standardized_columns):
+def get_maccor_column_to_standard_column_mapping():
     """
         Given a list of standard column names return a dict with a key
         of the column name in the file that maps to the standard column
         name in the value. Only return values where a valid mapping exists
     """
-    return {'TestTime': 'timestamp',
-            'Volts': 'V',
-            'Amps': 'A'}
+    return {'Amp-hr': 'Amp-hr', 'Amps': 'Amps', 'Cyc#': 'Cyc#',
+            'DPt Time': 'DPt Time', 'Watt-hr': 'Watt-hr', 'State': 'State',
+            'Step': 'Step', 'StepTime': 'StepTime',
+            'Volts': 'Volts',
+            'Capacity': 'Capacity', 'Energy': 'Energy', 'Power': 'Power'}
 
 def isfloat(value):
     try:
@@ -99,7 +101,7 @@ def identify_columns_maccor_text(file_type, file_path):
             reader = csv.reader(csvfile, delimiter=',')
         elif 'TSV' in file_type:
             reader = csv.reader(csvfile, delimiter='\t')
-        headers = reader.next()
+        headers = [ header for header in reader.next() if header is not '' ]
         column_has_data = [False for column in headers]
         first_data = reader.next()
         column_is_numeric = [isfloat(column) for column in first_data]
@@ -110,14 +112,30 @@ def identify_columns_maccor_text(file_type, file_path):
                 numberic_columns.append(i)
             else:
                 column_has_data[i] = True
+        correct_number_of_columns = len(column_is_numeric)
+        row_idx = -1
         for row in reader:
+            row_idx = row_idx + 1
+            if len(row) > correct_number_of_columns:
+                row = [row[0] + row[1]] + row[2:]
+#                print ('Row ' + str(row_idx) + ' has ' + str(len(row)) +
+#                ' cols, expected ' + str(correct_number_of_columns))
             for col in numberic_columns[:]:
-                if float(row[col]) != 0.0:
+                data_detected = False
+                is_float = True
+                try:
+                    data_detected = float(row[col]) != 0.0
+                except ValueError:
+                    # Failed to cast a string to float so it is a value
+                    data_detected = True
+                    is_float = False
+                if data_detected:
                     column_has_data[col] = True
                     numberic_columns.remove(col)
                     print("Found data in col " + str(col) + " ( " +
                           headers[col] + " ) : " + row[col] +
-                          " as float: " + str(float(row[col])))
+                          ((" as float: " + str(float(row[col]))) if is_float
+                           else '' ) + ' on row ' + str(row_idx))
         columns_with_data = {headers[i]: column_has_data[i]
                              for i in range(0, len(headers))}
         print(columns_with_data)
@@ -222,7 +240,7 @@ def load_data_maccor_excel(file_path, columns):
 
 def load_data_maccor_text(file_type, file_path, columns):
     """
-        Load adata in a maccor csv or tsv file"
+        Load data in a maccor csv or tsv file"
     """
     with open(file_path, 'rb') as csvfile:
         first = csvfile.readline()
@@ -233,12 +251,16 @@ def load_data_maccor_text(file_type, file_path, columns):
         elif 'TSV' in file_type:
             reader = csv.reader(csvfile, delimiter='\t')
         columns_of_interest = []
-        column_names = reader.next()
+        column_names = [ header for header in reader.next() if header is not '' ]
+        correct_number_of_columns = len(column_names)
         for col in range(len(column_names)):
             if column_names[col] in columns:
                 columns_of_interest.append(col)
         columns_data = [[] for i in columns_of_interest]
         for row in reader:
+            if len(row) > correct_number_of_columns:
+                #handle bug in maccor output where cyc# has commas in it
+                row = [row[0] + row[1]] + row[2:]
             for i in range(len(columns_of_interest)):
                     columns_data[i].append(row[columns_of_interest[i]])
         return {column_names[columns_of_interest[i]]: columns_data[i]

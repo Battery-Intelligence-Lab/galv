@@ -21,3 +21,9 @@ class UnsupportedFileTypeError(Exception):
         Exception indicating the file is unsupported
     """
     pass
+
+class DataGenerationError(Exception):
+    """
+        Exception indicating the failure to generate some columns
+    """
+    pass
