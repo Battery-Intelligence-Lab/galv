@@ -8,12 +8,14 @@ end = timer()
 print('f1 time')
 print(end - start)
 
-print(f1.get_column_to_standard_column_mapping())
+#print(f1.get_column_to_standard_column_mapping())
 # print(f2.get_column_to_standard_column_mapping(None))
 # print(f3.get_column_to_standard_column_mapping(None))
 
 start = timer()
-data = f1.get_standardized_data({'Rec#':'Rec#'})
+data = f1.get_data_with_standard_colums({'TestTime': 'TestTime',
+                                         'Rec#': 'Rec#',
+                                         'Power': None})
 end = timer()
 print('f1.get_standardized_data time')
 print(end - start)

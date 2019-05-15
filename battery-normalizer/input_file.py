@@ -102,6 +102,7 @@ class InputFile:
         self.type = identify_file(file_path)
         self.columns_with_data = identify_columns(self.type, file_path)
         self.metadata = load_metadata(self.type, file_path)
+        # there should be some map of loaded data, not sure whether to use file cols or standard cols
         self.generated_columns = {}
 
     def write_output_file(self, file_path, data):
@@ -127,7 +128,7 @@ class InputFile:
         pass
         return self.metadata['Date of Test:']
 
-    def generate_missing_columns(self, missing_colums, data):
+    def generate_missing_columns(self, possibly_missing_colums, data):
         """
             Recursively generate missing columns.
             Some columns depend on the existence of others, this method
@@ -135,16 +136,16 @@ class InputFile:
             generating dependant columns first. Each recursion generates at
             most one column until all required columns are generated.
         """
-        changes_made = False
+        missing_colums = [col for col in possibly_missing_colums if col not in
+                          self.generated_columns.keys()]
+        changes_made = len(missing_colums) != len(possibly_missing_colums)
         num_rows = len(data[data.keys()[0]])
         
         if 'Cyc#' in missing_colums:
-            data['Cyc#'] = [0] * num_rows
-            self.generated_columns['Cyc#'] = data['Cyc#']
+            self.generated_columns['Cyc#'] = [0] * num_rows
             changes_made = True
         elif 'State' in missing_colums:
-            data['State'] = ['R'] * num_rows
-            self.generated_columns['State#'] = data['State#']
+            self.generated_columns['State#'] = ['R'] * num_rows
             changes_made = True
         elif 'DPt Time' in missing_colums:
             # get Date of Test: from metadata
@@ -154,7 +155,6 @@ class InputFile:
             for i in range(num_rows):
                 dpt_times.append(start_date.add(seconds=(i*time_step)))
             self.generated_columns['DPt Time'] = dpt_times
-            data['DPt Time'] = dpt_times
             changes_made = True
         elif 'Step' in missing_colums:
             steps = []
@@ -168,7 +168,6 @@ class InputFile:
                     step = step + 1
                 steps.append(step)
             self.generated_columns['Step'] = steps
-            data['Step'] = steps
             changes_made = True
         elif 'StepTime' in missing_colums:
             step_start = 0
@@ -184,16 +183,14 @@ class InputFile:
                     step_start = i
                 step_time.append((i - step_start) * time_step)
             self.generated_columns['StepTime'] = step_time
-            data['StepTime'] = step_time
             changes_made = True
         elif 'Power' in missing_colums:
-            power = [data['Volts'][i] * data['Amps'][i] for i in range(num_rows)]
+            power = [float(data['Volts'][i]) * float(data['Amps'][i]) for i in range(num_rows)]
             self.generated_columns['Power'] = power
-            data['Power'] = power
             changes_made = True
-
+        
         if changes_made:
-            return self.generate_missing_columns(data)
+            return self.generate_missing_columns(missing_colums, data)
         elif len(missing_colums) > 0:
             print ("Error missing these columns and unable to generate them:")
             print (missing_colums)
@@ -212,7 +209,7 @@ class InputFile:
             containing the given standard columns as keys with lists of data
             as values.
         """
-        output_columns = (set(get_required_columns().keys()) +
+        output_columns = (set(get_required_columns().keys()) |
                           set(standard_cols_to_file_cols.keys()))
         # first determine 
         file_col_to_std_col = {}
@@ -248,10 +245,11 @@ class InputFile:
         """
         # first find which desired columns are available
         available_columns = {key for key, value in
-                             self.columns_with_data.items() if value}
+                                self.columns_with_data.items() if value['has_data']}
         available_desired_columns = (available_columns &
                                      set(desired_file_cols_to_std_cols.keys()))
         # now load the available data
+        # we need to pass whether the column is numeric to these
         if "MACCOR" in self.type:
             if "EXCEL" in self.type:
                 return maccor_functions.load_data_maccor_excel(self.file_path,

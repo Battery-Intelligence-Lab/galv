@@ -83,7 +83,8 @@ def identify_columns_maccor_excel(file_path):
                               str(float(sheet.cell_value(row, column))))
             print('Unloading sheet ' + str(sheet_id))
             wbook.unload_sheet(sheet_id)
-        columns_with_data = {headers[i]: column_has_data[i]
+        columns_with_data = {headers[i]: {'has_data': column_has_data[i],
+                                          'is_numeric': numeric_columns[i]}
                              for i in range(0, len(headers))}
         print(columns_with_data)
         return columns_with_data
@@ -106,10 +107,10 @@ def identify_columns_maccor_text(file_type, file_path):
         first_data = reader.next()
         column_is_numeric = [isfloat(column) for column in first_data]
         print(column_is_numeric)
-        numberic_columns = []
+        numeric_columns = []
         for i in range(0,len(column_is_numeric)):
             if column_is_numeric[i]:
-                numberic_columns.append(i)
+                numeric_columns.append(i)
             else:
                 column_has_data[i] = True
         correct_number_of_columns = len(column_is_numeric)
@@ -120,7 +121,7 @@ def identify_columns_maccor_text(file_type, file_path):
                 row = [row[0] + row[1]] + row[2:]
 #                print ('Row ' + str(row_idx) + ' has ' + str(len(row)) +
 #                ' cols, expected ' + str(correct_number_of_columns))
-            for col in numberic_columns[:]:
+            for col in numeric_columns[:]:
                 data_detected = False
                 is_float = True
                 try:
@@ -131,12 +132,13 @@ def identify_columns_maccor_text(file_type, file_path):
                     is_float = False
                 if data_detected:
                     column_has_data[col] = True
-                    numberic_columns.remove(col)
+                    numeric_columns.remove(col)
                     print("Found data in col " + str(col) + " ( " +
                           headers[col] + " ) : " + row[col] +
                           ((" as float: " + str(float(row[col]))) if is_float
                            else '' ) + ' on row ' + str(row_idx))
-        columns_with_data = {headers[i]: column_has_data[i]
+        columns_with_data = {headers[i]: {'has_data': column_has_data[i],
+                                          'is_numeric': column_is_numeric[i]}
                              for i in range(0, len(headers))}
         print(columns_with_data)
         return columns_with_data
