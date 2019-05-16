@@ -22,11 +22,11 @@ def load_config(config_file_path):
 
 def write_config_template(config_template_path):
     template = {
-        'username': 'user',
-        'password': 'password',
-        'db_host': '127.0.0.1',
-        'db_port': 5432,
-        'db_name': 'galvanalyser',
+        'database_username': 'harvester_user',
+        'database_password': 'password',
+        'database_host': '127.0.0.1',
+        'database_port': 5432,
+        'database_name': 'galvanalyser',
         'machine_id': 'my_machine_01'
     }
     with open(config_template_path, 'w') as json_file:
