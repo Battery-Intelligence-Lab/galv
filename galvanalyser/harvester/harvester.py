@@ -1,3 +1,4 @@
+import sys
 import json
 import psutil
 
@@ -18,10 +19,10 @@ def load_config(config_file_path):
     with open(config_file_path, 'r') as json_file:
         return json.load(json_file)
 
-def harvester_run():
+def main(argv):
     config = load_config("harvester-config.json")
     
 
 
 if __name__ == '__main__':
-    pass
+    main(sys.argv)
