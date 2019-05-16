@@ -35,7 +35,16 @@ def write_config_template(config_template_path):
 
 def main(argv):
     config = load_config("harvester-config.json")
-    
+    try:
+        conn = psycopg2.connect(host=config.database_host,
+                                port=config.database_port,
+                                database=config.database_name,
+                                user=config.database_username,
+                                password=config.database_password)
+        conn.autocommit = True
+
+    finally:
+        conn.close()
 
 
 if __name__ == '__main__':
