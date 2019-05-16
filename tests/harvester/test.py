@@ -1,5 +1,9 @@
+import os
+import sys
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+
 from timeit import default_timer as timer
-import input_file
+import galvanalyser.harvester.input_file as input_file
 
 
 start = timer()

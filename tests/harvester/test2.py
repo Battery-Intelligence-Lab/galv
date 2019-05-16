@@ -1,4 +1,8 @@
-import maccor_functions
+import os
+import sys
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+
+import galvanalyser.harvester.maccor_functions as maccor_functions
 import xlrd
 maccor_functions.load_metadata_maccor_excel('/Users/luke/Downloads/TPG1.2+-+Cell+15.002.xls')
 

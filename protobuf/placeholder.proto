@@ -1,0 +1,7 @@
+syntax = "proto2";
+
+package galvanalyser;
+
+message DataMessage {
+  repeated double data = 1;
+}
