@@ -19,6 +19,20 @@ def load_config(config_file_path):
     with open(config_file_path, 'r') as json_file:
         return json.load(json_file)
 
+
+def write_config_template(config_template_path):
+    template = {
+        'username': 'user',
+        'password': 'password',
+        'db_host': '127.0.0.1',
+        'db_port': 5432,
+        'db_name': 'galvanalyser',
+        'machine_id': 'my_machine_01'
+    }
+    with open(config_template_path, 'w') as json_file:
+        json.dump(template, json_file, indent=4)
+
+
 def main(argv):
     config = load_config("harvester-config.json")
     
