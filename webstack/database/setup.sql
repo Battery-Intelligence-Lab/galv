@@ -11,6 +11,9 @@ CREATE DATABASE galvanalyser
     TABLESPACE = pg_default
     CONNECTION LIMIT = -1;
 
+ALTER DATABASE galvanalyser SET timezone TO 'UTC';
+SELECT pg_reload_conf();
+
 -- Role: harvester
 -- DROP ROLE harvester;
 
