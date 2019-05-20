@@ -1,6 +1,7 @@
 import sys
 import json
 import psutil
+import psycopg2
 
 
 def has_handle(fpath):
