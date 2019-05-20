@@ -89,7 +89,7 @@ class ObservedFilesRow:
         with conn.cursor() as cursor:
             cursor.execute(
                 (
-                    "SELECT path, last_observed_size, last_observed_time "
+                    "SELECT path, last_observed_size, last_observed_time, "
                     "file_state FROM "
                     "harvesters.observed_files WHERE harvester_id=(%s)"
                 ),
@@ -103,6 +103,29 @@ class ObservedFilesRow:
                     last_observed_size=result[1],
                     last_observed_time=result[2],
                     file_state=result[3],
+                )
+                for result in records
+            ]
+
+    @staticmethod
+    def select_from_id_with_state(harvester_id, file_state, conn):
+        with conn.cursor() as cursor:
+            cursor.execute(
+                (
+                    "SELECT path, last_observed_size, last_observed_time "
+                    "FROM harvesters.observed_files WHERE "
+                    "harvester_id=(%s) AND file_state=(%s)"
+                ),
+                [harvester_id, file_state],
+            )
+            records = cursor.fetchall()
+            return [
+                ObservedFilesRow(
+                    harvester_id,
+                    path=result[0],
+                    last_observed_size=result[1],
+                    last_observed_time=result[2],
+                    file_state=file_state,
                 )
                 for result in records
             ]
