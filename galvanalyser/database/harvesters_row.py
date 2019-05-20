@@ -14,7 +14,7 @@ class HarvestersRow:
             )
 
     @staticmethod
-    def select_from_id(machine_id, conn):
+    def select_from_machine_id(machine_id, conn):
         with conn.cursor() as cursor:
             cursor.execute(
                 (
