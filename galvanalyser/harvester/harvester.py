@@ -2,8 +2,8 @@ import sys
 import json
 import psutil
 import psycopg2
-from ..database.harvesters_row import HarvestersRow
-from ..database.monitored_paths_row import MonitoredPathsRow
+from galvanalyser.database.harvesters_row import HarvestersRow
+from galvanalyser.database.monitored_paths_row import MonitoredPathsRow
 
 
 def has_handle(fpath):
@@ -42,14 +42,15 @@ def monitor_path(path, monitored_for, conn):
 
 
 def main(argv):
-    config = load_config("harvester-config.json")
+    config = load_config("./config/harvester-config.json")
+    print(config)
     try:
         conn = psycopg2.connect(
-            host=config.database_host,
-            port=config.database_port,
-            database=config.database_name,
-            user=config.database_username,
-            password=config.database_password,
+            host=config["database_host"],
+            port=config["database_port"],
+            database=config["database_name"],
+            user=config["database_username"],
+            password=config["database_password"],
         )
         conn.autocommit = True
 
@@ -66,6 +67,12 @@ def main(argv):
             sys.exit(1)
         monitored_paths_rows = MonitoredPathsRow.select_from_harvester_id(
             my_harvester_id_no, conn
+        )
+        print(
+            config["machine_id"]
+            + " is monitoring "
+            + str(len(monitored_paths_rows))
+            + " directories"
         )
         for monitored_paths_row in monitored_paths_rows:
             monitor_path(
