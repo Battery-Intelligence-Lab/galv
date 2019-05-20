@@ -1,9 +1,12 @@
+import os
 import sys
 import json
 import psutil
 import psycopg2
+from datetime import datetime, timezone
 from galvanalyser.database.harvesters_row import HarvestersRow
 from galvanalyser.database.monitored_paths_row import MonitoredPathsRow
+from galvanalyser.database.observed_files_row import ObservedFilesRow
 
 
 def has_handle(fpath):
@@ -36,8 +39,64 @@ def write_config_template(config_template_path):
         json.dump(template, json_file, indent=4)
 
 
-def monitor_path(path, monitored_for, conn):
+def monitor_path(harvester_id, path, monitored_for, conn):
     print("Examining " + path + " for user " + monitored_for)
+    current_files = os.listdir(path)
+    for file_path in current_files:
+        print("Found " + file_path)
+        current_observation = ObservedFilesRow(
+            harvester_id,
+            path,
+            os.path.getsize(path),
+            datetime.now(timezone.utc),
+        )
+        database_observation = ObservedFilesRow.select_from_id_and_path(
+            harvester_id, path, conn
+        )
+        if database_observation is None:
+            print("Found a new file " + path)
+            current_observation.insert(conn)
+        else:
+            print(current_observation.last_observed_time)
+            print(database_observation.last_observed_time)
+            if database_observation.file_state != "UNSTABLE":
+                # This file has already been handled
+                print(
+                    "File has already been handled. State is currently "
+                    + str(database_observation.file_state)
+                )
+                continue
+            elif (
+                current_observation.last_observed_size
+                != database_observation.last_observed_size
+            ):
+                # The file is changing, record its size
+                print(
+                    "File has changed size since last it was checked, skipping"
+                )
+                current_observation.insert(conn)
+            elif has_handle(path):
+                # the file is currently in use, record this update time
+                print("File is currently in use, skipping")
+                current_observation.insert(conn)
+            elif (
+                current_observation.last_observed_time
+                - database_observation.last_observed_time
+            ).total_seconds() > 60:
+                # the file hasn't changed in the last minute
+                current_observation.file_state = "STABLE"
+                current_observation.insert(conn)
+                # the file is stable and not in use so let's import it
+                print("Importing " + path)
+            else:
+                # The file hasn't changed this time, but it hasn't been over a
+                # minute since we last checked
+                # We don't update the database because we don't want to change
+                # the timestamp of our last observation and nothing else has
+                # changed
+                print("Waiting for file to become stable")
+                pass
+
     pass
 
 
@@ -76,6 +135,7 @@ def main(argv):
         )
         for monitored_paths_row in monitored_paths_rows:
             monitor_path(
+                monitored_paths_row.harvester_id,
                 monitored_paths_row.path,
                 monitored_paths_row.monitored_for,
                 conn,
