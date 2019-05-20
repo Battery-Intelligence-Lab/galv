@@ -1,0 +1,6 @@
+psycopg2
+dash
+dash-renderer
+dash-html-components
+dash-core-components
+plotly

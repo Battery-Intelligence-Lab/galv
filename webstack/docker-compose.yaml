@@ -1,7 +1,9 @@
 version: '3'
 services:
   galvanalyserapp:
-    build: ./dashapp
+    build:
+      dockerfile: ./webstack/dashapp/Dockerfile
+      context: ../
     volumes:
      - ../galvanalyser/webapp:/usr/src/app
   nginx:
