@@ -14,6 +14,7 @@ services:
     image: "redis"
   postgres:
     image: "postgres"
+    stop_signal: SIGINT                 # Fast Shutdown mode
     ports:
       - "5432:5432"
     volumes:
