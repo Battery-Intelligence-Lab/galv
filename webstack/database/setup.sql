@@ -96,6 +96,7 @@ CREATE TABLE harvesters.observed_files
     path text NOT NULL,
     last_observed_size bigint NOT NULL,
     last_observed_time timestamp with time zone NOT NULL,
+    file_state harvesters.file_state_t NOT NULL DEFAULT 'UNSTABLE'::harvesters.file_state_t,
     PRIMARY KEY (harvester_id, path),
     FOREIGN KEY (harvester_id)
         REFERENCES harvesters.harvesters (id_no) MATCH SIMPLE
