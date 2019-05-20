@@ -46,18 +46,19 @@ def monitor_path(harvester_id, path, monitored_for, conn):
     print("Examining " + path + " for user " + monitored_for)
     current_files = os.listdir(path)
     for file_path in current_files:
+        file_path = os.path.join(path, file_path)
         print("Found " + file_path)
         current_observation = ObservedFilesRow(
             harvester_id,
-            path,
-            os.path.getsize(path),
+            file_path,
+            os.path.getsize(file_path),
             datetime.now(timezone.utc),
         )
         database_observation = ObservedFilesRow.select_from_id_and_path(
-            harvester_id, path, conn
+            harvester_id, file_path, conn
         )
         if database_observation is None:
-            print("Found a new file " + path)
+            print("Found a new file " + file_path)
             current_observation.insert(conn)
         else:
             print(current_observation.last_observed_time)
@@ -78,7 +79,7 @@ def monitor_path(harvester_id, path, monitored_for, conn):
                     "File has changed size since last it was checked, skipping"
                 )
                 current_observation.insert(conn)
-            elif has_handle(path):
+            elif has_handle(file_path):
                 # the file is currently in use, record this update time
                 print("File is currently in use, skipping")
                 current_observation.insert(conn)
@@ -89,8 +90,6 @@ def monitor_path(harvester_id, path, monitored_for, conn):
                 # the file hasn't changed in the last minute
                 current_observation.file_state = "STABLE"
                 current_observation.insert(conn)
-                # the file is stable and not in use so let's import it
-                print("Importing " + path)
             else:
                 # The file hasn't changed this time, but it hasn't been over a
                 # minute since we last checked
@@ -143,6 +142,13 @@ def main(argv):
                 monitored_paths_row.monitored_for,
                 conn,
             )
+        # files for import
+        stable_monitored_paths_rows = ObservedFilesRow.select_from_id_with_state(
+            my_harvester_id_no, "STABLE", conn
+        )
+        for monitored_paths_row in stable_monitored_paths_rows:
+            # import the file
+            print("Importing " + monitored_paths_row.path)
 
     finally:
         conn.close()
