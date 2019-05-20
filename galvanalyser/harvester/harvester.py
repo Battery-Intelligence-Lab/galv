@@ -2,6 +2,8 @@ import sys
 import json
 import psutil
 import psycopg2
+from ..database.harvesters_row import HarvestersRow
+from ..database.monitored_paths_row import MonitoredPathsRow
 
 
 def has_handle(fpath):
@@ -34,6 +36,11 @@ def write_config_template(config_template_path):
         json.dump(template, json_file, indent=4)
 
 
+def monitor_path(path, monitored_for, conn):
+    print("Examining " + path + " for user " + monitored_for)
+    pass
+
+
 def main(argv):
     config = load_config("harvester-config.json")
     try:
@@ -45,6 +52,19 @@ def main(argv):
             password=config.database_password,
         )
         conn.autocommit = True
+
+        my_harvester_id_no = HarvestersRow.select_from_machine_id(
+            config.machine_id, conn
+        ).id_no
+        monitored_paths_rows = MonitoredPathsRow.select_from_harvester_id(
+            my_harvester_id_no, conn
+        )
+        for monitored_paths_row in monitored_paths_rows:
+            monitor_path(
+                monitored_paths_row.path,
+                monitored_paths_row.monitored_for,
+                conn,
+            )
 
     finally:
         conn.close()
