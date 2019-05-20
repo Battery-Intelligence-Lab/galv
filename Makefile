@@ -7,7 +7,13 @@ test:
 protobuf: protobuf/placeholder.proto
 	protoc -I=protobuf --python_out=galvanalyser/protobuf --js_out=import_style=commonjs,binary:webapp-static-content/js/protobuf protobuf/placeholder.proto
 
-harvester-docker:
+format:
+	black --line-length 79 ./
+
+harvester-docker-build:
 	docker build -t harvester -f harvester/Dockerfile .
 
-.PHONY: init test protobuf harvester-docker
+harvester-docker-run:
+	docker run --rm -it -v /Users/luke/code/battery-project/battery-project/galvanalyser:/usr/src/app/galvanalyser -v /Users/luke/code/battery-project/harvester-test:/usr/src/app/config --net host harvester
+
+.PHONY: init test protobuf format harvester-docker-build harvester-docker-run
