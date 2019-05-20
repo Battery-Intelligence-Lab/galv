@@ -10,6 +10,9 @@ from galvanalyser.database.observed_files_row import ObservedFilesRow
 
 
 def has_handle(fpath):
+    """
+        Returns true if the file is in use by a process
+    """
     for proc in psutil.process_iter():
         try:
             for item in proc.open_files():
