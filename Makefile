@@ -1,5 +1,5 @@
 init:
-	pip install -r requirements.txt
+	pip install -r ./galvanalyser/harvester/requirements.txt && pip install -r ./galvanalyser/webapp/requirements.txt
 
 test:
 	py.test tests
