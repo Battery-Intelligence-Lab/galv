@@ -32,6 +32,9 @@ CREATE ROLE harvester WITH
 CREATE SCHEMA harvesters
     AUTHORIZATION postgres;
 
+GRANT ALL ON SCHEMA harvesters TO postgres;
+
+GRANT USAGE ON SCHEMA harvesters TO harvester;
 
 -- Table: harvesters.harvesters
 
