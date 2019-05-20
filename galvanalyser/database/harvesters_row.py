@@ -24,4 +24,6 @@ class HarvestersRow:
                 [machine_id],
             )
             result = cursor.fetchone()
+            if result is None:
+                return None
             return HarvestersRow(id_no=result[0], machine_id=machine_id)

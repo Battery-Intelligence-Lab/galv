@@ -53,9 +53,17 @@ def main(argv):
         )
         conn.autocommit = True
 
-        my_harvester_id_no = HarvestersRow.select_from_machine_id(
-            config.machine_id, conn
-        ).id_no
+        try:
+            my_harvester_id_no = HarvestersRow.select_from_machine_id(
+                config["machine_id"], conn
+            ).id_no
+        except AttributeError:
+            print(
+                "Error: Could not find a harvester id for a machine called "
+                + config["machine_id"]
+                + " harvester in the database"
+            )
+            sys.exit(1)
         monitored_paths_rows = MonitoredPathsRow.select_from_harvester_id(
             my_harvester_id_no, conn
         )
