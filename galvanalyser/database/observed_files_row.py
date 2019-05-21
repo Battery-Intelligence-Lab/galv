@@ -112,17 +112,13 @@ class ObservedFilesRow:
         with conn.cursor() as cursor:
             cursor.execute(
                 (
-                    "SELECT harvesters.observed_files.monitor_path_id, "
-                    "harvesters.observed_files.path, "
-                    "harvesters.observed_files.last_observed_size, "
-                    "harvesters.observed_files.last_observed_time "
-                    "FROM harvesters.observed_files "
-                    "INNER JOIN harvesters.monitored_paths ON "
-                    "harvesters.observed_files.monitor_path_id = "
-                    "harvesters.monitored_paths.monitor_path_id "
+                    "SELECT hof.monitor_path_id, hof.path, "
+                    "hof.last_observed_size, hof.last_observed_time "
+                    "FROM harvesters.observed_files AS hof "
+                    "INNER JOIN harvesters.monitored_paths AS hmp ON "
+                    "hof.monitor_path_id = hmp.monitor_path_id "
                     "WHERE "
-                    "harvesters.monitored_paths.harvester_id=(%s) AND "
-                    "harvesters.observed_files.file_state=(%s)"
+                    "hmp.harvester_id=(%s) AND hof.file_state=(%s)"
                 ),
                 [harvester_id, file_state],
             )
