@@ -118,3 +118,92 @@ ALTER TABLE harvesters.observed_files
 GRANT INSERT, SELECT, UPDATE, DELETE ON TABLE harvesters.observed_files TO harvester;
 
 GRANT ALL ON TABLE harvesters.observed_files TO postgres;
+
+-- SCHEMA: experiment
+
+-- DROP SCHEMA experiment ;
+
+CREATE SCHEMA experiment
+    AUTHORIZATION postgres;
+
+GRANT ALL ON SCHEMA experiment TO postgres;
+
+GRANT USAGE ON SCHEMA experiment TO harvester;
+
+-- Table: experiment.experiments
+
+-- DROP TABLE experiment.experiments;
+
+CREATE TABLE experiment.experiments
+(
+    id bigserial NOT NULL,
+    name text,
+    date timestamp with time zone,
+    type text NOT NULL,
+    PRIMARY KEY (name, date),
+    UNIQUE (id)
+
+)
+WITH (
+    OIDS = FALSE
+);
+
+ALTER TABLE experiment.experiments
+    OWNER to postgres;
+
+GRANT INSERT, SELECT, TRIGGER ON TABLE experiment.experiments TO harvester;
+
+GRANT ALL ON TABLE experiment.experiments TO postgres;
+
+-- Table: experiment.access
+
+-- DROP TABLE experiment.access;
+
+CREATE TABLE experiment.access
+(
+    experiment_id bigint NOT NULL,
+    user_name text NOT NULL,
+    PRIMARY KEY (experiment_id, user_name),
+    FOREIGN KEY (experiment_id)
+        REFERENCES experiment.experiments (id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION
+)
+WITH (
+    OIDS = FALSE
+);
+
+ALTER TABLE experiment.access
+    OWNER to postgres;
+
+GRANT INSERT, SELECT ON TABLE experiment.access TO harvester;
+
+GRANT ALL ON TABLE experiment.access TO postgres;
+
+-- FUNCTION: experiment.create_child_data_table()
+
+-- DROP FUNCTION experiment.create_child_data_table();
+
+CREATE FUNCTION experiment.create_child_data_table()
+    RETURNS trigger
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE NOT LEAKPROOF 
+AS $BODY$
+	DECLARE
+    temprow RECORD;
+	remainder integer;
+BEGIN
+	FOR temprow IN
+SELECT DISTINCT id FROM public.data_default
+LOOP
+remainder = temprow.experiment_id % 256;
+RAISE NOTICE 'CREATING TABLE experiment.data_%',remainder;
+EXECUTE format('CREATE TABLE IF NOT EXISTS "experiment.data_%s" PARTITION OF experiment.data FOR VALUES IN (%s);', remainder, remainder);
+END LOOP;
+
+RETURN NULL;
+END;$BODY$;
+
+ALTER FUNCTION experiment.create_child_data_table()
+    OWNER TO postgres;
