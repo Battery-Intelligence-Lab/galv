@@ -6,7 +6,10 @@ import psycopg2
 from datetime import datetime, timezone
 from galvanalyser.database.harvesters_row import HarvestersRow
 from galvanalyser.database.monitored_paths_row import MonitoredPathsRow
-from galvanalyser.database.observed_files_row import ObservedFilesRow
+from galvanalyser.database.observed_files_row import (
+    ObservedFilesRow,
+    ObservedFilePathRow,
+)
 
 
 def has_handle(fpath):
@@ -98,8 +101,14 @@ def monitor_path(monitor_path_id, path, monitored_for, conn):
                 # changed
                 print("Waiting for file to become stable")
                 pass
+    print("Done monitoring paths")
 
-    pass
+
+def import_file(file_path_row, conn):
+    print(
+        "Importing "
+        + os.path.join(file_path_row.monitored_path, file_path_row.observed_path)
+    )
 
 
 def main(argv):
@@ -143,12 +152,12 @@ def main(argv):
                 conn,
             )
         # files for import
-        stable_monitored_paths_rows = ObservedFilesRow.select_from_harvester_id_no_with_state(
+        stable_observed_file_path_rows = ObservedFilePathRow.select_from_harvester_id_no_with_state(
             my_harvester_id_no, "STABLE", conn
         )
-        for monitored_paths_row in stable_monitored_paths_rows:
+        for stable_observed_file_path_row in stable_observed_file_path_rows:
             # import the file
-            print("Importing " + monitored_paths_row.path)
+            import_file(stable_observed_file_path_row, conn)
 
     finally:
         conn.close()
