@@ -108,23 +108,31 @@ class ObservedFilesRow:
             ]
 
     @staticmethod
-    def select_from_id_with_state(monitor_path_id, file_state, conn):
+    def select_from_harvester_id_no_with_state(harvester_id, file_state, conn):
         with conn.cursor() as cursor:
             cursor.execute(
                 (
-                    "SELECT path, last_observed_size, last_observed_time "
-                    "FROM harvesters.observed_files WHERE "
-                    "monitor_path_id=(%s) AND file_state=(%s)"
+                    "SELECT harvesters.observed_files.monitor_path_id, "
+                    "harvesters.observed_files.path, "
+                    "harvesters.observed_files.last_observed_size, "
+                    "harvesters.observed_files.last_observed_time "
+                    "FROM harvesters.observed_files "
+                    "INNER JOIN harvesters.monitored_paths ON "
+                    "harvesters.observed_files.monitor_path_id = "
+                    "harvesters.monitored_paths.monitor_path_id "
+                    "WHERE "
+                    "harvesters.monitored_paths.harvester_id=(%s) AND "
+                    "harvesters.observed_files.file_state=(%s)"
                 ),
-                [monitor_path_id, file_state],
+                [harvester_id, file_state],
             )
             records = cursor.fetchall()
             return [
                 ObservedFilesRow(
-                    monitor_path_id,
-                    path=result[0],
-                    last_observed_size=result[1],
-                    last_observed_time=result[2],
+                    monitor_path_id=result[0],
+                    path=result[1],
+                    last_observed_size=result[2],
+                    last_observed_time=result[3],
                     file_state=file_state,
                 )
                 for result in records

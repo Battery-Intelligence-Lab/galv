@@ -43,7 +43,7 @@ def write_config_template(config_template_path):
 
 
 def monitor_path(monitor_path_id, path, monitored_for, conn):
-    print("Examining " + path + " for user " + monitored_for)
+    print("Examining " + path + " for users " + str(monitored_for))
     current_files = os.listdir(path)
     for file_path in current_files:
         full_file_path = os.path.join(path, file_path)
@@ -143,7 +143,7 @@ def main(argv):
                 conn,
             )
         # files for import
-        stable_monitored_paths_rows = ObservedFilesRow.select_from_id_with_state(
+        stable_monitored_paths_rows = ObservedFilesRow.select_from_harvester_id_no_with_state(
             my_harvester_id_no, "STABLE", conn
         )
         for monitored_paths_row in stable_monitored_paths_rows:
