@@ -42,20 +42,20 @@ def write_config_template(config_template_path):
         json.dump(template, json_file, indent=4)
 
 
-def monitor_path(harvester_id, path, monitored_for, conn):
+def monitor_path(monitor_path_id, path, monitored_for, conn):
     print("Examining " + path + " for user " + monitored_for)
     current_files = os.listdir(path)
     for file_path in current_files:
-        file_path = os.path.join(path, file_path)
-        print("Found " + file_path)
+        full_file_path = os.path.join(path, file_path)
+        print("Found " + full_file_path)
         current_observation = ObservedFilesRow(
-            harvester_id,
+            monitor_path_id,
             file_path,
-            os.path.getsize(file_path),
+            os.path.getsize(full_file_path),
             datetime.now(timezone.utc),
         )
         database_observation = ObservedFilesRow.select_from_id_and_path(
-            harvester_id, file_path, conn
+            monitor_path_id, file_path, conn
         )
         if database_observation is None:
             print("Found a new file " + file_path)
@@ -79,7 +79,7 @@ def monitor_path(harvester_id, path, monitored_for, conn):
                     "File has changed size since last it was checked, skipping"
                 )
                 current_observation.insert(conn)
-            elif has_handle(file_path):
+            elif has_handle(full_file_path):
                 # the file is currently in use, record this update time
                 print("File is currently in use, skipping")
                 current_observation.insert(conn)
@@ -137,7 +137,7 @@ def main(argv):
         )
         for monitored_paths_row in monitored_paths_rows:
             monitor_path(
-                monitored_paths_row.harvester_id,
+                monitored_paths_row.monitor_path_id,
                 monitored_paths_row.path,
                 monitored_paths_row.monitored_for,
                 conn,

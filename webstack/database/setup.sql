@@ -67,17 +67,21 @@ GRANT ALL ON TABLE harvesters.harvesters TO postgres;
 CREATE TABLE harvesters.monitored_paths
 (
     harvester_id bigint NOT NULL,
-    monitored_for text NOT NULL,
-    path text,
-    PRIMARY KEY (harvester_id, monitored_for, path),
-    FOREIGN KEY (harvester_id)
+    path text COLLATE pg_catalog."default" NOT NULL,
+    monitored_for text[] COLLATE pg_catalog."default" NOT NULL,
+    monitor_path_id bigint NOT NULL DEFAULT nextval('harvesters.monitored_paths_monitor_id_seq'::regclass) ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 9223372036854775807 CACHE 1 ),
+    CONSTRAINT monitored_paths_pkey PRIMARY KEY (path, harvester_id),
+    CONSTRAINT monitored_paths_path_id_key UNIQUE (monitor_path_id)
+,
+    CONSTRAINT monitored_paths_harvester_id_fkey FOREIGN KEY (harvester_id)
         REFERENCES harvesters.harvesters (id_no) MATCH SIMPLE
         ON UPDATE CASCADE
         ON DELETE CASCADE
 )
 WITH (
     OIDS = FALSE
-);
+)
+TABLESPACE pg_default;
 
 ALTER TABLE harvesters.monitored_paths
     OWNER to postgres;
@@ -92,22 +96,25 @@ GRANT ALL ON TABLE harvesters.monitored_paths TO postgres;
 
 CREATE TABLE harvesters.observed_files
 (
-    harvester_id bigint NOT NULL,
-    path text NOT NULL,
+    monitor_path_id bigint NOT NULL,
+    path text COLLATE pg_catalog."default" NOT NULL,
     last_observed_size bigint NOT NULL,
     last_observed_time timestamp with time zone NOT NULL,
     file_state harvesters.file_state_t NOT NULL DEFAULT 'UNSTABLE'::harvesters.file_state_t,
-    PRIMARY KEY (harvester_id, path),
-    FOREIGN KEY (harvester_id)
-        REFERENCES harvesters.harvesters (id_no) MATCH SIMPLE
-        ON UPDATE CASCADE
-        ON DELETE CASCADE
+    CONSTRAINT observed_files_pkey PRIMARY KEY (monitor_path_id, path),
+    CONSTRAINT observed_files_monitor_path_id_fkey FOREIGN KEY (monitor_path_id)
+        REFERENCES harvesters.monitored_paths (monitor_path_id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION
 )
 WITH (
     OIDS = FALSE
-);
+)
+TABLESPACE pg_default;
 
 ALTER TABLE harvesters.observed_files
     OWNER to postgres;
 
 GRANT INSERT, SELECT, UPDATE, DELETE ON TABLE harvesters.observed_files TO harvester;
+
+GRANT ALL ON TABLE harvesters.observed_files TO postgres;

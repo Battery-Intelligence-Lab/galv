@@ -2,12 +2,16 @@ import psycopg2
 
 
 class MonitoredPathsRow:
-    def __init__(self, harvester_id, monitored_for, path):
+    def __init__(
+        self, harvester_id, monitored_for, path, monitor_path_id=None
+    ):
         self.harvester_id = harvester_id
         self.monitored_for = monitored_for
         self.path = path
+        self.monitor_path_id = monitor_path_id
 
     def insert(self, conn):
+        # TODO change this to an upsert
         with conn.cursor() as cursor:
             cursor.execute(
                 (
@@ -22,7 +26,7 @@ class MonitoredPathsRow:
         with conn.cursor() as cursor:
             cursor.execute(
                 (
-                    "SELECT monitored_for, path FROM "
+                    "SELECT monitored_for, path, monitor_path_id FROM "
                     "harvesters.monitored_paths "
                     "WHERE harvester_id=(%s)"
                 ),
@@ -34,6 +38,7 @@ class MonitoredPathsRow:
                     harvester_id=harvester_id,
                     monitored_for=result[0],
                     path=result[1],
+                    monitor_path_id=result[2],
                 )
                 for result in records
             ]
@@ -43,7 +48,7 @@ class MonitoredPathsRow:
         with conn.cursor() as cursor:
             cursor.execute(
                 (
-                    "SELECT harvester_id, path FROM "
+                    "SELECT harvester_id, path, monitor_path_id FROM "
                     "harvesters.monitored_paths "
                     "WHERE monitored_for=(%s)"
                 ),
@@ -55,6 +60,7 @@ class MonitoredPathsRow:
                     harvester_id=result[0],
                     monitored_for=monitored_for,
                     path=result[1],
+                    monitor_path_id=result[2],
                 )
                 for result in records
             ]

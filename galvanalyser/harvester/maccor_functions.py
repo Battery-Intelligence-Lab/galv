@@ -144,6 +144,9 @@ def identify_columns_maccor_text(file_type, file_path):
         for row in reader:
             row_idx = row_idx + 1
             if len(row) > correct_number_of_columns:
+                # TODO make this [0: column of the record count] +
+                # [[column of record count] + [column of record count +1]] +
+                # [column of record count +2:]
                 row = [row[0] + row[1]] + row[2:]
             #                print ('Row ' + str(row_idx) + ' has ' + str(len(row)) +
             #                ' cols, expected ' + str(correct_number_of_columns))
