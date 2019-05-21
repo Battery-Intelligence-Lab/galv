@@ -67,8 +67,8 @@ GRANT ALL ON TABLE harvesters.harvesters TO postgres;
 CREATE TABLE harvesters.monitored_paths
 (
     harvester_id bigint NOT NULL,
-    path text COLLATE pg_catalog."default" NOT NULL,
-    monitored_for text[] COLLATE pg_catalog."default" NOT NULL,
+    path text NOT NULL,
+    monitored_for text[] NOT NULL,
     monitor_path_id bigint NOT NULL DEFAULT nextval('harvesters.monitored_paths_monitor_id_seq'::regclass) ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 9223372036854775807 CACHE 1 ),
     CONSTRAINT monitored_paths_pkey PRIMARY KEY (path, harvester_id),
     CONSTRAINT monitored_paths_path_id_key UNIQUE (monitor_path_id)
@@ -97,7 +97,7 @@ GRANT ALL ON TABLE harvesters.monitored_paths TO postgres;
 CREATE TABLE harvesters.observed_files
 (
     monitor_path_id bigint NOT NULL,
-    path text COLLATE pg_catalog."default" NOT NULL,
+    path text NOT NULL,
     last_observed_size bigint NOT NULL,
     last_observed_time timestamp with time zone NOT NULL,
     file_state harvesters.file_state_t NOT NULL DEFAULT 'UNSTABLE'::harvesters.file_state_t,
