@@ -10,6 +10,7 @@ from galvanalyser.database.observed_files_row import (
     ObservedFilesRow,
     ObservedFilePathRow,
 )
+from input_file import InputFile
 
 
 def has_handle(fpath):
@@ -105,10 +106,14 @@ def monitor_path(monitor_path_id, path, monitored_for, conn):
 
 
 def import_file(file_path_row, conn):
-    print(
-        "Importing "
-        + os.path.join(file_path_row.monitored_path, file_path_row.observed_path)
+    """
+        Attempts to import a given file
+    """
+    fullpath = os.path.join(
+        file_path_row.monitored_path, file_path_row.observed_path
     )
+    print("Importing " + fullpath)
+    file_path_row.update_observed_file_state("IMPORTING", conn)
 
 
 def main(argv):

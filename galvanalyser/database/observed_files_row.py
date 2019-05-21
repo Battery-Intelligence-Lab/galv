@@ -183,3 +183,13 @@ class ObservedFilePathRow:
                 )
                 for result in records
             ]
+
+    def update_observed_file_state(file_state, conn):
+        with conn.cursor() as cursor:
+            cursor.execute(
+                (
+                    "UPDATE harvesters.observed_files SET file_state = %s"
+                    "WHERE monitor_path_id=(%s)"
+                ),
+                [file_state, self.monitor_path_id],
+            )
