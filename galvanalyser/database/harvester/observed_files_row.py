@@ -184,7 +184,7 @@ class ObservedFilePathRow:
                 for result in records
             ]
 
-    def update_observed_file_state(file_state, conn):
+    def update_observed_file_state(self, file_state, conn):
         with conn.cursor() as cursor:
             cursor.execute(
                 (

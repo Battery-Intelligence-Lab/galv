@@ -17,7 +17,7 @@
 #
 import csv
 import maya
-import battery_exceptions
+import galvanalyser.harvester.battery_exceptions as battery_exceptions
 
 
 class LogFilter(object):

@@ -4,13 +4,15 @@ import json
 import psutil
 import psycopg2
 from datetime import datetime, timezone
-from galvanalyser.database.harvesters_row import HarvestersRow
-from galvanalyser.database.monitored_paths_row import MonitoredPathsRow
-from galvanalyser.database.observed_files_row import (
+from galvanalyser.database.harvester.harvesters_row import HarvestersRow
+from galvanalyser.database.harvester.monitored_paths_row import (
+    MonitoredPathsRow,
+)
+from galvanalyser.database.harvester.observed_files_row import (
     ObservedFilesRow,
     ObservedFilePathRow,
 )
-from input_file import InputFile
+from galvanalyser.harvester.input_file import InputFile
 
 
 def has_handle(fpath):

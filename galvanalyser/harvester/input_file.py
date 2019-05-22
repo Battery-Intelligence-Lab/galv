@@ -16,8 +16,12 @@
 # @author Luke Pitt.
 #
 
-import battery_exceptions
-import maccor_functions
+import galvanalyser.harvester.battery_exceptions as battery_exceptions
+import galvanalyser.harvester.maccor_functions as maccor_functions
+
+
+# see https://gist.github.com/jsheedy/ed81cdf18190183b3b7d
+# https://stackoverflow.com/a/30721460
 
 
 def load_metadata(file_type, file_path):
