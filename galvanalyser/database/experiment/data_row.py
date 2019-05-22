@@ -38,6 +38,15 @@ class DataRow:
         pass
 
 
+    @staticmethod
+    def get_column_names(conn):
+        with conn.cursor() as cursor:
+            cursor.execute(
+                (
+                    "SELECT * FROM experiment.data LIMIT 0"
+                ))
+            return [desc[0] for desc in cursor.description]
+
 #    @staticmethod
 #    def select_from_name_and_date(name, date, conn):
 #        with conn.cursor() as cursor:
