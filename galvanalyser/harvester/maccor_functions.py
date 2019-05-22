@@ -15,8 +15,10 @@
 #
 # @author Luke Pitt.
 #
+import os
 import csv
 import maya
+import ntpath
 import galvanalyser.harvester.battery_exceptions as battery_exceptions
 
 
@@ -79,9 +81,12 @@ def identify_columns_maccor_excel(file_path):
         column_has_data = [False for col in range(0, sheet.ncols)]
         headers = []
         numeric_columns = []
+        column_is_numeric = []
         for col in range(0, sheet.ncols):
             headers.append(sheet.cell_value(1, col))
-            if isfloat(sheet.cell_value(2, col)):
+            is_numeric = isfloat(sheet.cell_value(2, col))
+            column_is_numeric.append(is_numeric)
+            if is_numeric:
                 numeric_columns.append(col)
             else:
                 column_has_data[col] = True
@@ -108,7 +113,7 @@ def identify_columns_maccor_excel(file_path):
         columns_with_data = {
             headers[i]: {
                 "has_data": column_has_data[i],
-                "is_numeric": numeric_columns[i],
+                "is_numeric": column_is_numeric[i],
             }
             for i in range(0, len(headers))
         }
@@ -243,6 +248,8 @@ def load_metadata_maccor_excel(file_path):
                 metadata[key] = sheet.cell_value(0, col + 1)
                 col = col + 1
             col = col + 1
+        metadata["Machine Type"] = "Maccor"
+        metadata["Experiment Name"] = ntpath.basename(metadata["Filename"])
     print(metadata)
     return metadata
 
@@ -264,6 +271,10 @@ def load_metadata_maccor_text(file_type, file_path):
         second = reader.next()
         key = clean_key(second[0])
         metadata[key] = maya.parse(second[1]).datetime()
+        metadata["Experiment Name"] = os.path.splitext(
+            ntpath.basename(file_path)
+        )[0]
+        metadata["Machine Type"] = "Maccor"
     print(metadata)
     return metadata
 
