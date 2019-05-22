@@ -122,6 +122,11 @@ def import_file(file_path_row, conn):
     print("Importing " + fullpath)
     file_path_row.update_observed_file_state("IMPORTING", conn)
     try:
+        # Attempt reading the file before updating the database to avoid
+        # creating rows for a file we can't read.
+        # TODO handle rows in the experiments and access tables with no 
+        # corresponding data since the import might fail while reading the data
+        # anyway
         input_file = InputFile(fullpath)
         experiment_row = ExperimentsRow(
             name=input_file.metadata["Experiment Name"],
