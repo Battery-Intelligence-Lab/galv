@@ -12,6 +12,9 @@ from galvanalyser.database.harvester.observed_files_row import (
     ObservedFilesRow,
     ObservedFilePathRow,
 )
+from galvanalyser.database.experiment.experiments_row import ExperimentsRow
+from galvanalyser.database.experiment.access_row import AccessRow
+from galvanalyser.database.experiment.data_row import DataRow
 from galvanalyser.harvester.input_file import InputFile
 
 
@@ -116,6 +119,28 @@ def import_file(file_path_row, conn):
     )
     print("Importing " + fullpath)
     file_path_row.update_observed_file_state("IMPORTING", conn)
+    try:
+        input_file = InputFile(fullpath)
+        experiment_row = ExperimentsRow(
+            name=input_file.metadata["Experiment Name"],
+            date=input_file.metadata["Date of Test"],
+            experiment_type=input_file.metadata["Machine Type"],
+        )
+        experiment_row.insert(conn)
+        print("Added experiment id " + str(experiment_row.id))
+        for user in file_path_row.monitored_for:
+            print("  Allowing access to " + user)
+            access_row = AccessRow(
+                experiment_id=experiment_row.id, user_name=user
+            )
+            access_row.insert(conn)
+        print("Inserting Data")
+        DataRow.insert_input_file(input_file, conn)
+        file_path_row.update_observed_file_state("IMPORTED", conn)
+        print("File successfully imported")
+    except:
+        file_path_row.update_observed_file_state("IMPORT_FAILED", conn)
+        print("Import failed for " + fullpath)
 
 
 def main(argv):
