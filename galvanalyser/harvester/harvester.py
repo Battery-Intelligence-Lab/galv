@@ -17,6 +17,8 @@ from galvanalyser.database.experiment.access_row import AccessRow
 from galvanalyser.database.experiment.data_row import DataRow
 from galvanalyser.harvester.input_file import InputFile
 
+import traceback
+
 
 def has_handle(fpath):
     """
@@ -141,6 +143,9 @@ def import_file(file_path_row, conn):
     except:
         file_path_row.update_observed_file_state("IMPORT_FAILED", conn)
         print("Import failed for " + fullpath)
+        # perhaps the exception should be saved to the database
+        # print it for now during development
+        traceback.print_exc()
 
 
 def main(argv):
