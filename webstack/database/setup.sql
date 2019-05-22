@@ -199,7 +199,7 @@ SELECT DISTINCT id FROM public.data_default
 LOOP
 remainder = temprow.experiment_id % 256;
 RAISE NOTICE 'CREATING TABLE experiment.data_%',remainder;
-EXECUTE format('CREATE TABLE IF NOT EXISTS "experiment.data_%s" PARTITION OF experiment.data FOR VALUES IN (%s);', remainder, remainder);
+EXECUTE format('CREATE TABLE IF NOT EXISTS "experiment.data_%s" PARTITION OF experiment.data ( PRIMARY KEY (experiment_id, sample_no)) FOR VALUES IN (%s);', remainder, remainder);
 END LOOP;
 
 RETURN NULL;
@@ -207,3 +207,42 @@ END;$BODY$;
 
 ALTER FUNCTION experiment.create_child_data_table()
     OWNER TO postgres;
+
+
+CREATE TABLE experiment.data
+(
+    experiment_id bigint NOT NULL,
+    sample_no bigint NOT NULL,
+    "time" double precision NOT NULL,
+    voltage double precision NOT NULL,
+    current double precision NOT NULL,
+    charge double precision,
+    temperature double precision,
+    FOREIGN KEY (experiment_id)
+        REFERENCES experiment.experiments (id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION
+) PARTITION BY LIST ((experiment_id % 256)) 
+WITH (
+    OIDS = FALSE
+);
+
+ALTER TABLE experiment.data
+    OWNER to postgres;
+
+GRANT INSERT, SELECT, UPDATE, DELETE, TRIGGER ON TABLE experiment.data TO harvester;
+
+-- Trigger: data_insert_create_table_trigger
+
+-- DROP TRIGGER data_insert_create_table_trigger ON experiment.data;
+
+CREATE TRIGGER data_insert_create_table_trigger
+    AFTER INSERT
+    ON experiment.data
+    FOR EACH STATEMENT
+    EXECUTE PROCEDURE experiment.create_child_data_table();
+
+-- Partitions SQL
+
+CREATE TABLE experiment.data_default PARTITION OF experiment.data_insert_create_table_trigger
+    DEFAULT;
