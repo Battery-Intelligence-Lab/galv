@@ -142,6 +142,7 @@ def import_file(file_path_row, conn):
             )
             access_row.insert(conn)
         print("Inserting Data")
+        input_file.metadata["experiment_id"] = experiment_row.id
         DataRow.insert_input_file(input_file, conn)
         file_path_row.update_observed_file_state("IMPORTED", conn)
         print("File successfully imported")
