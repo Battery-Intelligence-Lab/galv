@@ -170,8 +170,8 @@ CREATE TABLE experiment.access
     PRIMARY KEY (experiment_id, user_name),
     FOREIGN KEY (experiment_id)
         REFERENCES experiment.experiments (id) MATCH SIMPLE
-        ON UPDATE NO ACTION
-        ON DELETE NO ACTION
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
 )
 WITH (
     OIDS = FALSE
@@ -199,7 +199,7 @@ AS $BODY$
 	remainder integer;
 BEGIN
 	FOR temprow IN
-SELECT DISTINCT id FROM public.data_default
+SELECT DISTINCT experiment_id FROM experiment.data_default
 LOOP
 remainder = temprow.experiment_id % 256;
 RAISE NOTICE 'CREATING TABLE experiment.data_%',remainder;
@@ -248,5 +248,7 @@ CREATE TRIGGER data_insert_create_table_trigger
 
 -- Partitions SQL
 
-CREATE TABLE experiment.data_default PARTITION OF experiment.data_insert_create_table_trigger
+CREATE TABLE experiment.data_default PARTITION OF experiment.data ( PRIMARY KEY (experiment_id, sample_no))
     DEFAULT;
+
+GRANT INSERT, SELECT ON TABLE experiment.data_default TO harvester;
