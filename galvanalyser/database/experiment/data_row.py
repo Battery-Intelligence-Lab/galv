@@ -49,7 +49,7 @@ class DataRow:
         with conn.cursor() as cursor:
             print("Copying data to table")
             start = timer()
-            cursor.copy_from(iter_file, '"experiment.data"')
+            cursor.copy_from(iter_file, "experiment.data")
             end = timer()
             print("Done copying data to table")
             print(

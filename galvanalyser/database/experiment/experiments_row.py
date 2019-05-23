@@ -19,6 +19,9 @@ class ExperimentsRow:
                 [self.name, self.date, self.experiment_type],
             )
             self.id = cursor.fetchone()[0]
+            # except
+            # psycopg2.errors.UniqueViolation: duplicate key value violates unique constraint "experiments_pkey"
+            # DETAIL:  Key (name, date)=(TPG1+-+Cell+15+-+002, 2018-02-23 08:42:16+00) already exists.
 
     @staticmethod
     def select_from_name_and_date(name, date, conn):

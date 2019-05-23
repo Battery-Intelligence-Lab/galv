@@ -44,27 +44,32 @@ def get_maccor_column_to_standard_column_mapping():
         the standard column name in the value. Only return values where a
         mapping exists
     """
-    return {
+    print("get_maccor_column_to_standard_column_mapping")
+    all_values = {
+        "Amp-hr": None,
+        "Amps": "amps",
+        "Cyc#": None,
+        "DPt Time": None,
+        "Watt-hr": None,
+        "State": None,
+        "Step": None,
+        "StepTime": None,
+        "Volts": "volts",
+        "Capacity": "capacity",
+        "Energy": None,
+        "Power": None,
+        "TestTime": "test_time",
+        "Rec#": "sample_no",
+        "Temp 1": "temperature",
+    }
+    print("all_values: " + str(all_values))
+    filtered_values = {
         file_col: std_col
-        for file_col, std_col in {
-            "Amp-hr": None,
-            "Amps": "amps",
-            "Cyc#": None,
-            "DPt Time": None,
-            "Watt-hr": None,
-            "State": None,
-            "Step": None,
-            "StepTime": None,
-            "Volts": "volts",
-            "Capacity": "capacity",
-            "Energy": None,
-            "Power": None,
-            "TestTime": "test_time",
-            "Rec#": "sample_no",
-            "Temp 1": "temperature",
-        }
+        for file_col, std_col in all_values.items()
         if std_col is not None
     }
+    print("filtered_values: " + str(filtered_values))
+    return filtered_values
 
 
 def isfloat(value):
@@ -345,6 +350,8 @@ def load_data_maccor_text(file_type, file_path, columns):
                 row = [row[0] + row[1]] + row[2:]
             for i in range(len(columns_of_interest)):
                 columns_data[i].append(row[columns_of_interest[i]])
+        # TODO properly quote non-numeric types
+        # TODO remove the commas in the record number
         return {
             column_names[columns_of_interest[i]]: columns_data[i]
             for i in range(len(columns_data))
