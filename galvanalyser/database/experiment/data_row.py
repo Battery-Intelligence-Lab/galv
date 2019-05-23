@@ -1,6 +1,7 @@
 import psycopg2
 from galvanalyser.harvester.input_file import InputFile
 from galvanalyser.database.util.iter_file import IteratorFile
+from timeit import default_timer as timer
 
 
 class DataRow:
@@ -43,8 +44,17 @@ class DataRow:
         iter_file = IteratorFile(row_generator.get_data_row_generator())
         with conn.cursor() as cursor:
             print("Copying data to table")
+            start = timer()
             cursor.copy_from(iter_file, '"experiment.data"')
+            end = timer()
             print("Done copying data to table")
+            print(
+                "Inserted "
+                + str(cursor.rowcount)
+                + " rows in "
+                + str(end - start)
+                + " seconds"
+            )
 
     @staticmethod
     def get_column_names(conn):
