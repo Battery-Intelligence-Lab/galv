@@ -40,23 +40,30 @@ class LogFilter(object):
 
 def get_maccor_column_to_standard_column_mapping():
     """
-        Given a list of standard column names return a dict with a key
-        of the column name in the file that maps to the standard column
-        name in the value. Only return values where a valid mapping exists
+        Return a dict with a key of the column name in the file that maps to 
+        the standard column name in the value. Only return values where a
+        mapping exists
     """
     return {
-        "Amp-hr": "Amp-hr",
-        "Amps": "Amps",
-        "Cyc#": "Cyc#",
-        "DPt Time": "DPt Time",
-        "Watt-hr": "Watt-hr",
-        "State": "State",
-        "Step": "Step",
-        "StepTime": "StepTime",
-        "Volts": "Volts",
-        "Capacity": "Capacity",
-        "Energy": "Energy",
-        "Power": "Power",
+        file_col: std_col
+        for file_col, std_col in {
+            "Amp-hr": None,
+            "Amps": "amps",
+            "Cyc#": None,
+            "DPt Time": None,
+            "Watt-hr": None,
+            "State": None,
+            "Step": None,
+            "StepTime": None,
+            "Volts": "volts",
+            "Capacity": "capacity",
+            "Energy": None,
+            "Power": None,
+            "TestTime": "test_time",
+            "Rec#": "sample_no",
+            "Temp 1": "temperature",
+        }
+        if std_col is not None
     }
 
 
