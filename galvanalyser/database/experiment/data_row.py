@@ -42,7 +42,9 @@ class DataRow:
         )
         iter_file = IteratorFile(row_generator.get_data_row_generator())
         with conn.cursor() as cursor:
-            cursor.copy_from(iter_file, 'experiment.data')
+            print("Copying data to table")
+            cursor.copy_from(iter_file, "experiment.data")
+            print("Done copying data to table")
 
     @staticmethod
     def get_column_names(conn):
