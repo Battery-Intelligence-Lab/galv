@@ -36,12 +36,13 @@ class DataRow:
 
     @staticmethod
     def insert_input_file(input_file, conn):
-        pass
         required_column_names = DataRow.get_column_names(conn)
         row_generator = input_file.get_data_row_generator(
             required_column_names
         )
         iter_file = IteratorFile(row_generator.get_data_row_generator())
+        with conn.cursor() as cursor:
+            cursor.copy_from(iter_file, 'experiment.data')
 
     @staticmethod
     def get_column_names(conn):
