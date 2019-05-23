@@ -68,56 +68,11 @@ def identify_file(file_path):
         raise battery_exceptions.UnsupportedFileTypeError
 
 
-def get_required_columns_ordered():
-    """
-        Returns a list of column names in order
-    """
-    return [
-        "Cyc#",
-        "Step",
-        "StepTime",
-        "Amp-hr",
-        "Watt-hr",
-        "Amps",
-        "Volts",
-        "State",
-        "DPt Time",
-    ]
-
-
-def get_required_columns():
-    """
-        Returns a map of columns required and their types
-    """
-    return {
-        "Amp-hr": "double",
-        "Amps": "double",
-        "Cyc#": "int",
-        "DPt Time": "date",
-        "Watt-hr": "double",
-        "State": "string",
-        "Step": "int",
-        "StepTime": "double",
-        "Volts": "double",
-    }
-
-
-def get_optional_columns():
-    """
-        Returns a map of columns required and their types
-    """
-    return {"Capacity": "double", "Energy": "double", "Power": "double"}
-
-
 def get_default_sample_time_setep(file_type):
     if "MACCOR" in file_type:
         return 1.0 / 60.0
     else:
         raise battery_exceptions.UnsupportedFileTypeError
-
-
-def format_datetime_american(date_time):
-    return date_time.strftime("%m/%d/%Y %I:%M:%S %p")
 
 
 class InputFile:
@@ -132,37 +87,6 @@ class InputFile:
         self.metadata = load_metadata(self.type, file_path)
         # there should be some map of loaded data, not sure whether to use file cols or standard cols
         self.generated_columns = {}
-
-    def write_output_file(self, file_path, data):
-        """
-            Writes standard data to file
-        """
-        # get standard columns in order
-        columns_to_write = get_required_columns_ordered()
-        # add custom columns after in any order
-        columns_to_write = columns_to_write + [
-            col for col in data.keys() if col not in columns_to_write
-        ]
-        num_rows = len(data[data.keys()[0]])
-        with open(file_path, "w") as fout:
-            fout.write(
-                "Today''s Date\t"
-                + format_datetime_american(self.metadata["Today's Date"])
-                + "\n"
-            )
-            fout.write(
-                "Date of Test:\t"
-                + format_datetime_american(self.metadata["Date of Test"])
-                + "\n"
-            )
-            fout.write("\t".join(columns_to_write))
-            for i in range(num_rows):
-                fout.write(
-                    "\n"
-                    + "\t".join(
-                        [str(data[key][i]) for key in columns_to_write]
-                    )
-                )
 
     def get_test_start_date(self):
         # look check file type, ask specific implementation for metadata value
