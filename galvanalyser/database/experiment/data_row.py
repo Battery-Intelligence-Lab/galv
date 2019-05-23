@@ -45,7 +45,7 @@ class DataRow:
         )
         end = timer()
         print("Loaded data in " + str(end - start) + " seconds")
-        iter_file = IteratorFile(row_generator.get_data_row_generator())
+        iter_file = IteratorFile(row_generator)
         with conn.cursor() as cursor:
             print("Copying data to table")
             start = timer()

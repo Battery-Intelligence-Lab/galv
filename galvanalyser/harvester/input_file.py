@@ -227,7 +227,7 @@ class InputFile:
         else:
             raise battery_exceptions.UnsupportedFileTypeError
 
-    def get_data_row_generator(required_column_names):
+    def get_data_row_generator(self, required_column_names):
         # given list of columns, map file columns to desired columns
         # load available columns
         # generate missing columns

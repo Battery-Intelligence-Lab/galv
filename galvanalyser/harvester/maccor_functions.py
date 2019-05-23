@@ -132,7 +132,7 @@ def identify_columns_maccor_text(file_type, file_path):
     """
         Identifies columns in a maccor csv or tsv file"
     """
-    with open(file_path, "rb") as csvfile:
+    with open(file_path, "r") as csvfile:
         first = csvfile.readline()
         second = csvfile.readline()
         reader = None
@@ -140,9 +140,9 @@ def identify_columns_maccor_text(file_type, file_path):
             reader = csv.reader(csvfile, delimiter=",")
         elif "TSV" in file_type:
             reader = csv.reader(csvfile, delimiter="\t")
-        headers = [header for header in reader.next() if header is not ""]
+        headers = [header for header in next(reader) if header is not ""]
         column_has_data = [False for column in headers]
-        first_data = reader.next()
+        first_data = next(reader)
         column_is_numeric = [isfloat(column) for column in first_data]
         print(column_is_numeric)
         numeric_columns = []
@@ -266,16 +266,16 @@ def load_metadata_maccor_text(file_type, file_path):
         Load metadata in a maccor csv or tsv file"
     """
     metadata = {}
-    with open(file_path, "rb") as csvfile:
+    with open(file_path, "r") as csvfile:
         reader = None
         if "CSV" in file_type:
             reader = csv.reader(csvfile, delimiter=",")
         elif "TSV" in file_type:
             reader = csv.reader(csvfile, delimiter="\t")
-        first = reader.next()
+        first = next(reader)
         key = clean_key(first[0])
         metadata[key] = maya.parse(first[1]).datetime()
-        second = reader.next()
+        second = next(reader)
         key = clean_key(second[0])
         metadata[key] = maya.parse(second[1]).datetime()
         metadata["Experiment Name"] = os.path.splitext(
@@ -324,7 +324,7 @@ def load_data_maccor_text(file_type, file_path, columns):
     """
         Load data in a maccor csv or tsv file"
     """
-    with open(file_path, "rb") as csvfile:
+    with open(file_path, "r") as csvfile:
         first = csvfile.readline()
         second = csvfile.readline()
         reader = None
@@ -333,7 +333,7 @@ def load_data_maccor_text(file_type, file_path, columns):
         elif "TSV" in file_type:
             reader = csv.reader(csvfile, delimiter="\t")
         columns_of_interest = []
-        column_names = [header for header in reader.next() if header is not ""]
+        column_names = [header for header in next(reader) if header is not ""]
         correct_number_of_columns = len(column_names)
         for col in range(len(column_names)):
             if column_names[col] in columns:

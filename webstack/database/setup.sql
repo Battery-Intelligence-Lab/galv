@@ -155,6 +155,10 @@ GRANT INSERT, SELECT, TRIGGER ON TABLE experiment.experiments TO harvester;
 
 GRANT ALL ON TABLE experiment.experiments TO postgres;
 
+GRANT ALL ON SEQUENCE experiment.experiments_id_seq TO postgres;
+
+GRANT USAGE ON SEQUENCE experiment.experiments_id_seq TO harvester;
+
 -- Table: experiment.access
 
 -- DROP TABLE experiment.access;
