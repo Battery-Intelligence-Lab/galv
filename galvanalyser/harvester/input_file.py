@@ -118,14 +118,17 @@ class InputFile:
                 self.meta_data["experiment_id"] * num_rows
             )
             changes_made = True
+            print("Generated missing column experiment_id")
         elif "sample_no" in missing_colums:
             self.generated_columns["sample_no"] = [
                 i for i in range(1, num_rows + 1)
             ]
             changes_made = True
+            print("Generated missing column sample_no")
         elif "capacity" in missing_colums:
             self.generated_columns["sample_no"] = accumulate(data["amps"])
             changes_made = True
+            print("Generated missing column capacity")
         elif "power" in missing_colums:
             power = [
                 float(data["volts"][i]) * float(data["amps"][i])
@@ -133,6 +136,7 @@ class InputFile:
             ]
             self.generated_columns["power"] = power
             changes_made = True
+            print("Generated missing column power")
 
         if changes_made:
             return self.generate_missing_columns(missing_colums, data)
