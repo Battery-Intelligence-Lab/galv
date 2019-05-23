@@ -1,5 +1,6 @@
 import psycopg2
 from galvanalyser.harvester.input_file import InputFile
+from galvanalyser.util.iter_file import IteratorFile
 
 
 class DataRow:
@@ -36,16 +37,18 @@ class DataRow:
     @staticmethod
     def insert_input_file(input_file, conn):
         pass
-
+        required_column_names = DataRow.get_column_names(conn)
+        row_generator = input_file.get_data_row_generator(
+            required_column_names
+        )
+        iter_file = IteratorFile(row_generator.get_data_row_generator())
 
     @staticmethod
     def get_column_names(conn):
         with conn.cursor() as cursor:
-            cursor.execute(
-                (
-                    "SELECT * FROM experiment.data LIMIT 0"
-                ))
+            cursor.execute(("SELECT * FROM experiment.data LIMIT 0"))
             return [desc[0] for desc in cursor.description]
+
 
 #    @staticmethod
 #    def select_from_name_and_date(name, date, conn):

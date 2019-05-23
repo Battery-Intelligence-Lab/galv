@@ -18,6 +18,7 @@
 
 import galvanalyser.harvester.battery_exceptions as battery_exceptions
 import galvanalyser.harvester.maccor_functions as maccor_functions
+from itertools import accumulate
 
 
 # see https://gist.github.com/jsheedy/ed81cdf18190183b3b7d
@@ -146,13 +147,15 @@ class InputFile:
         """
         return ["Cyc#", "State", "DPt Time", "Step", "StepTime", "Power"]
 
-    def get_data_with_standard_colums(self, standard_cols_to_file_cols):
+    def get_data_with_standard_colums(
+        self, required_columns, standard_cols_to_file_cols={}
+    ):
         """
             Given a map of standard columns to file columns; return a map
             containing the given standard columns as keys with lists of data
             as values.
         """
-        output_columns = set(get_required_columns().keys()) | set(
+        output_columns = set(required_columns) | set(
             standard_cols_to_file_cols.keys()
         )
         # first determine
@@ -223,3 +226,37 @@ class InputFile:
                 )
         else:
             raise battery_exceptions.UnsupportedFileTypeError
+
+    class DataRowGenerator:
+        def __init__(self, required_column_names, data):
+            """
+                required_column_names list of column names, specifies order
+                data map of column name to list of data values
+            """
+            self.columns_names = required_column_names
+            self.data = [None * len(self.columns_names)]
+            self.data_index = {
+                name: index for index, name in enumerate(self.columns_names)
+            }
+            for column_name in data.keys():
+                data[data_index[column_name]] = data[column_name]
+
+        def get_data_row_generator(self):
+            iterators = [iter(column) for column in data]
+            while True:
+                yield "\t".join(
+                    [
+                        ('"' + str(next(iterator)) + '"')
+                        for iterator in iterators
+                    ]
+                )
+
+    def get_data_row_generator(required_column_names):
+        # given list of columns, map file columns to desired columns
+        # load available columns
+        # generate missing columns
+        # store data values in list of lists
+        # entries in outer list match given list of columns
+        std_cols_to_data_map = self.get_data_with_standard_colums(required_column_names)
+        dg = DataRowGenerator(required_column_names, std_cols_to_data_map)
+        pass
