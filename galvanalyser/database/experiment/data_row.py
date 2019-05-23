@@ -1,6 +1,6 @@
 import psycopg2
 from galvanalyser.harvester.input_file import InputFile
-from galvanalyser.util.iter_file import IteratorFile
+from galvanalyser.database.util.iter_file import IteratorFile
 
 
 class DataRow:
@@ -43,7 +43,7 @@ class DataRow:
         iter_file = IteratorFile(row_generator.get_data_row_generator())
         with conn.cursor() as cursor:
             print("Copying data to table")
-            cursor.copy_from(iter_file, "experiment.data")
+            cursor.copy_from(iter_file, '"experiment.data"')
             print("Done copying data to table")
 
     @staticmethod
