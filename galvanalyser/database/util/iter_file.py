@@ -39,7 +39,7 @@ class IteratorFile(io.TextIOBase):
 
     def readline(self):
         try:
-            #load up a line to make sure that there is one to read
+            # load up a line to make sure that there is one to read
             self._f.write(next(self._it) + "\n")
         except StopIteration as e:
             # soak up StopIteration. this block is not necessary because

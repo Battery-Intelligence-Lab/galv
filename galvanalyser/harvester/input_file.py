@@ -234,12 +234,14 @@ class InputFile:
         # store data values in map of standard columns to lists of data values
         # generate list of iterators of data columns in order of input list
         # yield a single line of tab separated quoted values
-        std_cols_to_data_map = self.get_data_with_standard_colums(required_column_names)
-        iterators = [iter(std_cols_to_data_map[column]) for column in required_column_names]
+        std_cols_to_data_map = self.get_data_with_standard_colums(
+            required_column_names
+        )
+        iterators = [
+            iter(std_cols_to_data_map[column])
+            for column in required_column_names
+        ]
         while True:
             yield "\t".join(
-                [
-                    ('"' + str(next(iterator)) + '"')
-                    for iterator in iterators
-                ]
+                [('"' + str(next(iterator)) + '"') for iterator in iterators]
             )
