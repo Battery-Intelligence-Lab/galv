@@ -201,49 +201,6 @@ class InputFile:
         elif "capacity" in missing_colums:
             self.generated_columns["sample_no"] = accumulate(data["amps"])
             changes_made = True
-        elif "State" in missing_colums:
-            self.generated_columns["State#"] = ["R"] * num_rows
-            changes_made = True
-        elif "Cyc#" in missing_colums:
-            self.generated_columns["Cyc#"] = [0] * num_rows
-            changes_made = True
-        elif "DPt Time" in missing_colums:
-            # get Date of Test: from metadata
-            start_date = self.get_test_start_date()
-            time_step = get_default_sample_time_setep(self.file_path)
-            dpt_times = []
-            for i in range(num_rows):
-                dpt_times.append(start_date.add(seconds=(i * time_step)))
-            self.generated_columns["DPt Time"] = dpt_times
-            changes_made = True
-        elif "Step" in missing_colums:
-            steps = []
-            state = ""
-            step = 0
-            states = data["State"]
-            for i in range(num_rows):
-                state_i = states[i]
-                if state_i != state:
-                    state = state_i
-                    step = step + 1
-                steps.append(step)
-            self.generated_columns["Step"] = steps
-            changes_made = True
-        elif "StepTime" in missing_colums:
-            step_start = 0
-            prev_step = 0
-            step_time = []
-            steps = data["Step"]
-            # calculate timestep from test time if available?
-            time_step = get_default_sample_time_setep(self.file_path)
-            for i in range(num_rows):
-                step_i = steps[i]
-                if step_i != prev_step:
-                    prev_step = step_i
-                    step_start = i
-                step_time.append((i - step_start) * time_step)
-            self.generated_columns["StepTime"] = step_time
-            changes_made = True
         elif "power" in missing_colums:
             power = [
                 float(data["volts"][i]) * float(data["amps"][i])
