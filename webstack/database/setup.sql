@@ -213,10 +213,10 @@ CREATE TABLE experiment.data
 (
     experiment_id bigint NOT NULL,
     sample_no bigint NOT NULL,
-    "time" double precision NOT NULL,
-    voltage double precision NOT NULL,
-    current double precision NOT NULL,
-    charge double precision,
+    test_time double precision NOT NULL,
+    volts double precision NOT NULL,
+    amps double precision NOT NULL,
+    capacity double precision,
     temperature double precision,
     FOREIGN KEY (experiment_id)
         REFERENCES experiment.experiments (id) MATCH SIMPLE
