@@ -19,7 +19,7 @@
 import galvanalyser.harvester.battery_exceptions as battery_exceptions
 import galvanalyser.harvester.maccor_functions as maccor_functions
 from itertools import accumulate
-
+import traceback
 
 # see https://gist.github.com/jsheedy/ed81cdf18190183b3b7d
 # https://stackoverflow.com/a/30721460
@@ -102,20 +102,24 @@ class InputFile:
             generating dependant columns first. Each recursion generates at
             most one column until all required columns are generated.
         """
+        print("generate_missing_columns")
+        print("possibly_missing_colums: " + str(possibly_missing_colums))
         missing_colums = [
             col
             for col in possibly_missing_colums
             if col not in self.generated_columns.keys()
         ]
+        print("missing_colums: " + str(missing_colums))
         changes_made = len(missing_colums) != len(possibly_missing_colums)
-        num_rows = len(data[data.keys()[0]])
-
+        print("changes_made: " + str(changes_made))
+        num_rows = len(next(iter(data.values())))
+        print("num_rows: " + str(num_rows))
         if (
             "experiment_id" in missing_colums
-            and "experiment_id" in self.meta_data
+            and "experiment_id" in self.metadata
         ):
             self.generated_columns["experiment_id"] = (
-                self.meta_data["experiment_id"] * num_rows
+                [self.metadata["experiment_id"]] * num_rows
             )
             changes_made = True
             print("Generated missing column experiment_id")
@@ -126,7 +130,15 @@ class InputFile:
             changes_made = True
             print("Generated missing column sample_no")
         elif "capacity" in missing_colums:
-            self.generated_columns["sample_no"] = accumulate(data["amps"])
+            print("Generating missing column capacity")
+            print("len of data['amps'] is : " + str(len(data["amps"])))
+            #capacity = [0] * num_rows
+            #total = 0.0
+            #for index, value in enumerate(data["amps"]):
+            #    total += value
+            #    capacity[index] = total
+            #self.generated_columns["capacity"] = capacity
+            self.generated_columns["capacity"] = list(accumulate(map(float,data["amps"])))
             changes_made = True
             print("Generated missing column capacity")
         elif "power" in missing_colums:
@@ -138,8 +150,9 @@ class InputFile:
             changes_made = True
             print("Generated missing column power")
 
+        print("changes_made 2: " + str(changes_made))
         if changes_made:
-            return self.generate_missing_columns(missing_colums, data)
+            self.generate_missing_columns(missing_colums, data)
         elif len(missing_colums) > 0:
             print("Error missing these columns and unable to generate them:")
             print(missing_colums)
@@ -159,15 +172,21 @@ class InputFile:
             containing the given standard columns as keys with lists of data
             as values.
         """
+        print("get_data_with_standard_colums")
+        print("Required columns: " + str(required_columns))
         output_columns = set(required_columns) | set(
             standard_cols_to_file_cols.keys()
         )
+        print("output_columns: " + str(output_columns))
         # first determine
         file_col_to_std_col = {}
+        print("Full type is " + str(self.type))
         if "MACCOR" in self.type:
+            print("Type is MACCOR")
             file_col_to_std_col = (
                 maccor_functions.get_maccor_column_to_standard_column_mapping()
             )
+        print("file_col_to_std_col 1: " + str(file_col_to_std_col))
         file_col_to_std_col.update(
             {
                 value: key
@@ -175,6 +194,7 @@ class InputFile:
                 if value is not None
             }
         )
+        print("file_col_to_std_col 2: " + str(file_col_to_std_col))
         #        file_col_to_std_col.update({standard_cols_to_file_cols[key]: key for
         #                                    key in standard_cols_to_file_cols.keys()
         #                                    if standard_cols_to_file_cols[key]
@@ -182,24 +202,28 @@ class InputFile:
         file_cols_to_data = self.get_desired_data_if_present(
             file_col_to_std_col
         )
-
+        print("file_cols_to_data keys: " + str(file_cols_to_data.keys()))
         # remap to standard colums : data
         standard_cols_to_data = {
             file_col_to_std_col[key]: value
             for key, value in file_cols_to_data.items()
         }
+        print("standard_cols_to_data keys: " + str(standard_cols_to_data.keys()))
         # find the missing columns
         missing_std_cols = {
             col
             for col in output_columns
             if col not in standard_cols_to_data.keys()
         }
+        print("missing_std_cols: " + str(missing_std_cols))
         # generate the missing columns
+        print("generating missing data")
         self.generate_missing_columns(missing_std_cols, standard_cols_to_data)
         for missing_col in missing_std_cols:
             standard_cols_to_data[missing_col] = self.generated_columns[
                 missing_col
             ]
+        print("standard_cols_to_data keys: " + str(standard_cols_to_data.keys()))
         return standard_cols_to_data
 
     def get_desired_data_if_present(self, desired_file_cols_to_std_cols={}):
@@ -208,6 +232,11 @@ class InputFile:
             get the file columns that are present,
             return a map of standard_colums to lists of data
         """
+        print("get_desired_data_if_present")
+        print(
+            "desired_file_cols_to_std_cols: "
+            + str(desired_file_cols_to_std_cols)
+        )
         # first find which desired columns are available
         available_columns = {
             key
@@ -217,6 +246,7 @@ class InputFile:
         available_desired_columns = available_columns & set(
             desired_file_cols_to_std_cols.keys()
         )
+        print("available_desired_columns: " + str(available_desired_columns))
         # now load the available data
         # we need to pass whether the column is numeric to these
         if "MACCOR" in self.type:
@@ -238,14 +268,23 @@ class InputFile:
         # store data values in map of standard columns to lists of data values
         # generate list of iterators of data columns in order of input list
         # yield a single line of tab separated quoted values
-        std_cols_to_data_map = self.get_data_with_standard_colums(
-            required_column_names
-        )
-        iterators = [
-            iter(std_cols_to_data_map[column])
-            for column in required_column_names
-        ]
-        while True:
-            yield "\t".join(
-                [('"' + str(next(iterator)) + '"') for iterator in iterators]
+        try:
+            std_cols_to_data_map = self.get_data_with_standard_colums(
+                required_column_names
             )
+            print("Got data")
+            #print(std_cols_to_data_map)
+            for key,value in std_cols_to_data_map.items():
+                print(str(key) + " : " + str(value)[0:32])
+            iterators = [
+                iter(std_cols_to_data_map[column])
+                for column in required_column_names
+            ]
+            print("Iterators made")
+            while True:
+                yield "\t".join(
+                    [( str(next(iterator))) for iterator in iterators]
+                )
+        except:
+            traceback.print_exc()
+            raise
