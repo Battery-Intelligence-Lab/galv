@@ -38,9 +38,13 @@ class DataRow:
     @staticmethod
     def insert_input_file(input_file, conn):
         required_column_names = DataRow.get_column_names(conn)
+        print("Getting data")
+        start = timer()
         row_generator = input_file.get_data_row_generator(
             required_column_names
         )
+        end = timer()
+        print("Loaded data in " + str(end - start) + " seconds")
         iter_file = IteratorFile(row_generator.get_data_row_generator())
         with conn.cursor() as cursor:
             print("Copying data to table")
