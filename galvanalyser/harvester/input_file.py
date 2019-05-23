@@ -185,7 +185,23 @@ class InputFile:
         changes_made = len(missing_colums) != len(possibly_missing_colums)
         num_rows = len(data[data.keys()[0]])
 
-        if "State" in missing_colums:
+        if (
+            "experiment_id" in missing_colums
+            and "experiment_id" in self.meta_data
+        ):
+            self.generated_columns["experiment_id"] = (
+                self.meta_data["experiment_id"] * num_rows
+            )
+            changes_made = True
+        elif "sample_no" in missing_colums:
+            self.generated_columns["sample_no"] = [
+                i for i in range(1, num_rows + 1)
+            ]
+            changes_made = True
+        elif "capacity" in missing_colums:
+            self.generated_columns["sample_no"] = accumulate(data["amps"])
+            changes_made = True
+        elif "State" in missing_colums:
             self.generated_columns["State#"] = ["R"] * num_rows
             changes_made = True
         elif "Cyc#" in missing_colums:
@@ -228,12 +244,12 @@ class InputFile:
                 step_time.append((i - step_start) * time_step)
             self.generated_columns["StepTime"] = step_time
             changes_made = True
-        elif "Power" in missing_colums:
+        elif "power" in missing_colums:
             power = [
-                float(data["Volts"][i]) * float(data["Amps"][i])
+                float(data["volts"][i]) * float(data["amps"][i])
                 for i in range(num_rows)
             ]
-            self.generated_columns["Power"] = power
+            self.generated_columns["power"] = power
             changes_made = True
 
         if changes_made:
