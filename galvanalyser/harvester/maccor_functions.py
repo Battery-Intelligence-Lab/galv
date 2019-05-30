@@ -340,18 +340,25 @@ def load_data_maccor_text(file_type, file_path, columns):
         columns_of_interest = []
         column_names = [header for header in next(reader) if header is not ""]
         correct_number_of_columns = len(column_names)
-        for col in range(len(column_names)):
-            if column_names[col] in columns:
-                columns_of_interest.append(col)
+        for col_idx in range(len(column_names)):
+            if column_names[col_idx] in columns:
+                columns_of_interest.append(col_idx)
         columns_data = [[] for i in columns_of_interest]
         for row in reader:
             if len(row) > correct_number_of_columns:
                 # handle bug in maccor output where cyc# has commas in it
                 row = [row[0] + row[1]] + row[2:]
-            for i in range(len(columns_of_interest)):
-                columns_data[i].append(row[columns_of_interest[i]])
+            for i, col_idx in enumerate(columns_of_interest):
+                columns_data[i].append(row[col_idx])
         # TODO properly quote non-numeric types
         # TODO remove the commas in the record number
+        try:
+            recno_col = column_names.index("Rec#")
+            rec_data_col_idx = columns_of_interest.index(recno_col)
+            for i, value in enumerate(columns_data[rec_data_col_idx]):
+                columns_data[rec_data_col_idx][i] = value.replace(",", "")
+        except ValueError:
+            pass
         return {
             column_names[columns_of_interest[i]]: columns_data[i]
             for i in range(len(columns_data))
