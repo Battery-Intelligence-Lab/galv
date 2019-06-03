@@ -184,34 +184,9 @@ GRANT INSERT, SELECT ON TABLE experiment.access TO harvester;
 
 GRANT ALL ON TABLE experiment.access TO postgres;
 
--- FUNCTION: experiment.create_child_data_table()
+-- Table: experiment.data
 
--- DROP FUNCTION experiment.create_child_data_table();
-
-CREATE FUNCTION experiment.create_child_data_table()
-    RETURNS trigger
-    LANGUAGE 'plpgsql'
-    COST 100
-    VOLATILE NOT LEAKPROOF 
-AS $BODY$
-	DECLARE
-    temprow RECORD;
-	remainder integer;
-BEGIN
-	FOR temprow IN
-SELECT DISTINCT experiment_id FROM experiment.data_default
-LOOP
-remainder = temprow.experiment_id % 256;
-RAISE NOTICE 'CREATING TABLE experiment.data_%',remainder;
-EXECUTE format('CREATE TABLE IF NOT EXISTS "experiment.data_%s" PARTITION OF experiment.data ( PRIMARY KEY (experiment_id, sample_no)) FOR VALUES IN (%s);', remainder, remainder);
-END LOOP;
-
-RETURN NULL;
-END;$BODY$;
-
-ALTER FUNCTION experiment.create_child_data_table()
-    OWNER TO postgres;
-
+-- DROP TABLE experiment.data;
 
 CREATE TABLE experiment.data
 (
@@ -222,33 +197,23 @@ CREATE TABLE experiment.data
     amps double precision NOT NULL,
     capacity double precision,
     temperature double precision,
-    FOREIGN KEY (experiment_id)
+    CONSTRAINT data_pkey PRIMARY KEY (experiment_id, sample_no),
+    CONSTRAINT data_experiment_id_fkey FOREIGN KEY (experiment_id)
         REFERENCES experiment.experiments (id) MATCH SIMPLE
         ON UPDATE NO ACTION
         ON DELETE NO ACTION
-) PARTITION BY LIST ((experiment_id % 256)) 
+) PARTITION BY LIST (experiment_id) 
 WITH (
     OIDS = FALSE
-);
+)
+TABLESPACE pg_default;
 
 ALTER TABLE experiment.data
-    OWNER to postgres;
+    OWNER to harvester;
 
-GRANT INSERT, SELECT, UPDATE, DELETE, TRIGGER ON TABLE experiment.data TO harvester;
-
--- Trigger: data_insert_create_table_trigger
-
--- DROP TRIGGER data_insert_create_table_trigger ON experiment.data;
-
-CREATE TRIGGER data_insert_create_table_trigger
-    AFTER INSERT
-    ON experiment.data
-    FOR EACH STATEMENT
-    EXECUTE PROCEDURE experiment.create_child_data_table();
+GRANT ALL ON TABLE experiment.data TO harvester;
 
 -- Partitions SQL
 
-CREATE TABLE experiment.data_default PARTITION OF experiment.data ( PRIMARY KEY (experiment_id, sample_no))
+CREATE TABLE experiment.data_default PARTITION OF experiment.data
     DEFAULT;
-
-GRANT INSERT, SELECT ON TABLE experiment.data_default TO harvester;
