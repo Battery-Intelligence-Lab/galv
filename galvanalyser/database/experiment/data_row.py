@@ -53,11 +53,9 @@ class DataRow:
             end = timer()
             print("Done copying data to table")
             print(
-                "Inserted "
-                + str(cursor.rowcount)
-                + " rows in "
-                + str(end - start)
-                + " seconds"
+                "Inserted {} rows in {:.2f} seconds".format(
+                    cursor.rowcount, end - start
+                )
             )
 
     @staticmethod
