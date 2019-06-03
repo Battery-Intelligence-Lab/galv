@@ -118,9 +118,9 @@ class InputFile:
             "experiment_id" in missing_colums
             and "experiment_id" in self.metadata
         ):
-            self.generated_columns["experiment_id"] = (
-                [self.metadata["experiment_id"]] * num_rows
-            )
+            self.generated_columns["experiment_id"] = [
+                self.metadata["experiment_id"]
+            ] * num_rows
             changes_made = True
             print("Generated missing column experiment_id")
         elif "sample_no" in missing_colums:
@@ -132,13 +132,15 @@ class InputFile:
         elif "capacity" in missing_colums:
             print("Generating missing column capacity")
             print("len of data['amps'] is : " + str(len(data["amps"])))
-            #capacity = [0] * num_rows
-            #total = 0.0
-            #for index, value in enumerate(data["amps"]):
+            # capacity = [0] * num_rows
+            # total = 0.0
+            # for index, value in enumerate(data["amps"]):
             #    total += value
             #    capacity[index] = total
-            #self.generated_columns["capacity"] = capacity
-            self.generated_columns["capacity"] = list(accumulate(map(float,data["amps"])))
+            # self.generated_columns["capacity"] = capacity
+            self.generated_columns["capacity"] = list(
+                accumulate(map(float, data["amps"]))
+            )
             changes_made = True
             print("Generated missing column capacity")
         elif "power" in missing_colums:
@@ -208,7 +210,9 @@ class InputFile:
             file_col_to_std_col[key]: value
             for key, value in file_cols_to_data.items()
         }
-        print("standard_cols_to_data keys: " + str(standard_cols_to_data.keys()))
+        print(
+            "standard_cols_to_data keys: " + str(standard_cols_to_data.keys())
+        )
         # find the missing columns
         missing_std_cols = {
             col
@@ -223,7 +227,9 @@ class InputFile:
             standard_cols_to_data[missing_col] = self.generated_columns[
                 missing_col
             ]
-        print("standard_cols_to_data keys: " + str(standard_cols_to_data.keys()))
+        print(
+            "standard_cols_to_data keys: " + str(standard_cols_to_data.keys())
+        )
         return standard_cols_to_data
 
     def get_desired_data_if_present(self, desired_file_cols_to_std_cols={}):
@@ -273,18 +279,23 @@ class InputFile:
                 required_column_names
             )
             print("Got data")
-            #print(std_cols_to_data_map)
-            for key,value in std_cols_to_data_map.items():
+            # print(std_cols_to_data_map)
+            for key, value in std_cols_to_data_map.items():
                 print(str(key) + " : " + str(value)[0:32])
             iterators = [
                 iter(std_cols_to_data_map[column])
                 for column in required_column_names
             ]
             print("Iterators made")
-            while True:
-                yield "\t".join(
-                    [( str(next(iterator))) for iterator in iterators]
-                )
+            # this could be
+            for elem in zip(*iterators):
+                yield "\t".join(map(str, elem))
+            # while True:
+            #    yield "\t".join(
+            #        [(str(next(iterator))) for iterator in iterators]
+            #    )
+        # except StopIteration:
+        #    return
         except:
             traceback.print_exc()
             raise
