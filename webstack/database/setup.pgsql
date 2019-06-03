@@ -217,3 +217,27 @@ GRANT ALL ON TABLE experiment.data TO harvester;
 
 --CREATE TABLE experiment.data_default PARTITION OF experiment.data
 --    DEFAULT;
+
+-- Table: experiment.metadata
+
+-- DROP TABLE experiment.metadata;
+
+CREATE TABLE experiment.metadata
+(
+    experiment_id bigint NOT NULL,
+    label_name text NOT NULL,
+    sample_range int8range NOT NULL,
+    PRIMARY KEY (experiment_id, label_name),
+    FOREIGN KEY (experiment_id)
+        REFERENCES experiment.experiments (id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+)
+WITH (
+    OIDS = FALSE
+);
+
+ALTER TABLE experiment.metadata
+    OWNER to postgres;
+
+GRANT INSERT ON TABLE experiment.metadata TO harvester;
