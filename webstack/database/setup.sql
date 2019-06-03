@@ -200,9 +200,9 @@ CREATE TABLE experiment.data
     CONSTRAINT data_pkey PRIMARY KEY (experiment_id, sample_no),
     CONSTRAINT data_experiment_id_fkey FOREIGN KEY (experiment_id)
         REFERENCES experiment.experiments (id) MATCH SIMPLE
-        ON UPDATE NO ACTION
-        ON DELETE NO ACTION
-) PARTITION BY LIST (experiment_id) 
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+) --PARTITION BY LIST (experiment_id) 
 WITH (
     OIDS = FALSE
 )
@@ -215,5 +215,5 @@ GRANT ALL ON TABLE experiment.data TO harvester;
 
 -- Partitions SQL
 
-CREATE TABLE experiment.data_default PARTITION OF experiment.data
-    DEFAULT;
+--CREATE TABLE experiment.data_default PARTITION OF experiment.data
+--    DEFAULT;
