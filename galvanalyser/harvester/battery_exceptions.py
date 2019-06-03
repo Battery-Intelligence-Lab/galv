@@ -25,6 +25,14 @@ class UnsupportedFileTypeError(Exception):
     pass
 
 
+class InvalidDataInFileError(Exception):
+    """
+        Exception indicating the file has invalid data
+    """
+
+    pass
+
+
 class DataGenerationError(Exception):
     """
         Exception indicating the failure to generate some columns
