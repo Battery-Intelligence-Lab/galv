@@ -365,7 +365,7 @@ def load_data_maccor_text(file_type, file_path, columns):
             recno_col = column_names.index("Rec#")
         except ValueError:
             recno_col = -1
-        for row in reader:
+        for row_idx, row in enumerate(reader):
             if len(row) > correct_number_of_columns:
                 # handle bug in maccor output where cyc# has commas in it
                 if recno_col >= 0:
