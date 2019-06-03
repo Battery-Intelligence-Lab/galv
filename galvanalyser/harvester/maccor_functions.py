@@ -157,16 +157,33 @@ def identify_columns_maccor_text(file_type, file_path):
             else:
                 column_has_data[i] = True
         correct_number_of_columns = len(column_is_numeric)
-        row_idx = -1
-        for row in reader:
-            row_idx = row_idx + 1
+        try:
+            recno_col = headers.index("Rec#")
+        except ValueError:
+            recno_col = -1
+        for row_idx, row in enumerate(reader):
             if len(row) > correct_number_of_columns:
                 # TODO make this [0: column of the record count] +
                 # [[column of record count] + [column of record count +1]] +
                 # [column of record count +2:]
-                row = [row[0] + row[1]] + row[2:]
-            #                print ('Row ' + str(row_idx) + ' has ' + str(len(row)) +
-            #                ' cols, expected ' + str(correct_number_of_columns))
+                if recno_col >= 0:
+                    row = (
+                        row[0:recno_col]
+                        + [row[recno_col] + row[recno_col + 1]]
+                        + row[recno_col + 2 :]
+                    )
+                else:
+                    raise battery_exceptions.InvalidDataInFileError(
+                        "There are more data columns than headers."
+                        + "Row "
+                        + str(row_idx)
+                        + " has "
+                        + str(len(row))
+                        + " cols, expected "
+                        + str(correct_number_of_columns)
+                    )
+                # row = [row[0] + row[1]] + row[2:]
+            #                print ()
             for col in numeric_columns[:]:
                 data_detected = False
                 is_float = True
@@ -340,14 +357,34 @@ def load_data_maccor_text(file_type, file_path, columns):
         columns_of_interest = []
         column_names = [header for header in next(reader) if header is not ""]
         correct_number_of_columns = len(column_names)
-        for col_idx in range(len(column_names)):
-            if column_names[col_idx] in columns:
+        for col_idx, col_name in enumerate(column_names):
+            if col_name in columns:
                 columns_of_interest.append(col_idx)
         columns_data = [[] for i in columns_of_interest]
+        try:
+            recno_col = column_names.index("Rec#")
+        except ValueError:
+            recno_col = -1
         for row in reader:
             if len(row) > correct_number_of_columns:
                 # handle bug in maccor output where cyc# has commas in it
-                row = [row[0] + row[1]] + row[2:]
+                if recno_col >= 0:
+                    row = (
+                        row[0:recno_col]
+                        + [row[recno_col] + row[recno_col + 1]]
+                        + row[recno_col + 2 :]
+                    )
+                else:
+                    raise battery_exceptions.InvalidDataInFileError(
+                        "There are more data columns than headers."
+                        + "Row "
+                        + str(row_idx)
+                        + " has "
+                        + str(len(row))
+                        + " cols, expected "
+                        + str(correct_number_of_columns)
+                    )
+                # row = [row[0] + row[1]] + row[2:]
             for i, col_idx in enumerate(columns_of_interest):
                 columns_data[i].append(row[col_idx])
         # TODO properly quote non-numeric types
