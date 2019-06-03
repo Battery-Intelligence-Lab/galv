@@ -163,9 +163,6 @@ def identify_columns_maccor_text(file_type, file_path):
             recno_col = -1
         for row_idx, row in enumerate(reader):
             if len(row) > correct_number_of_columns:
-                # TODO make this [0: column of the record count] +
-                # [[column of record count] + [column of record count +1]] +
-                # [column of record count +2:]
                 if recno_col >= 0:
                     row = (
                         row[0:recno_col]
@@ -174,16 +171,11 @@ def identify_columns_maccor_text(file_type, file_path):
                     )
                 else:
                     raise battery_exceptions.InvalidDataInFileError(
-                        "There are more data columns than headers."
-                        + "Row "
-                        + str(row_idx)
-                        + " has "
-                        + str(len(row))
-                        + " cols, expected "
-                        + str(correct_number_of_columns)
+                        (
+                            "There are more data columns than headers. "
+                            "Row {} has {} cols, expected {}"
+                        ).format(row_idx, len(row), correct_number_of_columns)
                     )
-                # row = [row[0] + row[1]] + row[2:]
-            #                print ()
             for col in numeric_columns[:]:
                 data_detected = False
                 is_float = True
@@ -197,19 +189,17 @@ def identify_columns_maccor_text(file_type, file_path):
                     column_has_data[col] = True
                     numeric_columns.remove(col)
                     print(
-                        "Found data in col "
-                        + str(col)
-                        + " ( "
-                        + headers[col]
-                        + " ) : "
-                        + row[col]
-                        + (
-                            (" as float: " + str(float(row[col])))
-                            if is_float
-                            else ""
+                        "Found data in col {} ( {} ) : {}{} on row {}".format(
+                            col,
+                            headers[col],
+                            row[col],
+                            (
+                                (" as float: " + str(float(row[col])))
+                                if is_float
+                                else ""
+                            ),
+                            row_idx,
                         )
-                        + " on row "
-                        + str(row_idx)
                     )
         columns_with_data = {
             headers[i]: {
@@ -376,19 +366,14 @@ def load_data_maccor_text(file_type, file_path, columns):
                     )
                 else:
                     raise battery_exceptions.InvalidDataInFileError(
-                        "There are more data columns than headers."
-                        + "Row "
-                        + str(row_idx)
-                        + " has "
-                        + str(len(row))
-                        + " cols, expected "
-                        + str(correct_number_of_columns)
+                        (
+                            "There are more data columns than headers. "
+                            "Row {} has {} cols, expected {}"
+                        ).format(row_idx, len(row), correct_number_of_columns)
                     )
-                # row = [row[0] + row[1]] + row[2:]
             for i, col_idx in enumerate(columns_of_interest):
                 columns_data[i].append(row[col_idx])
         # TODO properly quote non-numeric types
-        # TODO remove the commas in the record number
         try:
             recno_col = column_names.index("Rec#")
             rec_data_col_idx = columns_of_interest.index(recno_col)
