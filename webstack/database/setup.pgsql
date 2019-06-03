@@ -241,3 +241,10 @@ ALTER TABLE experiment.metadata
     OWNER to postgres;
 
 GRANT INSERT ON TABLE experiment.metadata TO harvester;
+
+-- SELECT * FROM experiment.data as d
+-- INNER JOIN experiment.metadata AS m ON
+-- d.experiment_id = m.experiment_id
+-- WHERE m.experiment_id = 46 and
+--       texteq(m.label_name, 'test_label_1') and
+-- 	     d.sample_no <@ m.sample_range
