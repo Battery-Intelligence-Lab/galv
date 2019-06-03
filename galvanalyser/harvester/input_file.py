@@ -70,6 +70,8 @@ def identify_file(file_path):
 
 
 def get_default_sample_time_setep(file_type):
+    # TODO handle other file types
+    # TODO do something better here
     if "MACCOR" in file_type:
         return 1.0 / 60.0
     else:
@@ -90,9 +92,8 @@ class InputFile:
         self.generated_columns = {}
 
     def get_test_start_date(self):
-        # look check file type, ask specific implementation for metadata value
-        pass
-        return self.metadata["Date of Test:"]
+        # TODO look check file type, ask specific implementation for metadata value
+        return self.metadata["Date of Test"]
 
     def generate_missing_columns(self, possibly_missing_colums, data):
         """
