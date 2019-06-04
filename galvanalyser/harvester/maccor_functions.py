@@ -131,13 +131,40 @@ def identify_columns_maccor_excel(wbook):
     return columns_with_data, total_rows
 
 
+def handle_recno(row, correct_number_of_columns, recno_col, row_idx):
+    if len(row) > correct_number_of_columns:
+        if recno_col >= 0:
+            row = (
+                row[0:recno_col]
+                + [row[recno_col] + row[recno_col + 1]]
+                + row[recno_col + 2 :]
+            )
+        else:
+            raise battery_exceptions.InvalidDataInFileError(
+                (
+                    "There are more data columns than headers. "
+                    "Row {} has {} cols, expected {}"
+                ).format(row_idx, len(row), correct_number_of_columns)
+            )
+    return row
+
+
 def identify_columns_maccor_text(reader):
     """
         Identifies columns in a maccor csv or tsv file"
     """
     headers = [header for header in next(reader) if header is not ""]
+    correct_number_of_columns = len(headers)
+    try:
+        recno_col = headers.index("Rec#")
+    except ValueError:
+        recno_col = -1
     column_has_data = [False for column in headers]
+    row_idx = 1
     first_data = next(reader)
+    first_data = handle_recno(
+        first_data, correct_number_of_columns, recno_col, row_idx
+    )
     column_is_numeric = [isfloat(column) for column in first_data]
     print(column_is_numeric)
     numeric_columns = []
@@ -146,28 +173,8 @@ def identify_columns_maccor_text(reader):
             numeric_columns.append(i)
         else:
             column_has_data[i] = True
-    # should this be len(headers) ?
-    correct_number_of_columns = len(column_is_numeric)
-    try:
-        recno_col = headers.index("Rec#")
-    except ValueError:
-        recno_col = -1
-    row_idx = 1
     for row_idx, row in enumerate(reader, 1):
-        if len(row) > correct_number_of_columns:
-            if recno_col >= 0:
-                row = (
-                    row[0:recno_col]
-                    + [row[recno_col] + row[recno_col + 1]]
-                    + row[recno_col + 2 :]
-                )
-            else:
-                raise battery_exceptions.InvalidDataInFileError(
-                    (
-                        "There are more data columns than headers. "
-                        "Row {} has {} cols, expected {}"
-                    ).format(row_idx, len(row), correct_number_of_columns)
-                )
+        row = handle_recno(row, correct_number_of_columns, recno_col, row_idx)
         for col in numeric_columns[:]:
             data_detected = False
             is_float = True
