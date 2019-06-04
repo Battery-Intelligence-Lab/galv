@@ -3,6 +3,8 @@ from galvanalyser.harvester.input_file import InputFile
 from galvanalyser.database.util.iter_file import IteratorFile
 from timeit import default_timer as timer
 
+import galvanalyser.harvester.battery_exceptions as battery_exceptions
+
 
 class DataRow:
     def __init__(
@@ -51,6 +53,12 @@ class DataRow:
             start = timer()
             cursor.copy_from(iter_file, "experiment.data")
             end = timer()
+            if cursor.rowcount != input_file.num_rows:
+                raise battery_exceptions.InsertError(
+                    "Insert failed. Inserted {} of {} rows before failure".format(
+                        cursor.rowcount, input_file.num_rows
+                    )
+                )
             print("Done copying data to table")
             print(
                 "Inserted {} rows in {:.2f} seconds".format(
