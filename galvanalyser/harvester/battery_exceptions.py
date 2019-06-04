@@ -32,6 +32,7 @@ class InvalidDataInFileError(Exception):
 
     pass
 
+
 class EmptyFileError(Exception):
     """
         Exception indicating the file has no data
@@ -39,9 +40,18 @@ class EmptyFileError(Exception):
 
     pass
 
+
 class DataGenerationError(Exception):
     """
         Exception indicating the failure to generate some columns
+    """
+
+    pass
+
+
+class InsertError(Exception):
+    """
+        Exception indicating the failure to insert data
     """
 
     pass
