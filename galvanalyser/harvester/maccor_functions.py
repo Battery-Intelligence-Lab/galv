@@ -225,6 +225,8 @@ def load_metadata_maccor_excel(file_path):
     ) as wbook:
         sheet = wbook.sheet_by_index(0)
         col = 0
+        if sheet.ncols == 0:
+            raise battery_exceptions.EmptyFileError()
         while col < sheet.ncols:
             key = sheet.cell_value(0, col)
             if not key:
