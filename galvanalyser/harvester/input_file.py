@@ -72,7 +72,7 @@ class InputFile:
     def __init__(self, file_path):
         self.file_path = file_path
         self.type = identify_file(file_path)
-        self.metadata, self.columns_with_data = load_metadata(
+        self.metadata, self.columns_with_data, self.num_rows = load_metadata(
             self.type, file_path
         )
         # there should be some map of loaded data, not sure whether to use file cols or standard cols

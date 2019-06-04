@@ -99,9 +99,11 @@ def identify_columns_maccor_excel(wbook):
             column_has_data[col] = True
     print(headers)
     print(numeric_columns)
+    total_rows = 0
     for sheet_id in range(0, wbook.nsheets):
         print("Loading sheet... " + str(sheet_id))
         sheet = wbook.sheet_by_index(sheet_id)
+        total_rows += sheet.nrows - 2
         for row in range(2, sheet.nrows):
             for column in numeric_columns[:]:
                 if float(sheet.cell_value(row, column)) != 0.0:
@@ -125,7 +127,8 @@ def identify_columns_maccor_excel(wbook):
         for i in range(0, len(headers))
     }
     print(columns_with_data)
-    return columns_with_data
+    print("Num rows {}".format(total_rows))
+    return columns_with_data, total_rows
 
 
 def identify_columns_maccor_text(reader):
@@ -148,6 +151,7 @@ def identify_columns_maccor_text(reader):
         recno_col = headers.index("Rec#")
     except ValueError:
         recno_col = -1
+    row_idx = 0  # declare in case of empty file
     for row_idx, row in enumerate(reader):
         if len(row) > correct_number_of_columns:
             if recno_col >= 0:
@@ -196,7 +200,8 @@ def identify_columns_maccor_text(reader):
         for i in range(0, len(headers))
     }
     print(columns_with_data)
-    return columns_with_data
+    print("Num rows {}".format(row_idx))
+    return columns_with_data, row_idx
 
 
 def clean_key(key):
@@ -258,9 +263,9 @@ def load_metadata_maccor_excel(file_path):
             col = col + 1
         metadata["Machine Type"] = "Maccor"
         metadata["Experiment Name"] = ntpath.basename(metadata["Filename"])
-        columns_with_data = identify_columns_maccor_excel(wbook)
+        columns_with_data, total_rows = identify_columns_maccor_excel(wbook)
         print(metadata)
-        return metadata, columns_with_data
+        return metadata, columns_with_data, total_rows
 
 
 def load_metadata_maccor_text(file_type, file_path):
@@ -284,9 +289,9 @@ def load_metadata_maccor_text(file_type, file_path):
             ntpath.basename(file_path)
         )[0]
         metadata["Machine Type"] = "Maccor"
-        columns_with_data = identify_columns_maccor_text(reader)
+        columns_with_data, total_rows = identify_columns_maccor_text(reader)
         print(metadata)
-        return metadata, columns_with_data
+        return metadata, columns_with_data, total_rows
 
 
 def load_data_maccor_excel(file_path, columns, column_renames=None):
@@ -378,9 +383,7 @@ def load_data_maccor_text(file_type, file_path, columns, column_renames=None):
                         ).format(row_idx, len(row), correct_number_of_columns)
                     )
             elif recno_col >= 0:
-                row[recno_col] = row[recno_col].replace(
-                                ",", ""
-                            )
+                row[recno_col] = row[recno_col].replace(",", "")
             yield {
                 column_names[col_idx]: row[col_idx]
                 for col_idx in columns_of_interest
