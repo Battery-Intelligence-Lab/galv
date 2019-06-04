@@ -110,12 +110,11 @@ def identify_columns_maccor_excel(wbook):
                     column_has_data[column] = True
                     numeric_columns.remove(column)
                     print(
-                        "Found data in col "
-                        + str(column)
-                        + " ( "
-                        + headers[column]
-                        + " ) : "
-                        + str(float(sheet.cell_value(row, column)))
+                        "Found data in col {} ( {} ) : {}".format(
+                            column,
+                            headers[column],
+                            float(sheet.cell_value(row, column)),
+                        )
                     )
         print("Unloading sheet " + str(sheet_id))
         wbook.unload_sheet(sheet_id)
