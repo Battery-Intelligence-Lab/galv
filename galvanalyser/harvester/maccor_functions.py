@@ -146,13 +146,14 @@ def identify_columns_maccor_text(reader):
             numeric_columns.append(i)
         else:
             column_has_data[i] = True
+    # should this be len(headers) ?
     correct_number_of_columns = len(column_is_numeric)
     try:
         recno_col = headers.index("Rec#")
     except ValueError:
         recno_col = -1
-    row_idx = 0  # declare in case of empty file
-    for row_idx, row in enumerate(reader):
+    row_idx = 1
+    for row_idx, row in enumerate(reader, 1):
         if len(row) > correct_number_of_columns:
             if recno_col >= 0:
                 row = (
@@ -199,9 +200,11 @@ def identify_columns_maccor_text(reader):
         }
         for i in range(0, len(headers))
     }
+    # account for 0 based indexing
+    total_rows = row_idx + 1
     print(columns_with_data)
-    print("Num rows {}".format(row_idx))
-    return columns_with_data, row_idx
+    print("Num rows {}".format(total_rows))
+    return columns_with_data, total_rows
 
 
 def clean_key(key):
