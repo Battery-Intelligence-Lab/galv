@@ -316,9 +316,9 @@ def load_data_maccor_excel(file_path, columns, column_renames=None):
             for row in range(2, sheet.nrows):
                 yield {
                     column_names[col_idx]: (
-                        row[col_idx]
+                        sheet.cell_value(row, col_idx)
                         if recno_col != col_idx
-                        else row[col_idx].replace(",", "")
+                        else sheet.cell_value(row, col_idx).replace(",", "")
                     )
                     for col_idx in columns_of_interest
                 }
