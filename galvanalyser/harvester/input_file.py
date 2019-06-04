@@ -47,6 +47,8 @@ def identify_file(file_path):
     """
     if file_path.endswith(".xls"):
         return "EXCEL-MACCOR"
+    elif file_path.endswith(".xlsx"):
+        return "EXCEL-MACCOR"
     elif file_path.endswith(".csv"):
         return "CSV-MACCOR"
     elif file_path.endswith(".txt"):
