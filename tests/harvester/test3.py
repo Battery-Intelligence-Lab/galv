@@ -34,12 +34,10 @@ end = timer()
 print("f1.write_output_file time")
 print(end - start)
 
-print('\n' + '-'*80 +'\n')
+print("\n" + "-" * 80 + "\n")
 
 start = timer()
-f2 = input_file.InputFile(
-    "/Users/luke/Downloads/TPG1.2+-+Cell+15.002.xls"
-)
+f2 = input_file.InputFile("/Users/luke/Downloads/TPG1.2+-+Cell+15.002.xls")
 end = timer()
 print("f2 time")
 print(end - start)
