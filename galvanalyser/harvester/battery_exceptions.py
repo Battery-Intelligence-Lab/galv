@@ -32,6 +32,12 @@ class InvalidDataInFileError(Exception):
 
     pass
 
+class EmptyFileError(Exception):
+    """
+        Exception indicating the file has no data
+    """
+
+    pass
 
 class DataGenerationError(Exception):
     """
