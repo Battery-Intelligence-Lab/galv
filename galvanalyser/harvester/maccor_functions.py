@@ -375,6 +375,10 @@ def load_data_maccor_text(file_type, file_path, columns, column_renames=None):
                             "Row {} has {} cols, expected {}"
                         ).format(row_idx, len(row), correct_number_of_columns)
                     )
+            elif recno_col >= 0:
+                row[recno_col] = row[recno_col].replace(
+                                ",", ""
+                            )
             yield {
                 column_names[col_idx]: row[col_idx]
                 for col_idx in columns_of_interest
