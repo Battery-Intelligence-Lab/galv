@@ -27,28 +27,14 @@ import traceback
 
 def load_metadata(file_type, file_path):
     """
-        Reads metadata contained in the file
+        Reads metadata contained in the file and
+        Identifies which columns are present in the file and which have data
     """
     if "MACCOR" in file_type:
         if "EXCEL" in file_type:
             return maccor_functions.load_metadata_maccor_excel(file_path)
         else:
             return maccor_functions.load_metadata_maccor_text(
-                file_type, file_path
-            )
-    else:
-        raise battery_exceptions.UnsupportedFileTypeError
-
-
-def identify_columns(file_type, file_path):
-    """
-        Identifies which columns are present in the file and which have data
-    """
-    if "MACCOR" in file_type:
-        if "EXCEL" in file_type:
-            return maccor_functions.identify_columns_maccor_excel(file_path)
-        else:
-            return maccor_functions.identify_columns_maccor_text(
                 file_type, file_path
             )
     else:
@@ -86,8 +72,9 @@ class InputFile:
     def __init__(self, file_path):
         self.file_path = file_path
         self.type = identify_file(file_path)
-        self.columns_with_data = identify_columns(self.type, file_path)
-        self.metadata = load_metadata(self.type, file_path)
+        self.metadata, self.columns_with_data = load_metadata(
+            self.type, file_path
+        )
         # there should be some map of loaded data, not sure whether to use file cols or standard cols
         self.generated_columns = {}
 
@@ -167,6 +154,34 @@ class InputFile:
         """
         return ["Cyc#", "State", "DPt Time", "Step", "StepTime", "Power"]
 
+    def complete_columns(self, required_columns, file_cols_to_data_generator):
+        """
+            Generates missing columns, returns generator of lists that match
+            required_columns
+        """
+        rec_col_set = set(required_columns)
+        capacity_total = 0.0
+        for row_no, file_data_row in enumerate(file_cols_to_data_generator):
+            missing_colums = rec_col_set - set(file_data_row.keys())
+            if (
+                "experiment_id" in missing_colums
+                and "experiment_id" in self.metadata
+            ):
+                file_data_row["experiment_id"] = self.metadata["experiment_id"]
+            if "sample_no" in missing_colums:
+                file_data_row["sample_no"] = row_no
+            if "temperature" in missing_colums:
+                file_data_row["temperature"] = None
+            if "capacity" in missing_colums:
+                capacity_total += float(file_data_row["amps"])
+                file_data_row["capacity"] = capacity_total
+            if "power" in missing_colums:
+                file_data_row["power"] = float(file_data_row["volts"]) * float(
+                    file_data_row["amps"]
+                )
+                # file_data_row[col_name] if col_name in file_data_row else None
+            yield [file_data_row[col_name] for col_name in required_columns]
+
     def get_data_with_standard_colums(
         self, required_columns, standard_cols_to_file_cols={}
     ):
@@ -184,12 +199,14 @@ class InputFile:
         # first determine
         file_col_to_std_col = {}
         print("Full type is " + str(self.type))
+        # Get the column mappings the file type knows about
         if "MACCOR" in self.type:
             print("Type is MACCOR")
             file_col_to_std_col = (
                 maccor_functions.get_maccor_column_to_standard_column_mapping()
             )
         print("file_col_to_std_col 1: " + str(file_col_to_std_col))
+        # extend those mappings with any custom ones provided
         file_col_to_std_col.update(
             {
                 value: key
@@ -202,39 +219,24 @@ class InputFile:
         #                                    key in standard_cols_to_file_cols.keys()
         #                                    if standard_cols_to_file_cols[key]
         #                                    is not None})
-        file_cols_to_data = self.get_desired_data_if_present(
-            file_col_to_std_col
-        )
-        print("file_cols_to_data keys: " + str(file_cols_to_data.keys()))
-        # remap to standard colums : data
-        standard_cols_to_data = {
-            file_col_to_std_col[key]: value
-            for key, value in file_cols_to_data.items()
+
+        desired_file_cols_to_std_cols = {
+            key: value
+            for key, value in file_col_to_std_col.items()
+            if value in required_columns
         }
-        print(
-            "standard_cols_to_data keys: " + str(standard_cols_to_data.keys())
+        file_cols_to_data_generator = self.get_desired_data_if_present(
+            desired_file_cols_to_std_cols
         )
-        # find the missing columns
-        missing_std_cols = {
-            col
-            for col in output_columns
-            if col not in standard_cols_to_data.keys()
-        }
-        print("missing_std_cols: " + str(missing_std_cols))
-        # generate the missing columns
-        print("generating missing data")
-        self.generate_missing_columns(missing_std_cols, standard_cols_to_data)
-        for missing_col in missing_std_cols:
-            standard_cols_to_data[missing_col] = self.generated_columns[
-                missing_col
-            ]
-        print(
-            "standard_cols_to_data keys: " + str(standard_cols_to_data.keys())
+        # pass file_cols_to_data_generator to generate missing column
+
+        return self.complete_columns(
+            required_columns, file_cols_to_data_generator
         )
-        return standard_cols_to_data
 
     def get_desired_data_if_present(self, desired_file_cols_to_std_cols={}):
         """
+            now a generator
             Given a map of file_columns to standard_columns,
             get the file columns that are present,
             return a map of standard_colums to lists of data
@@ -259,11 +261,16 @@ class InputFile:
         if "MACCOR" in self.type:
             if "EXCEL" in self.type:
                 return maccor_functions.load_data_maccor_excel(
-                    self.file_path, available_desired_columns
+                    self.file_path,
+                    available_desired_columns,
+                    desired_file_cols_to_std_cols,
                 )
             else:
                 return maccor_functions.load_data_maccor_text(
-                    self.type, self.file_path, available_desired_columns
+                    self.type,
+                    self.file_path,
+                    available_desired_columns,
+                    desired_file_cols_to_std_cols,
                 )
         else:
             raise battery_exceptions.UnsupportedFileTypeError
@@ -276,21 +283,10 @@ class InputFile:
         # generate list of iterators of data columns in order of input list
         # yield a single line of tab separated quoted values
         try:
-            std_cols_to_data_map = self.get_data_with_standard_colums(
+            for row in self.get_data_with_standard_colums(
                 required_column_names
-            )
-            print("Got data")
-            # print(std_cols_to_data_map)
-            for key, value in std_cols_to_data_map.items():
-                print(str(key) + " : " + str(value)[0:32])
-            iterators = [
-                iter(std_cols_to_data_map[column])
-                for column in required_column_names
-            ]
-            print("Iterators made")
-            # this could be
-            for elem in zip(*iterators):
-                yield "\t".join(map(str, elem))
+            ):
+                yield "\t".join(map(str, row))
             # while True:
             #    yield "\t".join(
             #        [(str(next(iterator))) for iterator in iterators]
@@ -300,3 +296,14 @@ class InputFile:
         except:
             traceback.print_exc()
             raise
+
+    def get_data_generating_missing_columns(self, required_column_names):
+        """
+            Generator that returns lists with one entry per requested column
+            Generates columns if needed
+        """
+        available_file_columns = [
+            col
+            for col in required_column_names
+            if col in self.columns_with_data
+        ]
