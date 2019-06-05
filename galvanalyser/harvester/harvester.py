@@ -132,13 +132,23 @@ def import_file(file_path_row, conn):
         # use a transaction to avoid generating experiment rows if import fails
         conn.autocommit = False
         with conn:
-            experiment_row = ExperimentsRow(
+            # Check if this experiment is already in the db
+            experiment_row = ExperimentsRow.select_from_name_and_date(
                 name=input_file.metadata["Experiment Name"],
                 date=input_file.metadata["Date of Test"],
-                experiment_type=input_file.metadata["Machine Type"],
+                conn=conn,
             )
-            experiment_row.insert(conn)
-            print("Added experiment id " + str(experiment_row.id))
+            is_new_experiment = experiment_row is None
+            if is_new_experiment:
+                experiment_row = ExperimentsRow(
+                    name=input_file.metadata["Experiment Name"],
+                    date=input_file.metadata["Date of Test"],
+                    experiment_type=input_file.metadata["Machine Type"],
+                )
+                experiment_row.insert(conn)
+                print("Added experiment id " + str(experiment_row.id))
+            else:
+                print("This experiment is already in the database")
             for user in file_path_row.monitored_for:
                 print("  Allowing access to " + user)
                 access_row = AccessRow(
