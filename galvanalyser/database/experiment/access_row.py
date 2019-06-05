@@ -40,7 +40,7 @@ class AccessRow:
                     "SELECT experiment_id FROM experiment.access "
                     "WHERE user_name=(%s)"
                 ),
-                [experiment_id],
+                [user_name],
             )
             records = cursor.fetchall()
             return [
