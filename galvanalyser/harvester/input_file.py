@@ -214,3 +214,17 @@ class InputFile:
         except:
             traceback.print_exc()
             raise
+
+    def get_data_labels(self):
+        if "MACCOR" in self.type:
+            return maccor_functions.generate_maccor_data_labels(
+                self.type,
+                self.file_path,
+                [
+                    column
+                    for column, info in self.columns_with_data.items()
+                    if info["has_data"]
+                ],
+            )
+        else:
+            raise battery_exceptions.UnsupportedFileTypeError
