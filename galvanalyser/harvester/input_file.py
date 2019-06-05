@@ -46,13 +46,13 @@ def identify_file(file_path):
         Returns a string identifying the type of the input file
     """
     if file_path.endswith(".xls"):
-        return "EXCEL-MACCOR"
+        return {"EXCEL", "MACCOR"}
     elif file_path.endswith(".xlsx"):
-        return "EXCEL-MACCOR"
+        return {"EXCEL", "MACCOR"}
     elif file_path.endswith(".csv"):
-        return "CSV-MACCOR"
+        return {"CSV", "MACCOR"}
     elif file_path.endswith(".txt"):
-        return "TSV-MACCOR"
+        return {"TSV", "MACCOR"}
     else:
         raise battery_exceptions.UnsupportedFileTypeError
 
