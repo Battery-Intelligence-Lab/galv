@@ -16,6 +16,7 @@ from galvanalyser.database.experiment.experiments_row import ExperimentsRow
 from galvanalyser.database.experiment.access_row import AccessRow
 from galvanalyser.database.experiment.data_row import DataRow
 from galvanalyser.harvester.input_file import InputFile
+from galvanalyser.database.experiment.metadata_row import MetaDataRow
 
 import traceback
 
@@ -147,6 +148,11 @@ def import_file(file_path_row, conn):
             print("Inserting Data")
             input_file.metadata["experiment_id"] = experiment_row.id
             DataRow.insert_input_file(input_file, conn)
+            for label, sample_range in input_file.get_data_labels():
+                print("inserting {}".format(label))
+                MetaDataRow(
+                    experiment_row.id, label, sample_range[0], sample_range[1]
+                ).insert(conn)
             file_path_row.update_observed_file_state("IMPORTED", conn)
             print("File successfully imported")
     except:
