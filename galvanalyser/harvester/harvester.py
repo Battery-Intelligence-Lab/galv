@@ -160,6 +160,11 @@ def import_file(file_path_row, conn):
             if is_new_experiment:
                 print("Inserting Data")
                 DataRow.insert_input_file(input_file, conn)
+                for label, sample_range in input_file.get_data_labels():
+                    print("inserting {}".format(label))
+                    MetaDataRow(
+                        experiment_id, label, sample_range[0], sample_range[1]
+                    ).insert(conn)
             elif (
                 DataRow.select_from_experiment_id_and_sample_no(
                     experiment_id, input_file.metadata["first_sample_no"], conn
@@ -173,14 +178,9 @@ def import_file(file_path_row, conn):
                 # This is more data for an existing experiment
                 print("Inserting Additional Data")
                 DataRow.insert_input_file(input_file, conn)
+                # TODO handle inserting metadata when extending a dataset
             else:
                 print("Dataset already in database")
-            # this doesn't handle adding more data to an existing experiment
-            for label, sample_range in input_file.get_data_labels():
-                print("inserting {}".format(label))
-                MetaDataRow(
-                    experiment_id, label, sample_range[0], sample_range[1]
-                ).insert(conn)
             file_path_row.update_observed_file_state("IMPORTED", conn)
             print("File successfully imported")
     except:
