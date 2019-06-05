@@ -149,19 +149,37 @@ def import_file(file_path_row, conn):
                 print("Added experiment id " + str(experiment_row.id))
             else:
                 print("This experiment is already in the database")
+            experiment_id = experiment_row.id
             for user in file_path_row.monitored_for:
                 print("  Allowing access to " + user)
                 access_row = AccessRow(
-                    experiment_id=experiment_row.id, user_name=user
+                    experiment_id=experiment_id, user_name=user
                 )
                 access_row.insert(conn)
-            print("Inserting Data")
-            input_file.metadata["experiment_id"] = experiment_row.id
-            DataRow.insert_input_file(input_file, conn)
+            input_file.metadata["experiment_id"] = experiment_id
+            if is_new_experiment:
+                print("Inserting Data")
+                DataRow.insert_input_file(input_file, conn)
+            elif (
+                DataRow.select_from_experiment_id_and_sample_no(
+                    experiment_id, input_file.metadata["first_sample_no"], conn
+                )
+                is None
+                and DataRow.select_from_experiment_id_and_sample_no(
+                    experiment_id, input_file.metadata["last_sample_no"], conn
+                )
+                is None
+            ):
+                # This is more data for an existing experiment
+                print("Inserting Additional Data")
+                DataRow.insert_input_file(input_file, conn)
+            else:
+                print("Dataset already in database")
+            # this doesn't handle adding more data to an existing experiment
             for label, sample_range in input_file.get_data_labels():
                 print("inserting {}".format(label))
                 MetaDataRow(
-                    experiment_row.id, label, sample_range[0], sample_range[1]
+                    experiment_id, label, sample_range[0], sample_range[1]
                 ).insert(conn)
             file_path_row.update_observed_file_state("IMPORTED", conn)
             print("File successfully imported")
