@@ -8,7 +8,14 @@ import galvanalyser.harvester.battery_exceptions as battery_exceptions
 
 class DataRow:
     def __init__(
-        self, experiment_id, sample_no, time, voltage, current, charge
+        self,
+        experiment_id,
+        sample_no,
+        time,
+        voltage,
+        current,
+        charge,
+        temperature,
     ):
         self.experiment_id = experiment_id
         self.sample_no = sample_no
@@ -92,4 +99,5 @@ class DataRow:
                 voltage=result[1],
                 current=result[2],
                 charge=result[3],
+                temperature=result[4],
             )
