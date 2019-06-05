@@ -1,7 +1,7 @@
 import psycopg2
 
 
-class MetadDataRow:
+class MetaDataRow:
     def __init__(self, experiment_id, label_name, lower_bound, upper_bound):
         self.experiment_id = experiment_id
         self.label_name = label_name
@@ -14,11 +14,11 @@ class MetadDataRow:
                 (
                     "INSERT INTO experiment.metadata "
                     "(experiment_id, label_name, sample_range) "
-                    "VALUES (%s, %s, [%s, %s)"
+                    "VALUES (%s, %s, '[%s, %s)')"
                 ),
                 [
                     self.experiment_id,
-                    self.user_name,
+                    self.label_name,
                     self.lower_bound,
                     self.upper_bound,
                 ],
@@ -36,7 +36,7 @@ class MetadDataRow:
             )
             records = cursor.fetchall()
             return [
-                MetadDataRow(
+                MetaDataRow(
                     experiment_id=experiment_id,
                     label_name=result[0],
                     lower_bound=result[1][0],
@@ -59,7 +59,7 @@ class MetadDataRow:
             )
             records = cursor.fetchall()
             return [
-                MetadDataRow(
+                MetaDataRow(
                     experiment_id=experiment_id,
                     label_name=label_name,
                     lower_bound=result[0][0],
