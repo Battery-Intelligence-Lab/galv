@@ -28,7 +28,7 @@ class ExperimentsRow:
         with conn.cursor() as cursor:
             cursor.execute(
                 (
-                    "SELECT id, experiment_type FROM experiment.experiments "
+                    "SELECT id, type FROM experiment.experiments "
                     "WHERE name=(%s) AND date=(%s)"
                 ),
                 [name, date],
