@@ -97,8 +97,8 @@ def identify_columns_maccor_excel(wbook):
             numeric_columns.append(col)
         else:
             column_has_data[col] = True
-    print(headers)
-    print(numeric_columns)
+    print("headers: {}".format(headers))
+    print("numeric_columns: {}".format(numeric_columns))
     try:
         recno_col = headers.index("Rec#")
         first_rec = sheet.cell_value(2, recno_col)
