@@ -397,3 +397,56 @@ def load_data_maccor_text(file_type, file_path, columns, column_renames=None):
                 column_names[col_idx]: row[col_idx]
                 for col_idx in columns_of_interest
             }
+
+
+def generate_maccor_data_labels(file_type, file_path, columns):
+    if "EXCEL" in file_type:
+        data_generator = load_data_maccor_excel(file_path, columns)
+    else:
+        data_generator = load_data_maccor_text(file_type, file_path, columns)
+
+    # note ranges returned are inclusive lower bound, exclusive upper bound
+    cyc_no = None
+    cyc_no_start = None
+    cyc_amps = 0
+    for row_idx, row in enumerate(data_generator):
+        rec_no = int(row.get("Rec#", row_idx))
+        if "Cyc#" in row:
+            row_cyc = int(row["Cyc#"])
+            if cyc_no is None:
+                cyc_no = row_cyc
+                cyc_no_start = rec_no
+            elif cyc_no < row_cyc:
+                # on a new cycle
+                yield "cycle_{}".format(cyc_no), (cyc_no_start, rec_no)
+                cyc_no = row_cyc
+                cyc_no_start = rec_no
+        elif "Amps" in row:
+            # This file doesn't have cycles recorded, try and detect them from
+            # amps
+            pass
+            amps = float(row["Amps"])
+            cyc_begin = cyc_amps <= 0 and amps > 0.0
+            cyc_mid = cyc_amps > 0 and amps < 0.0
+            cyc_end = cyc_amps < 0 and amps >= 0.0
+            # a <=0 to positive amps edge
+            if cyc_begin:
+                cyc_amps = 1
+                if cyc_no_start is not None:
+                    yield "cycle_{}".format(cyc_no), (cyc_no_start, rec_no)
+                cyc_no_start = rec_no
+                cyc_no = 0 if cyc_no is None else cyc_no + 1
+            # a <0 to 0 change
+            elif cyc_end: # cycle ended at zero amps, not start of a new cycle
+                yield "cycle_{}".format(cyc_no), (cyc_no_start, rec_no)
+                cyc_no_start = None
+                cyc_amps = 0
+            elif cyc_mid:
+                # positive to 0 or negative
+                cyc_amps = -1
+
+
+
+    # return any partial ranges
+    if cyc_no_start is not None:
+        yield "cycle_{}".format(cyc_no), (cyc_no_start, rec_no + 1)
