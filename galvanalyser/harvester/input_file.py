@@ -74,7 +74,7 @@ class InputFile:
     def __init__(self, file_path):
         self.file_path = file_path
         self.type = identify_file(file_path)
-        self.metadata, self.columns_with_data, self.num_rows = load_metadata(
+        self.metadata, self.columns_with_data = load_metadata(
             self.type, file_path
         )
 
@@ -89,7 +89,7 @@ class InputFile:
         """
         rec_col_set = set(required_columns)
         capacity_total = 0.0
-        for row_no, file_data_row in enumerate(file_cols_to_data_generator):
+        for row_no, file_data_row in enumerate(file_cols_to_data_generator, 1):
             missing_colums = rec_col_set - set(file_data_row.keys())
             if (
                 "experiment_id" in missing_colums

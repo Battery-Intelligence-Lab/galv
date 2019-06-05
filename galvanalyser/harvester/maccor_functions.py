@@ -99,6 +99,12 @@ def identify_columns_maccor_excel(wbook):
             column_has_data[col] = True
     print(headers)
     print(numeric_columns)
+    try:
+        recno_col = headers.index("Rec#")
+        first_rec = sheet.cell_value(2, recno_col)
+    except ValueError:
+        # Don't have record numbers, make them up
+        first_rec = 1
     total_rows = 0
     for sheet_id in range(0, wbook.nsheets):
         print("Loading sheet... " + str(sheet_id))
@@ -116,6 +122,15 @@ def identify_columns_maccor_excel(wbook):
                             float(sheet.cell_value(row, column)),
                         )
                     )
+        if sheet.nrows > 2:
+            # update this each time there is a valid answer since we don't know
+            # for sure if the last sheet actually will have data
+            try:
+                recno_col = headers.index("Rec#")
+                last_rec = sheet.cell_value(2, row)
+            except ValueError:
+                # Don't have record numbers, make them up
+                last_rec = total_rows
         print("Unloading sheet " + str(sheet_id))
         wbook.unload_sheet(sheet_id)
     columns_with_data = {
@@ -127,7 +142,7 @@ def identify_columns_maccor_excel(wbook):
     }
     print(columns_with_data)
     print("Num rows {}".format(total_rows))
-    return columns_with_data, total_rows
+    return columns_with_data, total_rows, first_rec, last_rec
 
 
 def handle_recno(row, correct_number_of_columns, recno_col, row_idx):
@@ -208,9 +223,16 @@ def identify_columns_maccor_text(reader):
     }
     # account for 0 based indexing
     total_rows = row_idx + 1
+    if recno_col == -1:
+        # No Rec# , make up numbers
+        first_rec = 1  # Maccor count from 1
+        last_rec = total_rows
+    else:
+        first_rec = first_data[recno_col]
+        last_rec = row[recno_col]
     print(columns_with_data)
     print("Num rows {}".format(total_rows))
-    return columns_with_data, total_rows
+    return columns_with_data, total_rows, first_rec, last_rec
 
 
 def clean_key(key):
@@ -272,9 +294,14 @@ def load_metadata_maccor_excel(file_path):
             col = col + 1
         metadata["Machine Type"] = "Maccor"
         metadata["Experiment Name"] = ntpath.basename(metadata["Filename"])
-        columns_with_data, total_rows = identify_columns_maccor_excel(wbook)
+        columns_with_data, total_rows, first_rec, last_rec = identify_columns_maccor_excel(
+            wbook
+        )
+        metadata["num_rows"] = total_rows
+        metadata["first_sample_no"] = first_rec
+        metadata["last_sample_no"] = last_rec
         print(metadata)
-        return metadata, columns_with_data, total_rows
+        return metadata, columns_with_data
 
 
 def load_metadata_maccor_text(file_type, file_path):
@@ -298,9 +325,14 @@ def load_metadata_maccor_text(file_type, file_path):
             ntpath.basename(file_path)
         )[0]
         metadata["Machine Type"] = "Maccor"
-        columns_with_data, total_rows = identify_columns_maccor_text(reader)
+        columns_with_data, total_rows, first_rec, last_rec = identify_columns_maccor_text(
+            reader
+        )
+        metadata["num_rows"] = total_rows
+        metadata["first_sample_no"] = first_rec
+        metadata["last_sample_no"] = last_rec
         print(metadata)
-        return metadata, columns_with_data, total_rows
+        return metadata, columns_with_data
 
 
 def load_data_maccor_excel(file_path, columns, column_renames=None):
@@ -437,15 +469,13 @@ def generate_maccor_data_labels(file_type, file_path, columns):
                 cyc_no_start = rec_no
                 cyc_no = 0 if cyc_no is None else cyc_no + 1
             # a <0 to 0 change
-            elif cyc_end: # cycle ended at zero amps, not start of a new cycle
+            elif cyc_end:  # cycle ended at zero amps, not start of a new cycle
                 yield "cycle_{}".format(cyc_no), (cyc_no_start, rec_no)
                 cyc_no_start = None
                 cyc_amps = 0
             elif cyc_mid:
                 # positive to 0 or negative
                 cyc_amps = -1
-
-
 
     # return any partial ranges
     if cyc_no_start is not None:

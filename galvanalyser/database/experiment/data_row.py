@@ -50,10 +50,10 @@ class DataRow:
             start = timer()
             cursor.copy_from(iter_file, "experiment.data")
             end = timer()
-            if cursor.rowcount != input_file.num_rows:
+            if cursor.rowcount != input_file.metadata["num_rows"]:
                 raise battery_exceptions.InsertError(
                     "Insert failed. Inserted {} of {} rows before failure".format(
-                        cursor.rowcount, input_file.num_rows
+                        cursor.rowcount, input_file.metadata["num_rows"]
                     )
                 )
             print("Done copying data to table")
