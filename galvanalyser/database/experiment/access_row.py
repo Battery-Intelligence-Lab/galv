@@ -11,7 +11,7 @@ class AccessRow:
             cursor.execute(
                 (
                     "INSERT INTO experiment.access (experiment_id, user_name) "
-                    "VALUES (%s, %s)"
+                    "VALUES (%s, %s) ON CONFLICT DO NOTHING"
                 ),
                 [self.experiment_id, self.user_name],
             )
