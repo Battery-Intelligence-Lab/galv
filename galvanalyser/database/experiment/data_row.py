@@ -69,20 +69,27 @@ class DataRow:
             cursor.execute(("SELECT * FROM experiment.data LIMIT 0"))
             return [desc[0] for desc in cursor.description]
 
-
-#    @staticmethod
-#    def select_from_name_and_date(name, date, conn):
-#        with conn.cursor() as cursor:
-#            cursor.execute(
-#                (
-#                    "SELECT id, experiment_type FROM experiment.experiments "
-#                    "WHERE name=(%s) AND date=(%s)"
-#                ),
-#                [name, date],
-#            )
-#            result = cursor.fetchone()
-#            if result is None:
-#                return None
-#            return ExperimentsRow(
-#                id=result[0], name=name, date=date, experiment_type=result[1]
-#            )
+    @staticmethod
+    def select_from_experiment_id_and_sample_no(
+        experiment_id, sample_no, conn
+    ):
+        with conn.cursor() as cursor:
+            cursor.execute(
+                (
+                    "SELECT test_time, volts, amps, capacity, temperature "
+                    "FROM experiment.data "
+                    "WHERE experiment_id=(%s) AND sample_no=(%s)"
+                ),
+                [experiment_id, sample_no],
+            )
+            result = cursor.fetchone()
+            if result is None:
+                return None
+            return DataRow(
+                experiment_id=experiment_id,
+                sample_no=sample_no,
+                time=result[0],
+                voltage=result[1],
+                current=result[2],
+                charge=result[3],
+            )
