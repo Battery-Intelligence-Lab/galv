@@ -30,9 +30,9 @@ def do_test(path, test_no):
 
 
 files = [
+    "/Users/luke/code/battery-project/harvester-test/test-data/Ivium_Cell+1.txt",
     "/Users/luke/Downloads/TPG1+-+2+-+Cell+15+-+002-2.csv",
     "/Users/luke/Downloads/TPG1.2+-+Cell+15.002.xls",
-    "/Users/luke/code/battery-project/harvester-test/test-data/Ivium_Cell+1.txt",
 ]
 
 for test_no, path in enumerate(files):
