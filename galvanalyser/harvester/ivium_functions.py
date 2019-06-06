@@ -105,4 +105,5 @@ def load_data_ivium_text(file_type, file_path, columns, column_renames=None):
 
 
 def generate_ivium_data_labels(file_type, file_path, columns):
-    pass
+    for item in []:
+        yield item
