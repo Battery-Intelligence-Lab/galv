@@ -18,6 +18,7 @@
 
 import galvanalyser.harvester.battery_exceptions as battery_exceptions
 import galvanalyser.harvester.maccor_functions as maccor_functions
+import galvanalyser.harvester.ivium_functions as ivium_functions
 from itertools import accumulate
 import traceback
 
@@ -37,8 +38,10 @@ def load_metadata(file_type, file_path):
             return maccor_functions.load_metadata_maccor_text(
                 file_type, file_path
             )
-    else:
-        raise battery_exceptions.UnsupportedFileTypeError
+    elif "IVIUM" in file_type:
+        if "TXT" in file_type:
+            return ivium_functions.load_metadata_ivium_text(file_path)
+    raise battery_exceptions.UnsupportedFileTypeError
 
 
 def identify_file(file_path):
@@ -55,8 +58,16 @@ def identify_file(file_path):
         elif maccor_functions.is_maccor_text_file(file_path, "\t"):
             return {"TSV", "MACCOR"}
     elif file_path.endswith(".txt"):
-        if maccor_functions.is_maccor_text_file(file_path, "\t"):
+        if file_path.endswith(".mps.txt"):
+            # Bio-Logic settings file, doesn't contain data
+            pass
+        elif file_path.endswith(".mps.txt"):
+            # Bio-Logic text data file
+            pass
+        elif maccor_functions.is_maccor_text_file(file_path, "\t"):
             return {"TSV", "MACCOR"}
+        elif ivium_functions.is_ivium_text_file(file_path):
+            return {"TXT", "IVIUM"}
     raise battery_exceptions.UnsupportedFileTypeError
 
 
@@ -91,6 +102,8 @@ class InputFile:
             required_columns
         """
         rec_col_set = set(required_columns)
+        prev_time = 0.0
+        prev_amps = 0.0
         capacity_total = 0.0
         for row_no, file_data_row in enumerate(file_cols_to_data_generator, 1):
             missing_colums = rec_col_set - set(file_data_row.keys())
@@ -104,8 +117,14 @@ class InputFile:
             if "temperature" in missing_colums:
                 file_data_row["temperature"] = None
             if "capacity" in missing_colums:
-                capacity_total += float(file_data_row["amps"])
+                current_amps = float(file_data_row["amps"])
+                current_time = float(file_data_row["test_time"])
+                capacity_total += ((prev_amps + current_amps) / 2.0) * (
+                    current_time - prev_time
+                )
                 file_data_row["capacity"] = capacity_total
+                prev_amps = current_amps
+                prev_time = current_time
             if "power" in missing_colums:
                 file_data_row["power"] = float(file_data_row["volts"]) * float(
                     file_data_row["amps"]
@@ -135,6 +154,11 @@ class InputFile:
             print("Type is MACCOR")
             file_col_to_std_col = (
                 maccor_functions.get_maccor_column_to_standard_column_mapping()
+            )
+        elif "IVIUM" in self.type:
+            print("Type is IVIUM")
+            file_col_to_std_col = (
+                ivium_functions.get_ivium_column_to_standard_column_mapping()
             )
         print("file_col_to_std_col 1: " + str(file_col_to_std_col))
         # extend those mappings with any custom ones provided
@@ -199,8 +223,15 @@ class InputFile:
                     available_desired_columns,
                     desired_file_cols_to_std_cols,
                 )
-        else:
-            raise battery_exceptions.UnsupportedFileTypeError
+        elif "IVIUM" in self.type:
+            if "TXT" in self.type:
+                return ivium_functions.load_data_ivium_text(
+                    self.file_path,
+                    available_desired_columns,
+                    desired_file_cols_to_std_cols,
+                )
+
+        raise battery_exceptions.UnsupportedFileTypeError
 
     def get_data_row_generator(self, required_column_names):
         # given list of columns, map file columns to desired columns
@@ -229,5 +260,14 @@ class InputFile:
                     if info["has_data"]
                 ],
             )
-        else:
-            raise battery_exceptions.UnsupportedFileTypeError
+        elif "IVIUM" in self.type:
+            return ivium_functions.generate_ivium_data_labels(
+                self.type,
+                self.file_path,
+                [
+                    column
+                    for column, info in self.columns_with_data.items()
+                    if info["has_data"]
+                ],
+            )
+        raise battery_exceptions.UnsupportedFileTypeError
