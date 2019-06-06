@@ -50,11 +50,14 @@ def identify_file(file_path):
     elif file_path.endswith(".xlsx"):
         return {"EXCEL", "MACCOR"}
     elif file_path.endswith(".csv"):
-        return {"CSV", "MACCOR"}
+        if maccor_functions.is_maccor_text_file(file_path, ","):
+            return {"CSV", "MACCOR"}
+        elif maccor_functions.is_maccor_text_file(file_path, "\t"):
+            return {"TSV", "MACCOR"}
     elif file_path.endswith(".txt"):
-        return {"TSV", "MACCOR"}
-    else:
-        raise battery_exceptions.UnsupportedFileTypeError
+        if maccor_functions.is_maccor_text_file(file_path, "\t"):
+            return {"TSV", "MACCOR"}
+    raise battery_exceptions.UnsupportedFileTypeError
 
 
 def get_default_sample_time_setep(file_type):
