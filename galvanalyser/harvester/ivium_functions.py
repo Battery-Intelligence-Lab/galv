@@ -60,7 +60,9 @@ def load_metadata_ivium_text(file_path):
     """
     metadata = {}
     metadata["Machine Type"] = "Ivium"
-    metadata["Experiment Name"] = ntpath.basename(metadata["Filename"])
+    metadata["Experiment Name"] = os.path.splitext(
+            ntpath.basename(file_path)
+        )[0]
     columns_with_data = {
         name: {"has_data": True, "is_numeric": True}
         for name in get_ivium_column_to_standard_column_mapping()
@@ -74,7 +76,7 @@ def load_metadata_ivium_text(file_path):
         return metadata, columns_with_data
 
 
-def load_data_ivium_text(file_type, file_path, columns, column_renames=None):
+def load_data_ivium_text(file_path, columns, column_renames=None):
     """
         Load data in a ivium text file"
     """
@@ -97,7 +99,7 @@ def load_data_ivium_text(file_type, file_path, columns, column_renames=None):
                         "Incorrect line length on line {} was {} expected {}"
                     ).format(line_idx, len(line), 39)
                 )
-            row = [strip(line[:12]), strip(line[13:25]), strip(line[26:])]
+            row = [line[:12].strip(), line[13:25].strip(), line[26:].strip()]
             yield {
                 column_names[col_idx]: row[col_idx]
                 for col_idx in columns_of_interest
