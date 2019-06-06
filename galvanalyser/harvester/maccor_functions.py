@@ -278,7 +278,7 @@ def clean_value(value):
 
 def load_metadata_maccor_excel(file_path):
     """
-        Load metadata  in a maccor excel file"
+        Load metadata in a maccor excel file"
     """
     import xlrd
 
@@ -384,7 +384,6 @@ def load_data_maccor_excel(file_path, columns, column_renames=None):
             if column_renames is not None and column_name in column_renames:
                 column_name = column_renames[column_name]
             column_names.append(column_name)
-        columns_data = [[] for i in columns_of_interest]
         for sheet_id in range(0, wbook.nsheets):
             print("Loading sheet..." + str(sheet_id))
             sheet = wbook.sheet_by_index(sheet_id)
