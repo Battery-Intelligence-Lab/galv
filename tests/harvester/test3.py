@@ -35,5 +35,5 @@ files = [
     "/Users/luke/code/battery-project/harvester-test/test-data/Ivium_Cell+1.txt",
 ]
 
-for test_no, path in files:
+for test_no, path in enumerate(files):
     do_test(path, test_no)
