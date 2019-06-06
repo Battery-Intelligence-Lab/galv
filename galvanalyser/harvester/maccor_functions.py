@@ -19,6 +19,7 @@ import os
 import csv
 import maya
 import ntpath
+import re
 import galvanalyser.harvester.battery_exceptions as battery_exceptions
 
 
@@ -78,6 +79,32 @@ def isfloat(value):
         return True
     except ValueError:
         return False
+
+
+def is_maccor_text_file(file_path, delimiter):
+    with open(file_path, "r") as f:
+        line = f.readline()
+        line_start = "Today''s Date" + delimiter
+        date_regex = "\d\d\/\d\d\/\d\d\d\d \d?\d:\d\d:\d\d [AP]M"
+        if not line.startswith(line_start):
+            return False
+        if not re.match((line_start + date_regex), line):
+            return False
+        line = f.readline()
+        line_start = "Date of Test:" + delimiter
+        if not line.startswith(line_start):
+            return False
+        if not re.match((line_start + date_regex), line):
+            return False
+        reader = csv.reader(f, delimiter=delimiter)
+        headers = next(reader)
+        if (
+            "Amps" not in headers
+            or "Volts" not in headers
+            or "TestTime" not in headers
+        ):
+            return False
+    return True
 
 
 def identify_columns_maccor_excel(wbook):
