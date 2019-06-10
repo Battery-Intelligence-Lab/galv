@@ -227,6 +227,7 @@ CREATE TABLE experiment.metadata
     experiment_id bigint NOT NULL,
     label_name text NOT NULL,
     sample_range int8range NOT NULL,
+    info jsonb,
     PRIMARY KEY (experiment_id, label_name),
     FOREIGN KEY (experiment_id)
         REFERENCES experiment.experiments (id) MATCH SIMPLE

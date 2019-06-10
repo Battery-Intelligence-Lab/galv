@@ -2,25 +2,29 @@ import psycopg2
 
 
 class MetaDataRow:
-    def __init__(self, experiment_id, label_name, lower_bound, upper_bound):
+    def __init__(
+        self, experiment_id, label_name, lower_bound, upper_bound, info=None
+    ):
         self.experiment_id = experiment_id
         self.label_name = label_name
         self.lower_bound = lower_bound
         self.upper_bound = upper_bound
+        self.info = info
 
     def insert(self, conn):
         with conn.cursor() as cursor:
             cursor.execute(
                 (
                     "INSERT INTO experiment.metadata "
-                    "(experiment_id, label_name, sample_range) "
-                    "VALUES (%s, %s, '[%s, %s)')"
+                    "(experiment_id, label_name, sample_range, info) "
+                    "VALUES (%s, %s, '[%s, %s)', %s)"
                 ),
                 [
                     self.experiment_id,
                     self.label_name,
                     self.lower_bound,
                     self.upper_bound,
+                    self.info,
                 ],
             )
 
@@ -29,7 +33,8 @@ class MetaDataRow:
         with conn.cursor() as cursor:
             cursor.execute(
                 (
-                    "SELECT label_name, sample_range FROM experiment.metadata "
+                    "SELECT label_name, sample_range, info "
+                    "FROM experiment.metadata "
                     "WHERE experiment_id=(%s)"
                 ),
                 [experiment_id],
@@ -41,6 +46,7 @@ class MetaDataRow:
                     label_name=result[0],
                     lower_bound=result[1][0],
                     upper_bound=result[1][1],
+                    info=result[2],
                 )
                 for result in records
             ]
@@ -52,7 +58,7 @@ class MetaDataRow:
         with conn.cursor() as cursor:
             cursor.execute(
                 (
-                    "SELECT sample_range FROM experiment.metadata "
+                    "SELECT sample_range, info FROM experiment.metadata "
                     "WHERE experiment_id=(%s) AND label_name=(%s)"
                 ),
                 [experiment_id, label_name],
@@ -64,6 +70,7 @@ class MetaDataRow:
                     label_name=label_name,
                     lower_bound=result[0][0],
                     upper_bound=result[0][1],
+                    info=result[1],
                 )
                 for result in records
             ]
