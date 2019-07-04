@@ -22,20 +22,19 @@ db_conf = {
 }
 
 layout = html.Div(children=[
-    html.Div(id="login-refresh-dummy", hidden=True),
+    html.Div(id="login_refresh_dummy", hidden=True),
     html.Form(#action='login', method='post',
     children=[
-    dcc.Input(id="input-username", type="text", value="", name="username"),
-    dcc.Input(id="input-password", type="password", value="", name="password"),
-    #dcc.Input(id="input-remember", type="checkbox", value="", name="remember"),
+    dcc.Input(id="login_input_username", type="text", value="", name="username"),
+    dcc.Input(id="login_input_password", type="password", value="", name="password"),
     dcc.Checklist(
-        id="input-remember",
+        id="login_input_remember",
         options=[{'label': 'Remember me?', 'value': 'True'}],
         values=[],
     ),
-    html.Button(id="input-submit", type="button", children="Login"),
+    html.Button(id="login_input_submit", type="button", children="Login"),
   ]),
-  html.Div(id="login-status", hidden=False, children="")
+  html.Div(id="login_status", hidden=False, children="")
 ])
 
 all_layouts.append(layout)
@@ -72,9 +71,9 @@ def register_callbacks(app, login_manager):
         return
 
     @app.callback(
-    Output("login-status", "children"),
-    [Input("input-submit", "n_clicks"), Input("input-password", "n_submit")],
-    [State("input-username", "value"), State("input-password", "value"), State("input-remember", "values")],
+    Output("login_status", "children"),
+    [Input("login_input_submit", "n_clicks"), Input("login_input_password", "n_submit")],
+    [State("login_input_username", "value"), State("login_input_password", "value"), State("login_input_remember", "values")],
     )
     def login_handler(n_clicks, n_submit, username, password, remember):
         if n_clicks or n_submit:
@@ -92,19 +91,10 @@ def register_callbacks(app, login_manager):
     app.clientside_callback(
     ClientsideFunction(
         namespace='clientside',
-        function_name='redirect'
-    ),
-    [Output("url-page1a", "children")],
-    [Input('url-page1', 'children')]
-    )
-
-    app.clientside_callback(
-    ClientsideFunction(
-        namespace='clientside',
         function_name='login_refresh'
     ),
-    [Output("login-refresh-dummy", "children")],
-    [Input('login-status', 'children')]
+    [Output("login_refresh_dummy", "children")],
+    [Input('login_status', 'children')]
     )
 
     @app.server.route('/logout')

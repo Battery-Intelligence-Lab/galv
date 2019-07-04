@@ -57,9 +57,9 @@ if __name__ == "__main__":
         if pathname == '/login':
             return pages.login.layout_login
         elif pathname == '/apps/app2':
-            return pages.main.layout
+            return "404"
         else:
-            return '404'
+            return pages.main.layout
     pages.login.register_callbacks(app, login_manager)
     pages.main.register_callbacks(app)
 

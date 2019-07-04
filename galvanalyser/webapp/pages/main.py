@@ -3,19 +3,17 @@ import dash_html_components as html
 from dash.dependencies import Input, Output
 from galvanalyser.webapp.pages import all_layouts
 
+experiment_selector = html.Div([html.P('placeholder experiment selector')])
+experiment_list = html.Div([html.P('placeholder experiment list')])
+data_ranges = html.Div([html.P('placeholder data ranges')])
+plotting_controls = html.Div([html.P('placeholder plotting_controls')])
+
 layout = html.Div([
-    html.H3('App 1'),
-    dcc.Dropdown(
-        id='app-1-dropdown',
-        options=[
-            {'label': 'App 1 - {}'.format(i), 'value': i} for i in [
-                'NYC', 'MTL', 'LA'
-            ]
-        ]
-    ),
-    html.Div(id='app-1-display-value'),
-    dcc.Link('Go to App 2', href='/apps/app2'),
-    html.Button(id="page2-button", type="button", children="Login")
+    dcc.Graph(id='main-graph'),
+    experiment_selector,
+    experiment_list,
+    data_ranges,
+    plotting_controls,
 ])
 
 all_layouts.append(layout)
