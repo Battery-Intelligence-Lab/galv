@@ -27,6 +27,12 @@ layout = html.Div(children=[
     children=[
     dcc.Input(id="input-username", type="text", value="", name="username"),
     dcc.Input(id="input-password", type="password", value="", name="password"),
+    #dcc.Input(id="input-remember", type="checkbox", value="", name="remember"),
+    dcc.Checklist(
+        id="input-remember",
+        options=[{'label': 'Remember me?', 'value': 'True'}],
+        values=[],
+    ),
     html.Button(id="input-submit", type="button", children="Login"),
   ]),
   html.Div(id="login-status", hidden=False, children="")
@@ -67,15 +73,16 @@ def register_callbacks(app, login_manager):
 
     @app.callback(
     Output("login-status", "children"),
-    [Input("input-submit", "n_clicks")],
-    [State("input-username", "value"), State("input-password", "value")],
+    [Input("input-submit", "n_clicks"), Input("input-password", "n_submit")],
+    [State("input-username", "value"), State("input-password", "value"), State("input-remember", "values")],
     )
-    def login_handler(n_clicks, username, password):
-        if n_clicks:
+    def login_handler(n_clicks, n_submit, username, password, remember):
+        if n_clicks or n_submit:
             id_str = f"{username}:{password}"
             user = user_loader(id_str)
+            log(repr(remember))
             if user:
-                flask_login.login_user(user)
+                flask_login.login_user(user, remember=bool(remember))
                 return "Login Success"
             else:
                 return "Login Failed"
