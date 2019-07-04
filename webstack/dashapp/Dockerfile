@@ -8,4 +8,4 @@ RUN pip install -r /usr/requirements.txt
 
 EXPOSE 8050
 
-CMD ["python", "app.py"]
+CMD ["python", "-m", "galvanalyser.webapp.app"]

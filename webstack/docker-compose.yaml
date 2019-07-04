@@ -5,7 +5,8 @@ services:
       dockerfile: ./webstack/dashapp/Dockerfile
       context: ../
     volumes:
-     - ../galvanalyser/webapp:/usr/src/app
+     - ../galvanalyser:/usr/src/app/galvanalyser
+     - ../webapp-static-content:/usr/src/app/static_content
   nginx:
     image: "nginx"
     ports:
