@@ -35,6 +35,10 @@ def add_layouts(layouts):
     layouts.append(layout_login)
 
 def register_callbacks(app, login_manager):
+    @login_manager.unauthorized_handler
+    def unauthorized_handler():
+        redirect("/")
+    
     @login_manager.user_loader
     def user_loader(id_str):
         log("In user_loader")
