@@ -29,7 +29,7 @@ all_layouts.append(layout)
 #    layouts.append(layout)
 
 
-def register_callbacks(app):
+def register_callbacks(app, config):
     @app.callback(
         Output("app-1-display-value", "children"),
         [Input("app-1-dropdown", "value")],

@@ -60,7 +60,7 @@ all_layouts.append(layout)
 #    layouts.append(layout_login)
 
 
-def register_callbacks(app, login_manager):
+def register_callbacks(app, config, login_manager):
     @login_manager.unauthorized_handler
     def unauthorized_handler():
         redirect("/")
@@ -71,9 +71,9 @@ def register_callbacks(app, login_manager):
         try:
             username, password = id_str.split(":", 1)
             conn = psycopg2.connect(
-                host=db_conf["database_host"],
-                port=db_conf["database_port"],
-                database=db_conf["database_name"],
+                host=config["db_conf"]["database_host"],
+                port=config["db_conf"]["database_port"],
+                database=config["db_conf"]["database_name"],
                 user=username,
                 password=password,
             )

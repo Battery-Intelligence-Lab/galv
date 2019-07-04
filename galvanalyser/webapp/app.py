@@ -7,6 +7,7 @@ from flask_login import current_user
 import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output
+import psycopg2
 
 
 url_bar_and_content_div = html.Div(
@@ -21,6 +22,27 @@ url_bar_and_content_div = html.Div(
 
 
 if __name__ == "__main__":
+    config = {
+        "db_conf": {
+            "database_name": "galvanalyser",
+            "database_port": 5432,
+            "database_host": "postgres",
+        }
+    }
+
+    def get_db_connection_for_current_user():
+        username, password = current_user.id.split(":", 1)
+        return psycopg2.connect(
+            host=config["db_conf"]["database_host"],
+            port=config["db_conf"]["database_port"],
+            database=config["db_conf"]["database_name"],
+            user=username,
+            password=password,
+        )
+
+    config[
+        "get_db_connection_for_current_user"
+    ] = get_db_connection_for_current_user
     layouts = [url_bar_and_content_div] + pages.all_layouts
     # pages.login.add_layouts(layouts)
     # pages.main.add_layouts(layouts)
@@ -41,7 +63,7 @@ if __name__ == "__main__":
         external_stylesheets=["https://codepen.io/chriddyp/pen/bWLwgP.css"],
     )
 
-    app.config.supress_callback_exceptions = True
+    # app.config.supress_callback_exceptions = True
     # app.renderer = '''
     # var renderer = new DashRenderer(request_hooks);
     #'''
@@ -62,8 +84,8 @@ if __name__ == "__main__":
         else:
             return pages.main.layout
 
-    pages.login.register_callbacks(app, login_manager)
-    pages.main.register_callbacks(app)
+    pages.login.register_callbacks(app, config, login_manager)
+    pages.main.register_callbacks(app, config)
 
     print("running")
     # TODO read this from an external file
