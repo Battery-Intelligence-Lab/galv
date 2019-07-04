@@ -39,3 +39,20 @@ class ExperimentsRow:
             return ExperimentsRow(
                 id=result[0], name=name, date=date, experiment_type=result[1]
             )
+
+    @staticmethod
+    def select_all_experiments(conn):
+        with conn.cursor() as cursor:
+            cursor.execute(
+                (
+                    "SELECT id, name, date, type "
+                    "FROM experiment.experiments"
+                )
+            )
+            records = cursor.fetchall()
+            return [
+                ExperimentsRow(
+                    id=result[0], name=result[1], date=result[2], experiment_type=result[3]
+                )
+                for result in records
+            ]
