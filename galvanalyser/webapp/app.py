@@ -15,15 +15,15 @@ url_bar_and_content_div = html.Div(
         html.Div(id="placeholder2"),
         dcc.Location(id="url", refresh=False),
         html.Div(id="page-content"),
-        html.Div(id='output-state'),
+        html.Div(id="output-state"),
     ]
 )
 
 
 if __name__ == "__main__":
     layouts = [url_bar_and_content_div] + pages.all_layouts
-    #pages.login.add_layouts(layouts)
-    #pages.main.add_layouts(layouts)
+    # pages.login.add_layouts(layouts)
+    # pages.main.add_layouts(layouts)
 
     def serve_layout():
         print("in serve_layout")
@@ -37,13 +37,13 @@ if __name__ == "__main__":
         return html.Div(layouts)
 
     app = dash.Dash(
-    __name__,
-    external_stylesheets=["https://codepen.io/chriddyp/pen/bWLwgP.css"],
+        __name__,
+        external_stylesheets=["https://codepen.io/chriddyp/pen/bWLwgP.css"],
     )
 
     app.config.supress_callback_exceptions = True
-    #app.renderer = '''
-    #var renderer = new DashRenderer(request_hooks);
+    # app.renderer = '''
+    # var renderer = new DashRenderer(request_hooks);
     #'''
 
     login_manager = flask_login.LoginManager()
@@ -51,18 +51,19 @@ if __name__ == "__main__":
     login_manager.init_app(app.server)
     app.layout = serve_layout
 
-    @app.callback(Output('page-content', 'children'),
-              [Input('url', 'pathname')])
+    @app.callback(
+        Output("page-content", "children"), [Input("url", "pathname")]
+    )
     def display_page(pathname):
-        if pathname == '/login':
+        if pathname == "/login":
             return pages.login.layout_login
-        elif pathname == '/apps/app2':
+        elif pathname == "/apps/app2":
             return "404"
         else:
             return pages.main.layout
+
     pages.login.register_callbacks(app, login_manager)
     pages.main.register_callbacks(app)
-
 
     print("running")
     # TODO read this from an external file
