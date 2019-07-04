@@ -1,7 +1,7 @@
 import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output
-
+from galvanalyser.webapp.pages import all_layouts
 
 layout = html.Div([
     html.H3('App 1'),
@@ -18,8 +18,10 @@ layout = html.Div([
     html.Button(id="page2-button", type="button", children="Login")
 ])
 
-def add_layouts(layouts):
-    layouts.append(layout)
+all_layouts.append(layout)
+
+#def add_layouts(layouts):
+#    layouts.append(layout)
 
 def register_callbacks(app):
     @app.callback(

@@ -8,6 +8,7 @@ from flask import redirect
 import flask
 import flask_login
 import psycopg2
+from galvanalyser.webapp.pages import all_layouts
 
 def log(text):
     with open("/tmp/log.txt", "a") as myfile:
@@ -20,7 +21,7 @@ db_conf = {
     "database_host": "postgres"
 }
 
-layout_login = html.Div(children=[
+layout = html.Div(children=[
     html.Div(id="login-refresh-dummy", hidden=True),
     html.Form(#action='login', method='post',
     children=[
@@ -31,8 +32,10 @@ layout_login = html.Div(children=[
   html.Div(id="login-status", hidden=False, children="")
 ])
 
-def add_layouts(layouts):
-    layouts.append(layout_login)
+all_layouts.append(layout)
+
+#def add_layouts(layouts):
+#    layouts.append(layout_login)
 
 def register_callbacks(app, login_manager):
     @login_manager.unauthorized_handler
