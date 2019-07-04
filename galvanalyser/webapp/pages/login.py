@@ -41,7 +41,6 @@ def register_callbacks(app, login_manager):
     
     @login_manager.user_loader
     def user_loader(id_str):
-        log("In user_loader")
         conn = None
         try:
             username, password = id_str.split(':', 1)
@@ -52,12 +51,10 @@ def register_callbacks(app, login_manager):
                 user=username,
                 password=password,
             )
-            log("connected")
             user = User()
             user.id = id_str
             return user
         except:
-            log("exception")
             pass
             #psycopg2.OperationalError: FATAL:  the database system is starting up
         finally:
@@ -71,10 +68,8 @@ def register_callbacks(app, login_manager):
     [State("input-username", "value"), State("input-password", "value")],
     )
     def login_handler(n_clicks, username, password):
-        log("In Login Handler")
         if n_clicks:
             id_str = f"{username}:{password}"
-            log(id_str)
             user = user_loader(id_str)
             if user:
                 flask_login.login_user(user)

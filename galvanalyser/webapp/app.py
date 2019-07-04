@@ -1,5 +1,5 @@
-import galvanalyser.webapp.login as login
-import galvanalyser.webapp.page2 as page2
+import galvanalyser.webapp.pages as pages
+#import galvanalyser.webapp.pages.main as pages.main
 import dash
 import flask
 import flask_login
@@ -23,8 +23,8 @@ url_bar_and_content_div = html.Div(
 
 if __name__ == "__main__":
     layouts = [url_bar_and_content_div]
-    login.add_layouts(layouts)
-    page2.add_layouts(layouts)
+    pages.login.add_layouts(layouts)
+    pages.main.add_layouts(layouts)
 
     def serve_layout():
         print("in serve_layout")
@@ -33,7 +33,7 @@ if __name__ == "__main__":
             if current_user.is_authenticated:
                 return url_bar_and_content_div
             else:
-                return login.layout_login
+                return pages.login.layout_login
         print("!flask.has_request_context")
         return html.Div(layouts)
 
@@ -56,13 +56,13 @@ if __name__ == "__main__":
               [Input('url', 'pathname')])
     def display_page(pathname):
         if pathname == '/login':
-            return login.layout_login
+            return pages.login.layout_login
         elif pathname == '/apps/app2':
-            return page2.layout
+            return pages.main.layout
         else:
             return '404'
-    login.register_callbacks(app, login_manager)
-    page2.register_callbacks(app)
+    pages.login.register_callbacks(app, login_manager)
+    pages.main.register_callbacks(app)
 
 
     print("running")
