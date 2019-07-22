@@ -44,8 +44,8 @@ class MetaDataRow:
                 MetaDataRow(
                     experiment_id=experiment_id,
                     label_name=result[0],
-                    lower_bound=result[1][0],
-                    upper_bound=result[1][1],
+                    lower_bound=result[1].lower,
+                    upper_bound=result[1].upper,
                     info=result[2],
                 )
                 for result in records
