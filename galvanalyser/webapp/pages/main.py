@@ -34,7 +34,7 @@ experiment_list = html.Div(
 )
 data_ranges = html.Div([html.P("placeholder data ranges"), html.P(id="main_selected_experiment"),
 html.Form(children=[
-dash_table.DataTable(id='metadata_table',row_selectable="single",
+dash_table.DataTable(id='metadata_table',row_selectable="multi",
     columns=[{"name": i, "id": i} for i in ["label_name","sample_range", "info"]],
     #data=[{"hello":"aa","world":"bb","id":1}]
     )]),
@@ -46,7 +46,7 @@ dash_table.DataTable(id='metadata_table',row_selectable="single",
     ])
 plotting_controls = html.Div([html.P("placeholder plotting_controls"),
 html.Form(children=[
-dash_table.DataTable(id='plot_ranges_table',row_selectable="single",
+dash_table.DataTable(id='plot_ranges_table',row_selectable="multi",
     columns=[{"name": i, "id": i} for i in ["label_name","sample_range", "info"]],
     #data=[{"hello":"aa","world":"bb","id":1}]
     )])
@@ -85,7 +85,7 @@ def register_callbacks(app, config):
         return options
     
     @app.callback(
-        [Output("main_selected_experiment", "children"),Output("metadata_table", "data")],
+        [Output("main_selected_experiment", "children"), Output("metadata_table", "data")],
         [ Input("experiment_table", "selected_row_ids")]
     )
     def experiment_selected(selected_row_ids):
@@ -103,11 +103,14 @@ def register_callbacks(app, config):
     
     @app.callback(
         Output("plot_ranges_table", "data"),
-        [Input("btn_add_data_range_to_plot", "n_clicks")]
+        [Input("btn_add_data_range_to_plot", "n_clicks")],
+        [State("metadata_table", "selected_rows"), State("metadata_table", "data")]
     )
-    def add_data_range_to_plot(n_clicks):
-        if n_clicks:
-            pass
-        return []
+    def add_data_range_to_plot(n_clicks, selected_rows, table_rows):
+        results = []
+        if n_clicks and selected_rows:
+            for row_idx in selected_rows:
+                results.append(table_rows[row_idx])
+        return results
 
 
