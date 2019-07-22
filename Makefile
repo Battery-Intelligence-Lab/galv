@@ -5,7 +5,8 @@ test:
 	py.test tests
 
 protobuf: protobuf/placeholder.proto
-	protoc -I=protobuf --python_out=galvanalyser/protobuf --js_out=import_style=commonjs,binary:webapp-static-content/js/protobuf protobuf/placeholder.proto
+	mkdir -p galvanalyser/protobuf && mkdir -p galvanalyser/webapp/assets/protobuf && \
+	protoc -I=protobuf --python_out=galvanalyser/protobuf --js_out=import_style=commonjs,binary:galvanalyser/webapp/assets/protobuf protobuf/placeholder.proto
 
 format:
 	black --line-length 79 ./
