@@ -5,6 +5,8 @@ from galvanalyser.webapp.pages import all_layouts
 import dash_table
 
 from galvanalyser.database.experiment.experiments_row import ExperimentsRow
+from galvanalyser.database.experiment.metadata_row import MetaDataRow
+import psycopg2
 
 def log(text):
     with open("/tmp/log.txt", "a") as myfile:
@@ -24,13 +26,32 @@ experiment_list = html.Div(
     [
         html.P("placeholder experiment list"),
         dcc.RadioItems(id="main_experiments"),
-        dash_table.DataTable(id='table',row_selectable="single",
+        html.Form(children=[dash_table.DataTable(id="experiment_table",row_selectable="single",
     columns=[{"name": i, "id": i} for i in ["id", "name","date", "type"]],
-    data=[{"hello":"aa","world":"bb","id":1}])
+    #data=[{"hello":"aa","world":"bb","id":1}]
+    )])
     ]
 )
-data_ranges = html.Div([html.P("placeholder data ranges"), html.P(id="main_selected_experiment")])
-plotting_controls = html.Div([html.P("placeholder plotting_controls")])
+data_ranges = html.Div([html.P("placeholder data ranges"), html.P(id="main_selected_experiment"),
+html.Form(children=[
+dash_table.DataTable(id='metadata_table',row_selectable="single",
+    columns=[{"name": i, "id": i} for i in ["label_name","sample_range", "info"]],
+    #data=[{"hello":"aa","world":"bb","id":1}]
+    )]),
+    html.Button(
+            id="btn_add_data_range_to_plot",
+            type="button",
+            children="Plot Data Range",
+        )
+    ])
+plotting_controls = html.Div([html.P("placeholder plotting_controls"),
+html.Form(children=[
+dash_table.DataTable(id='plot_ranges_table',row_selectable="single",
+    columns=[{"name": i, "id": i} for i in ["label_name","sample_range", "info"]],
+    #data=[{"hello":"aa","world":"bb","id":1}]
+    )])
+    
+])
 
 layout = html.Div(
     [
@@ -47,7 +68,7 @@ all_layouts.append(layout)
 
 def register_callbacks(app, config):
     @app.callback(
-        Output("table", "data"),
+        Output("experiment_table", "data"),
         [Input("main_get_experiments", "n_clicks")]
     )
     def get_experiments(n_clicks):
@@ -64,10 +85,29 @@ def register_callbacks(app, config):
         return options
     
     @app.callback(
-        Output("main_selected_experiment", "children"),
-        [ Input("table", "selected_row_ids")]
+        [Output("main_selected_experiment", "children"),Output("metadata_table", "data")],
+        [ Input("experiment_table", "selected_row_ids")]
     )
     def experiment_selected(selected_row_ids):
-        return f"Selected: {selected_row_ids}"
+        conn = config["get_db_connection_for_current_user"]()
+        info_line = f"Selected: {selected_row_ids}"
+        table_rows = []
+        if selected_row_ids:
+            selected_row_id = selected_row_ids[0]
+            try:
+                metadatas = MetaDataRow.select_from_experiment_id(selected_row_id, conn)
+                table_rows = [{"id": f"{selected_row_id}:{m.label_name}", "label_name": m.label_name, "sample_range": f"[{m.lower_bound} - {m.upper_bound})", "info": m.info} for m in metadatas]
+            except psycopg2.errors.InsufficientPrivilege:
+                info_line = f"Permission denied when retrieving metadata for experiment id {selected_row_ids}"
+        return info_line, table_rows
+    
+    @app.callback(
+        Output("plot_ranges_table", "data"),
+        [Input("btn_add_data_range_to_plot", "n_clicks")]
+    )
+    def add_data_range_to_plot(n_clicks):
+        if n_clicks:
+            pass
+        return []
 
 
