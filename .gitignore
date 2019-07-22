@@ -3,3 +3,5 @@
 .venv
 config
 .removed
+galvanalyser/protobuf
+galvanalyser/webapp/assets/protobuf
