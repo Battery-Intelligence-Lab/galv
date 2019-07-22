@@ -115,7 +115,7 @@ def register_callbacks(app, config, login_manager):
 
     app.clientside_callback(
         ClientsideFunction(
-            namespace="clientside", function_name="login_refresh"
+            namespace="clientside_login", function_name="login_refresh"
         ),
         [Output("login_refresh_dummy", "children")],
         [Input("login_status", "children")],

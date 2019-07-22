@@ -1,5 +1,5 @@
 if(!window.dash_clientside) {window.dash_clientside = {};}
-window.dash_clientside.clientside = {
+window.dash_clientside.clientside_login = {
     redirect: function (href) {
       if(href){
       window.history.pushState({}, '', href);
