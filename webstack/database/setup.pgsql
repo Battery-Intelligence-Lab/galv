@@ -14,6 +14,17 @@ CREATE DATABASE galvanalyser
 ALTER DATABASE galvanalyser SET timezone TO 'UTC';
 SELECT pg_reload_conf();
 
+-- Role: normal_user
+-- DROP ROLE normal_user;
+
+CREATE ROLE normal_user WITH
+  NOLOGIN
+  NOSUPERUSER
+  INHERIT
+  NOCREATEDB
+  NOCREATEROLE
+  NOREPLICATION;
+
 -- Role: harvester
 -- DROP ROLE harvester;
 
@@ -159,6 +170,8 @@ GRANT ALL ON SEQUENCE experiment.experiments_id_seq TO postgres;
 
 GRANT USAGE ON SEQUENCE experiment.experiments_id_seq TO harvester;
 
+GRANT SELECT ON TABLE experiment.experiments TO normal_user;
+
 -- Table: experiment.access
 
 -- DROP TABLE experiment.access;
@@ -183,6 +196,8 @@ ALTER TABLE experiment.access
 GRANT INSERT, SELECT ON TABLE experiment.access TO harvester;
 
 GRANT ALL ON TABLE experiment.access TO postgres;
+
+GRANT SELECT ON TABLE experiment.access TO normal_user;
 
 -- Table: experiment.data
 
@@ -243,9 +258,28 @@ ALTER TABLE experiment.metadata
 
 GRANT INSERT ON TABLE experiment.metadata TO harvester;
 
+GRANT SELECT ON TABLE experiment.metadata TO normal_user;
+
 -- SELECT * FROM experiment.data as d
 -- INNER JOIN experiment.metadata AS m ON
 -- d.experiment_id = m.experiment_id
 -- WHERE m.experiment_id = 46 and
 --       texteq(m.label_name, 'test_label_1') and
 -- 	     d.sample_no <@ m.sample_range
+
+ALTER TABLE experiment.access ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY access_access_policy ON experiment.access
+FOR SELECT USING ( user_name = current_user);
+
+ALTER TABLE experiment.experiments ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY experiments_access_policy ON experiment.experiments
+FOR SELECT USING ( current_user in (SELECT user_name FROM experiment.access
+									WHERE experiment_id = experiment.experiments.id));
+
+ALTER TABLE experiment.metadata ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY metadata_access_policy ON experiment.metadata
+FOR SELECT USING ( current_user in (SELECT user_name FROM experiment.access
+									WHERE experiment_id = experiment.metadata.experiment_id));
