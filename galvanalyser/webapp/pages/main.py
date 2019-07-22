@@ -1,6 +1,6 @@
 import dash_core_components as dcc
 import dash_html_components as html
-from dash.dependencies import Input, Output, State
+from dash.dependencies import Input, Output, State, ClientsideFunction
 from galvanalyser.webapp.pages import all_layouts
 import dash_table
 
@@ -11,6 +11,13 @@ import psycopg2
 def log(text):
     with open("/tmp/log.txt", "a") as myfile:
         myfile.write(text + "\n")
+
+graph_section = html.Div(
+[
+dcc.Graph(id="main-graph"),
+html.Div(id="graph_update_dummy", hidden=True)
+]
+)
 
 experiment_selector = html.Div(
     [
@@ -35,7 +42,7 @@ experiment_list = html.Div(
 data_ranges = html.Div([html.P("placeholder data ranges"), html.P(id="main_selected_experiment"),
 html.Form(children=[
 dash_table.DataTable(id='metadata_table',row_selectable="multi",
-    columns=[{"name": i, "id": i} for i in ["label_name","sample_range", "info"]],
+    columns=[{"name": i, "id": i} for i in ["label_name","samples_from","samples_to", "info"]],
     #data=[{"hello":"aa","world":"bb","id":1}]
     )]),
     html.Button(
@@ -47,7 +54,7 @@ dash_table.DataTable(id='metadata_table',row_selectable="multi",
 plotting_controls = html.Div([html.P("placeholder plotting_controls"),
 html.Form(children=[
 dash_table.DataTable(id='plot_ranges_table',row_selectable="multi",
-    columns=[{"name": i, "id": i} for i in ["label_name","sample_range", "info"]],
+    columns=[{"name": i, "id": i} for i in ["experiment", "label_name","samples_from","samples_to", "info"]],
     #data=[{"hello":"aa","world":"bb","id":1}]
     )])
     
@@ -55,7 +62,7 @@ dash_table.DataTable(id='plot_ranges_table',row_selectable="multi",
 
 layout = html.Div(
     [
-        dcc.Graph(id="main-graph"),
+        graph_section,
         experiment_selector,
         experiment_list,
         data_ranges,
@@ -96,7 +103,7 @@ def register_callbacks(app, config):
             selected_row_id = selected_row_ids[0]
             try:
                 metadatas = MetaDataRow.select_from_experiment_id(selected_row_id, conn)
-                table_rows = [{"id": f"{selected_row_id}:{m.label_name}", "label_name": m.label_name, "sample_range": f"[{m.lower_bound} - {m.upper_bound})", "info": m.info} for m in metadatas]
+                table_rows = [{"id": f"{selected_row_id}:{m.label_name}", "experiment":selected_row_id, "label_name": m.label_name, "samples_from": m.lower_bound, "samples_to":m.upper_bound, "info": m.info} for m in metadatas]
             except psycopg2.errors.InsufficientPrivilege:
                 info_line = f"Permission denied when retrieving metadata for experiment id {selected_row_ids}"
         return info_line, table_rows
@@ -113,4 +120,11 @@ def register_callbacks(app, config):
                 results.append(table_rows[row_idx])
         return results
 
+    app.clientside_callback(
+        ClientsideFunction(
+            namespace="clientside_graph", function_name="update_graph_trigger"
+        ),
+        [Output("graph_update_dummy", "children")],
+        [Input("plot_ranges_table", "data")],
+    )
 
