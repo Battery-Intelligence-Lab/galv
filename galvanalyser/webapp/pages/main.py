@@ -7,6 +7,7 @@ import dash_table
 from galvanalyser.database.experiment.experiments_row import ExperimentsRow
 from galvanalyser.database.experiment.metadata_row import MetaDataRow
 import psycopg2
+from galvanalyser.webapp.datahandling import data_server
 
 def log(text):
     with open("/tmp/log.txt", "a") as myfile:
@@ -134,4 +135,6 @@ def register_callbacks(app, config):
         [Output("graph_update_dummy", "children")],
         [Input("plot_ranges_table", "data")],
     )
+
+    data_server.register_handlers(app, config)
 
