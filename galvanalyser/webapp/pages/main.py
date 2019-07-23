@@ -82,13 +82,15 @@ def register_callbacks(app, config):
         log("in get_experiments")
         options = []
         if n_clicks:
+            conn = None
             try:
                 conn = config["get_db_connection_for_current_user"]()
                 experiments = ExperimentsRow.select_all_experiments(conn)
                 options = [{"id": exp.id,
                             "name": exp.name, "date": exp.date, "type": exp.experiment_type} for exp in experiments]
             finally:
-                conn.close()
+                if conn:
+                    conn.close()
         return options
     
     @app.callback(
@@ -96,16 +98,21 @@ def register_callbacks(app, config):
         [ Input("experiment_table", "selected_row_ids")]
     )
     def experiment_selected(selected_row_ids):
-        conn = config["get_db_connection_for_current_user"]()
         info_line = f"Selected: {selected_row_ids}"
         table_rows = []
-        if selected_row_ids:
-            selected_row_id = selected_row_ids[0]
-            try:
-                metadatas = MetaDataRow.select_from_experiment_id(selected_row_id, conn)
-                table_rows = [{"id": f"{selected_row_id}:{m.label_name}", "experiment":selected_row_id, "label_name": m.label_name, "samples_from": m.lower_bound, "samples_to":m.upper_bound, "info": m.info} for m in metadatas]
-            except psycopg2.errors.InsufficientPrivilege:
-                info_line = f"Permission denied when retrieving metadata for experiment id {selected_row_ids}"
+        conn = None
+        try:
+            conn = config["get_db_connection_for_current_user"]()
+            if selected_row_ids:
+                selected_row_id = selected_row_ids[0]
+                try:
+                    metadatas = MetaDataRow.select_from_experiment_id(selected_row_id, conn)
+                    table_rows = [{"id": f"{selected_row_id}:{m.label_name}", "experiment":selected_row_id, "label_name": m.label_name, "samples_from": m.lower_bound, "samples_to":m.upper_bound, "info": m.info} for m in metadatas]
+                except psycopg2.errors.InsufficientPrivilege:
+                    info_line = f"Permission denied when retrieving metadata for experiment id {selected_row_ids}"
+        finally:
+            if conn:
+                conn.close()
         return info_line, table_rows
     
     @app.callback(
