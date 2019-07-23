@@ -61,6 +61,9 @@ if __name__ == "__main__":
     app = dash.Dash(
         __name__,
         external_stylesheets=["https://codepen.io/chriddyp/pen/bWLwgP.css"],
+        external_scripts = [#'/libs/closure-library/closure/goog/base.js',
+        '/libs/galvanalyser-protobuf.js'
+        ]
     )
 
     # app.config.supress_callback_exceptions = True
