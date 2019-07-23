@@ -63,7 +63,8 @@ if __name__ == "__main__":
         external_stylesheets=["https://codepen.io/chriddyp/pen/bWLwgP.css"],
         external_scripts = [#'/libs/closure-library/closure/goog/base.js',
         '/libs/galvanalyser-protobuf.js'
-        ]
+        ],
+        compress=False
     )
 
     # app.config.supress_callback_exceptions = True
