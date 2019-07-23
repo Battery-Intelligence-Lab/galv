@@ -1,0 +1,6 @@
+[submodule "webapp-static-content/libs/closure-library"]
+	path = libs/closure-library
+	url = https://github.com/google/closure-library
+[submodule "webapp-static-content/libs/protobuf"]
+	path = libs/protobuf
+	url = https://github.com/protocolbuffers/protobuf.git
