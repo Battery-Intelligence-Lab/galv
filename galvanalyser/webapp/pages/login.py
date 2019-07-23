@@ -43,7 +43,7 @@ layout = html.Div(
                 dcc.Checklist(
                     id="login_input_remember",
                     options=[{"label": "Remember me?", "value": "True"}],
-                    values=[],
+                    value=[],
                 ),
                 html.Button(
                     id="login_input_submit", type="button", children="Login"
@@ -97,7 +97,7 @@ def register_callbacks(app, config, login_manager):
         [
             State("login_input_username", "value"),
             State("login_input_password", "value"),
-            State("login_input_remember", "values"),
+            State("login_input_remember", "value"),
         ],
     )
     def login_handler(n_clicks, n_submit, username, password, remember):
