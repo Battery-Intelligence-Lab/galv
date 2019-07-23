@@ -6,3 +6,4 @@ config
 galvanalyser/protobuf
 galvanalyser/webapp/assets/protobuf
 libs/galvanalyser-js-protobufs
+galvanalyser-protobuf.js
