@@ -2,12 +2,31 @@
 var graph_state = {};
 var graph_traces = [];
 
+goog.require('proto.galvanalyser.DataMessage');
+
 if(!window.dash_clientside) {window.dash_clientside = {};}
 window.dash_clientside.clientside_graph = {
   update_graph_trigger: function (data) {
-    goog.require('proto.galvanalyser.DataMessage');
+    
 
-    var message = new proto.galvanalyser.DataMessage();
+    var oReq = new XMLHttpRequest();
+    oReq.open("GET", "/data-server/data", true);
+    oReq.responseType = "arraybuffer";
+
+    oReq.onload = function (oEvent) {
+      var arrayBuffer = oReq.response; // Note: not oReq.responseText
+      if (arrayBuffer) {
+        var message = proto.galvanalyser.DataMessage.deserializeBinary(arrayBuffer);//new proto.galvanalyser.DataMessage(arrayBuffer);
+        console.log(message.getDataList());
+        //var byteArray = new Uint8Array(arrayBuffer);
+        //for (var i = 0; i < byteArray.byteLength; i++) {
+        //  // do something with each byte in the array
+        //}
+      }
+    };
+
+    oReq.send(null);
+
       let plot = document.getElementById('main-graph');
 
       for (const current_trace of graph_traces) {
