@@ -16,12 +16,9 @@ window.dash_clientside.clientside_graph = {
     oReq.onload = function (oEvent) {
       var arrayBuffer = oReq.response; // Note: not oReq.responseText
       if (arrayBuffer) {
-        var message = proto.galvanalyser.DataMessage.deserializeBinary(arrayBuffer);//new proto.galvanalyser.DataMessage(arrayBuffer);
-        console.log(message.getDataList());
         //var byteArray = new Uint8Array(arrayBuffer);
-        //for (var i = 0; i < byteArray.byteLength; i++) {
-        //  // do something with each byte in the array
-        //}
+        var message = proto.galvanalyser.DataMessage.deserializeBinary(arrayBuffer);
+        console.log(message.getDataList());
       }
     };
 
