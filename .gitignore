@@ -5,3 +5,4 @@ config
 .removed
 galvanalyser/protobuf
 galvanalyser/webapp/assets/protobuf
+libs/galvanalyser-js-protobufs
