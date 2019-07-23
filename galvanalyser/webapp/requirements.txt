@@ -5,3 +5,4 @@ dash-html-components
 dash-core-components
 plotly
 flask-login
+protobuf
