@@ -5,8 +5,15 @@ test:
 	py.test tests
 
 protobuf: protobuf/placeholder.proto
-	mkdir -p galvanalyser/protobuf && mkdir -p galvanalyser/webapp/assets/protobuf && \
-	protoc -I=protobuf --python_out=galvanalyser/protobuf --js_out=import_style=commonjs,binary:galvanalyser/webapp/assets/protobuf protobuf/placeholder.proto
+	mkdir -p galvanalyser/protobuf && mkdir -p libs/galvanalyser-js-protobufs && \
+	protoc -I=protobuf --python_out=galvanalyser/protobuf --js_out=binary:libs/galvanalyser-js-protobufs protobuf/placeholder.proto && \
+	libs/closure-library/closure/bin/build/closurebuilder.py \
+  --root=libs/closure-library/ \
+  --root=libs/protobuf/js/ \
+  --root=libs/galvanalyser-js-protobufs \
+  --input=libs/galvanalyser-js-protobufs/datamessage.js \
+  --output_mode=script \
+  --output_file=webapp-static-content/libs/galvanalyser-protobuf.js
 
 format:
 	black --line-length 79 ./
