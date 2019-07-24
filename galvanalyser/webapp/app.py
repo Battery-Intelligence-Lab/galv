@@ -76,6 +76,7 @@ if __name__ == "__main__":
 
     login_manager.init_app(app.server)
     app.layout = serve_layout
+    app.title = "Galvanalyser"
 
     @app.callback(
         Output("page-content", "children"), [Input("url", "pathname")]
