@@ -1,24 +1,26 @@
-"use strict"
+"use strict";
+
 var graph_state = {};
 var graph_traces = [];
 
-goog.require('proto.galvanalyser.DataMessage');
+goog.require('proto.galvanalyser.DataRanges');
+goog.require('datarange');
 
 if(!window.dash_clientside) {window.dash_clientside = {};}
 window.dash_clientside.clientside_graph = {
   update_graph_trigger: function (data) {
-    
+    let foo = new datarange.DataRange();
 
-    var oReq = new XMLHttpRequest();
+    let oReq = new XMLHttpRequest();
     oReq.open("GET", "/data-server/data", true);
     oReq.responseType = "arraybuffer";
 
     oReq.onload = function (oEvent) {
-      var arrayBuffer = oReq.response; // Note: not oReq.responseText
+      let arrayBuffer = oReq.response; // Note: not oReq.responseText
       if (arrayBuffer) {
         //var byteArray = new Uint8Array(arrayBuffer);
-        var message = proto.galvanalyser.DataMessage.deserializeBinary(arrayBuffer);
-        console.log(message.getDataList());
+        let message = proto.galvanalyser.DataRanges.deserializeBinary(arrayBuffer);
+        console.log(message.getRangesList());
       }
     };
 
