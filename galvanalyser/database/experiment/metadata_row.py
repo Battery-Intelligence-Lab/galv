@@ -67,9 +67,9 @@ class MetaDataRow:
             if result is None:
                 return None
             return MetaDataRow(
-                    experiment_id=experiment_id,
-                    label_name=label_name,
-                    lower_bound=result[0][0],
-                    upper_bound=result[0][1],
-                    info=result[1],
-                )
+                experiment_id=experiment_id,
+                label_name=label_name,
+                lower_bound=result[0][0],
+                upper_bound=result[0][1],
+                info=result[1],
+            )
