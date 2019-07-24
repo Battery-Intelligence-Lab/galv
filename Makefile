@@ -16,7 +16,7 @@ protobuf: protobuf/placeholder.proto
   --output_file=webapp-static-content/libs/galvanalyser-protobuf.js
 
 format:
-	black --line-length 79 ./
+	black --line-length 79 --exclude "libs|.venv" ./
 
 harvester-docker-build:
 	docker build -t harvester -f harvester/Dockerfile .
