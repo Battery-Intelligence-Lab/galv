@@ -1,4 +1,4 @@
-//"use strict";
+"use strict";
 goog.module('datarange');
 goog.module.declareLegacyNamespace();
 
