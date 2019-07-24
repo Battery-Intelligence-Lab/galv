@@ -16,7 +16,8 @@ protobuf: protobuf/placeholder.proto
   --input=webapp-static-content/js/data-range.js \
   --output_mode=script \
   --output_file=webapp-static-content/libs/galvanalyser-protobuf.js && \
-  sed -i -e "s/^goog\.global\.CLOSURE_NO_DEPS;/goog\.global\.CLOSURE_NO_DEPS = true;/" "webapp-static-content/libs/galvanalyser-protobuf.js"
+  sed -i -e "s/^goog\.global\.CLOSURE_NO_DEPS;/goog\.global\.CLOSURE_NO_DEPS = true;/" "webapp-static-content/libs/galvanalyser-protobuf.js" && \
+  rm -f webapp-static-content/libs/galvanalyser-protobuf.js-e
 
 format:
 	black --line-length 79 --exclude "libs|.venv" ./
