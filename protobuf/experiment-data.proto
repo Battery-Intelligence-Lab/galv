@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package galvanalyser;
+
+message DataRange {
+  int64 start_sample_no = 1;
+  repeated double test_time = 2;
+  repeated double volts = 3;
+  repeated double amps = 4;
+  repeated double capacity = 5;
+  repeated double temperature = 6;
+}
+
+message DataRanges{
+  int64 experiment_id = 1;
+  repeated DataRange ranges = 2;
+}
