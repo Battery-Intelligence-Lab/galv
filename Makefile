@@ -8,10 +8,12 @@ protobuf: protobuf/placeholder.proto
 	mkdir -p galvanalyser/protobuf && mkdir -p libs/galvanalyser-js-protobufs && \
 	protoc -I=protobuf --python_out=galvanalyser/protobuf --js_out=binary:libs/galvanalyser-js-protobufs protobuf/placeholder.proto && \
 	libs/closure-library/closure/bin/build/closurebuilder.py \
-  --root=libs/closure-library/ \
-  --root=libs/protobuf/js/ \
+  --root=libs/closure-library \
+  --root=libs/protobuf/js \
   --root=libs/galvanalyser-js-protobufs \
+  --root=webapp-static-content/js \
   --input=libs/galvanalyser-js-protobufs/datamessage.js \
+  --input=webapp-static-content/js/data-range.js \
   --output_mode=script \
   --output_file=webapp-static-content/libs/galvanalyser-protobuf.js
 
