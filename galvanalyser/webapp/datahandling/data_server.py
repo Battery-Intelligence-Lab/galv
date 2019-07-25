@@ -3,10 +3,11 @@ import flask
 from flask import request, abort
 import flask_login
 
-from galvanalyser.database.experiment.experiments_row import ExperimentsRow
+from galvanalyser.database.experiment.data_row import DataRow
 from galvanalyser.database.experiment.access_row import AccessRow
-
+import galvanalyser.database.experiment.data_columns as DataColumns
 import math
+
 
 def log(text):
     with open("/tmp/log.txt", "a") as myfile:
@@ -21,11 +22,11 @@ def register_handlers(app, config):
         message.experiment_id = 3
         value = message.ranges.add()
         value.start_sample_no = 50
-        value.volts.extend([math.sin(x/10.0) for x in range(512)])
-        value.test_time.extend([float(x)/60.0 for x in range(512)])
-        #log(str(repr(message.data)))
-        #log(repr(flask.request.headers))
-        #message.data.extend([float(x) for x in range(512)])
+        value.volts.extend([math.sin(x / 10.0) for x in range(512)])
+        value.test_time.extend([float(x) / 60.0 for x in range(512)])
+        # log(str(repr(message.data)))
+        # log(repr(flask.request.headers))
+        # message.data.extend([float(x) for x in range(512)])
         # log(str(repr(message.data)))
         # return flask.make_response("foo:") # + str(message)
         log(f"length {len(message.SerializeToString())}")
@@ -33,7 +34,7 @@ def register_handlers(app, config):
         response.headers.set("Content-Type", "application/octet-stream")
         # response.headers.set('Content-Disposition', 'attachment', filename='np-array.bin')
         return response
-    
+
     @app.server.route("/experiment/<int:experiment_id>/data")
     @flask_login.login_required
     def experiment_data(experiment_id):
@@ -56,7 +57,7 @@ def register_handlers(app, config):
             if conn:
                 conn.close()
         return f"You asked for data for experiment {experiment_id} in range {data_from} - {data_to} and columns {columns}"
-    
+
     @app.server.route("/experiment/<int:id>/metadata")
     @flask_login.login_required
     def experiment_metadata(id):
@@ -64,4 +65,5 @@ def register_handlers(app, config):
         data_to = request.args.get("to", None)
         columns = request.args.get("columns", None)
         return f"You asked for metadata for experiment {id} in range {data_from} - {data_to} and columns {columns}"
+
     # pass

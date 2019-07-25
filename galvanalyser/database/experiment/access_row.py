@@ -47,7 +47,7 @@ class AccessRow:
                 AccessRow(experiment_id=result[0], user_name=user_name)
                 for result in records
             ]
-            
+
     @staticmethod
     def current_user_has_access_to_experiment(experiment_id, conn):
         with conn.cursor() as cursor:
@@ -59,4 +59,3 @@ class AccessRow:
                 [experiment_id],
             )
             return cursor.fetchone()[0] > 0
-        
