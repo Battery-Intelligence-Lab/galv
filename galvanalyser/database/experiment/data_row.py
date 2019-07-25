@@ -1,5 +1,4 @@
 import psycopg2
-from galvanalyser.harvester.input_file import InputFile
 from galvanalyser.database.util.iter_file import IteratorFile
 from timeit import default_timer as timer
 
