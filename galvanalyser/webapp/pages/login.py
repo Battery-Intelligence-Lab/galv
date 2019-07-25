@@ -63,7 +63,7 @@ all_layouts.append(layout)
 def register_callbacks(app, config, login_manager):
     @login_manager.unauthorized_handler
     def unauthorized_handler():
-        redirect("/")
+        return redirect("/")
 
     @login_manager.user_loader
     def user_loader(id_str):
