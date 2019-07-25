@@ -1,5 +1,7 @@
 import galvanalyser.protobuf.experiment_data_pb2 as experiment_data_pb2
 import flask
+from flask import request
+import flask_login
 
 import math
 
@@ -28,5 +30,20 @@ def register_handlers(app, config):
         response.headers.set("Content-Type", "application/octet-stream")
         # response.headers.set('Content-Disposition', 'attachment', filename='np-array.bin')
         return response
-
+    
+    @app.server.route("/experiment/<int:id>/data")
+    @flask_login.login_required
+    def experiment_data(id):
+        data_from = request.args.get("from", None)
+        data_to = request.args.get("to", None)
+        columns = request.args.get("columns", None)
+        return f"You asked for data for experiment {id} in range {data_from} - {data_to} and columns {columns}"
+    
+    @app.server.route("/experiment/<int:id>/metadata")
+    @flask_login.login_required
+    def experiment_metadata(id):
+        data_from = request.args.get("from", None)
+        data_to = request.args.get("to", None)
+        columns = request.args.get("columns", None)
+        return f"You asked for metadata for experiment {id} in range {data_from} - {data_to} and columns {columns}"
     # pass
