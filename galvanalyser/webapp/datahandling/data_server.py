@@ -7,7 +7,7 @@ from galvanalyser.database.experiment.data_row import DataRow
 from galvanalyser.database.experiment.access_row import AccessRow
 import galvanalyser.database.experiment.data_columns as DataColumns
 import math
-
+import psycopg2
 
 def log(text):
     with open("/tmp/log.txt", "a") as myfile:
@@ -53,6 +53,8 @@ def register_handlers(app, config):
                 pass
             else:
                 abort(403)
+        #except psycopg2.errors.InsufficientPrivilege:
+        #    abort(403) # commented out for debugging
         finally:
             if conn:
                 conn.close()
