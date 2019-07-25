@@ -37,19 +37,24 @@ def register_handlers(app, config):
     @app.server.route("/experiment/<int:experiment_id>/data")
     @flask_login.login_required
     def experiment_data(experiment_id):
+        data_from = request.args.get("from", None)
+        data_to = request.args.get("to", None)
+        columns = request.args.get("columns", None)
         conn = None
         try:
             conn = config["get_db_connection_for_current_user"]()
-            if(AccessRow.current_user_has_access_to_experiment(experiment_id, conn)):
+            if AccessRow.current_user_has_access_to_experiment(
+                experiment_id, conn
+            ):
+                results = DataColumns.select_experiment_data_columns_in_range(
+                    experiment_id, columns, data_from, data_to
+                )
                 pass
             else:
                 abort(403)
         finally:
             if conn:
                 conn.close()
-        data_from = request.args.get("from", None)
-        data_to = request.args.get("to", None)
-        columns = request.args.get("columns", None)
         return f"You asked for data for experiment {experiment_id} in range {data_from} - {data_to} and columns {columns}"
     
     @app.server.route("/experiment/<int:id>/metadata")
