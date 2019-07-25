@@ -48,9 +48,12 @@ def register_handlers(app, config):
                 experiment_id, conn
             ):
                 results = DataColumns.select_experiment_data_columns_in_range(
-                    experiment_id, columns, data_from, data_to
+                    experiment_id, columns.split(","), data_from, data_to, conn
                 )
-                pass
+                
+                return (f"You asked for data for experiment {experiment_id} in range {data_from} - {data_to} and columns {columns}."
+                    f"\nThere were {str([x for x in map(len, results)])} results"
+                )
             else:
                 abort(403)
         #except psycopg2.errors.InsufficientPrivilege:
