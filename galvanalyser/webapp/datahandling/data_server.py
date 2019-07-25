@@ -1,7 +1,10 @@
 import galvanalyser.protobuf.experiment_data_pb2 as experiment_data_pb2
 import flask
-from flask import request
+from flask import request, abort
 import flask_login
+
+from galvanalyser.database.experiment.experiments_row import ExperimentsRow
+from galvanalyser.database.experiment.access_row import AccessRow
 
 import math
 
@@ -31,13 +34,23 @@ def register_handlers(app, config):
         # response.headers.set('Content-Disposition', 'attachment', filename='np-array.bin')
         return response
     
-    @app.server.route("/experiment/<int:id>/data")
+    @app.server.route("/experiment/<int:experiment_id>/data")
     @flask_login.login_required
-    def experiment_data(id):
+    def experiment_data(experiment_id):
+        conn = None
+        try:
+            conn = config["get_db_connection_for_current_user"]()
+            if(AccessRow.current_user_has_access_to_experiment(experiment_id, conn)):
+                pass
+            else:
+                abort(403)
+        finally:
+            if conn:
+                conn.close()
         data_from = request.args.get("from", None)
         data_to = request.args.get("to", None)
         columns = request.args.get("columns", None)
-        return f"You asked for data for experiment {id} in range {data_from} - {data_to} and columns {columns}"
+        return f"You asked for data for experiment {experiment_id} in range {data_from} - {data_to} and columns {columns}"
     
     @app.server.route("/experiment/<int:id>/metadata")
     @flask_login.login_required
