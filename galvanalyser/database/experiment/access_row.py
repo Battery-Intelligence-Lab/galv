@@ -47,3 +47,16 @@ class AccessRow:
                 AccessRow(experiment_id=result[0], user_name=user_name)
                 for result in records
             ]
+            
+    @staticmethod
+    def current_user_has_access_to_experiment(experiment_id, conn):
+        with conn.cursor() as cursor:
+            cursor.execute(
+                (
+                    "SELECT count(*) from experiment.access WHERE "
+                    "experiment_id = (%s) AND user_name = current_user;"
+                ),
+                [experiment_id],
+            )
+            return cursor.fetchone()[0] > 0
+        
