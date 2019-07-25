@@ -20,7 +20,7 @@ protobuf: protobuf/placeholder.proto
   rm -f webapp-static-content/libs/galvanalyser-protobuf.js-e
 
 format:
-	black --line-length 79 --exclude "libs|.venv" ./
+	black --line-length 79 --exclude "libs|.venv|_pb2\.py" ./
 
 harvester-docker-build:
 	docker build -t harvester -f harvester/Dockerfile .
