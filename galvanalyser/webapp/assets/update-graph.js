@@ -9,7 +9,7 @@ goog.require('datarange');
 if(!window.dash_clientside) {window.dash_clientside = {};}
 window.dash_clientside.clientside_graph = {
   update_graph_trigger: function (data) {
-    let foo = new datarange.DataRange();
+    let foo = new datarange.ExperimentData();
 
     let oReq = new XMLHttpRequest();
     oReq.open("GET", "/data-server/data", true);
