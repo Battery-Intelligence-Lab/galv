@@ -29,7 +29,7 @@ window.dash_clientside.clientside_graph = {
               x: ranges_list[0].getTestTimeList(),
               y: ranges_list[0].getVoltsList(),
               mode: 'markers',
-              type: 'scatter'
+              type: 'scattergl'
             };
             graph_state.dataplot = trace1;
             Plotly.addTraces(plot, trace1);
@@ -55,7 +55,7 @@ window.dash_clientside.clientside_graph = {
           x: [1, 2, 3, 4],
           y: [10, 15, 13, 17],
           mode: 'markers',
-          type: 'scatter'
+          type: 'scattergl'
         };
         graph_state.first = trace1;
         Plotly.addTraces(plot, trace1);
