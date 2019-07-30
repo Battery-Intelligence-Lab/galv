@@ -9,6 +9,7 @@ import galvanalyser.database.experiment.data_columns as DataColumns
 import math
 import psycopg2
 
+
 def log(text):
     with open("/tmp/log.txt", "a") as myfile:
         myfile.write(text + "\n")
@@ -41,7 +42,7 @@ def register_handlers(app, config):
         data_from = request.args.get("from", None)
         data_to = request.args.get("to", None)
         columns = request.args.get("columns", None)
-        #log(f"You asked for data for experiment {experiment_id} in range {data_from} - {data_to} and columns {columns}")
+        # log(f"You asked for data for experiment {experiment_id} in range {data_from} - {data_to} and columns {columns}")
         columns = columns.split(",")
         conn = None
         try:
@@ -49,35 +50,43 @@ def register_handlers(app, config):
             if AccessRow.current_user_has_access_to_experiment(
                 experiment_id, conn
             ):
-                #log("Getting results")
-                select_columns = columns if "sample_no" in columns else (["sample_no"] + columns)
+                # log("Getting results")
+                select_columns = (
+                    columns
+                    if "sample_no" in columns
+                    else (["sample_no"] + columns)
+                )
                 results = DataColumns.select_experiment_data_columns_in_range(
                     experiment_id, select_columns, data_from, data_to, conn
                 )
-                #log("got results")
+                # log("got results")
                 message = experiment_data_pb2.DataRanges()
-                #log("made message")
+                # log("made message")
                 message.experiment_id = experiment_id
                 iters = [iter(col) for col in results]
                 sample_no_iter = iters[0]
                 data_iters = iters[1:]
-                #log("made iters")
+                # log("made iters")
                 try:
                     first_sample_no = next(sample_no_iter)
                     current_sample_no = first_sample_no
                     while True:
-                        #log(f"First block sample no is {first_sample_no}")
+                        # log(f"First block sample no is {first_sample_no}")
                         # loop for each block of contiguous data
                         range_msg = message.ranges.add()
-                        #log("range msg added")
+                        # log("range msg added")
                         range_msg.start_sample_no = first_sample_no
-                        #log("start_sample_no set")
+                        # log("start_sample_no set")
                         while True:
                             # loop over contiguous data
                             # add data
-                            for col_name, data_iter in zip(columns, data_iters):
-                                #log(f"appending to {col_name}")
-                                getattr(range_msg, col_name).append(next(data_iter))
+                            for col_name, data_iter in zip(
+                                columns, data_iters
+                            ):
+                                # log(f"appending to {col_name}")
+                                getattr(range_msg, col_name).append(
+                                    next(data_iter)
+                                )
                             new_sample_no = next(sample_no_iter)
                             if new_sample_no == (current_sample_no + 1):
                                 current_sample_no = new_sample_no
@@ -87,19 +96,21 @@ def register_handlers(app, config):
                                 break
                 except StopIteration:
                     pass
-                #return (f"You asked for data for experiment {experiment_id} in range {data_from} - {data_to} and columns {columns}."
+                # return (f"You asked for data for experiment {experiment_id} in range {data_from} - {data_to} and columns {columns}."
                 #    f"\nThere were {str([x for x in map(len, results)])} results"
-                #)
+                # )
                 log("Serializing response")
                 response = flask.make_response(message.SerializeToString())
-                response.headers.set("Content-Type", "application/octet-stream")
+                response.headers.set(
+                    "Content-Type", "application/octet-stream"
+                )
                 log("returning response")
                 return response
             else:
                 abort(403)
         except:
             log(f"Exception:\n{repr(sys.exc_info()[0])}")
-        #except psycopg2.errors.InsufficientPrivilege:
+        # except psycopg2.errors.InsufficientPrivilege:
         #    abort(403) # commented out for debugging
         finally:
             if conn:
