@@ -9,22 +9,38 @@ goog.require('datarange');
 if(!window.dash_clientside) {window.dash_clientside = {};}
 window.dash_clientside.clientside_graph = {
   update_graph_trigger: function (data) {
-    let foo = new datarange.ExperimentData();
+    for(const row of data){
+      let foo = new datarange.ExperimentData();
 
-    let oReq = new XMLHttpRequest();
-    oReq.open("GET", "/data-server/data", true);
-    oReq.responseType = "arraybuffer";
+      let oReq = new XMLHttpRequest();
+      oReq.open("GET", `/experiment/${row.experiment}/data?from=${row.samples_from}&to=${row.samples_to}&columns=test_time,volts,amps`, true);
+      oReq.responseType = "arraybuffer";
 
-    oReq.onload = function (oEvent) {
-      let arrayBuffer = oReq.response; // Note: not oReq.responseText
-      if (arrayBuffer) {
-        //var byteArray = new Uint8Array(arrayBuffer);
-        let message = proto.galvanalyser.DataRanges.deserializeBinary(arrayBuffer);
-        console.log(message.getRangesList());
-      }
-    };
+      oReq.onload = function (oEvent) {
+        let arrayBuffer = oReq.response; // Note: not oReq.responseText
+        if (arrayBuffer) {
+          //var byteArray = new Uint8Array(arrayBuffer);
+          let message = proto.galvanalyser.DataRanges.deserializeBinary(arrayBuffer);
+          let ranges_list = message.getRangesList();
+          console.log(ranges_list);
+          if(!('dataplot' in graph_state)){
+            alert("Adding data plot")
+            let trace1 = {
+              x: ranges_list[0].getTestTimeList(),
+              y: ranges_list[0].getVoltsList(),
+              mode: 'markers',
+              type: 'scatter'
+            };
+            graph_state.dataplot = trace1;
+            Plotly.addTraces(plot, trace1);
+          } else {
+            alert("Not adding data plot");
+          }
+        }
+      };
 
-    oReq.send(null);
+      oReq.send(null);
+  }
 
       let plot = document.getElementById('main-graph');
 
