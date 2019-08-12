@@ -69,8 +69,8 @@ def register_handlers(app, config):
                 # log("made iters")
                 try:
                     first_sample_no = next(sample_no_iter)
-                    current_sample_no = first_sample_no
                     while True:
+                        current_sample_no = first_sample_no
                         # log(f"First block sample no is {first_sample_no}")
                         # loop for each block of contiguous data
                         range_msg = message.ranges.add()
