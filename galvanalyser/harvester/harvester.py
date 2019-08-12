@@ -160,6 +160,9 @@ def import_file(file_path_row, conn):
             if is_new_experiment:
                 print("Inserting Data")
                 DataRow.insert_input_file(input_file, conn)
+                MetaDataRow(
+                        experiment_id, "all", int(input_file.metadata["first_sample_no"]), int(input_file.metadata["last_sample_no"]) + 1
+                    ).insert(conn)
                 for label, sample_range in input_file.get_data_labels():
                     print("inserting {}".format(label))
                     MetaDataRow(
