@@ -240,11 +240,15 @@ class InputFile:
         # store data values in map of standard columns to lists of data values
         # generate list of iterators of data columns in order of input list
         # yield a single line of tab separated quoted values
+        def tsv_format(value):
+            # The psycopg2 cursor.copy_from method needs null values to be
+            # represented as a literal '\N'
+            return str(value) if value is not None else "\\N"
         try:
             for row in self.get_data_with_standard_colums(
                 required_column_names
             ):
-                yield "\t".join(map(str, row))
+                yield "\t".join(map(tsv_format, row))
         except:
             traceback.print_exc()
             raise
