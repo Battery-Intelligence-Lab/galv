@@ -68,6 +68,10 @@ def register_handlers(app, config):
                 data_iters = iters[1:]
                 # log("made iters")
                 try:
+                    # What we actually want is to loop over all samples
+                    # make contigious blocks for each channel
+                    # split all blocks on discontinuities of sample numbers
+                    # and split individual blocks on null values
                     first_sample_no = next(sample_no_iter)
                     while True:
                         current_sample_no = first_sample_no
