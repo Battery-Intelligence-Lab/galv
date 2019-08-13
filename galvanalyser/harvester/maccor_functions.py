@@ -476,7 +476,7 @@ def generate_maccor_data_labels(file_type, file_path, columns):
                 cyc_no_start = rec_no
             elif cyc_no < row_cyc:
                 # on a new cycle
-                yield "cycle_{}".format(cyc_no), (cyc_no_start, rec_no)
+                yield "cycle_{}".format(cyc_no), (cyc_no_start, rec_no + 1)
                 cyc_no = row_cyc
                 cyc_no_start = rec_no
         elif "Amps" in row:
@@ -491,12 +491,12 @@ def generate_maccor_data_labels(file_type, file_path, columns):
             if cyc_begin:
                 cyc_amps = 1
                 if cyc_no_start is not None:
-                    yield "cycle_{}".format(cyc_no), (cyc_no_start, rec_no)
+                    yield "cycle_{}".format(cyc_no), (cyc_no_start, rec_no + 1)
                 cyc_no_start = rec_no
                 cyc_no = 0 if cyc_no is None else cyc_no + 1
             # a <0 to 0 change
             elif cyc_end:  # cycle ended at zero amps, not start of a new cycle
-                yield "cycle_{}".format(cyc_no), (cyc_no_start, rec_no)
+                yield "cycle_{}".format(cyc_no), (cyc_no_start, rec_no + 1)
                 cyc_no_start = None
                 cyc_amps = 0
             elif cyc_mid:
