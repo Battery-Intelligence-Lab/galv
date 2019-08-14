@@ -31,7 +31,7 @@ function graph_substate_equal(a, b){
  * @param {int} end_sample_no 
  */
 function send_data_request(experiment_id, column, start_sample_no, end_sample_no){
-    console.log(`send_data_request Requesting ${experiment_id} , ${column} , ${start_sample_no} , ${end_sample_no}`);
+    //console.log(`send_data_request Requesting ${experiment_id} , ${column} , ${start_sample_no} , ${end_sample_no}`);
     let oReq = new XMLHttpRequest();
     oReq.open("GET", `/experiment/${experiment_id}/data?column=${column}&from=${start_sample_no}&to=${end_sample_no}`, true);
     oReq.responseType = "arraybuffer";
@@ -44,7 +44,7 @@ function send_data_request(experiment_id, column, start_sample_no, end_sample_no
             let ranges_list = message.getRangesList();
             let received_experiment_id = message.getExperimentId();
             let received_column = message.getColumn();
-            console.log(`send_data_request Received ${received_experiment_id} , ${column}`);
+            //console.log(`send_data_request Received ${received_experiment_id} , ${column}`);
             if(! all_experiment_data.has(received_experiment_id)){
                 all_experiment_data.set(received_experiment_id, new datarange.ExperimentData());
             }
@@ -122,18 +122,18 @@ function get_list_of_missing_ranges(reading_data, start_sample_no, end_sample_no
  * @param {int} end_sample_no 
  */
 function request_experiment_data(experiment_id, column, start_sample_no, end_sample_no){
-    console.log(`request_experiment_data start ${experiment_id} , ${column} , ${start_sample_no} , ${end_sample_no}`);
+    //console.log(`request_experiment_data start ${experiment_id} , ${column} , ${start_sample_no} , ${end_sample_no}`);
     //check we haven't requested this data already
     if(!experiment_data_requested_from_server.has(experiment_id)){
         // we don't have any data for this experiment, get it all.
-        console.log(`request_experiment_data have no ${experiment_id}`);
+        //console.log(`request_experiment_data have no ${experiment_id}`);
         send_data_request(experiment_id, column, start_sample_no, end_sample_no);
         return true;
     } 
     let requested_experiment_data = experiment_data_requested_from_server.get(experiment_id);
     if(!requested_experiment_data.columns.has(column)){
         // we don't have any data for this column, get it all.
-        console.log(`request_experiment_data has no ${experiment_id} , ${column}`);
+        //console.log(`request_experiment_data has no ${experiment_id} , ${column}`);
         send_data_request(experiment_id, column, start_sample_no, end_sample_no);
         return true;
     }
@@ -141,11 +141,11 @@ function request_experiment_data(experiment_id, column, start_sample_no, end_sam
     let missing_data_ranges = get_list_of_missing_ranges(requested_column_data, start_sample_no, end_sample_no);
     let data_requested = false;
     for(const missing_range of missing_data_ranges){
-        console.log(`request_experiment_data has missing range ${experiment_id} , ${column} , ${missing_range.from} , ${missing_range.to}`);
+        //console.log(`request_experiment_data has missing range ${experiment_id} , ${column} , ${missing_range.from} , ${missing_range.to}`);
         send_data_request(experiment_id, column, missing_range.from, missing_range.to);
         data_requested = true;
     }
-    console.log(`request_experiment_data data_requested: ${data_requested}`);
+    //console.log(`request_experiment_data data_requested: ${data_requested}`);
     return data_requested;
 }
 
@@ -164,9 +164,9 @@ function update_graph(){
     // Add or update new plots
     let updates_requested = false;
     for (const [requested_experiment_id, requested_experiment_data] of requested_graph_state) {
-        console.log(`update_graph iterating ${requested_experiment_id}`);
+        //console.log(`update_graph iterating ${requested_experiment_id}`);
         for(const [column, reading_data] of requested_experiment_data.columns){
-            console.log(`update_graph iterating ${requested_experiment_id} , ${column}`);
+            //console.log(`update_graph iterating ${requested_experiment_id} , ${column}`);
             reading_data.iterate_ranges(function(data_range){
                 // get the sample times and requested data
                 updates_requested |= request_experiment_data(requested_experiment_id, x_axis_column_name, data_range.from, data_range.to);
@@ -176,7 +176,7 @@ function update_graph(){
     }
 
     if(!updates_requested){
-        console.log(`update_graph attempting to plot`);
+        //console.log(`update_graph attempting to plot`);
         let plot = document.getElementById('main-graph');
         //update graph
         let traces = [];
@@ -184,7 +184,7 @@ function update_graph(){
             if(all_experiment_data.has(requested_experiment_id)){
                 let available_experiment_data = all_experiment_data.get(requested_experiment_id);
                 if(!available_experiment_data.columns.has(x_axis_column_name)){
-                    console.log(`update_graph NO X-AXIS ${requested_experiment_id}`);
+                    //console.log(`update_graph NO X-AXIS ${requested_experiment_id}`);
                     // no x axis, can't plot
                     continue;
                 }
@@ -223,7 +223,7 @@ function update_graph(){
                     traces.push(trace);
                 }
             } else {
-                console.log(`update_graph NO DATA for ${requested_experiment_id}`);
+                //console.log(`update_graph NO DATA for ${requested_experiment_id}`);
             }
         }
 
@@ -255,7 +255,7 @@ window.dash_clientside.clientside_graph = {
             }
             let experiment_data = new_config.get(row.experiment_id);
             experiment_data.add_empty_data_range(row.column, row.samples_from, row.samples_to);
-            console.log(`update_graph_trigger wants ${row.experiment_id} , ${row.column} , ${row.samples_from} , ${row.samples_to}`);
+            //console.log(`update_graph_trigger wants ${row.experiment_id} , ${row.column} , ${row.samples_from} , ${row.samples_to}`);
         }
         requested_graph_state = new_config;
         update_graph();
@@ -281,7 +281,7 @@ window.dash_clientside.clientside_graph = {
         //            //ranges_list.forEach(function(range){
         //            //    experiment_data.add_protobuf_data_range(range);
         //            //});
-        //            //console.log(ranges_list);
+        //            ////console.log(ranges_list);
         //            //ranges_list.forEach(function(range){
         //            //    let volt_list = range.getVoltsList();
         //            //    let data_name = `${message.getExperimentId()}_${range.getStartSampleNo()}_${volt_list.length}_volts`;
@@ -322,7 +322,7 @@ window.dash_clientside.clientside_graph = {
         //let plot = document.getElementById('main-graph');
 //
         //for (const current_trace of graph_traces) {
-        //    //console.log(val);
+        //    ////console.log(val);
         //    // if(! (current_trace['id'] in data_ids)) -- we need to make a list of ids
         //}
 
