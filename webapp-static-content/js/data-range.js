@@ -9,8 +9,14 @@ goog.require('goog.structs.AvlTree');
 class DataRange {
     constructor(start_sample_no, data_values) {
         this.from = start_sample_no;
-        this.to = start_sample_no + data_values.length;
-        this.data_values = data_values;
+        if( typeof data_values == 'number'){
+            // data_values can also be the end sample no 
+            this.to = data_values;
+            this.data_values = [];
+        } else {
+            this.to = start_sample_no + data_values.length;
+            this.data_values = data_values;
+        }
     }
 
     /**
@@ -35,7 +41,7 @@ class DataRange {
         }
         let start = lower.from;
         let end = upper.to;
-        let data = lower.data_values.concat(upper.data_values.slice(lower.to - upper.from))
+        let data = lower.data_values.concat(upper.data_values.slice(lower.to - upper.from));
         this.from = start;
         this.to = end;
         this.data_values = data;
@@ -114,30 +120,27 @@ class ReadingData {
 class ExperimentData {
 
     constructor() {
-        let temp_pb = new proto.galvanalyser.DataRange();
-        let list_regex = /get(\w+)List/;
-        this.columns = [];
-        for (const prop in temp_pb) {
-            if (!temp_pb.hasOwnProperty(prop)) {
-                let match = list_regex.exec(prop);
-                if (match && match[1]) {
-                    let column = match[1];
-                    this[column] = new ReadingData(column);
-                    this.columns.push(column);
-                    //console.log(`obj.${prop} = ${temp_pb[prop]}`);
-                }
-            }
+        this.columns = new Map();
+    }
+
+    add_protobuf_data_range(column, pb_data_range){
+        if(! this.columns.has(column)){
+            this.columns.set(column, new ReadingData(column));
+        }
+        let reading_data = this.columns.get(column);
+        let start_sample_no = pb_data_range.getStartSampleNo();
+        let data = pb_data_range.getValuesList();
+        if(data.length >0){
+            reading_data.add_data_range(new DataRange(start_sample_no, data));
         }
     }
 
-    add_protobuf_data_range(pb_data_range){
-        let start_sample_no = pb_data_range.getStartSampleNo();
-        for(const column_name of this.columns){
-            let data = pb_data_range[`get${column_name}List`]();
-            if(data.length >0){
-                this[column_name].add_data_range(new DataRange(start_sample_no, data));
-            }
+    add_empty_data_range(column, start_sample_no, end_sample_no){
+        if(! this.columns.has(column)){
+            this.columns.set(column, new ReadingData(column));
         }
+        let reading_data = this.columns.get(column);
+        reading_data.add_data_range(new DataRange(start_sample_no, end_sample_no));
     }
 }
 
