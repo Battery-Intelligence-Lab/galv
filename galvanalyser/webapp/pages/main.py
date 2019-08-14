@@ -151,6 +151,7 @@ def register_callbacks(app, config):
         [
             Output("main_selected_experiment", "children"),
             Output("metadata_table", "data"),
+            Output("metadata_table", "selected_rows")
         ],
         [Input("experiment_table", "selected_row_ids")],
     )
@@ -185,7 +186,7 @@ def register_callbacks(app, config):
         finally:
             if conn:
                 conn.close()
-        return info_line, table_rows
+        return info_line, table_rows, []
 
     @app.callback(
         Output("plot_ranges_table", "data"),
