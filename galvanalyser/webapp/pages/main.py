@@ -194,10 +194,11 @@ def register_callbacks(app, config):
         [
             State("metadata_table", "selected_rows"),
             State("metadata_table", "data"),
+            State("plot_ranges_table", "data")
         ],
     )
-    def add_data_range_to_plot(n_clicks, selected_rows, table_rows):
-        results = []
+    def add_data_range_to_plot(n_clicks, selected_rows, table_rows, current_table_rows):
+        results = current_table_rows if current_table_rows is not None else []
         if n_clicks and selected_rows:
             for row_idx in selected_rows:
                 results.append(table_rows[row_idx])
