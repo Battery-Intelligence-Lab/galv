@@ -46,6 +46,16 @@ class DataRange {
         this.to = end;
         this.data_values = data;
     }
+
+    get_subset(sample_no_from, sample_no_to){
+        let sample_no_end = Math.min(sample_no_to, this.to);
+        let sample_no_start = Math.max(sample_no_from, this.from);
+        let index_start = sample_no_start - this.from;
+        let index_end = sample_no_end - this.from;
+        let subset = this.data_values.slice(index_start, index_end);
+        return new DataRange(sample_no_start, subset);
+    }
+
 }
 
 function data_range_comp(a, b) {
@@ -102,17 +112,43 @@ class ReadingData {
     get_readings_between(sample_no_from, sample_no_to){
         let data = new Array(0);
         this.tree.reverseOrderTraverse(function(data_range){
-            let sample_no_end = Math.min(sample_no_to, data_range.to);
-            let sample_no_start = Math.max(sample_no_from, data_range.from);
-            let index_start = sample_no_start - data_range.from;
-            let index_end = sample_no_end - data_range.from;
-            let subset = data_range.data_values.slice(index_start, index_end);
-            data = subset.concat(data);
+            let datarange_subset = data_range.get_subset(sample_no_from, sample_no_to);
+            //let sample_no_end = Math.min(sample_no_to, data_range.to);
+            //let sample_no_start = Math.max(sample_no_from, data_range.from);
+            //let index_start = sample_no_start - data_range.from;
+            //let index_end = sample_no_end - data_range.from;
+            //let subset = data_range.data_values.slice(index_start, index_end);
+            data = datarange_subset.data_values.concat(data);
             // stop iteration condition
             return (data_range.from <= sample_no_from );
         },
         sample_no_to);
         return data;
+    }
+
+    get_ranges_between(sample_no_from, sample_no_to){
+        let results = [];
+        this.tree.reverseOrderTraverse(function(data_range){
+            if(data_range.to > sample_no_to || data_range.from < sample_no_from){
+                //this is an end block, make a new datarange from the partial block
+                results.push(data_range.get_subset(sample_no_from, sample_no_to));
+            } else {
+                // this block is wholly contained in the requested range
+                results.push(data_range);
+            }
+            // stop iteration condition
+            return (data_range.from <= sample_no_from );
+        },
+        sample_no_to);
+        results.reverse();
+        return results;
+    }
+
+    iterate_ranges(func){
+        this.tree.inOrderTraverse(func);
+    }
+    iterate_ranges_from(func, start_sample_no){
+        this.tree.inOrderTraverse(func,start_sample_no);
     }
 
 }
