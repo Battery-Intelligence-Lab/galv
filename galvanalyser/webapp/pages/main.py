@@ -201,7 +201,8 @@ def register_callbacks(app, config):
         results = current_table_rows if current_table_rows is not None else []
         if n_clicks and selected_rows:
             for row_idx in selected_rows:
-                results.append(table_rows[row_idx])
+                if table_rows[row_idx] not in results:
+                    results.append(table_rows[row_idx])
         return results
 
     app.clientside_callback(
