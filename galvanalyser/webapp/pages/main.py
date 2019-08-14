@@ -64,6 +64,7 @@ data_ranges = html.Div(
                         {"name": i, "id": i}
                         for i in [
                             "label_name",
+                            "column",
                             "samples_from",
                             "samples_to",
                             "info",
@@ -93,6 +94,7 @@ plotting_controls = html.Div(
                         for i in [
                             "experiment",
                             "label_name",
+                            "column",
                             "samples_from",
                             "samples_to",
                             "info",
@@ -158,6 +160,8 @@ def register_callbacks(app, config):
         conn = None
         try:
             conn = config["get_db_connection_for_current_user"]()
+            # populate columns properly, don't include "test_time"
+            available_columns = ["volts", "amps"]
             if selected_row_ids:
                 selected_row_id = selected_row_ids[0]
                 try:
@@ -166,14 +170,15 @@ def register_callbacks(app, config):
                     )
                     table_rows = [
                         {
-                            "id": f"{selected_row_id}:{m.label_name}",
+                            "id": f"{selected_row_id}:{col}:{m.label_name}",
                             "experiment": selected_row_id,
                             "label_name": m.label_name,
+                            "column": col,
                             "samples_from": m.lower_bound,
                             "samples_to": m.upper_bound,
                             "info": m.info,
                         }
-                        for m in metadatas
+                        for m in metadatas for col in available_columns
                     ]
                 except psycopg2.errors.InsufficientPrivilege:
                     info_line = f"Permission denied when retrieving metadata for experiment id {selected_row_ids}"
