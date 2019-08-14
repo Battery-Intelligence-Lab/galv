@@ -1,3 +1,4 @@
+import sys
 import galvanalyser.protobuf.experiment_data_pb2 as experiment_data_pb2
 import flask
 from flask import request, abort
@@ -36,14 +37,20 @@ def register_handlers(app, config):
         # response.headers.set('Content-Disposition', 'attachment', filename='np-array.bin')
         return response
 
+
+    @app.server.route("/experiment/<int:experiment_id>/columns")
+    @flask_login.login_required
+    def experiment_columns(experiment_id):
+        # return a list of available columns for this experiment
+        return ["test_time", "volts", "amps"]
+
     @app.server.route("/experiment/<int:experiment_id>/data")
     @flask_login.login_required
     def experiment_data(experiment_id):
         data_from = request.args.get("from", None)
         data_to = request.args.get("to", None)
-        columns = request.args.get("columns", None)
+        column = request.args.get("column", None)
         # log(f"You asked for data for experiment {experiment_id} in range {data_from} - {data_to} and columns {columns}")
-        columns = columns.split(",")
         conn = None
         try:
             conn = config["get_db_connection_for_current_user"]()
@@ -52,9 +59,9 @@ def register_handlers(app, config):
             ):
                 # log("Getting results")
                 select_columns = (
-                    columns
-                    if "sample_no" in columns
-                    else (["sample_no"] + columns)
+                    ["sample_no"]
+                    if "sample_no" == column
+                    else ["sample_no", column]
                 )
                 results = DataColumns.select_experiment_data_columns_in_range(
                     experiment_id, select_columns, data_from, data_to, conn
@@ -63,9 +70,10 @@ def register_handlers(app, config):
                 message = experiment_data_pb2.DataRanges()
                 # log("made message")
                 message.experiment_id = experiment_id
+                message.column = column
                 iters = [iter(col) for col in results]
                 sample_no_iter = iters[0]
-                data_iters = iters[1:]
+                data_iter = iters[1]
                 # log("made iters")
                 try:
                     # What we actually want is to loop over all samples
@@ -84,13 +92,8 @@ def register_handlers(app, config):
                         while True:
                             # loop over contiguous data
                             # add data
-                            for col_name, data_iter in zip(
-                                columns, data_iters
-                            ):
                                 # log(f"appending to {col_name}")
-                                getattr(range_msg, col_name).append(
-                                    next(data_iter)
-                                )
+                            range_msg.values.append(next(data_iter))
                             new_sample_no = next(sample_no_iter)
                             if new_sample_no == (current_sample_no + 1):
                                 current_sample_no = new_sample_no
@@ -113,7 +116,7 @@ def register_handlers(app, config):
             else:
                 abort(403)
         except:
-            log(f"Exception:\n{repr(sys.exc_info()[0])}")
+            log(f"Exception:\n{repr(sys.exc_info())}")
         # except psycopg2.errors.InsufficientPrivilege:
         #    abort(403) # commented out for debugging
         finally:
