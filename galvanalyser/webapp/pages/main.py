@@ -92,7 +92,7 @@ plotting_controls = html.Div(
                     columns=[
                         {"name": i, "id": i}
                         for i in [
-                            "experiment",
+                            "experiment_id",
                             "label_name",
                             "column",
                             "samples_from",
@@ -171,7 +171,7 @@ def register_callbacks(app, config):
                     table_rows = [
                         {
                             "id": f"{selected_row_id}:{col}:{m.label_name}",
-                            "experiment": selected_row_id,
+                            "experiment_id": selected_row_id,
                             "label_name": m.label_name,
                             "column": col,
                             "samples_from": m.lower_bound,
