@@ -208,6 +208,7 @@ function update_graph() {
                         y: y_data,
                         mode: 'markers',
                         type: 'scattergl',
+                        marker: {size:2},
                         name: `${requested_experiment_id} ${requested_column_name}`
                     };
                     traces.push(trace);
