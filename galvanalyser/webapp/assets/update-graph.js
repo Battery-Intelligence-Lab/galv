@@ -150,17 +150,6 @@ function request_experiment_data(experiment_id, column, start_sample_no, end_sam
 }
 
 function update_graph() {
-    /*
-    for each requested graph state:
-        if state already satisfied:
-            pass
-        elif already have data:
-            add or update graph traces
-        elif already fetching data:
-            pass
-        else:
-            request data
-    */
     // Add or update new plots
     let updates_requested = false;
     for (const [requested_experiment_id, requested_experiment_data] of requested_graph_state) {
@@ -227,19 +216,6 @@ function update_graph() {
                 //console.log(`update_graph NO DATA for ${requested_experiment_id}`);
             }
         }
-
-        //traces = [{
-        //            x: [1, 2, 3, 4],
-        //            y: [-10, 15, -13, 17],
-        //            mode: 'markers',
-        //            type: 'scattergl'
-        //        },
-        //        {
-        //            x: [1, 2, 3, 4],
-        //            y: [15, 10, -3, 7],
-        //            mode: 'markers',
-        //            type: 'scattergl'
-        //        }];
         Plotly.react(plot, traces);
     }
 }
