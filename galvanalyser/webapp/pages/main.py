@@ -196,9 +196,14 @@ def register_callbacks(app, config):
         return info_line, table_rows, []
 
     @app.callback(
-        [Output("plot_ranges_table", "data"), Output("plot_ranges_table", "selected_rows")],
-        [Input("btn_add_data_range_to_plot", "n_clicks"),
-        Input("btn_remove_data_range_from_plot", "n_clicks")],
+        [
+            Output("plot_ranges_table", "data"),
+            Output("plot_ranges_table", "selected_rows"),
+        ],
+        [
+            Input("btn_add_data_range_to_plot", "n_clicks"),
+            Input("btn_remove_data_range_from_plot", "n_clicks"),
+        ],
         [
             State("metadata_table", "selected_rows"),
             State("metadata_table", "data"),
@@ -207,18 +212,33 @@ def register_callbacks(app, config):
         ],
     )
     def add_data_range_to_plot(
-        add_n_clicks, remove_n_clicks, metadata_selected_rows, metadata_table_rows, plotted_table_rows, plotted_selected_rows
+        add_n_clicks,
+        remove_n_clicks,
+        metadata_selected_rows,
+        metadata_table_rows,
+        plotted_table_rows,
+        plotted_selected_rows,
     ):
         results = plotted_table_rows if plotted_table_rows is not None else []
         ctx = dash.callback_context
         if ctx.triggered:
-            button_id = ctx.triggered[0]['prop_id'].split('.')[0]
-            if button_id == "btn_add_data_range_to_plot" and add_n_clicks and metadata_selected_rows:
+            button_id = ctx.triggered[0]["prop_id"].split(".")[0]
+            if (
+                button_id == "btn_add_data_range_to_plot"
+                and add_n_clicks
+                and metadata_selected_rows
+            ):
                 for row_idx in metadata_selected_rows:
                     if metadata_table_rows[row_idx] not in results:
                         results.append(metadata_table_rows[row_idx])
-            if button_id == "btn_remove_data_range_from_plot" and add_n_clicks and plotted_selected_rows:
-                reverse_index_list = sorted(plotted_selected_rows, reverse=True)
+            if (
+                button_id == "btn_remove_data_range_from_plot"
+                and add_n_clicks
+                and plotted_selected_rows
+            ):
+                reverse_index_list = sorted(
+                    plotted_selected_rows, reverse=True
+                )
                 for row_idx in reverse_index_list:
                     del results[row_idx]
                 plotted_selected_rows = []
