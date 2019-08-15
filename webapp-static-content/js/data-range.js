@@ -48,6 +48,9 @@ class DataRange {
     }
 
     get_subset(sample_no_from, sample_no_to) {
+        if(sample_no_from == this.from && sample_no_to == this.to){
+            return this;
+        }
         let sample_no_end = Math.min(sample_no_to, this.to);
         let sample_no_start = Math.max(sample_no_from, this.from);
         let index_start = sample_no_start - this.from;
