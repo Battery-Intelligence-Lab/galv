@@ -196,7 +196,7 @@ def register_callbacks(app, config):
         return info_line, table_rows, []
 
     @app.callback(
-        Output("plot_ranges_table", "data"),
+        [Output("plot_ranges_table", "data"), Output("plot_ranges_table", "selected_rows")],
         [Input("btn_add_data_range_to_plot", "n_clicks"),
         Input("btn_remove_data_range_from_plot", "n_clicks")],
         [
@@ -221,7 +221,8 @@ def register_callbacks(app, config):
                 reverse_index_list = sorted(plotted_selected_rows, reverse=True)
                 for row_idx in reverse_index_list:
                     del results[row_idx]
-        return results
+                plotted_selected_rows = []
+        return results, plotted_selected_rows or []
 
     app.clientside_callback(
         ClientsideFunction(
