@@ -1,3 +1,4 @@
+import dash
 import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output, State, ClientsideFunction
@@ -104,6 +105,11 @@ plotting_controls = html.Div(
                 )
             ]
         ),
+        html.Button(
+            id="btn_remove_data_range_from_plot",
+            type="button",
+            children="Remove Data Range",
+        ),
     ]
 )
 
@@ -191,21 +197,30 @@ def register_callbacks(app, config):
 
     @app.callback(
         Output("plot_ranges_table", "data"),
-        [Input("btn_add_data_range_to_plot", "n_clicks")],
+        [Input("btn_add_data_range_to_plot", "n_clicks"),
+        Input("btn_remove_data_range_from_plot", "n_clicks")],
         [
             State("metadata_table", "selected_rows"),
             State("metadata_table", "data"),
             State("plot_ranges_table", "data"),
+            State("plot_ranges_table", "selected_rows"),
         ],
     )
     def add_data_range_to_plot(
-        n_clicks, selected_rows, table_rows, current_table_rows
+        add_n_clicks, remove_n_clicks, metadata_selected_rows, metadata_table_rows, plotted_table_rows, plotted_selected_rows
     ):
-        results = current_table_rows if current_table_rows is not None else []
-        if n_clicks and selected_rows:
-            for row_idx in selected_rows:
-                if table_rows[row_idx] not in results:
-                    results.append(table_rows[row_idx])
+        results = plotted_table_rows if plotted_table_rows is not None else []
+        ctx = dash.callback_context
+        if ctx.triggered:
+            button_id = ctx.triggered[0]['prop_id'].split('.')[0]
+            if button_id == "btn_add_data_range_to_plot" and add_n_clicks and metadata_selected_rows:
+                for row_idx in metadata_selected_rows:
+                    if metadata_table_rows[row_idx] not in results:
+                        results.append(metadata_table_rows[row_idx])
+            if button_id == "btn_remove_data_range_from_plot" and add_n_clicks and plotted_selected_rows:
+                reverse_index_list = sorted(plotted_selected_rows, reverse=True)
+                for row_idx in reverse_index_list:
+                    del results[row_idx]
         return results
 
     app.clientside_callback(
