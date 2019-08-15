@@ -177,7 +177,11 @@ def handle_recno(row, correct_number_of_columns, recno_col, row_idx):
         if recno_col >= 0:
             row = (
                 row[0:recno_col]
-                + [row[recno_col] + row[recno_col + 1]]
+                + [
+                    (row[recno_col] + row[recno_col + 1]).replace(
+                        ",", ""
+                    )
+                ]
                 + row[recno_col + 2 :]
             )
         else:
@@ -187,6 +191,8 @@ def handle_recno(row, correct_number_of_columns, recno_col, row_idx):
                     "Row {} has {} cols, expected {}"
                 ).format(row_idx, len(row), correct_number_of_columns)
             )
+    elif recno_col >= 0:
+        row[recno_col] = row[recno_col].replace(",", "")
     return row
 
 
