@@ -151,7 +151,7 @@ def register_callbacks(app, config):
         [
             Output("main_selected_experiment", "children"),
             Output("metadata_table", "data"),
-            Output("metadata_table", "selected_rows")
+            Output("metadata_table", "selected_rows"),
         ],
         [Input("experiment_table", "selected_row_ids")],
     )
@@ -179,7 +179,8 @@ def register_callbacks(app, config):
                             "samples_to": m.upper_bound,
                             "info": m.info,
                         }
-                        for m in metadatas for col in available_columns
+                        for m in metadatas
+                        for col in available_columns
                     ]
                 except psycopg2.errors.InsufficientPrivilege:
                     info_line = f"Permission denied when retrieving metadata for experiment id {selected_row_ids}"
@@ -194,10 +195,12 @@ def register_callbacks(app, config):
         [
             State("metadata_table", "selected_rows"),
             State("metadata_table", "data"),
-            State("plot_ranges_table", "data")
+            State("plot_ranges_table", "data"),
         ],
     )
-    def add_data_range_to_plot(n_clicks, selected_rows, table_rows, current_table_rows):
+    def add_data_range_to_plot(
+        n_clicks, selected_rows, table_rows, current_table_rows
+    ):
         results = current_table_rows if current_table_rows is not None else []
         if n_clicks and selected_rows:
             for row_idx in selected_rows:

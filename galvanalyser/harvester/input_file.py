@@ -244,6 +244,7 @@ class InputFile:
             # The psycopg2 cursor.copy_from method needs null values to be
             # represented as a literal '\N'
             return str(value) if value is not None else "\\N"
+
         try:
             for row in self.get_data_with_standard_colums(
                 required_column_names

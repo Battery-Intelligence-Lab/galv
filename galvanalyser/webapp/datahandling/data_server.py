@@ -37,7 +37,6 @@ def register_handlers(app, config):
         # response.headers.set('Content-Disposition', 'attachment', filename='np-array.bin')
         return response
 
-
     @app.server.route("/experiment/<int:experiment_id>/columns")
     @flask_login.login_required
     def experiment_columns(experiment_id):
@@ -92,7 +91,7 @@ def register_handlers(app, config):
                         while True:
                             # loop over contiguous data
                             # add data
-                                # log(f"appending to {col_name}")
+                            # log(f"appending to {col_name}")
                             range_msg.values.append(next(data_iter))
                             new_sample_no = next(sample_no_iter)
                             if new_sample_no == (current_sample_no + 1):

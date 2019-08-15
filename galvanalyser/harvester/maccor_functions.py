@@ -177,11 +177,7 @@ def handle_recno(row, correct_number_of_columns, recno_col, row_idx):
         if recno_col >= 0:
             row = (
                 row[0:recno_col]
-                + [
-                    (row[recno_col] + row[recno_col + 1]).replace(
-                        ",", ""
-                    )
-                ]
+                + [(row[recno_col] + row[recno_col + 1]).replace(",", "")]
                 + row[recno_col + 2 :]
             )
         else:
@@ -436,7 +432,9 @@ def load_data_maccor_text(file_type, file_path, columns, column_renames=None):
                 column_names[col_idx] = column_renames[column_name]
         columns_data = [[] for i in columns_of_interest]
         for row_idx, row in enumerate(reader):
-            row = handle_recno(row, correct_number_of_columns, recno_col, row_idx)
+            row = handle_recno(
+                row, correct_number_of_columns, recno_col, row_idx
+            )
             yield {
                 column_names[col_idx]: row[col_idx]
                 for col_idx in columns_of_interest
