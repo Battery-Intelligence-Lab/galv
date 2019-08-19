@@ -99,6 +99,7 @@ plotting_controls = html.Div(
                             "samples_from",
                             "samples_to",
                             "info",
+                            "offset",
                         ]
                     ],
                     # data=[{"hello":"aa","world":"bb","id":1}]
@@ -109,6 +110,11 @@ plotting_controls = html.Div(
             id="btn_remove_data_range_from_plot",
             type="button",
             children="Remove Data Range",
+        ),
+        html.Button(
+            id="btn_apply_offset_to_data_range",
+            type="button",
+            children="Apply offset",
         ),
     ]
 )
@@ -184,6 +190,7 @@ def register_callbacks(app, config):
                             "samples_from": m.lower_bound,
                             "samples_to": m.upper_bound,
                             "info": m.info,
+                            "offset": 0.0
                         }
                         for m in metadatas
                         for col in available_columns
@@ -203,21 +210,25 @@ def register_callbacks(app, config):
         [
             Input("btn_add_data_range_to_plot", "n_clicks"),
             Input("btn_remove_data_range_from_plot", "n_clicks"),
+            Input("btn_apply_offset_to_data_range", "n_clicks"),
         ],
         [
             State("metadata_table", "selected_rows"),
             State("metadata_table", "data"),
             State("plot_ranges_table", "data"),
             State("plot_ranges_table", "selected_rows"),
+            State("main-graph", "relayoutData"),
         ],
     )
     def add_data_range_to_plot(
         add_n_clicks,
         remove_n_clicks,
+        offset_n_clicks,
         metadata_selected_rows,
         metadata_table_rows,
         plotted_table_rows,
         plotted_selected_rows,
+        graph_relayout_data,
     ):
         results = plotted_table_rows if plotted_table_rows is not None else []
         ctx = dash.callback_context
@@ -242,6 +253,15 @@ def register_callbacks(app, config):
                 for row_idx in reverse_index_list:
                     del results[row_idx]
                 plotted_selected_rows = []
+            if (
+                button_id == "btn_apply_offset_to_data_range"
+                and offset_n_clicks
+                and plotted_selected_rows
+                and graph_relayout_data
+            ):
+                log(repr(graph_relayout_data))
+                for row_idx in plotted_selected_rows:
+                    results[row_idx]['offset'] = graph_relayout_data.get('xaxis.range[0]', 0.0)
         return results, plotted_selected_rows or []
 
     app.clientside_callback(
