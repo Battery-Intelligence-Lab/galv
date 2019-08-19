@@ -22,4 +22,4 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - /Users/luke/projects/battery/docker/postgres:/var/lib/postgresql/data
+      - "${PG_DATA_PATH}:/var/lib/postgresql/data"
