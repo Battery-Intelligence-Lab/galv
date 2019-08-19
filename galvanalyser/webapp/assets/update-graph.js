@@ -194,24 +194,20 @@ function update_graph() {
                             }
                         });
                     }
-                    let fuse_data = function(data_range_array, null_dummy) {
+                    let fuse_data = function(data_range_array) {
                         let data = new Array(0);
                         for (const data_range of data_range_array) {
                             if(data.length >0){
                                 // Insert dummy data values to make plotly split the lines on gaps between data
-                                if(null_dummy){
-                                    data.push(null);
-                                } else {
-                                    data.push(Math.random());
-                                }
+                                data.push(null);
                             }
                             data = data.concat(data_range.data_values);
                         }
                         return data;
                     };
                     // TODO insert dummy x values and null y values in gaps between data arrays
-                    let x_data = fuse_data(x_ranges, false);
-                    let y_data = fuse_data(y_ranges, true);
+                    let x_data = fuse_data(x_ranges);
+                    let y_data = fuse_data(y_ranges);
                     let trace = {
                         x: x_data,
                         y: y_data,
