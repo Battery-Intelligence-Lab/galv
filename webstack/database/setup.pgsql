@@ -283,3 +283,12 @@ ALTER TABLE experiment.metadata ENABLE ROW LEVEL SECURITY;
 CREATE POLICY metadata_access_policy ON experiment.metadata
 FOR SELECT USING ( current_user in (SELECT user_name FROM experiment.access
 									WHERE experiment_id = experiment.metadata.experiment_id));
+
+CREATE POLICY experiments_harvester_policy ON experiment.experiments
+FOR ALL TO harvester USING (true);
+
+CREATE POLICY access_harvester_policy ON experiment.access
+FOR ALL TO harvester USING (true);
+
+CREATE POLICY metadata_harvester_policy ON experiment.metadata
+FOR ALL TO harvester USING (true);
