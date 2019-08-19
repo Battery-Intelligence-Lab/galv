@@ -1,7 +1,8 @@
 "use strict";
 
 var graph_state = new Map();
-var requested_graph_state = new Map();
+var requested_metadata_ranges = new Map();
+var requested_graph_ranges = new Map();
 var graph_traces = [];
 var all_experiment_data = new Map();
 var experiment_data_requested_from_server = new Map(); //new datarange.ExperimentData();
@@ -149,10 +150,17 @@ function request_experiment_data(experiment_id, column, start_sample_no, end_sam
     return data_requested;
 }
 
+function apply_offset(data, offset){
+    if(offset == 0.0){
+        return data;
+    }
+    return data.map(x => x - offset);
+}
+
 function update_graph() {
     // Add or update new plots
     let updates_requested = false;
-    for (const [requested_experiment_id, requested_experiment_data] of requested_graph_state) {
+    for (const [requested_experiment_id, requested_experiment_data] of requested_graph_ranges) {
         //console.log(`update_graph iterating ${requested_experiment_id}`);
         for (const [column, reading_data] of requested_experiment_data.columns) {
             //console.log(`update_graph iterating ${requested_experiment_id} , ${column}`);
@@ -169,7 +177,7 @@ function update_graph() {
         let plot = document.getElementById('main-graph');
         //update graph
         let traces = [];
-        for (const [requested_experiment_id, requested_experiment_data] of requested_graph_state) {
+        for (const [requested_experiment_id, requested_experiment_data] of requested_metadata_ranges) {
             if (all_experiment_data.has(requested_experiment_id)) {
                 let available_experiment_data = all_experiment_data.get(requested_experiment_id);
                 if (!available_experiment_data.columns.has(x_axis_column_name)) {
@@ -178,30 +186,30 @@ function update_graph() {
                     continue;
                 }
                 let sample_time_data = available_experiment_data.columns.get(x_axis_column_name);
-                for (const [requested_column_name, requested_reading_data] of requested_experiment_data.columns) {
+                for (const [requested_column_name, requested_reading_data] of requested_experiment_data) {
                     let y_ranges = [];
                     let x_ranges = [];
                     if (available_experiment_data.columns.has(requested_column_name)) {
                         let available_column_reading_data = available_experiment_data.columns.get(requested_column_name);
-                        requested_reading_data.iterate_ranges(function(requested_data_range) {
+                        for(const requested_data_range of requested_reading_data){
                             let available_y_ranges = available_column_reading_data.get_ranges_between(requested_data_range.from, requested_data_range.to);
                             for (const available_y_range of available_y_ranges) {
                                 let available_x_ranges = sample_time_data.get_ranges_between(available_y_range.from, available_y_range.to);
                                 for (const available_x_range of available_x_ranges) {
-                                    y_ranges.push(available_y_range.get_subset(available_x_range.from, available_x_range.to));
-                                    x_ranges.push(available_x_range);
+                                    y_ranges.push(available_y_range.get_subset(available_x_range.from, available_x_range.to).data_values);
+                                    x_ranges.push(apply_offset(available_x_range.data_values, requested_data_range.offset)); // apply offset from requested_data_range here
                                 }
                             }
-                        });
+                        }
                     }
-                    let fuse_data = function(data_range_array) {
+                    let fuse_data = function(data_range_values_array) {
                         let data = new Array(0);
-                        for (const data_range of data_range_array) {
+                        for (const data_range_values of data_range_values_array) {
                             if(data.length >0){
                                 // Insert dummy data values to make plotly split the lines on gaps between data
                                 data.push(null);
                             }
-                            data = data.concat(data_range.data_values);
+                            data = data.concat(data_range_values);
                         }
                         return data;
                     };
@@ -231,15 +239,23 @@ if (!window.dash_clientside) {
 window.dash_clientside.clientside_graph = {
     update_graph_trigger: function(data) {
         let new_config = new Map();
+        let new_experiment_ranges = new Map();
         for (const row of data) {
             if (!new_config.has(row.experiment_id)) {
                 new_config.set(row.experiment_id, new datarange.ExperimentData());
+                new_experiment_ranges.set(row.experiment_id, new Map());
             }
             let experiment_data = new_config.get(row.experiment_id);
             experiment_data.add_empty_data_range(row.column, row.samples_from, row.samples_to);
+            let experiment_ranges = new_experiment_ranges.get(row.experiment_id);
+            if (!experiment_ranges.has(row.column)) {
+                experiment_ranges.set(row.column, [] );
+            }
+            experiment_ranges.get(row.column).push({from:row.samples_from, to:row.samples_to, offset:row.offset||0.0});
             //console.log(`update_graph_trigger wants ${row.experiment_id} , ${row.column} , ${row.samples_from} , ${row.samples_to}`);
         }
-        requested_graph_state = new_config;
+        requested_graph_ranges = new_config;
+        requested_metadata_ranges = new_experiment_ranges;
         update_graph();
         //for (const row of data) {
         //    let foo = new datarange.ExperimentData();
