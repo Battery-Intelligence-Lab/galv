@@ -91,7 +91,7 @@ plotting_controls = html.Div(
                     id="plot_ranges_table",
                     row_selectable="multi",
                     columns=[
-                        {"name": i, "id": i}
+                        {"name": i, "id": i, "editable": True if i == "offset" else False}
                         for i in [
                             "experiment_id",
                             "label_name",
