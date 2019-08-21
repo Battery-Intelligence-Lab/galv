@@ -1,4 +1,34 @@
 
+## The Makefile
+There are several scripts in the Makefile that are useful
+
+### make format
+The format script formats all the python and javascript files for consistent formatting
+
+### make protobuf
+This builds the protobuf files for javascript and python.
+It also bundles up some JS modules and the built javascript protobufs into a single file to be served to web clients.
+
+### harvester-docker-build
+Builds the harvester docker image
+
+### harvester-docker-run
+Runs the harvester docker image. The paths in this will need to change since there are a couple of absolute ones to directories on my machine.
+
+### make test
+Runs some old broken tests. It'd be good to fix this some time.
+
+### make init
+pip installs the python requirements. See Setup.
+
+## Setup
+If you want to run things locally - not in a docker
+```
+# make a virtual environment
+python3 -m venv ./.venv
+# run the init scrip in the Makefile to pip insall all the requirements
+make init
+```
 
 Folder Structure
 ----------------
