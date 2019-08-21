@@ -1,4 +1,4 @@
-
+# Galvanalyser project
 ## The Makefile
 There are several scripts in the Makefile that are useful
 
