@@ -2,7 +2,7 @@
 
 Folder Structure
 ----------------
-.
+```
 ├── config
 ├── galvanalyser -- The python code goes here, all under the galvanalyser namespace
 │   ├── database -- Library files for interacting with the database
@@ -26,3 +26,4 @@ Folder Structure
     ├── dashapp -- The dockerfile for the web app
     ├── database -- The sql file for setting up the database (should probably move elsewhere)
     └── nginx-config -- The nginx config file lives here
+```
