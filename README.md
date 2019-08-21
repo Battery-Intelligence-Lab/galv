@@ -37,10 +37,10 @@ The format script formats all the python and javascript files for consistent for
 This builds the protobuf files for javascript and python.
 It also bundles up some JS modules and the built javascript protobufs into a single file to be served to web clients.
 
-### harvester-docker-build
+### make harvester-docker-build
 Builds the harvester docker image
 
-### harvester-docker-run
+### make harvester-docker-run
 Runs the harvester docker image. The paths in this will need to change since there are a couple of absolute ones to directories on my machine.
 
 ### make test
