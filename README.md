@@ -3,7 +3,7 @@
 Folder Structure
 ----------------
 ```
-├── config
+├── config -- Doesn't actually exist in the repo, can be created locally and used to store test a harvester config
 ├── galvanalyser -- The python code goes here, all under the galvanalyser namespace
 │   ├── database -- Library files for interacting with the database
 │   ├── harvester -- The harvester app
@@ -26,4 +26,35 @@ Folder Structure
     ├── dashapp -- The dockerfile for the web app
     ├── database -- The sql file for setting up the database (should probably move elsewhere)
     └── nginx-config -- The nginx config file lives here
+```
+
+## Running the server
+In the `webstack` directory run `docker-compose up`
+
+## Database setup
+There is a file `webstack/database/setup.pgsql` that describes the database
+
+## Harvester config
+For the harvester that runs in a docker you can create a `harvester-config.json` file in the `config` directory with some content that looks like
+```
+{
+    "database_name": "galvanalyser", 
+    "database_port": 5432, 
+    "database_username": "harvester_user", 
+    "database_password": "harvester_password", 
+    "machine_id": "test_machine_01", 
+    "database_host": "127.0.0.1"
+}
+```
+You'll want to add a harvester user to the database
+```
+CREATE USER harvester_user WITH
+  LOGIN
+  NOSUPERUSER
+  INHERIT
+  NOCREATEDB
+  NOCREATEROLE
+  NOREPLICATION;
+
+GRANT harvester TO harvester_user;
 ```
