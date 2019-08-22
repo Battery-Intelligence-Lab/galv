@@ -41,4 +41,4 @@ harvester-docker-build:
 harvester-docker-run:
 	docker run --rm -it -v /Users/luke/code/battery-project/battery-project/galvanalyser:/usr/src/app/galvanalyser -v /Users/luke/code/battery-project/harvester-test:/usr/src/app/config --net host harvester
 
-.PHONY: init test protobuf format harvester-docker-build harvester-docker-run
+.PHONY: init test protobuf custom-dash-components builder-docker-build builder-docker-run format harvester-docker-build harvester-docker-run
