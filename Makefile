@@ -27,6 +27,6 @@ harvester-docker-build:
 	docker build -t harvester -f harvester/Dockerfile .
 
 harvester-docker-run:
-	docker run --rm -it -v /Users/luke/code/battery-project/battery-project/galvanalyser:/usr/src/app/galvanalyser -v /Users/luke/code/battery-project/harvester-test:/usr/src/app/config --net host harvester
+	docker run --rm -it -v ${CURDIR}/galvanalyser:/usr/src/app/galvanalyser -v ${CURDIR}/harvester-test:/usr/src/app/config --net host harvester
 
 .PHONY: init test protobuf format harvester-docker-build harvester-docker-run
