@@ -4,3 +4,6 @@
 [submodule "webapp-static-content/libs/protobuf"]
 	path = libs/protobuf
 	url = https://github.com/protocolbuffers/protobuf.git
+[submodule "libs/galvanalyser-dash-components"]
+	path = libs/galvanalyser-dash-components
+url=git@github.com:FaradayInstitution/galvanalyser-dash-components.git
