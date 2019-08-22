@@ -19,6 +19,13 @@ protobuf: protobuf/placeholder.proto
   sed -i -e "s/^goog\.global\.CLOSURE_NO_DEPS;/goog\.global\.CLOSURE_NO_DEPS = true;/" "webapp-static-content/libs/galvanalyser-protobuf.js" && \
   rm -f webapp-static-content/libs/galvanalyser-protobuf.js-e
 
+builder-docker-build:
+	docker build -t builder -f builder/Dockerfile .
+
+builder-docker-run:
+	docker run --rm -it -v ${CURDIR}:/workdir/project:rw builder
+
+
 format:
 	black --line-length 79 --exclude "libs|.venv|_pb2\.py" ./ && \
   find . \( -type f -name "*.js" ! -path "*/libs/*" ! -path "./.venv/*" \) -exec js-beautify -r {} \;
