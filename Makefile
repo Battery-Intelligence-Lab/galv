@@ -19,6 +19,11 @@ protobuf: protobuf/placeholder.proto
   sed -i -e "s/^goog\.global\.CLOSURE_NO_DEPS;/goog\.global\.CLOSURE_NO_DEPS = true;/" "webapp-static-content/libs/galvanalyser-protobuf.js" && \
   rm -f webapp-static-content/libs/galvanalyser-protobuf.js-e
 
+custom-dash-components:
+	pushd "libs/galvanalyser-dash-components" && \
+	npm run build && \
+	python setup.py sdist
+
 builder-docker-build:
 	docker build -t builder -f builder/Dockerfile .
 
