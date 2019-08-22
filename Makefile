@@ -4,7 +4,7 @@ init:
 test:
 	py.test tests
 
-protobuf: protobuf/placeholder.proto
+protobuf: protobuf/experiment-data.proto
 	mkdir -p galvanalyser/protobuf && mkdir -p libs/galvanalyser-js-protobufs && \
 	protoc -I=protobuf --python_out=galvanalyser/protobuf --js_out=binary:libs/galvanalyser-js-protobufs protobuf/experiment-data.proto && \
 	libs/closure-library/closure/bin/build/closurebuilder.py \
