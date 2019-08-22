@@ -30,8 +30,18 @@ Folder Structure
 ## The Makefile
 There are several scripts in the Makefile that are useful
 
+## make update-submodules
+Checks out the git submodules or updates them if necessary.
+
 ### make format
 The format script formats all the python and javascript files for consistent formatting
+
+## make builder-docker-build
+This builds the "builder" docker image. This is a docker image that can be used for cross platform building of this project.
+
+## make builder-docker-run
+This runs the builder docker image. It mounts the project directory in the builder docker container and the builder docker then runs the builder/build.sh script. This should generate the protobuf and library files used by the project in the appropriate places in this project
+on your local file system.
 
 ### make protobuf
 This builds the protobuf files for javascript and python.
