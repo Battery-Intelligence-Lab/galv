@@ -150,8 +150,8 @@ function request_experiment_data(experiment_id, column, start_sample_no, end_sam
     return data_requested;
 }
 
-function apply_offset(data, offset){
-    if(offset == 0.0){
+function apply_offset(data, offset) {
+    if (offset == 0.0) {
         return data;
     }
     return data.map(x => x - offset);
@@ -191,7 +191,7 @@ function update_graph() {
                     let x_ranges = [];
                     if (available_experiment_data.columns.has(requested_column_name)) {
                         let available_column_reading_data = available_experiment_data.columns.get(requested_column_name);
-                        for(const requested_data_range of requested_reading_data){
+                        for (const requested_data_range of requested_reading_data) {
                             let available_y_ranges = available_column_reading_data.get_ranges_between(requested_data_range.from, requested_data_range.to);
                             for (const available_y_range of available_y_ranges) {
                                 let available_x_ranges = sample_time_data.get_ranges_between(available_y_range.from, available_y_range.to);
@@ -205,7 +205,7 @@ function update_graph() {
                     let fuse_data = function(data_range_values_array) {
                         let data = new Array(0);
                         for (const data_range_values of data_range_values_array) {
-                            if(data.length >0){
+                            if (data.length > 0) {
                                 // Insert dummy data values to make plotly split the lines on gaps between data
                                 data.push(null);
                             }
@@ -249,9 +249,13 @@ window.dash_clientside.clientside_graph = {
             experiment_data.add_empty_data_range(row.column, row.samples_from, row.samples_to);
             let experiment_ranges = new_experiment_ranges.get(row.experiment_id);
             if (!experiment_ranges.has(row.column)) {
-                experiment_ranges.set(row.column, [] );
+                experiment_ranges.set(row.column, []);
             }
-            experiment_ranges.get(row.column).push({from:row.samples_from, to:row.samples_to, offset:row.offset||0.0});
+            experiment_ranges.get(row.column).push({
+                from: row.samples_from,
+                to: row.samples_to,
+                offset: row.offset || 0.0
+            });
             //console.log(`update_graph_trigger wants ${row.experiment_id} , ${row.column} , ${row.samples_from} , ${row.samples_to}`);
         }
         requested_graph_ranges = new_config;
