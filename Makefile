@@ -24,21 +24,21 @@ webapp-static-content/libs/galvanalyser-protobuf.js: protobuf/experiment-data.pr
   sed -i -e "s/^goog\.global\.CLOSURE_NO_DEPS;/goog\.global\.CLOSURE_NO_DEPS = true;/" "webapp-static-content/libs/galvanalyser-protobuf.js" && \
   rm -f webapp-static-content/libs/galvanalyser-protobuf.js-e
 
-custom-dash-components: libs/galvanalyser-dash-components/dist/galvanalyser_dash_components-0.0.1.tar.gz
 
-libs/galvanalyser-dash-components/dist/galvanalyser_dash_components-0.0.1.tar.gz:
-	pushd "libs/galvanalyser-dash-components" && \
-	npm run build && \
+
+custom-dash-components libs/galvanalyser-dash-components/dist/galvanalyser_dash_components-0.0.1.tar.gz: libs/galvanalyser-dash-components/src/lib/index.js libs/galvanalyser-dash-components/src/lib/components/GalvanalyserLegend.react.js 
+	cd "libs/galvanalyser-dash-components" && \
+	npm run build-dev && \
 	python setup.py sdist
 
 builder-docker-build:
 	docker build -t builder -f builder/Dockerfile .
 
 builder-docker-run:
-	docker run --rm -it -v ${CURDIR}:/workdir/project:rw builder
+	docker start --attach galvanalyser_webstack_builder || docker run -it -v ${CURDIR}:/workdir/project:rw --name="galvanalyser_webstack_builder" builder
 
 build-webstack: builder-docker-run
-	pushd webstack && \
+	cd webstack && \
 	docker-compose down && \
 	docker-compose build
 
