@@ -8,8 +8,8 @@ make init
 
 pushd libs/galvanalyser-dash-components
 npm install
-npm run build
-python setup.py sdist
 popd
+
+make custom-dash-components
 
 make protobuf
