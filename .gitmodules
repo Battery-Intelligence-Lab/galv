@@ -1,9 +1,9 @@
 [submodule "webapp-static-content/libs/closure-library"]
 	path = libs/closure-library
-	url = https://github.com/google/closure-library
+	url = https://github.com/LuAPi/closure-library.git
 [submodule "webapp-static-content/libs/protobuf"]
 	path = libs/protobuf
-	url = https://github.com/protocolbuffers/protobuf.git
+	url = https://github.com/LuAPi/protobuf.git
 [submodule "libs/galvanalyser-dash-components"]
 	path = libs/galvanalyser-dash-components
-url=git@github.com:FaradayInstitution/galvanalyser-dash-components.git
+    url=git@github.com:FaradayInstitution/galvanalyser-dash-components.git

@@ -1,6 +1,9 @@
 init:
 	pip install -r ./galvanalyser/harvester/requirements.txt && pip install -r ./galvanalyser/webapp/requirements.txt
 
+update-submodules:
+	git submodule update --init --recursive
+
 test:
 	py.test tests
 
@@ -41,4 +44,4 @@ harvester-docker-build:
 harvester-docker-run:
 	docker run --rm -it -v ${CURDIR}/galvanalyser:/usr/src/app/galvanalyser -v ${CURDIR}/harvester-test:/usr/src/app/config --net host harvester
 
-.PHONY: init test protobuf custom-dash-components builder-docker-build builder-docker-run format harvester-docker-build harvester-docker-run
+.PHONY: init update-submodules test protobuf custom-dash-components builder-docker-build builder-docker-run format harvester-docker-build harvester-docker-run
