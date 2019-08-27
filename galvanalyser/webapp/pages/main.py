@@ -16,12 +16,7 @@ def log(text):
         myfile.write(text + "\n")
 
 
-graph_section = html.Div(
-    [
-        dcc.Graph(id="main-graph"),
-        html.Div(id="graph_update_dummy", hidden=True),
-    ]
-)
+
 
 experiment_selector = html.Div(
     [
@@ -118,21 +113,90 @@ plotting_controls = html.Div(
         ),
     ]
 )
+tab_graph_content = html.Div(id="tab_graph_content",
+    children=[
+                dcc.Graph(id="main-graph",
+                figure={
+                      'layout': {
+                            'clickmode': 'event+select'
+                        }
+                  },
+                  config={
+                      'displaylogo': False,
+                      'responsive': True,
+                      'fillFrame': False,
+                      #'modeBarButtonsToAdd': [{'name':x }for x in ['select2d','lasso2d']]
+                  }),
 
-layout = html.Div(
-    [
-        graph_section,
+        html.Div(id="graph_update_dummy", hidden=True),
+    ]
+)
+
+tab_experiments_content = html.Div(id="tab_experiments_content",
+    children=[
         experiment_selector,
         experiment_list,
         data_ranges,
+    ],
+    hidden=True
+)
+
+tab_legend_content = html.Div(id="tab_legend_content",
+    children=[
+        html.P("placeholder legend content"),
         plotting_controls,
     ]
 )
 
-all_layouts.append(layout)
+tab_export_content = html.Div(id="tab_export_content",
+    children=[
+        html.P("placeholder export content"),
+    ],
+    hidden=True
+)
+
+main_tabs_container = html.Div(id="main_tabs_container", children=[
+    dcc.Tabs(id="main_tabs", value='tab_graph', children=[
+        dcc.Tab(label='Plotting', value='tab_graph'),
+        dcc.Tab(label='Select Experiments', value='tab_experiments'),
+    ]),
+    html.Div(id='main_tabs_content', children=[tab_graph_content, tab_experiments_content])
+])
+
+side_tabs_container = html.Div(id="side_tabs_container", children=[
+    dcc.Tabs(id="side_tabs", value='tab_legend', children=[
+        dcc.Tab(label='Legend', value='tab_legend'),
+        dcc.Tab(label='Export', value='tab_export'),
+    ]),
+    html.Div(id='side_tabs_content', children=[tab_legend_content, tab_export_content])
+])
+
+
+layout = html.Div(id="main_page_container",
+    children=[
+        main_tabs_container,
+        side_tabs_container,
+    ]
+)
+
+all_layouts.extend([layout, tab_graph_content, tab_experiments_content, tab_legend_content, tab_export_content])
 
 
 def register_callbacks(app, config):
+    @app.callback([Output('tab_graph_content', 'hidden'),Output('tab_experiments_content', 'hidden')],
+              [Input('main_tabs', 'value')])
+    def render_main_tabs_content(tab):
+        if tab == 'tab_graph':
+            return False, True
+        elif tab == 'tab_experiments':
+            return True, False
+    @app.callback([Output('tab_legend_content', 'hidden'),Output('tab_export_content', 'hidden')],
+              [Input('side_tabs', 'value')])
+    def render_main_tabs_content(tab):
+        if tab == 'tab_legend':
+            return False, True
+        elif tab == 'tab_export':
+            return True, False
     @app.callback(
         Output("experiment_table", "data"),
         [Input("main_get_experiments", "n_clicks")],
