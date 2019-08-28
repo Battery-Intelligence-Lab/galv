@@ -26,9 +26,10 @@ webapp-static-content/libs/galvanalyser-protobuf.js: protobuf/experiment-data.pr
 
 custom-dash-components: libs/galvanalyser-dash-components/dist/galvanalyser_dash_components-0.0.1.tar.gz
 
-libs/galvanalyser-dash-components/dist/galvanalyser_dash_components-0.0.1.tar.gz:
-	pushd "libs/galvanalyser-dash-components" && \
-	npm run build && \
+
+custom-dash-components libs/galvanalyser-dash-components/dist/galvanalyser_dash_components-0.0.1.tar.gz: libs/galvanalyser-dash-components/src/lib/index.js libs/galvanalyser-dash-components/src/lib/components/*.react.js 
+	cd "libs/galvanalyser-dash-components" && \
+	npm run build-dev && \
 	python setup.py sdist
 
 builder-docker-build:
