@@ -9,6 +9,7 @@ from galvanalyser.database.experiment.experiments_row import ExperimentsRow
 from galvanalyser.database.experiment.metadata_row import MetaDataRow
 import psycopg2
 from galvanalyser.webapp.datahandling import data_server
+from galvanalyser_dash_components import GalvanalyserLegend
 
 
 def log(text):
@@ -140,7 +141,11 @@ tab_experiments_content = html.Div(
 
 tab_legend_content = html.Div(
     id="tab_legend_content",
-    children=[html.P("placeholder legend content"), plotting_controls],
+    children=[html.P("placeholder legend content"), plotting_controls, 
+    GalvanalyserLegend(id='my-first-legend',
+        entries=[{"foo":x} for x in ["foo", "bar", "spam", "eggs", "harry", "bear"]],
+        label='my-label')
+    ],
 )
 
 tab_export_content = html.Div(
