@@ -35,7 +35,7 @@ builder-docker-build:
 	docker rm -f galvanalyser_webstack_builder ; docker build -t builder -f builder/Dockerfile .
 
 builder-docker-run:
-	docker start --attach galvanalyser_webstack_builder || { echo "Building galvanalyser_webstack_builder" ; docker run -it -v ${CURDIR}:/workdir/project:rw --name="galvanalyser_webstack_builder" builder ;}
+	docker start --attach galvanalyser_webstack_builder || { echo "Creating container galvanalyser_webstack_builder" ; docker run -it -v ${CURDIR}:/workdir/project:rw --name="galvanalyser_webstack_builder" builder ;}
 
 build-webstack: builder-docker-run
 	cd webstack && \
