@@ -30,7 +30,7 @@ npm install:
 "
 pushd libs/galvanalyser-dash-components
 StopIfError $? "Failed to set working directory to libs/galvanalyser-dash-components"
-npm install
+pnpm install
 StopIfError $? "Failed to install npm dependencies"
 popd
 StopIfError $? "Failed to set working directory back to project directory"
