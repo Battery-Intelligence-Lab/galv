@@ -11,7 +11,13 @@ import psycopg2
 from galvanalyser.webapp.datahandling import data_server
 from galvanalyser_dash_components import GalvanalyserLegend
 
-
+# Reference for selection interaction https://dash.plot.ly/interactive-graphing
+# Plotly python reference https://plot.ly/python/reference/
+# Plotly js reference https://plot.ly/javascript/reference/
+# and https://dash.plot.ly/dash-core-components
+# also https://raw.githubusercontent.com/plotly/plotly.py/master/packages/python/plotly/plotly/graph_objs/__init__.py
+# and https://github.com/plotly/dash-core-components/blob/dev/dash_core_components/Graph.py
+# and https://github.com/plotly/dash-html-components/blob/master/dash_html_components/Div.py
 def log(text):
     with open("/tmp/log.txt", "a") as myfile:
         myfile.write(text + "\n")
