@@ -1,6 +1,6 @@
 FROM node:lts
 
-RUN apt update && apt install -y build-essential protobuf-compiler curl python3.5-dev python3-venv && \
+RUN apt update && apt install -y build-essential protobuf-compiler curl python3.5-dev python3-venv rename && \
 mkdir /workdir && python3 -m venv /workdir/venv && \
 npm install -g pnpm && \
 bash -c "source /workdir/venv/bin/activate && pip install wheel pyyaml"
