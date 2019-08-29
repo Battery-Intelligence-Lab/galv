@@ -148,7 +148,7 @@ tab_experiments_content = html.Div(
 tab_legend_content = html.Div(
     id="tab_legend_content",
     children=[html.P("placeholder legend content"), plotting_controls, 
-    GalvanalyserLegend(id='my-first-legend',
+    GalvanalyserLegend(id='my-first-legend', graphId="main-graph",
         entries=[{"foo":x} for x in ["foo", "bar", "spam", "eggs", "harry", "bear"]],
         label='my-label')
     ],
