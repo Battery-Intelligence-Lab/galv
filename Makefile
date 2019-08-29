@@ -32,10 +32,10 @@ custom-dash-components libs/galvanalyser-dash-components/dist/galvanalyser_dash_
 	python setup.py sdist
 
 builder-docker-build:
-	docker build -t builder -f builder/Dockerfile .
+	docker rm -f galvanalyser_webstack_builder ; docker build -t builder -f builder/Dockerfile .
 
 builder-docker-run:
-	docker start --attach galvanalyser_webstack_builder || docker run -it -v ${CURDIR}:/workdir/project:rw --name="galvanalyser_webstack_builder" builder
+	docker start --attach galvanalyser_webstack_builder || { echo "Building galvanalyser_webstack_builder" ; docker run -it -v ${CURDIR}:/workdir/project:rw --name="galvanalyser_webstack_builder" builder ;}
 
 build-webstack: builder-docker-run
 	cd webstack && \
