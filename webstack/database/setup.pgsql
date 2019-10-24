@@ -200,39 +200,100 @@ GRANT ALL ON TABLE experiment.access TO postgres;
 
 GRANT SELECT ON TABLE experiment.access TO normal_user;
 
--- Table: experiment.data
-
--- DROP TABLE experiment.data;
-
-CREATE TABLE experiment.data
+CREATE TABLE experiment.unit
 (
-    experiment_id bigint NOT NULL,
-    sample_no bigint NOT NULL,
-    test_time double precision NOT NULL,
-    volts double precision NOT NULL,
-    amps double precision NOT NULL,
-    capacity double precision,
-    temperature double precision,
-    CONSTRAINT data_pkey PRIMARY KEY (experiment_id, sample_no),
-    CONSTRAINT data_experiment_id_fkey FOREIGN KEY (experiment_id)
-        REFERENCES experiment.experiments (id) MATCH SIMPLE
-        ON UPDATE CASCADE
-        ON DELETE CASCADE
-) --PARTITION BY LIST (experiment_id) 
+    id bigserial NOT NULL,
+    name text NOT NULL,
+    symbol text NOT NULL,
+    description text,
+    CONSTRAINT unit_pkey PRIMARY KEY (id)
+)
 WITH (
     OIDS = FALSE
 )
 TABLESPACE pg_default;
 
-ALTER TABLE experiment.data
+ALTER TABLE experiment.unit
     OWNER to harvester;
 
-GRANT ALL ON TABLE experiment.data TO harvester;
+ALTER SEQUENCE experiment.unit_id_seq
+    OWNER TO harvester;
 
--- Partitions SQL
+-- Table: experiment.column_type
 
---CREATE TABLE experiment.data_default PARTITION OF experiment.data
---    DEFAULT;
+-- DROP TABLE experiment.column_type;
+
+CREATE TABLE experiment.column_type
+(
+    id bigserial NOT NULL,
+    name text NOT NULL,
+    unit_id bigint,
+    CONSTRAINT column_type_pkey PRIMARY KEY (id),
+    CONSTRAINT column_type_unit_id_fkey FOREIGN KEY (unit_id)
+        REFERENCES experiment.unit (id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE SET NULL
+)
+WITH (
+    OIDS = FALSE
+)
+TABLESPACE pg_default;
+
+ALTER TABLE experiment.column_type
+    OWNER to harvester;
+
+ALTER SEQUENCE experiment.column_type_id_seq
+    OWNER TO harvester;
+
+-- Table: experiment."column"
+
+-- DROP TABLE experiment."column";
+
+CREATE TABLE experiment."column"
+(
+    id bigserial NOT NULL,
+    type_id bigint NOT NULL,
+    name text NOT NULL,
+    CONSTRAINT column_pkey PRIMARY KEY (id),
+    CONSTRAINT column_type_id_fkey FOREIGN KEY (type_id)
+        REFERENCES experiment.column_type (id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
+)
+WITH (
+    OIDS = FALSE
+)
+TABLESPACE pg_default;
+
+ALTER TABLE experiment."column"
+    OWNER to harvester;
+
+ALTER SEQUENCE experiment.column_id_seq
+    OWNER TO harvester;
+
+-- Table: experiment.timeseries_data
+
+-- DROP TABLE experiment.timeseries_data;
+
+CREATE TABLE experiment.timeseries_data
+(
+    experiment_id bigint NOT NULL,
+    sample_no bigint NOT NULL,
+    value double precision NOT NULL,
+    column_id bigint NOT NULL,
+    CONSTRAINT timeseries_data_pkey PRIMARY KEY (experiment_id, sample_no),
+    CONSTRAINT timeseries_data_column_id_fkey FOREIGN KEY (column_id)
+        REFERENCES experiment."column" (id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
+)
+WITH (
+    OIDS = FALSE
+)
+TABLESPACE pg_default;
+
+ALTER TABLE experiment.timeseries_data
+    OWNER to harvester;
 
 -- Table: experiment.metadata
 
