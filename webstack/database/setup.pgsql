@@ -141,36 +141,37 @@ GRANT ALL ON SCHEMA experiment TO postgres;
 
 GRANT USAGE ON SCHEMA experiment TO harvester;
 
--- Table: experiment.experiments
+-- Table: experiment.dataset
 
--- DROP TABLE experiment.experiments;
+-- DROP TABLE experiment.dataset;
 
-CREATE TABLE experiment.experiments
+CREATE TABLE experiment.dataset
 (
     id bigserial NOT NULL,
-    name text,
-    date timestamp with time zone,
+    name text NOT NULL,
+    date timestamp with time zone NOT NULL,
+    institution text NOT NULL,
     type text NOT NULL,
-    PRIMARY KEY (name, date),
+    PRIMARY KEY (name, date, institution),
     UNIQUE (id)
-
 )
 WITH (
     OIDS = FALSE
 );
 
-ALTER TABLE experiment.experiments
+ALTER TABLE experiment.dataset
     OWNER to postgres;
 
-GRANT INSERT, SELECT, TRIGGER ON TABLE experiment.experiments TO harvester;
+GRANT INSERT, SELECT, TRIGGER ON TABLE experiment.dataset TO harvester;
 
-GRANT ALL ON TABLE experiment.experiments TO postgres;
+GRANT SELECT ON TABLE experiment.dataset TO normal_user;
 
-GRANT ALL ON SEQUENCE experiment.experiments_id_seq TO postgres;
+GRANT ALL ON TABLE experiment.dataset TO postgres;
 
-GRANT USAGE ON SEQUENCE experiment.experiments_id_seq TO harvester;
+GRANT ALL ON SEQUENCE experiment.dataset_id_seq TO postgres;
 
-GRANT SELECT ON TABLE experiment.experiments TO normal_user;
+GRANT USAGE ON SEQUENCE experiment.dataset_id_seq TO harvester;
+
 
 -- Table: experiment.access
 
