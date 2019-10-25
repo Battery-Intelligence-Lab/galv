@@ -80,7 +80,7 @@ CREATE TABLE harvesters.monitored_paths
     harvester_id bigint NOT NULL,
     path text NOT NULL,
     monitored_for text[] NOT NULL,
-    monitor_path_id bigint NOT NULL DEFAULT nextval('harvesters.monitored_paths_monitor_id_seq'::regclass) ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 9223372036854775807 CACHE 1 ),
+    monitor_path_id bigserial NOT NULL,
     CONSTRAINT monitored_paths_pkey PRIMARY KEY (path, harvester_id),
     CONSTRAINT monitored_paths_path_id_key UNIQUE (monitor_path_id)
 ,
@@ -100,6 +100,17 @@ ALTER TABLE harvesters.monitored_paths
 GRANT SELECT ON TABLE harvesters.monitored_paths TO harvester;
 
 GRANT ALL ON TABLE harvesters.monitored_paths TO postgres;
+
+-- Type: file_state_t
+
+-- DROP TYPE harvesters.file_state_t;
+
+CREATE TYPE harvesters.file_state_t AS ENUM
+    ('IMPORTED', 'IMPORTING', 'STABLE', 'UNSTABLE', 'IMPORT_FAILED');
+
+ALTER TYPE harvesters.file_state_t
+    OWNER TO postgres;
+
 
 -- Table: harvesters.observed_files
 
@@ -141,6 +152,27 @@ GRANT ALL ON SCHEMA experiment TO postgres;
 
 GRANT USAGE ON SCHEMA experiment TO harvester;
 
+-- Table: experiment.institution
+
+-- DROP TABLE experiment.institution;
+
+CREATE TABLE experiment.institution
+(
+    id bigserial NOT NULL,
+    name text NOT NULL,
+    PRIMARY KEY (id)
+)
+WITH (
+    OIDS = FALSE
+);
+
+ALTER TABLE experiment.institution
+    OWNER to postgres;
+
+GRANT SELECT ON TABLE experiment.institution TO harvester;
+
+GRANT SELECT ON TABLE experiment.institution TO normal_user;
+
 -- Table: experiment.dataset
 
 -- DROP TABLE experiment.dataset;
@@ -150,10 +182,14 @@ CREATE TABLE experiment.dataset
     id bigserial NOT NULL,
     name text NOT NULL,
     date timestamp with time zone NOT NULL,
-    institution text NOT NULL,
+    institution_id bigint NOT NULL,
     type text NOT NULL,
-    PRIMARY KEY (name, date, institution),
-    UNIQUE (id)
+    PRIMARY KEY (name, date, institution_id),
+    UNIQUE (id),
+    FOREIGN KEY (institution_id)
+        REFERENCES experiment.institution (id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
 )
 WITH (
     OIDS = FALSE
@@ -172,18 +208,17 @@ GRANT ALL ON SEQUENCE experiment.dataset_id_seq TO postgres;
 
 GRANT USAGE ON SEQUENCE experiment.dataset_id_seq TO harvester;
 
-
 -- Table: experiment.access
 
 -- DROP TABLE experiment.access;
 
 CREATE TABLE experiment.access
 (
-    experiment_id bigint NOT NULL,
+    dataset_id bigint NOT NULL,
     user_name text NOT NULL,
-    PRIMARY KEY (experiment_id, user_name),
-    FOREIGN KEY (experiment_id)
-        REFERENCES experiment.experiments (id) MATCH SIMPLE
+    PRIMARY KEY (dataset_id, user_name),
+    FOREIGN KEY (dataset_id)
+        REFERENCES experiment.dataset (id) MATCH SIMPLE
         ON UPDATE CASCADE
         ON DELETE CASCADE
 )
@@ -277,11 +312,11 @@ ALTER SEQUENCE experiment.column_id_seq
 
 CREATE TABLE experiment.timeseries_data
 (
-    experiment_id bigint NOT NULL,
+    dataset_id bigint NOT NULL,
     sample_no bigint NOT NULL,
     value double precision NOT NULL,
     column_id bigint NOT NULL,
-    CONSTRAINT timeseries_data_pkey PRIMARY KEY (experiment_id, sample_no),
+    CONSTRAINT timeseries_data_pkey PRIMARY KEY (dataset_id, sample_no),
     CONSTRAINT timeseries_data_column_id_fkey FOREIGN KEY (column_id)
         REFERENCES experiment."column" (id) MATCH SIMPLE
         ON UPDATE CASCADE
@@ -301,13 +336,13 @@ ALTER TABLE experiment.timeseries_data
 
 CREATE TABLE experiment.metadata
 (
-    experiment_id bigint NOT NULL,
+    dataset_id bigint NOT NULL,
     label_name text NOT NULL,
     sample_range int8range NOT NULL,
     info jsonb,
-    PRIMARY KEY (experiment_id, label_name),
-    FOREIGN KEY (experiment_id)
-        REFERENCES experiment.experiments (id) MATCH SIMPLE
+    PRIMARY KEY (dataset_id, label_name),
+    FOREIGN KEY (dataset_id)
+        REFERENCES experiment.dataset (id) MATCH SIMPLE
         ON UPDATE CASCADE
         ON DELETE CASCADE
 )
@@ -324,8 +359,8 @@ GRANT SELECT ON TABLE experiment.metadata TO normal_user;
 
 -- SELECT * FROM experiment.data as d
 -- INNER JOIN experiment.metadata AS m ON
--- d.experiment_id = m.experiment_id
--- WHERE m.experiment_id = 46 and
+-- d.dataset_id = m.dataset_id
+-- WHERE m.dataset_id = 46 and
 --       texteq(m.label_name, 'test_label_1') and
 -- 	     d.sample_no <@ m.sample_range
 
@@ -334,19 +369,19 @@ ALTER TABLE experiment.access ENABLE ROW LEVEL SECURITY;
 CREATE POLICY access_access_policy ON experiment.access
 FOR SELECT USING ( user_name = current_user);
 
-ALTER TABLE experiment.experiments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE experiment.dataset ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY experiments_access_policy ON experiment.experiments
+CREATE POLICY dataset_access_policy ON experiment.dataset
 FOR SELECT USING ( current_user in (SELECT user_name FROM experiment.access
-									WHERE experiment_id = experiment.experiments.id));
+									WHERE dataset_id = experiment.dataset.id));
 
 ALTER TABLE experiment.metadata ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY metadata_access_policy ON experiment.metadata
 FOR SELECT USING ( current_user in (SELECT user_name FROM experiment.access
-									WHERE experiment_id = experiment.metadata.experiment_id));
+									WHERE dataset_id = experiment.metadata.dataset_id));
 
-CREATE POLICY experiments_harvester_policy ON experiment.experiments
+CREATE POLICY dataset_harvester_policy ON experiment.dataset
 FOR ALL TO harvester USING (true);
 
 CREATE POLICY access_harvester_policy ON experiment.access
