@@ -47,16 +47,16 @@ GRANT ALL ON SCHEMA harvesters TO postgres;
 
 GRANT USAGE ON SCHEMA harvesters TO harvester;
 
--- Table: harvesters.harvesters
+-- Table: harvesters.harvester
 
--- DROP TABLE harvesters.harvesters;
+-- DROP TABLE harvesters.harvester;
 
-CREATE TABLE harvesters.harvesters
+CREATE TABLE harvesters.harvester
 (
-    id_no bigserial NOT NULL,
+    id bigserial NOT NULL,
     machine_id text NOT NULL,
-    CONSTRAINT harvesters_pkey PRIMARY KEY (id_no),
-    CONSTRAINT harvesters_machine_id_key UNIQUE (machine_id)
+    CONSTRAINT harvester_pkey PRIMARY KEY (id),
+    CONSTRAINT harvester_machine_id_key UNIQUE (machine_id)
 
 )
 WITH (
@@ -64,28 +64,27 @@ WITH (
 )
 TABLESPACE pg_default;
 
-ALTER TABLE harvesters.harvesters
+ALTER TABLE harvesters.harvester
     OWNER to postgres;
 
-GRANT SELECT ON TABLE harvesters.harvesters TO harvester;
+GRANT SELECT ON TABLE harvesters.harvester TO harvester;
 
-GRANT ALL ON TABLE harvesters.harvesters TO postgres;
+GRANT ALL ON TABLE harvesters.harvester TO postgres;
 
--- Table: harvesters.monitored_paths
+-- Table: harvesters.monitored_path
 
--- DROP TABLE harvesters.monitored_paths;
+-- DROP TABLE harvesters.monitored_path;
 
-CREATE TABLE harvesters.monitored_paths
+CREATE TABLE harvesters.monitored_path
 (
     harvester_id bigint NOT NULL,
     path text NOT NULL,
     monitored_for text[] NOT NULL,
     monitor_path_id bigserial NOT NULL,
-    CONSTRAINT monitored_paths_pkey PRIMARY KEY (path, harvester_id),
-    CONSTRAINT monitored_paths_path_id_key UNIQUE (monitor_path_id)
-,
-    CONSTRAINT monitored_paths_harvester_id_fkey FOREIGN KEY (harvester_id)
-        REFERENCES harvesters.harvesters (id_no) MATCH SIMPLE
+    PRIMARY KEY (path, harvester_id),
+    UNIQUE (monitor_path_id),
+    FOREIGN KEY (harvester_id)
+        REFERENCES harvesters.harvester (id) MATCH SIMPLE
         ON UPDATE CASCADE
         ON DELETE CASCADE
 )
@@ -94,12 +93,12 @@ WITH (
 )
 TABLESPACE pg_default;
 
-ALTER TABLE harvesters.monitored_paths
+ALTER TABLE harvesters.monitored_path
     OWNER to postgres;
 
-GRANT SELECT ON TABLE harvesters.monitored_paths TO harvester;
+GRANT SELECT ON TABLE harvesters.monitored_path TO harvester;
 
-GRANT ALL ON TABLE harvesters.monitored_paths TO postgres;
+GRANT ALL ON TABLE harvesters.monitored_path TO postgres;
 
 -- Type: file_state_t
 
@@ -112,11 +111,11 @@ ALTER TYPE harvesters.file_state_t
     OWNER TO postgres;
 
 
--- Table: harvesters.observed_files
+-- Table: harvesters.observed_file
 
--- DROP TABLE harvesters.observed_files;
+-- DROP TABLE harvesters.observed_file;
 
-CREATE TABLE harvesters.observed_files
+CREATE TABLE harvesters.observed_file
 (
     monitor_path_id bigint NOT NULL,
     path text NOT NULL,
@@ -125,7 +124,7 @@ CREATE TABLE harvesters.observed_files
     file_state harvesters.file_state_t NOT NULL DEFAULT 'UNSTABLE'::harvesters.file_state_t,
     CONSTRAINT observed_files_pkey PRIMARY KEY (monitor_path_id, path),
     CONSTRAINT observed_files_monitor_path_id_fkey FOREIGN KEY (monitor_path_id)
-        REFERENCES harvesters.monitored_paths (monitor_path_id) MATCH SIMPLE
+        REFERENCES harvesters.monitored_path (monitor_path_id) MATCH SIMPLE
         ON UPDATE NO ACTION
         ON DELETE NO ACTION
 )
@@ -134,12 +133,12 @@ WITH (
 )
 TABLESPACE pg_default;
 
-ALTER TABLE harvesters.observed_files
+ALTER TABLE harvesters.observed_file
     OWNER to postgres;
 
-GRANT INSERT, SELECT, UPDATE, DELETE ON TABLE harvesters.observed_files TO harvester;
+GRANT INSERT, SELECT, UPDATE, DELETE ON TABLE harvesters.observed_file TO harvester;
 
-GRANT ALL ON TABLE harvesters.observed_files TO postgres;
+GRANT ALL ON TABLE harvesters.observed_file TO postgres;
 
 -- SCHEMA: experiment
 
