@@ -11,7 +11,7 @@ from galvanalyser.database.harvester.monitored_paths_row import (
 from galvanalyser.database.harvester.observed_files_row import (
     ObservedFileRow,
     ObservedFilePathRow,
-)
+from galvanalyser.database.experiment.institution_row import InstitutionRow
 from galvanalyser.database.experiment.dataset_row import DatasetRow
 from galvanalyser.database.experiment.access_row import AccessRow
 from galvanalyser.database.experiment.data_row import DataRow
@@ -49,6 +49,7 @@ def write_config_template(config_template_path):
         "database_port": 5432,
         "database_name": "galvanalyser",
         "machine_id": "my_machine_01",
+        "institution": "Oxford",
     }
     with open(config_template_path, "w") as json_file:
         json.dump(template, json_file, indent=4)
@@ -113,7 +114,7 @@ def monitor_path(monitor_path_id, path, monitored_for, conn):
     print("Done monitoring paths")
 
 
-def import_file(file_path_row, conn):
+def import_file(file_path_row, institution_id, conn):
     """
         Attempts to import a given file
     """
@@ -136,6 +137,7 @@ def import_file(file_path_row, conn):
             dataset_row = DatasetRow.select_from_name_date_and_institution_id(
                 name=input_file.metadata["Dataset Name"],
                 date=input_file.metadata["Date of Test"],
+                institution_id,
                 conn=conn,
             )
             is_new_dataset = dataset_row is None
@@ -143,6 +145,7 @@ def import_file(file_path_row, conn):
                 dataset_row = DatasetRow(
                     name=input_file.metadata["Dataset Name"],
                     date=input_file.metadata["Date of Test"],
+                    institution_id,
                     dataset_type=input_file.metadata["Machine Type"],
                 )
                 dataset_row.insert(conn)
@@ -224,6 +227,18 @@ def main(argv):
                 + " harvester in the database"
             )
             sys.exit(1)
+        try:
+            institution_id = InstitutionRow.select_from_name(
+                config["institution"], conn
+            ).id
+        except AttributeError:
+            print(
+                "Error: Could not find a institution id for an institution "
+                "called "
+                + config["machine_id"]
+                + " harvester in the database"
+            )
+            sys.exit(1)
         monitored_paths_rows = MonitoredPathRow.select_from_harvester_id(
             my_harvester_id, conn
         )
@@ -246,7 +261,7 @@ def main(argv):
         )
         for stable_observed_file_path_row in stable_observed_file_path_rows:
             # import the file
-            import_file(stable_observed_file_path_row, conn)
+            import_file(stable_observed_file_path_row, institution_id, conn)
 
     finally:
         conn.close()
