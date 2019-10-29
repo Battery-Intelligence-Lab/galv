@@ -1,7 +1,7 @@
 import psycopg2
 
 
-class MonitoredPathsRow:
+class MonitoredPathRow:
     def __init__(
         self, harvester_id, monitored_for, path, monitor_path_id=None
     ):
@@ -34,7 +34,7 @@ class MonitoredPathsRow:
             )
             records = cursor.fetchall()
             return [
-                MonitoredPathsRow(
+                MonitoredPathRow(
                     harvester_id=harvester_id,
                     monitored_for=result[0],
                     path=result[1],
@@ -56,7 +56,7 @@ class MonitoredPathsRow:
             )
             records = cursor.fetchall()
             return [
-                MonitoredPathsRow(
+                MonitoredPathRow(
                     harvester_id=result[0],
                     monitored_for=monitored_for,
                     path=result[1],

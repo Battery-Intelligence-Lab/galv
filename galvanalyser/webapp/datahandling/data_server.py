@@ -1,5 +1,5 @@
 import sys
-import galvanalyser.protobuf.experiment_data_pb2 as experiment_data_pb2
+import galvanalyser.protobuf.timeseries_data_pb2 as timeseries_data_pb2
 import flask
 from flask import request, abort
 import flask_login
@@ -20,8 +20,8 @@ def register_handlers(app, config):
     @app.server.route("/data-server/data")
     def serve_data():
         log("in serve_data")
-        message = experiment_data_pb2.DataRanges()
-        message.experiment_id = 3
+        message = timeseries_data_pb2.DataRanges()
+        message.dataset_id = 3
         value = message.ranges.add()
         value.start_sample_no = 50
         value.volts.extend([math.sin(x / 10.0) for x in range(512)])
@@ -37,24 +37,24 @@ def register_handlers(app, config):
         # response.headers.set('Content-Disposition', 'attachment', filename='np-array.bin')
         return response
 
-    @app.server.route("/experiment/<int:experiment_id>/columns")
+    @app.server.route("/dataset/<int:dataset_id>/columns")
     @flask_login.login_required
-    def experiment_columns(experiment_id):
+    def dataset_columns(dataset_id):
         # return a list of available columns for this experiment
         return ["test_time", "volts", "amps"]
 
-    @app.server.route("/experiment/<int:experiment_id>/data")
+    @app.server.route("/dataset/<int:dataset_id>/data")
     @flask_login.login_required
-    def experiment_data(experiment_id):
+    def dataset_data(dataset_id):
         data_from = request.args.get("from", None)
         data_to = request.args.get("to", None)
         column = request.args.get("column", None)
-        # log(f"You asked for data for experiment {experiment_id} in range {data_from} - {data_to} and columns {columns}")
+        # log(f"You asked for data for dataset {dataset_id} in range {data_from} - {data_to} and columns {columns}")
         conn = None
         try:
             conn = config["get_db_connection_for_current_user"]()
-            if AccessRow.current_user_has_access_to_experiment(
-                experiment_id, conn
+            if AccessRow.current_user_has_access_to_dataset(
+                dataset_id, conn
             ):
                 # log("Getting results")
                 select_columns = (
@@ -62,13 +62,13 @@ def register_handlers(app, config):
                     if "sample_no" == column
                     else ["sample_no", column]
                 )
-                results = DataColumns.select_experiment_data_columns_in_range(
-                    experiment_id, select_columns, data_from, data_to, conn
+                results = DataColumns.select_dataset_data_columns_in_range(
+                    dataset_id, select_columns, data_from, data_to, conn
                 )
                 # log("got results")
-                message = experiment_data_pb2.DataRanges()
+                message = timeseries_data_pb2.DataRanges()
                 # log("made message")
-                message.experiment_id = experiment_id
+                message.dataset_id = dataset_id
                 message.column = column
                 iters = [iter(col) for col in results]
                 sample_no_iter = iters[0]
@@ -102,7 +102,7 @@ def register_handlers(app, config):
                                 break
                 except StopIteration:
                     pass
-                # return (f"You asked for data for experiment {experiment_id} in range {data_from} - {data_to} and columns {columns}."
+                # return (f"You asked for data for dataset {dataset_id} in range {data_from} - {data_to} and columns {columns}."
                 #    f"\nThere were {str([x for x in map(len, results)])} results"
                 # )
                 log("Serializing response")
@@ -122,12 +122,12 @@ def register_handlers(app, config):
             if conn:
                 conn.close()
 
-    @app.server.route("/experiment/<int:id>/metadata")
+    @app.server.route("/dataset/<int:id>/metadata")
     @flask_login.login_required
-    def experiment_metadata(id):
+    def dataset_metadata(id):
         data_from = request.args.get("from", None)
         data_to = request.args.get("to", None)
         columns = request.args.get("columns", None)
-        return f"You asked for metadata for experiment {id} in range {data_from} - {data_to} and columns {columns}"
+        return f"You asked for metadata for dataset {id} in range {data_from} - {data_to} and columns {columns}"
 
     # pass

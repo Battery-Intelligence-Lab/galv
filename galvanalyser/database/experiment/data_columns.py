@@ -3,14 +3,14 @@ import galvanalyser.harvester.battery_exceptions as battery_exceptions
 
 
 # http://aklaver.org/wordpress/2018/04/21/building-dynamic-sql-using-psycopg2/
-def select_experiment_data_columns_in_range(
-    experiment_id, columns, samples_from, samples_to, conn
+def select_dataset_data_columns_in_range(
+    dataset_id, columns, samples_from, samples_to, conn
 ):
     with conn.cursor("column_cursor") as cursor:
         query_string = sql.SQL(
             (
                 "SELECT {} FROM experiment.data "
-                "WHERE experiment_id={} AND sample_no >= {} AND sample_no < {}"
+                "WHERE dataset_id={} AND sample_no >= {} AND sample_no < {}"
                 " ORDER BY sample_no ASC"
             )
         ).format(
@@ -19,5 +19,5 @@ def select_experiment_data_columns_in_range(
             sql.Placeholder(),
             sql.Placeholder(),
         )
-        cursor.execute(query_string, [experiment_id, samples_from, samples_to])
+        cursor.execute(query_string, [dataset_id, samples_from, samples_to])
         return tuple(column for column in zip(*(sample for sample in cursor)))

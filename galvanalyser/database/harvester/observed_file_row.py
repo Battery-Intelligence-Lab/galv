@@ -1,7 +1,7 @@
 import psycopg2
 
 
-class ObservedFilesRow:
+class ObservedFileRow:
     def __init__(
         self,
         monitor_path_id,
@@ -76,7 +76,7 @@ class ObservedFilesRow:
             result = cursor.fetchone()
             if result is None:
                 return None
-            return ObservedFilesRow(
+            return ObservedFileRow(
                 monitor_path_id,
                 path,
                 last_observed_size=result[0],
@@ -97,7 +97,7 @@ class ObservedFilesRow:
             )
             records = cursor.fetchall()
             return [
-                ObservedFilesRow(
+                ObservedFileRow(
                     monitor_path_id,
                     path=result[0],
                     last_observed_size=result[1],
@@ -108,7 +108,7 @@ class ObservedFilesRow:
             ]
 
     @staticmethod
-    def select_from_harvester_id_no_with_state(harvester_id, file_state, conn):
+    def select_from_harvester_id_with_state(harvester_id, file_state, conn):
         with conn.cursor() as cursor:
             cursor.execute(
                 (
@@ -124,7 +124,7 @@ class ObservedFilesRow:
             )
             records = cursor.fetchall()
             return [
-                ObservedFilesRow(
+                ObservedFileRow(
                     monitor_path_id=result[0],
                     path=result[1],
                     last_observed_size=result[2],
@@ -155,7 +155,7 @@ class ObservedFilePathRow:
         self.file_state = file_state
 
     @staticmethod
-    def select_from_harvester_id_no_with_state(harvester_id, file_state, conn):
+    def select_from_harvester_id_with_state(harvester_id, file_state, conn):
         with conn.cursor() as cursor:
             cursor.execute(
                 (

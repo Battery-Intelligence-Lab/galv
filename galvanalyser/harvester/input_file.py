@@ -108,10 +108,10 @@ class InputFile:
         for row_no, file_data_row in enumerate(file_cols_to_data_generator, 1):
             missing_colums = rec_col_set - set(file_data_row.keys())
             if (
-                "experiment_id" in missing_colums
-                and "experiment_id" in self.metadata
+                "dataset_id" in missing_colums
+                and "dataset_id" in self.metadata
             ):
-                file_data_row["experiment_id"] = self.metadata["experiment_id"]
+                file_data_row["dataset_id"] = self.metadata["dataset_id"]
             if "sample_no" in missing_colums:
                 file_data_row["sample_no"] = row_no
             if "temperature" in missing_colums:

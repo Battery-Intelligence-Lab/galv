@@ -8,7 +8,7 @@ import galvanalyser.harvester.battery_exceptions as battery_exceptions
 class DataRow:
     def __init__(
         self,
-        experiment_id,
+        dataset_id,
         sample_no,
         time,
         voltage,
@@ -16,7 +16,7 @@ class DataRow:
         charge,
         temperature,
     ):
-        self.experiment_id = experiment_id
+        self.dataset_id = dataset_id
         self.sample_no = sample_no
         self.time = time
         self.voltage = voltage
@@ -28,12 +28,12 @@ class DataRow:
         with conn.cursor() as cursor:
             cursor.execute(
                 (
-                    "INSERT INTO experiment.data (experiment_id, sample_no, "
+                    "INSERT INTO experiment.data (dataset_id, sample_no, "
                     '"time", voltage, current, charge) '
                     "VALUES (%s, %s, %s, %s, %s, %s, %s)"
                 ),
                 [
-                    self.experiment_id,
+                    self.dataset_id,
                     self.sample_no,
                     self.time,
                     self.voltage,
@@ -76,23 +76,23 @@ class DataRow:
             return [desc[0] for desc in cursor.description]
 
     @staticmethod
-    def select_from_experiment_id_and_sample_no(
-        experiment_id, sample_no, conn
+    def select_from_dataset_id_and_sample_no(
+        dataset_id, sample_no, conn
     ):
         with conn.cursor() as cursor:
             cursor.execute(
                 (
                     "SELECT test_time, volts, amps, capacity, temperature "
                     "FROM experiment.data "
-                    "WHERE experiment_id=(%s) AND sample_no=(%s)"
+                    "WHERE dataset_id=(%s) AND sample_no=(%s)"
                 ),
-                [experiment_id, sample_no],
+                [dataset_id, sample_no],
             )
             result = cursor.fetchone()
             if result is None:
                 return None
             return DataRow(
-                experiment_id=experiment_id,
+                dataset_id=dataset_id,
                 sample_no=sample_no,
                 time=result[0],
                 voltage=result[1],

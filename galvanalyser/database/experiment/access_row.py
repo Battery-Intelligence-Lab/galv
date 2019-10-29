@@ -2,33 +2,33 @@ import psycopg2
 
 
 class AccessRow:
-    def __init__(self, experiment_id, user_name):
-        self.experiment_id = experiment_id
+    def __init__(self, dataset_id, user_name):
+        self.dataset_id = dataset_id
         self.user_name = user_name
 
     def insert(self, conn):
         with conn.cursor() as cursor:
             cursor.execute(
                 (
-                    "INSERT INTO experiment.access (experiment_id, user_name) "
+                    "INSERT INTO experiment.access (dataset_id, user_name) "
                     "VALUES (%s, %s) ON CONFLICT DO NOTHING"
                 ),
-                [self.experiment_id, self.user_name],
+                [self.dataset_id, self.user_name],
             )
 
     @staticmethod
-    def select_from_experiment_id(experiment_id, conn):
+    def select_from_dataset_id(dataset_id, conn):
         with conn.cursor() as cursor:
             cursor.execute(
                 (
                     "SELECT user_name FROM experiment.access "
-                    "WHERE experiment_id=(%s)"
+                    "WHERE dataset_id=(%s)"
                 ),
-                [experiment_id],
+                [dataset_id],
             )
             records = cursor.fetchall()
             return [
-                AccessRow(experiment_id=experiment_id, user_name=result[0])
+                AccessRow(dataset_id=dataset_id, user_name=result[0])
                 for result in records
             ]
 
@@ -37,25 +37,25 @@ class AccessRow:
         with conn.cursor() as cursor:
             cursor.execute(
                 (
-                    "SELECT experiment_id FROM experiment.access "
+                    "SELECT dataset_id FROM experiment.access "
                     "WHERE user_name=(%s)"
                 ),
                 [user_name],
             )
             records = cursor.fetchall()
             return [
-                AccessRow(experiment_id=result[0], user_name=user_name)
+                AccessRow(dataset_id=result[0], user_name=user_name)
                 for result in records
             ]
 
     @staticmethod
-    def current_user_has_access_to_experiment(experiment_id, conn):
+    def current_user_has_access_to_dataset(dataset_id, conn):
         with conn.cursor() as cursor:
             cursor.execute(
                 (
                     "SELECT count(*) from experiment.access WHERE "
-                    "experiment_id = (%s) AND user_name = current_user;"
+                    "dataset_id = (%s) AND user_name = current_user;"
                 ),
-                [experiment_id],
+                [dataset_id],
             )
             return cursor.fetchone()[0] > 0

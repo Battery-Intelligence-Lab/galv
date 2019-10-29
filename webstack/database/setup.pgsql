@@ -329,17 +329,20 @@ TABLESPACE pg_default;
 ALTER TABLE experiment.timeseries_data
     OWNER to harvester;
 
+GRANT SELECT ON TABLE experiment.timeseries_data TO normal_user;
+
 -- Table: experiment.metadata
 
 -- DROP TABLE experiment.metadata;
 
-CREATE TABLE experiment.metadata
+CREATE TABLE experiment.range_label
 (
     dataset_id bigint NOT NULL,
     label_name text NOT NULL,
+	created_by text NOT NULL,
     sample_range int8range NOT NULL,
     info jsonb,
-    PRIMARY KEY (dataset_id, label_name),
+    PRIMARY KEY (dataset_id, label_name, created_by),
     FOREIGN KEY (dataset_id)
         REFERENCES experiment.dataset (id) MATCH SIMPLE
         ON UPDATE CASCADE
@@ -352,7 +355,7 @@ WITH (
 ALTER TABLE experiment.metadata
     OWNER to postgres;
 
-GRANT INSERT ON TABLE experiment.metadata TO harvester;
+GRANT INSERT, SELECT, UPDATE ON TABLE experiment.metadata TO harvester;
 
 GRANT SELECT ON TABLE experiment.metadata TO normal_user;
 
@@ -388,3 +391,33 @@ FOR ALL TO harvester USING (true);
 
 CREATE POLICY metadata_harvester_policy ON experiment.metadata
 FOR ALL TO harvester USING (true);
+
+-- SCHEMA: user_data
+
+-- DROP SCHEMA user_data ;
+
+CREATE SCHEMA user_data
+    AUTHORIZATION postgres;
+
+GRANT ALL ON SCHEMA user_data TO postgres;
+
+GRANT USAGE ON SCHEMA user_data TO normal_user;
+
+CREATE TABLE user_data.range_label
+(
+    access text[],
+    PRIMARY KEY (dataset_id, label_name, created_by),
+    FOREIGN KEY (dataset_id)
+        REFERENCES experiment.dataset (id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+)
+    INHERITS (experiment.range_label)
+WITH (
+    OIDS = FALSE
+);
+
+ALTER TABLE user_data.range_label
+    OWNER to postgres;
+
+GRANT INSERT, SELECT, UPDATE ON TABLE user_data.range_label TO normal_user;

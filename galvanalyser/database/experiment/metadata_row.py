@@ -3,9 +3,9 @@ import psycopg2
 
 class MetaDataRow:
     def __init__(
-        self, experiment_id, label_name, lower_bound, upper_bound, info=None
+        self, dataset_id, label_name, lower_bound, upper_bound, info=None
     ):
-        self.experiment_id = experiment_id
+        self.dataset_id = dataset_id
         self.label_name = label_name
         self.lower_bound = lower_bound
         self.upper_bound = upper_bound
@@ -16,11 +16,11 @@ class MetaDataRow:
             cursor.execute(
                 (
                     "INSERT INTO experiment.metadata "
-                    "(experiment_id, label_name, sample_range, info) "
+                    "(dataset_id, label_name, sample_range, info) "
                     "VALUES (%s, %s, '[%s, %s)', %s)"
                 ),
                 [
-                    self.experiment_id,
+                    self.dataset_id,
                     self.label_name,
                     self.lower_bound,
                     self.upper_bound,
@@ -29,20 +29,20 @@ class MetaDataRow:
             )
 
     @staticmethod
-    def select_from_experiment_id(experiment_id, conn):
+    def select_from_dataset_id(dataset_id, conn):
         with conn.cursor() as cursor:
             cursor.execute(
                 (
                     "SELECT label_name, sample_range, info "
                     "FROM experiment.metadata "
-                    "WHERE experiment_id=(%s)"
+                    "WHERE dataset_id=(%s)"
                 ),
-                [experiment_id],
+                [dataset_id],
             )
             records = cursor.fetchall()
             return [
                 MetaDataRow(
-                    experiment_id=experiment_id,
+                    dataset_id=dataset_id,
                     label_name=result[0],
                     lower_bound=result[1].lower,
                     upper_bound=result[1].upper,
@@ -52,22 +52,22 @@ class MetaDataRow:
             ]
 
     @staticmethod
-    def select_from_experiment_id_and_label_name(
-        experiment_id, label_name, conn
+    def select_from_dataset_id_and_label_name(
+        dataset_id, label_name, conn
     ):
         with conn.cursor() as cursor:
             cursor.execute(
                 (
                     "SELECT sample_range, info FROM experiment.metadata "
-                    "WHERE experiment_id=(%s) AND label_name=(%s)"
+                    "WHERE dataset_id=(%s) AND label_name=(%s)"
                 ),
-                [experiment_id, label_name],
+                [dataset_id, label_name],
             )
             result = cursor.fetchone()
             if result is None:
                 return None
             return MetaDataRow(
-                experiment_id=experiment_id,
+                dataset_id=dataset_id,
                 label_name=label_name,
                 lower_bound=result[0][0],
                 upper_bound=result[0][1],

@@ -1,26 +1,26 @@
 import psycopg2
 
 
-class ExperimentsRow:
-    def __init__(self, name, date, experiment_type, id=None):
+class DatasetRow:
+    def __init__(self, name, date, dataset_type, id=None):
         self.id = id
         self.name = name
         self.date = date
-        self.experiment_type = experiment_type
+        self.dataset_type = dataset_type
 
     def insert(self, conn):
         with conn.cursor() as cursor:
             cursor.execute(
                 (
-                    "INSERT INTO experiment.experiments (name, date, type) "
+                    "INSERT INTO experiment.dataset (name, date, type) "
                     "VALUES (%s, %s, %s) "
                     "RETURNING id"
                 ),
-                [self.name, self.date, self.experiment_type],
+                [self.name, self.date, self.dataset_type],
             )
             self.id = cursor.fetchone()[0]
             # except
-            # psycopg2.errors.UniqueViolation: duplicate key value violates unique constraint "experiments_pkey"
+            # psycopg2.errors.UniqueViolation: duplicate key value violates unique constraint "dataset_pkey"
             # DETAIL:  Key (name, date)=(TPG1+-+Cell+15+-+002, 2018-02-23 08:42:16+00) already exists.
 
     @staticmethod
@@ -28,7 +28,7 @@ class ExperimentsRow:
         with conn.cursor() as cursor:
             cursor.execute(
                 (
-                    "SELECT id, type FROM experiment.experiments "
+                    "SELECT id, type FROM experiment.dataset "
                     "WHERE name=(%s) AND date=(%s)"
                 ),
                 [name, date],
@@ -36,23 +36,23 @@ class ExperimentsRow:
             result = cursor.fetchone()
             if result is None:
                 return None
-            return ExperimentsRow(
-                id=result[0], name=name, date=date, experiment_type=result[1]
+            return DatasetRow(
+                id=result[0], name=name, date=date, dataset_type=result[1]
             )
 
     @staticmethod
-    def select_all_experiments(conn):
+    def select_all_dataset(conn):
         with conn.cursor() as cursor:
             cursor.execute(
-                ("SELECT id, name, date, type " "FROM experiment.experiments")
+                ("SELECT id, name, date, type " "FROM experiment.dataset")
             )
             records = cursor.fetchall()
             return [
-                ExperimentsRow(
+                DatasetRow(
                     id=result[0],
                     name=result[1],
                     date=result[2],
-                    experiment_type=result[3],
+                    dataset_type=result[3],
                 )
                 for result in records
             ]

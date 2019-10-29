@@ -1,15 +1,15 @@
 import psycopg2
 
 
-class HarvestersRow:
-    def __init__(self, machine_id, id_no=None):
+class HarvesterRow:
+    def __init__(self, machine_id, id=None):
         self.machine_id = machine_id
-        self.id_no = id_no
+        self.id = id
 
     def insert(self, conn):
         with conn.cursor() as cursor:
             cursor.execute(
-                "INSERT INTO harvesters.harvesters (machine_id) VALUES (%s)",
+                "INSERT INTO harvesters.harvester (machine_id) VALUES (%s)",
                 [self.machine_id],
             )
 
@@ -18,7 +18,7 @@ class HarvestersRow:
         with conn.cursor() as cursor:
             cursor.execute(
                 (
-                    "SELECT id_no FROM harvesters.harvesters WHERE "
+                    "SELECT id FROM harvesters.harvester WHERE "
                     "machine_id=(%s)"
                 ),
                 [machine_id],
@@ -26,4 +26,4 @@ class HarvestersRow:
             result = cursor.fetchone()
             if result is None:
                 return None
-            return HarvestersRow(id_no=result[0], machine_id=machine_id)
+            return HarvestersRow(id=result[0], machine_id=machine_id)

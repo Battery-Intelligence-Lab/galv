@@ -11,7 +11,7 @@ protobuf: webapp-static-content/libs/galvanalyser-protobuf.js
 
 webapp-static-content/libs/galvanalyser-protobuf.js: protobuf/experiment-data.proto webapp-static-content/js/data-range.js
 	mkdir -p galvanalyser/protobuf && mkdir -p libs/galvanalyser-js-protobufs && \
-	protoc -I=protobuf --python_out=galvanalyser/protobuf --js_out=binary:libs/galvanalyser-js-protobufs protobuf/experiment-data.proto && \
+	protoc -I=protobuf --python_out=galvanalyser/protobuf --js_out=binary:libs/galvanalyser-js-protobufs protobuf/timeseries-data.proto && \
 	libs/closure-library/closure/bin/build/closurebuilder.py \
   --root=libs/closure-library \
   --root=libs/protobuf/js \

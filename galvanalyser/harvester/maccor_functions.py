@@ -322,7 +322,7 @@ def load_metadata_maccor_excel(file_path):
                 col = col + 1
             col = col + 1
         metadata["Machine Type"] = "Maccor"
-        metadata["Experiment Name"] = ntpath.basename(metadata["Filename"])
+        metadata["Dataset Name"] = ntpath.basename(metadata["Filename"])
         columns_with_data, total_rows, first_rec, last_rec = identify_columns_maccor_excel(
             wbook
         )
@@ -350,7 +350,7 @@ def load_metadata_maccor_text(file_type, file_path):
         second = next(reader)
         key = clean_key(second[0])
         metadata[key] = maya.parse(second[1]).datetime()
-        metadata["Experiment Name"] = os.path.splitext(
+        metadata["Dataset Name"] = os.path.splitext(
             ntpath.basename(file_path)
         )[0]
         metadata["Machine Type"] = "Maccor"
