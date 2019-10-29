@@ -133,7 +133,7 @@ def import_file(file_path_row, conn):
         conn.autocommit = False
         with conn:
             # Check if this dataset is already in the db
-            dataset_row = DatasetRow.select_from_name_and_date(
+            dataset_row = DatasetRow.select_from_name_date_and_institution_id(
                 name=input_file.metadata["Dataset Name"],
                 date=input_file.metadata["Date of Test"],
                 conn=conn,
