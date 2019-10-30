@@ -14,7 +14,7 @@ from galvanalyser.database.harvester.observed_files_row import (
 from galvanalyser.database.experiment.institution_row import InstitutionRow
 from galvanalyser.database.experiment.dataset_row import DatasetRow
 from galvanalyser.database.experiment.access_row import AccessRow
-from galvanalyser.database.experiment.data_row import DataRow
+from galvanalyser.database.experiment.data_row import TimeseriesDataRow
 from galvanalyser.harvester.input_file import InputFile
 from galvanalyser.database.experiment.metadata_row import MetaDataRow
 
@@ -162,7 +162,7 @@ def import_file(file_path_row, institution_id, conn):
             input_file.metadata["dataset_id"] = dataset_id
             if is_new_dataset:
                 print("Inserting Data")
-                DataRow.insert_input_file(input_file, conn)
+                TimeseriesDataRow.insert_input_file(input_file, column_map, conn)
                 MetaDataRow(
                     dataset_id,
                     "all",
@@ -175,18 +175,18 @@ def import_file(file_path_row, institution_id, conn):
                         dataset_id, label, sample_range[0], sample_range[1]
                     ).insert(conn)
             elif (
-                DataRow.select_from_dataset_id_and_sample_no(
+                TimeseriesDataRow.select_from_dataset_id_and_sample_no(
                     dataset_id, input_file.metadata["first_sample_no"], conn
                 )
                 is None
-                and DataRow.select_from_dataset_id_and_sample_no(
+                and TimeseriesDataRow.select_from_dataset_id_and_sample_no(
                     dataset_id, input_file.metadata["last_sample_no"], conn
                 )
                 is None
             ):
                 # This is more data for an existing experiment
                 print("Inserting Additional Data")
-                DataRow.insert_input_file(input_file, conn)
+                TimeseriesDataRow.insert_input_file(input_file, conn)
                 # TODO handle inserting metadata when extending a dataset
             else:
                 print("Dataset already in database")

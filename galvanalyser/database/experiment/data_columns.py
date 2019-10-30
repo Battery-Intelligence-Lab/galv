@@ -9,7 +9,7 @@ def select_dataset_data_columns_in_range(
     with conn.cursor("column_cursor") as cursor:
         query_string = sql.SQL(
             (
-                "SELECT {} FROM experiment.data "
+                "SELECT {} FROM experiment.timeseries_data "
                 "WHERE dataset_id={} AND sample_no >= {} AND sample_no < {}"
                 " ORDER BY sample_no ASC"
             )

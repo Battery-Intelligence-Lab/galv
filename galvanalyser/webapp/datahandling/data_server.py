@@ -4,7 +4,7 @@ import flask
 from flask import request, abort
 import flask_login
 
-from galvanalyser.database.experiment.data_row import DataRow
+from galvanalyser.database.experiment.data_row import TimeseriesDataRow
 from galvanalyser.database.experiment.access_row import AccessRow
 import galvanalyser.database.experiment.data_columns as DataColumns
 import math
