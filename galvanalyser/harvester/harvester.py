@@ -162,7 +162,7 @@ def import_file(file_path_row, institution_id, conn):
             input_file.metadata["dataset_id"] = dataset_id
             if is_new_dataset:
                 print("Inserting Data")
-                TimeseriesDataRow.insert_input_file(input_file, column_map, conn)
+                TimeseriesDataRow.insert_input_file(input_file, conn)
                 MetaDataRow(
                     dataset_id,
                     "all",
