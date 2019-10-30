@@ -313,9 +313,9 @@ CREATE TABLE experiment.timeseries_data
 (
     dataset_id bigint NOT NULL,
     sample_no bigint NOT NULL,
-    value double precision NOT NULL,
     column_id bigint NOT NULL,
-    CONSTRAINT timeseries_data_pkey PRIMARY KEY (dataset_id, sample_no),
+    value double precision NOT NULL,
+    CONSTRAINT timeseries_data_pkey PRIMARY KEY (dataset_id, sample_no, column_id),
     CONSTRAINT timeseries_data_column_id_fkey FOREIGN KEY (column_id)
         REFERENCES experiment."column" (id) MATCH SIMPLE
         ON UPDATE CASCADE
