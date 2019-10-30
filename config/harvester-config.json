@@ -5,5 +5,13 @@
     "database_password": "password", 
     "machine_id": "test_machine_01", 
     "database_host": "127.0.0.1",
-    "institution": "Oxford"
+    "institution": "Oxford",
+    "machine_column_map": {
+        "MACCOR": {
+
+        },
+        "IVIUM": {
+
+        }
+    }
 }
