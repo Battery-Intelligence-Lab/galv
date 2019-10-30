@@ -50,14 +50,6 @@ def write_config_template(config_template_path):
         "database_name": "galvanalyser",
         "machine_id": "my_machine_01",
         "institution": "Oxford",
-        "machine_column_map": {
-            "MACCOR": {
-
-            },
-            "IVIUM": {
-
-            }
-        },
     }
     with open(config_template_path, "w") as json_file:
         json.dump(template, json_file, indent=4)
@@ -121,7 +113,8 @@ def monitor_path(monitor_path_id, path, monitored_for, conn):
                 pass
     print("Done monitoring paths")
 
-def import_file(file_path_row, institution_id, machine_column_map, conn):
+
+def import_file(file_path_row, institution_id, conn):
     """
         Attempts to import a given file
     """
@@ -137,7 +130,6 @@ def import_file(file_path_row, institution_id, machine_column_map, conn):
         # corresponding data since the import might fail while reading the data
         # anyway
         input_file = InputFile(fullpath)
-        column_map = input_file.select_column_map_for_file_type(machine_column_map)
         # use a transaction to avoid generating dataset rows if import fails
         conn.autocommit = False
         with conn:
@@ -269,7 +261,7 @@ def main(argv):
         )
         for stable_observed_file_path_row in stable_observed_file_path_rows:
             # import the file
-            import_file(stable_observed_file_path_row, institution_id, config["machine_column_map"], conn)
+            import_file(stable_observed_file_path_row, institution_id, conn)
 
     finally:
         conn.close()

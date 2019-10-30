@@ -92,19 +92,6 @@ class InputFile:
             self.type, file_path
         )
 
-    def select_column_map_for_file_type(self, machine_column_map):
-        """
-            Takes a map of maps - one map per machine type and returns the map
-            appropriate for teh machine type that maps standard column id
-            integers to file column names
-        """
-        if "MACCOR" in self.type:
-            return machine_column_map["MACCOR"]
-        elif "IVIUM" in self.type:
-            return machine_column_map["IVIUM"]
-        else:
-            raise battery_exceptions.UnsupportedFileTypeError
-
     def get_test_start_date(self):
         # TODO look check file type, ask specific implementation for metadata value
         return self.metadata["Date of Test"]
