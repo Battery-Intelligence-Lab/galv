@@ -64,7 +64,7 @@ If you want to run things locally - not in a docker
 ```
 # make a virtual environment
 python3 -m venv ./.venv
-# run the init scrip in the Makefile to pip insall all the requirements
+# run the init script in the Makefile to pip install all the requirements
 make init
 ```
 
