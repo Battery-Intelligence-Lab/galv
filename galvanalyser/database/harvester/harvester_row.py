@@ -2,9 +2,9 @@ import psycopg2
 
 
 class HarvesterRow:
-    def __init__(self, machine_id, id=None):
+    def __init__(self, machine_id, id_=None):
         self.machine_id = machine_id
-        self.id = id
+        self.id = id_
 
     def insert(self, conn):
         with conn.cursor() as cursor:
@@ -26,4 +26,4 @@ class HarvesterRow:
             result = cursor.fetchone()
             if result is None:
                 return None
-            return HarvestersRow(id=result[0], machine_id=machine_id)
+            return HarvestersRow(id_=result[0], machine_id=machine_id)

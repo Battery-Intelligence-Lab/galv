@@ -2,8 +2,7 @@ import psycopg2
 
 
 class DatasetRow:
-    def __init__(self, name, date, institution_id, dataset_type, id=None):
-        self.id = id
+    def __init__(self, name, date, institution_id, dataset_type, id_=None):
         self.name = name
         self.date = date
         self.institution_id = institution_id
@@ -39,7 +38,7 @@ class DatasetRow:
             if result is None:
                 return None
             return DatasetRow(
-                id=result[0], name=name, date=date, institution_id=institution_id, dataset_type=result[1]
+                id_=result[0], name=name, date=date, institution_id=institution_id, dataset_type=result[1]
             )
 
     @staticmethod
@@ -51,7 +50,7 @@ class DatasetRow:
             records = cursor.fetchall()
             return [
                 DatasetRow(
-                    id=result[0],
+                    id_=result[0],
                     name=result[1],
                     date=result[2],
                     institution_id=result[3],

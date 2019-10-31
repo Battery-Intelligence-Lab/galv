@@ -2,8 +2,8 @@ import psycopg2
 
 
 class InstitutionRow:
-    def __init__(self, id, name):
-        self.id = id
+    def __init__(self, id_, name):
+        self.id = id_
         self.name = name
 
     def insert(self, conn):
@@ -17,18 +17,18 @@ class InstitutionRow:
             )
 
     @staticmethod
-    def select_from_id(id, conn):
+    def select_from_id(id_, conn):
         with conn.cursor() as cursor:
             cursor.execute(
                 (
                     "SELECT name FROM experiment.institution "
                     "WHERE id=(%s)"
                 ),
-                [id],
+                [id_],
             )
             records = cursor.fetchall()
             return [
-                InstitutionRow(id=id, name=result[0])
+                InstitutionRow(id_=id_, name=result[0])
                 for result in records
             ]
 
@@ -44,6 +44,6 @@ class InstitutionRow:
             )
             records = cursor.fetchall()
             return [
-                InstitutionRow(id=result[0], name=name)
+                InstitutionRow(id_=result[0], name=name)
                 for result in records
             ]

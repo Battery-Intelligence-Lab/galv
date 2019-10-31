@@ -4,6 +4,7 @@ from timeit import default_timer as timer
 
 import galvanalyser.harvester.battery_exceptions as battery_exceptions
 
+RECORD_NO_COLUMN_ID = 0
 
 class TimeseriesDataRow:
     def __init__(
@@ -35,11 +36,12 @@ class TimeseriesDataRow:
             )
 
     @staticmethod
-    def insert_input_file(input_file, conn):
-        required_column_names = TimeseriesDataRow.get_column_names(conn)
+    def insert_input_file(input_file, dataset_id, standard_cols_to_file_cols={}, conn):
+        required_column_names = [RECORD_NO_COLUMN_ID]
+
         print("Getting data")
         row_generator = input_file.get_data_row_generator(
-            required_column_names
+            required_column_names, dataset_id, RECORD_NO_COLUMN_ID, standard_cols_to_file_cols
         )
         iter_file = IteratorFile(row_generator)
         with conn.cursor() as cursor:
@@ -61,13 +63,13 @@ class TimeseriesDataRow:
             )
 
     @staticmethod
-    def select_from_dataset_id_and_sample_no(
+    def select_one_from_dataset_id_and_sample_no(
         dataset_id, sample_no, conn
     ):
         with conn.cursor() as cursor:
             cursor.execute(
                 (
-                    "SELECT test_time, volts, amps, capacity, temperature "
+                    "SELECT column_id, value "
                     "FROM experiment.timeseries_data "
                     "WHERE dataset_id=(%s) AND sample_no=(%s) "
                     "LIMIT 1"

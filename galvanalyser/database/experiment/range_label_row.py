@@ -1,12 +1,13 @@
 import psycopg2
 
 
-class MetaDataRow:
+class RangeLabelRow:
     def __init__(
-        self, dataset_id, label_name, lower_bound, upper_bound, info=None
+        self, dataset_id, label_name, created_by, lower_bound, upper_bound, info=None
     ):
         self.dataset_id = dataset_id
         self.label_name = label_name
+        self.created_by = created_by
         self.lower_bound = lower_bound
         self.upper_bound = upper_bound
         self.info = info
@@ -16,12 +17,13 @@ class MetaDataRow:
             cursor.execute(
                 (
                     "INSERT INTO experiment.metadata "
-                    "(dataset_id, label_name, sample_range, info) "
-                    "VALUES (%s, %s, '[%s, %s)', %s)"
+                    "(dataset_id, label_name, created_by, sample_range, info) "
+                    "VALUES (%s, %s, %s, '[%s, %s)', %s)"
                 ),
                 [
                     self.dataset_id,
                     self.label_name,
+                    self.created_by,
                     self.lower_bound,
                     self.upper_bound,
                     self.info,
@@ -33,7 +35,7 @@ class MetaDataRow:
         with conn.cursor() as cursor:
             cursor.execute(
                 (
-                    "SELECT label_name, sample_range, info "
+                    "SELECT label_name, created_by, sample_range, info "
                     "FROM experiment.metadata "
                     "WHERE dataset_id=(%s)"
                 ),
@@ -41,12 +43,13 @@ class MetaDataRow:
             )
             records = cursor.fetchall()
             return [
-                MetaDataRow(
+                RangeLabelRow(
                     dataset_id=dataset_id,
                     label_name=result[0],
-                    lower_bound=result[1].lower,
-                    upper_bound=result[1].upper,
-                    info=result[2],
+                    created_by=result[1],
+                    lower_bound=result[2].lower,
+                    upper_bound=result[2].upper,
+                    info=result[3],
                 )
                 for result in records
             ]
@@ -58,7 +61,7 @@ class MetaDataRow:
         with conn.cursor() as cursor:
             cursor.execute(
                 (
-                    "SELECT sample_range, info FROM experiment.metadata "
+                    "SELECT created_by, sample_range, info FROM experiment.metadata "
                     "WHERE dataset_id=(%s) AND label_name=(%s)"
                 ),
                 [dataset_id, label_name],
@@ -66,10 +69,11 @@ class MetaDataRow:
             result = cursor.fetchone()
             if result is None:
                 return None
-            return MetaDataRow(
+            return RangeLabelRow(
                 dataset_id=dataset_id,
                 label_name=label_name,
-                lower_bound=result[0][0],
-                upper_bound=result[0][1],
-                info=result[1],
+                created_by=result[0],
+                lower_bound=result[1][0],
+                upper_bound=result[1][1],
+                info=result[2],
             )
