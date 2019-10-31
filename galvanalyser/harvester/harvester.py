@@ -16,7 +16,7 @@ from galvanalyser.database.experiment.dataset_row import DatasetRow
 from galvanalyser.database.experiment.access_row import AccessRow
 from galvanalyser.database.experiment.data_row import TimeseriesDataRow
 from galvanalyser.harvester.input_file import InputFile
-from galvanalyser.database.experiment.metadata_row import MetaDataRow
+from galvanalyser.database.experiment.range_label_row import RangeLabelRow
 
 import traceback
 
@@ -137,7 +137,7 @@ def import_file(file_path_row, institution_id, conn):
             dataset_row = DatasetRow.select_from_name_date_and_institution_id(
                 name=input_file.metadata["Dataset Name"],
                 date=input_file.metadata["Date of Test"],
-                institution_id,
+                institution_id=institution_id,
                 conn=conn,
             )
             is_new_dataset = dataset_row is None
@@ -145,7 +145,7 @@ def import_file(file_path_row, institution_id, conn):
                 dataset_row = DatasetRow(
                     name=input_file.metadata["Dataset Name"],
                     date=input_file.metadata["Date of Test"],
-                    institution_id,
+                    institution_id=institution_id,
                     dataset_type=input_file.metadata["Machine Type"],
                 )
                 dataset_row.insert(conn)
@@ -162,8 +162,8 @@ def import_file(file_path_row, institution_id, conn):
             input_file.metadata["dataset_id"] = dataset_id
             if is_new_dataset:
                 print("Inserting Data")
-                TimeseriesDataRow.insert_input_file(input_file, conn)
-                MetaDataRow(
+                TimeseriesDataRow.insert_input_file(input_file, dataset_id, conn)
+                RangeLabelRow(
                     dataset_id,
                     "all",
                     int(input_file.metadata["first_sample_no"]),
@@ -171,22 +171,22 @@ def import_file(file_path_row, institution_id, conn):
                 ).insert(conn)
                 for label, sample_range in input_file.get_data_labels():
                     print("inserting {}".format(label))
-                    MetaDataRow(
+                    RangeLabelRow(
                         dataset_id, label, sample_range[0], sample_range[1]
                     ).insert(conn)
             elif (
-                TimeseriesDataRow.select_from_dataset_id_and_sample_no(
+                TimeseriesDataRow.select_one_from_dataset_id_and_sample_no(
                     dataset_id, input_file.metadata["first_sample_no"], conn
                 )
                 is None
-                and TimeseriesDataRow.select_from_dataset_id_and_sample_no(
+                and TimeseriesDataRow.select_one_from_dataset_id_and_sample_no(
                     dataset_id, input_file.metadata["last_sample_no"], conn
                 )
                 is None
             ):
                 # This is more data for an existing experiment
                 print("Inserting Additional Data")
-                TimeseriesDataRow.insert_input_file(input_file, conn)
+                TimeseriesDataRow.insert_input_file(input_file, dataset_id, conn)
                 # TODO handle inserting metadata when extending a dataset
             else:
                 print("Dataset already in database")

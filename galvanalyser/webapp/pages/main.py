@@ -6,7 +6,7 @@ from galvanalyser.webapp.pages import all_layouts
 import dash_table
 
 from galvanalyser.database.experiment.dataset_row import DatasetRow
-from galvanalyser.database.experiment.metadata_row import MetaDataRow
+from galvanalyser.database.experiment.range_label_row import RangeLabelRow
 import psycopg2
 from galvanalyser.webapp.datahandling import data_server
 
@@ -274,7 +274,7 @@ def register_callbacks(app, config):
             if selected_row_ids:
                 selected_row_id = selected_row_ids[0]
                 try:
-                    metadatas = MetaDataRow.select_from_dataset_id(
+                    metadatas = RangeLabelRow.select_from_dataset_id(
                         selected_row_id, conn
                     )
                     table_rows = [
