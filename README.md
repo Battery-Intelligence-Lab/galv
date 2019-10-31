@@ -94,7 +94,8 @@ CREATE USER harvester_user WITH
   INHERIT
   NOCREATEDB
   NOCREATEROLE
-  NOREPLICATION;
+  NOREPLICATION
+  PASSWORD 'harvester_password';
 
 GRANT harvester TO harvester_user;
 ```
