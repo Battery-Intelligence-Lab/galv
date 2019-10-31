@@ -305,6 +305,19 @@ ALTER TABLE experiment."column"
 ALTER SEQUENCE experiment.column_id_seq
     OWNER TO harvester;
 
+-- Add required column
+
+INSERT INTO experiment.unit (id, name, symbol, description) VALUES (0, 'Unitless', '', 'A value with no units');
+SELECT setval('experiment.unit_id_seq'::regclass, 0);
+
+INSERT INTO experiment.column_type (id, name, unit_id) VALUES (-1, 'Unknown', NULL);
+INSERT INTO experiment.column_type (id, name, unit_id) VALUES (0, 'Sample Number', 0);
+SELECT setval('experiment.column_type_id_seq'::regclass, 0);
+
+INSERT INTO experiment."column" (id, type_id, name) VALUES (0, 0, 'Sample Number');
+SELECT setval('experiment.column_id_seq'::regclass, 0);
+
+
 -- Table: experiment.timeseries_data
 
 -- DROP TABLE experiment.timeseries_data;
