@@ -328,9 +328,13 @@ CREATE TABLE experiment.timeseries_data
     sample_no bigint NOT NULL,
     column_id bigint NOT NULL,
     value double precision NOT NULL,
-    CONSTRAINT timeseries_data_pkey PRIMARY KEY (dataset_id, sample_no, column_id),
-    CONSTRAINT timeseries_data_column_id_fkey FOREIGN KEY (column_id)
+    PRIMARY KEY (dataset_id, sample_no, column_id),
+    FOREIGN KEY (column_id)
         REFERENCES experiment."column" (id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
+    FOREIGN KEY (dataset_id)
+        REFERENCES experiment.dataset (id) MATCH SIMPLE
         ON UPDATE CASCADE
         ON DELETE RESTRICT
 )
