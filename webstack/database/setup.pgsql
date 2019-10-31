@@ -351,9 +351,9 @@ ALTER TABLE experiment.timeseries_data
 
 GRANT SELECT ON TABLE experiment.timeseries_data TO normal_user;
 
--- Table: experiment.metadata
+-- Table: experiment.range_label
 
--- DROP TABLE experiment.metadata;
+-- DROP TABLE experiment.range_label;
 
 CREATE TABLE experiment.range_label
 (
@@ -372,15 +372,15 @@ WITH (
     OIDS = FALSE
 );
 
-ALTER TABLE experiment.metadata
+ALTER TABLE experiment.range_label
     OWNER to postgres;
 
-GRANT INSERT, SELECT, UPDATE ON TABLE experiment.metadata TO harvester;
+GRANT INSERT, SELECT, UPDATE ON TABLE experiment.range_label TO harvester;
 
-GRANT SELECT ON TABLE experiment.metadata TO normal_user;
+GRANT SELECT ON TABLE experiment.range_label TO normal_user;
 
 -- SELECT * FROM experiment.data as d
--- INNER JOIN experiment.metadata AS m ON
+-- INNER JOIN experiment.range_label AS m ON
 -- d.dataset_id = m.dataset_id
 -- WHERE m.dataset_id = 46 and
 --       texteq(m.label_name, 'test_label_1') and
@@ -397,11 +397,11 @@ CREATE POLICY dataset_access_policy ON experiment.dataset
 FOR SELECT USING ( current_user in (SELECT user_name FROM experiment.access
 									WHERE dataset_id = experiment.dataset.id));
 
-ALTER TABLE experiment.metadata ENABLE ROW LEVEL SECURITY;
+ALTER TABLE experiment.range_label ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY metadata_access_policy ON experiment.metadata
+CREATE POLICY range_label_access_policy ON experiment.range_label
 FOR SELECT USING ( current_user in (SELECT user_name FROM experiment.access
-									WHERE dataset_id = experiment.metadata.dataset_id));
+									WHERE dataset_id = experiment.range_label.dataset_id));
 
 CREATE POLICY dataset_harvester_policy ON experiment.dataset
 FOR ALL TO harvester USING (true);
@@ -409,7 +409,7 @@ FOR ALL TO harvester USING (true);
 CREATE POLICY access_harvester_policy ON experiment.access
 FOR ALL TO harvester USING (true);
 
-CREATE POLICY metadata_harvester_policy ON experiment.metadata
+CREATE POLICY range_label_harvester_policy ON experiment.range_label
 FOR ALL TO harvester USING (true);
 
 -- SCHEMA: user_data
