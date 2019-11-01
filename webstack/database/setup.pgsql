@@ -55,8 +55,8 @@ CREATE TABLE harvesters.harvester
 (
     id bigserial NOT NULL,
     machine_id text NOT NULL,
-    CONSTRAINT harvester_pkey PRIMARY KEY (id),
-    CONSTRAINT harvester_machine_id_key UNIQUE (machine_id)
+    PRIMARY KEY (id),
+    UNIQUE (machine_id)
 
 )
 WITH (
@@ -122,8 +122,8 @@ CREATE TABLE harvesters.observed_file
     last_observed_size bigint NOT NULL,
     last_observed_time timestamp with time zone NOT NULL,
     file_state harvesters.file_state_t NOT NULL DEFAULT 'UNSTABLE'::harvesters.file_state_t,
-    CONSTRAINT observed_files_pkey PRIMARY KEY (monitor_path_id, path),
-    CONSTRAINT observed_files_monitor_path_id_fkey FOREIGN KEY (monitor_path_id)
+    CONSTRAINT observed_file_pkey PRIMARY KEY (monitor_path_id, path),
+    FOREIGN KEY (monitor_path_id)
         REFERENCES harvesters.monitored_path (monitor_path_id) MATCH SIMPLE
         ON UPDATE NO ACTION
         ON DELETE NO ACTION
@@ -159,7 +159,8 @@ CREATE TABLE experiment.institution
 (
     id bigserial NOT NULL,
     name text NOT NULL,
-    PRIMARY KEY (id)
+    PRIMARY KEY (id),
+    UNIQUE (name)
 )
 WITH (
     OIDS = FALSE
@@ -240,7 +241,7 @@ CREATE TABLE experiment.unit
     name text NOT NULL,
     symbol text NOT NULL,
     description text,
-    CONSTRAINT unit_pkey PRIMARY KEY (id)
+    PRIMARY KEY (id)
 )
 WITH (
     OIDS = FALSE
@@ -262,8 +263,8 @@ CREATE TABLE experiment.column_type
     id bigserial NOT NULL,
     name text NOT NULL,
     unit_id bigint,
-    CONSTRAINT column_type_pkey PRIMARY KEY (id),
-    CONSTRAINT column_type_unit_id_fkey FOREIGN KEY (unit_id)
+    PRIMARY KEY (id),
+    FOREIGN KEY (unit_id)
         REFERENCES experiment.unit (id) MATCH SIMPLE
         ON UPDATE CASCADE
         ON DELETE SET NULL
@@ -288,8 +289,8 @@ CREATE TABLE experiment."column"
     id bigserial NOT NULL,
     type_id bigint NOT NULL,
     name text NOT NULL,
-    CONSTRAINT column_pkey PRIMARY KEY (id),
-    CONSTRAINT column_type_id_fkey FOREIGN KEY (type_id)
+    PRIMARY KEY (id),
+    FOREIGN KEY (type_id)
         REFERENCES experiment.column_type (id) MATCH SIMPLE
         ON UPDATE CASCADE
         ON DELETE RESTRICT
