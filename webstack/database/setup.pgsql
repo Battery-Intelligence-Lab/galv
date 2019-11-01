@@ -311,16 +311,36 @@ ALTER SEQUENCE experiment.column_id_seq
 
 INSERT INTO experiment.unit (id, name, symbol, description) VALUES (0, 'Unitless', '', 'A value with no units');
 INSERT INTO experiment.unit (id, name, symbol, description) VALUES (1, 'Time', 's', 'Time in seconds');
-SELECT setval('experiment.unit_id_seq'::regclass, 1);
+INSERT INTO experiment.unit (id, name, symbol, description) VALUES (2, 'Volts', 'V', 'Voltage');
+INSERT INTO experiment.unit (id, name, symbol, description) VALUES (3, 'Amps', 'A', 'Current');
+INSERT INTO experiment.unit (id, name, symbol, description) VALUES (4, 'Energy', 'Wh', 'Energy in Watt-Hours');
+INSERT INTO experiment.unit (id, name, symbol, description) VALUES (5, 'Charge', 'Ah', 'Charge in Amp-Hours');
+INSERT INTO experiment.unit (id, name, symbol, description) VALUES (6, 'Temperature', '°c', 'Temperature in Centigrade');
+INSERT INTO experiment.unit (id, name, symbol, description) VALUES (7, 'Power', 'W', 'Power in Watts');
+INSERT INTO experiment.unit (id, name, symbol, description) VALUES (8, 'Ohm', 'Ω', 'Resistance or impediance in Ohms');
+INSERT INTO experiment.unit (id, name, symbol, description) VALUES (9, 'Degrees', '°', 'Angle in degrees');
+INSERT INTO experiment.unit (id, name, symbol, description) VALUES (10, 'Frequency', 'Hz', 'Frequency in Hz');
+SELECT setval('experiment.unit_id_seq'::regclass, 10);
 
 INSERT INTO experiment.column_type (id, name, unit_id) VALUES (-1, 'Unknown', NULL);
 INSERT INTO experiment.column_type (id, name, unit_id) VALUES (0, 'Sample Number', 0);
 INSERT INTO experiment.column_type (id, name, unit_id) VALUES (1, 'Time', 1);
-SELECT setval('experiment.column_type_id_seq'::regclass, 1);
+INSERT INTO experiment.column_type (id, name, unit_id) VALUES (2, 'Volts', 2);
+INSERT INTO experiment.column_type (id, name, unit_id) VALUES (3, 'Amps', 3);
+INSERT INTO experiment.column_type (id, name, unit_id) VALUES (4, 'Energy Capacity', 4);
+INSERT INTO experiment.column_type (id, name, unit_id) VALUES (5, 'Charge Capacity', 5);
+INSERT INTO experiment.column_type (id, name, unit_id) VALUES (6, 'Temperature', 6);
+SELECT setval('experiment.column_type_id_seq'::regclass, 6);
 
-INSERT INTO experiment."column" (id, type_id, name) VALUES (0, 0, 'Sample Number');
-INSERT INTO experiment."column" (id, type_id, name) VALUES (1, 1, 'Test time');
-SELECT setval('experiment.column_id_seq'::regclass, 1);
+INSERT INTO experiment."column" (id, type_id, name, description) VALUES (0, 0, 'Sample Number', 'The sample or record number. Is increased by one each time a test machine records a reading. Usually counts from 1 at the start of a test');
+INSERT INTO experiment."column" (id, type_id, name, description) VALUES (1, 1, 'Test Time', 'The time in seconds since the test run began.');
+INSERT INTO experiment."column" (id, type_id, name, description) VALUES (2, 2, 'Volts', 'The voltage of the cell.');
+INSERT INTO experiment."column" (id, type_id, name, description) VALUES (3, 3, 'Amps', 'The current current.');
+INSERT INTO experiment."column" (id, type_id, name, description) VALUES (4, 4, 'Energy Capacity', 'The Energy Capacity.');
+INSERT INTO experiment."column" (id, type_id, name, description) VALUES (5, 5, 'Charge Capacity', 'The Charge Capacity.');
+INSERT INTO experiment."column" (id, type_id, name, description) VALUES (6, 6, 'Temperature', 'The temperature.');
+INSERT INTO experiment."column" (id, type_id, name, description) VALUES (7, 1, 'Step Time', 'The time in seconds since the current step began.');
+SELECT setval('experiment.column_id_seq'::regclass, 7);
 
 
 -- Table: experiment.timeseries_data
