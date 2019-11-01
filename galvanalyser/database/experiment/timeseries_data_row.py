@@ -39,8 +39,10 @@ class TimeseriesDataRow:
             )
 
     @staticmethod
-    def insert_input_file(input_file, dataset_id, conn, standard_cols_to_file_cols={}):
         required_column_names = [RECORD_NO_COLUMN_ID, TEST_TIME_COLUMN_ID]
+    def insert_input_file(input_file, dataset_id, conn, standard_cols_to_file_cols=None):
+        if standard_cols_to_file_cols is None:
+            standard_cols_to_file_cols = {}
 
         # Check if we need to create new column types
         unknown_column_names = input_file.get_unknown_numeric_columns_with_data_names(standard_cols_to_file_cols)
