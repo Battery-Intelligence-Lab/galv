@@ -4,17 +4,18 @@ import json
 import psutil
 import psycopg2
 from datetime import datetime, timezone
-from galvanalyser.database.harvester.harvesters_row import HarvestersRow
-from galvanalyser.database.harvester.monitored_paths_row import (
+from galvanalyser.database.harvester.harvester_row import HarvesterRow
+from galvanalyser.database.harvester.monitored_path_row import (
     MonitoredPathRow,
 )
-from galvanalyser.database.harvester.observed_files_row import (
+from galvanalyser.database.harvester.observed_file_row import (
     ObservedFileRow,
     ObservedFilePathRow,
+)
 from galvanalyser.database.experiment.institution_row import InstitutionRow
 from galvanalyser.database.experiment.dataset_row import DatasetRow
 from galvanalyser.database.experiment.access_row import AccessRow
-from galvanalyser.database.experiment.data_row import TimeseriesDataRow
+from galvanalyser.database.experiment.timeseries_data_row import TimeseriesDataRow
 from galvanalyser.harvester.input_file import InputFile
 from galvanalyser.database.experiment.range_label_row import RangeLabelRow
 
@@ -57,7 +58,11 @@ def write_config_template(config_template_path):
 
 def monitor_path(monitor_path_id, path, monitored_for, conn):
     print("Examining " + path + " for users " + str(monitored_for))
-    current_files = os.listdir(path)
+    try:
+        current_files = os.listdir(path)
+    except FileNotFoundError:
+        print("ERROR: Requested path not found on this machine: " + path)
+        return
     for file_path in current_files:
         full_file_path = os.path.join(path, file_path)
         print("Found " + full_file_path)
@@ -114,7 +119,7 @@ def monitor_path(monitor_path_id, path, monitored_for, conn):
     print("Done monitoring paths")
 
 
-def import_file(file_path_row, institution_id, conn):
+def import_file(file_path_row, institution_id, harvester_name, conn):
     """
         Attempts to import a given file
     """
@@ -166,13 +171,14 @@ def import_file(file_path_row, institution_id, conn):
                 RangeLabelRow(
                     dataset_id,
                     "all",
+                    harvester_name,
                     int(input_file.metadata["first_sample_no"]),
                     int(input_file.metadata["last_sample_no"]) + 1,
                 ).insert(conn)
                 for label, sample_range in input_file.get_data_labels():
                     print("inserting {}".format(label))
                     RangeLabelRow(
-                        dataset_id, label, sample_range[0], sample_range[1]
+                        dataset_id, label, harvester_name, sample_range[0], sample_range[1]
                     ).insert(conn)
             elif (
                 TimeseriesDataRow.select_one_from_dataset_id_and_sample_no(
@@ -217,14 +223,14 @@ def main(argv):
         conn.autocommit = True
 
         try:
-            my_harvester_id = HarvestersRow.select_from_machine_id(
+            my_harvester_id = HarvesterRow.select_from_machine_id(
                 config["machine_id"], conn
             ).id
         except AttributeError:
             print(
                 "Error: Could not find a harvester id for a machine called "
                 + config["machine_id"]
-                + " harvester in the database"
+                + " in the harvester database"
             )
             sys.exit(1)
         try:
@@ -235,8 +241,8 @@ def main(argv):
             print(
                 "Error: Could not find a institution id for an institution "
                 "called "
-                + config["machine_id"]
-                + " harvester in the database"
+                + config["institution"]
+                + " in the experiment database"
             )
             sys.exit(1)
         monitored_paths_rows = MonitoredPathRow.select_from_harvester_id(
@@ -261,7 +267,7 @@ def main(argv):
         )
         for stable_observed_file_path_row in stable_observed_file_path_rows:
             # import the file
-            import_file(stable_observed_file_path_row, institution_id, conn)
+            import_file(stable_observed_file_path_row, institution_id, config["machine_id"], conn)
 
     finally:
         conn.close()

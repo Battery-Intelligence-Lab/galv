@@ -15,7 +15,7 @@ class MonitoredPathRow:
         with conn.cursor() as cursor:
             cursor.execute(
                 (
-                    "INSERT INTO harvesters.monitored_paths "
+                    "INSERT INTO harvesters.monitored_path "
                     "(harvester_id, monitored_for, path) VALUES (%s, %s, %s)"
                 ),
                 [self.harvester_id, self.monitored_for, self.path],
@@ -27,7 +27,7 @@ class MonitoredPathRow:
             cursor.execute(
                 (
                     "SELECT monitored_for, path, monitor_path_id FROM "
-                    "harvesters.monitored_paths "
+                    "harvesters.monitored_path "
                     "WHERE harvester_id=(%s)"
                 ),
                 [harvester_id],
@@ -49,7 +49,7 @@ class MonitoredPathRow:
             cursor.execute(
                 (
                     "SELECT harvester_id, path, monitor_path_id FROM "
-                    "harvesters.monitored_paths "
+                    "harvesters.monitored_path "
                     "WHERE monitored_for=(%s)"
                 ),
                 [monitored_for],

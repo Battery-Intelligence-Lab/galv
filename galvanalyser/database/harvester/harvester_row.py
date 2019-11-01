@@ -26,4 +26,4 @@ class HarvesterRow:
             result = cursor.fetchone()
             if result is None:
                 return None
-            return HarvestersRow(id_=result[0], machine_id=machine_id)
+            return HarvesterRow(id_=result[0], machine_id=machine_id)

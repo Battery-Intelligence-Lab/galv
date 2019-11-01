@@ -50,6 +50,21 @@ class ColumnRow:
             ]
 
     @staticmethod
+    def select_one_unknown_with_name(name, conn):
+        with conn.cursor() as cursor:
+            cursor.execute(
+                (
+                    'SELECT id FROM experiment."column" '
+                    "WHERE type_id=(-1) AND name=(%s)"
+                ),
+                [name],
+            )
+            result = cursor.fetchone()
+            if result is None:
+                return None
+            return ColumnRow(id_=result[0], type_id=-1, name=name)
+
+    @staticmethod
     def select_from_type_id(type_id, conn):
         with conn.cursor() as cursor:
             cursor.execute(

@@ -26,11 +26,10 @@ class InstitutionRow:
                 ),
                 [id_],
             )
-            records = cursor.fetchall()
-            return [
-                InstitutionRow(id_=id_, name=result[0])
-                for result in records
-            ]
+            result = cursor.fetchone()
+            if result is None:
+                return None
+            return InstitutionRow(id_=id_, name=result[0])
 
     @staticmethod
     def select_from_name(name, conn):
@@ -42,8 +41,7 @@ class InstitutionRow:
                 ),
                 [name],
             )
-            records = cursor.fetchall()
-            return [
-                InstitutionRow(id_=result[0], name=name)
-                for result in records
-            ]
+            result = cursor.fetchone()
+            if result is None:
+                return None
+            return InstitutionRow(id_=result[0], name=name)

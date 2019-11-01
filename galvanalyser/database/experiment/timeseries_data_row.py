@@ -2,9 +2,12 @@ import psycopg2
 from galvanalyser.database.util.iter_file import IteratorFile
 from timeit import default_timer as timer
 
+from galvanalyser.database.experiment.column_row import ColumnRow
+
 import galvanalyser.harvester.battery_exceptions as battery_exceptions
 
 RECORD_NO_COLUMN_ID = 0
+TEST_TIME_COLUMN_ID = 1
 
 class TimeseriesDataRow:
     def __init__(
@@ -36,8 +39,19 @@ class TimeseriesDataRow:
             )
 
     @staticmethod
-    def insert_input_file(input_file, dataset_id, standard_cols_to_file_cols={}, conn):
-        required_column_names = [RECORD_NO_COLUMN_ID]
+    def insert_input_file(input_file, dataset_id, conn, standard_cols_to_file_cols={}):
+        required_column_names = [RECORD_NO_COLUMN_ID, TEST_TIME_COLUMN_ID]
+
+        # Check if we need to create new column types
+        unknown_column_names = input_file.get_unknown_numeric_columns_with_data_names(standard_cols_to_file_cols)
+        for name in unknown_column_names:
+            col = ColumnRow.select_one_unknown_with_name(name, conn)
+            if col is None:
+                new_column = ColumnRow(-1, name)
+                new_column.insert(conn)
+                standard_cols_to_file_cols[new_column.id] = name
+            else:
+                standard_cols_to_file_cols[col.id] = name
 
         print("Getting data")
         row_generator = input_file.get_data_row_generator(

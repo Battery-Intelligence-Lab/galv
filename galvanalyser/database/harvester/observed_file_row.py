@@ -21,10 +21,10 @@ class ObservedFileRow:
             if self.file_state is None:
                 cursor.execute(
                     (
-                        "INSERT INTO harvesters.observed_files "
+                        "INSERT INTO harvesters.observed_file "
                         "(monitor_path_id, path, last_observed_size, "
                         "last_observed_time) VALUES (%s, %s, %s, %s) "
-                        "ON CONFLICT ON CONSTRAINT observed_files_pkey "
+                        "ON CONFLICT ON CONSTRAINT observed_file_pkey "
                         "DO UPDATE SET "
                         "last_observed_size = %s, last_observed_time = %s"
                     ),
@@ -40,11 +40,11 @@ class ObservedFileRow:
             else:
                 cursor.execute(
                     (
-                        "INSERT INTO harvesters.observed_files "
+                        "INSERT INTO harvesters.observed_file "
                         "(monitor_path_id, path, last_observed_size, "
                         "last_observed_time, file_state) "
                         "VALUES (%s, %s, %s, %s, %s) "
-                        "ON CONFLICT ON CONSTRAINT observed_files_pkey "
+                        "ON CONFLICT ON CONSTRAINT observed_file_pkey "
                         "DO UPDATE SET "
                         "last_observed_size = %s, last_observed_time = %s, "
                         "file_state = %s"
@@ -68,7 +68,7 @@ class ObservedFileRow:
                 (
                     "SELECT last_observed_size, last_observed_time, "
                     "file_state FROM "
-                    "harvesters.observed_files WHERE "
+                    "harvesters.observed_file WHERE "
                     "monitor_path_id=(%s) AND path=(%s)"
                 ),
                 [monitor_path_id, path],
@@ -91,7 +91,7 @@ class ObservedFileRow:
                 (
                     "SELECT path, last_observed_size, last_observed_time, "
                     "file_state FROM "
-                    "harvesters.observed_files WHERE monitor_path_id=(%s)"
+                    "harvesters.observed_file WHERE monitor_path_id=(%s)"
                 ),
                 [monitor_path_id],
             )
@@ -114,8 +114,8 @@ class ObservedFileRow:
                 (
                     "SELECT hof.monitor_path_id, hof.path, "
                     "hof.last_observed_size, hof.last_observed_time "
-                    "FROM harvesters.observed_files AS hof "
-                    "INNER JOIN harvesters.monitored_paths AS hmp ON "
+                    "FROM harvesters.observed_file AS hof "
+                    "INNER JOIN harvesters.monitored_path AS hmp ON "
                     "hof.monitor_path_id = hmp.monitor_path_id "
                     "WHERE "
                     "hmp.harvester_id=(%s) AND hof.file_state=(%s)"
@@ -162,8 +162,8 @@ class ObservedFilePathRow:
                     "SELECT hof.monitor_path_id, hmp.path, hof.path, "
                     "hmp.monitored_for, hof.last_observed_size, "
                     "hof.last_observed_time "
-                    "FROM harvesters.observed_files AS hof "
-                    "INNER JOIN harvesters.monitored_paths AS hmp ON "
+                    "FROM harvesters.observed_file AS hof "
+                    "INNER JOIN harvesters.monitored_path AS hmp ON "
                     "hof.monitor_path_id = hmp.monitor_path_id "
                     "WHERE "
                     "hmp.harvester_id=(%s) AND hof.file_state=(%s)"
@@ -188,7 +188,7 @@ class ObservedFilePathRow:
         with conn.cursor() as cursor:
             cursor.execute(
                 (
-                    "UPDATE harvesters.observed_files SET file_state = %s"
+                    "UPDATE harvesters.observed_file SET file_state = %s"
                     "WHERE monitor_path_id=(%s)"
                 ),
                 [file_state, self.monitor_path_id],
