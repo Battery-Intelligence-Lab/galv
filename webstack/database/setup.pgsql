@@ -289,6 +289,7 @@ CREATE TABLE experiment."column"
     id bigserial NOT NULL,
     type_id bigint NOT NULL,
     name text NOT NULL,
+    description text,
     PRIMARY KEY (id),
     FOREIGN KEY (type_id)
         REFERENCES experiment.column_type (id) MATCH SIMPLE
