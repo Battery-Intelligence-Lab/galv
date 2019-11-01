@@ -31,7 +31,7 @@ def get_ivium_column_to_standard_column_mapping():
         mapping exists
     """
     print("get_ivium_column_to_standard_column_mapping")
-    return {"amps": "amps", "volts": "volts", "test_time": "test_time"}
+    return {"amps": 3, "volts": 2, "test_time": 1}
 
 
 def isfloat(value):
