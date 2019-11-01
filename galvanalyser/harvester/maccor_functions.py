@@ -47,21 +47,21 @@ def get_maccor_column_to_standard_column_mapping():
     """
     print("get_maccor_column_to_standard_column_mapping")
     all_values = {
-        "Amp-hr": None,
-        "Amps": "amps",
+        "Amp-hr": 5,
+        "Amps": 3,
         "Cyc#": None,
         "DPt Time": None,
-        "Watt-hr": None,
+        "Watt-hr": 4,
         "State": None,
         "Step": None,
-        "StepTime": None,
-        "Volts": "volts",
-        "Capacity": "capacity",
+        "StepTime": 7,
+        "Volts": 2,
+        "Capacity": None,
         "Energy": None,
         "Power": None,
-        "TestTime": "test_time",
-        "Rec#": "sample_no",
-        "Temp 1": "temperature",
+        "TestTime": 1,
+        "Rec#": 0,
+        "Temp 1": 6,
     }
     print("all_values: " + str(all_values))
     filtered_values = {
