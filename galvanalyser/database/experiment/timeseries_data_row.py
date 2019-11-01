@@ -39,10 +39,15 @@ class TimeseriesDataRow:
             )
 
     @staticmethod
-        required_column_names = [RECORD_NO_COLUMN_ID, TEST_TIME_COLUMN_ID]
     def insert_input_file(input_file, dataset_id, conn, standard_cols_to_file_cols=None):
         if standard_cols_to_file_cols is None:
             standard_cols_to_file_cols = {}
+        required_column_ids = {RECORD_NO_COLUMN_ID, TEST_TIME_COLUMN_ID}
+
+        builtin_std_cols_to_file_cols = input_file.get_standard_column_to_file_column_mapping()
+        # override builtin definitions with external ones if provided
+        builtin_std_cols_to_file_cols.update(standard_cols_to_file_cols)
+        standard_cols_to_file_cols = builtin_std_cols_to_file_cols
 
         # Check if we need to create new column types
         unknown_column_names = input_file.get_unknown_numeric_columns_with_data_names(standard_cols_to_file_cols)
@@ -54,21 +59,32 @@ class TimeseriesDataRow:
                 standard_cols_to_file_cols[new_column.id] = name
             else:
                 standard_cols_to_file_cols[col.id] = name
+        
+        # Get all numeric data from the file
+        numeric_file_cols_with_data = input_file.get_names_of_numeric_columns_with_data()
+        for standard_id, file_col_name in standard_cols_to_file_cols.items():
+            if file_col_name in numeric_file_cols_with_data:
+                required_column_ids.add(standard_id)
 
         print("Getting data")
         row_generator = input_file.get_data_row_generator(
-            required_column_names, dataset_id, RECORD_NO_COLUMN_ID, standard_cols_to_file_cols
+            list(required_column_ids), dataset_id, RECORD_NO_COLUMN_ID, standard_cols_to_file_cols
         )
         iter_file = IteratorFile(row_generator)
+        num_value_columns = len(required_column_ids)-1
+        expected_insert_count = input_file.metadata["num_rows"] * num_value_columns
         with conn.cursor() as cursor:
             print("Copying data to table")
             start = timer()
             cursor.copy_from(iter_file, "experiment.timeseries_data")
             end = timer()
-            if cursor.rowcount != input_file.metadata["num_rows"]:
+            if cursor.rowcount != expected_insert_count:
                 raise battery_exceptions.InsertError(
-                    "Insert failed. Inserted {} of {} rows before failure".format(
-                        cursor.rowcount, input_file.metadata["num_rows"]
+                    "Insert failed. Inserted {} of {} values ({} rows * {} columns) before failure".format(
+                        cursor.rowcount,
+                        expected_insert_count,
+                        input_file.metadata["num_rows"],
+                        num_value_columns
                     )
                 )
             print("Done copying data to table")

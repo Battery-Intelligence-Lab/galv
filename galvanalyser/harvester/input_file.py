@@ -109,6 +109,10 @@ class InputFile:
         else:
             raise battery_exceptions.UnsupportedFileTypeError
 
+    def get_standard_column_to_file_column_mapping(self):
+        file_col_to_std_col = self.get_file_column_to_standard_column_mapping()
+        return {value: key for key, value in file_col_to_std_col.items() if value is not None}
+
     def get_names_of_columns_with_data(self):
         return {
             key
@@ -154,10 +158,10 @@ class InputFile:
 #            ):
 #                file_data_row["dataset_id"] = self.metadata["dataset_id"]
             if 0 in missing_colums: # sample_no
-                file_data_row["sample_no"] = row_no
+                file_data_row[0] = row_no
             if 5 in missing_colums: # "capacity" / Charge Capacity
-                current_amps = float(file_data_row["amps"])
-                current_time = float(file_data_row["test_time"])
+                current_amps = float(file_data_row[3])
+                current_time = float(file_data_row[1])
                 capacity_total += ((prev_amps + current_amps) / 2.0) * (
                     current_time - prev_time
                 )
@@ -174,7 +178,9 @@ class InputFile:
                 print(repr(file_data_row))
                 print(repr(required_column_ids))
                 flag = False
-            yield [file_data_row[col_name] for col_name in required_column_ids]
+            # Should we just yield file_data_row, it should be exactly the same now
+            yield {col_id: file_data_row[col_id] for col_id in required_column_ids}
+            #yield [file_data_row[col_id] for col_id in required_column_ids]
 
     def get_data_with_standard_colums(
         self, required_column_ids, standard_cols_to_file_cols=None
@@ -188,10 +194,6 @@ class InputFile:
         if standard_cols_to_file_cols is None:
             standard_cols_to_file_cols = {}
         print("Required columns: " + str(required_column_ids))
-        output_columns = set(required_column_ids) | set(
-            standard_cols_to_file_cols.keys()
-        )
-        print("output_columns: " + str(output_columns))
         # first determine
         file_col_to_std_col = {}
         print("Full type is " + str(self.type))
@@ -219,9 +221,9 @@ class InputFile:
         # pass file_cols_to_data_generator to generate missing column
 
         return self.complete_columns(
-            output_columns, file_cols_to_data_generator
+            required_column_ids, file_cols_to_data_generator
         )
-        return file_cols_to_data_generator
+        #return file_cols_to_data_generator
 
     def get_desired_data_if_present(self, desired_file_cols_to_std_cols=None):
         """

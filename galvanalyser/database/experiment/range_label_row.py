@@ -16,7 +16,7 @@ class RangeLabelRow:
         with conn.cursor() as cursor:
             cursor.execute(
                 (
-                    "INSERT INTO experiment.metadata "
+                    "INSERT INTO experiment.range_label "
                     "(dataset_id, label_name, created_by, sample_range, info) "
                     "VALUES (%s, %s, %s, '[%s, %s)', %s)"
                 ),
@@ -36,7 +36,7 @@ class RangeLabelRow:
             cursor.execute(
                 (
                     "SELECT label_name, created_by, sample_range, info "
-                    "FROM experiment.metadata "
+                    "FROM experiment.range_label "
                     "WHERE dataset_id=(%s)"
                 ),
                 [dataset_id],
@@ -61,7 +61,7 @@ class RangeLabelRow:
         with conn.cursor() as cursor:
             cursor.execute(
                 (
-                    "SELECT created_by, sample_range, info FROM experiment.metadata "
+                    "SELECT created_by, sample_range, info FROM experiment.range_label "
                     "WHERE dataset_id=(%s) AND label_name=(%s)"
                 ),
                 [dataset_id, label_name],
