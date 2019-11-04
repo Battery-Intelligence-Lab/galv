@@ -3,7 +3,13 @@ import psycopg2
 
 class RangeLabelRow:
     def __init__(
-        self, dataset_id, label_name, created_by, lower_bound, upper_bound, info=None
+        self,
+        dataset_id,
+        label_name,
+        created_by,
+        lower_bound,
+        upper_bound,
+        info=None,
     ):
         self.dataset_id = dataset_id
         self.label_name = label_name
@@ -55,9 +61,7 @@ class RangeLabelRow:
             ]
 
     @staticmethod
-    def select_from_dataset_id_and_label_name(
-        dataset_id, label_name, conn
-    ):
+    def select_from_dataset_id_and_label_name(dataset_id, label_name, conn):
         with conn.cursor() as cursor:
             cursor.execute(
                 (

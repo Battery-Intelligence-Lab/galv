@@ -20,10 +20,7 @@ class InstitutionRow:
     def select_from_id(id_, conn):
         with conn.cursor() as cursor:
             cursor.execute(
-                (
-                    "SELECT name FROM experiment.institution "
-                    "WHERE id=(%s)"
-                ),
+                ("SELECT name FROM experiment.institution " "WHERE id=(%s)"),
                 [id_],
             )
             result = cursor.fetchone()
@@ -35,10 +32,7 @@ class InstitutionRow:
     def select_from_name(name, conn):
         with conn.cursor() as cursor:
             cursor.execute(
-                (
-                    "SELECT id FROM experiment.institution "
-                    "WHERE name=(%s)"
-                ),
+                ("SELECT id FROM experiment.institution " "WHERE name=(%s)"),
                 [name],
             )
             result = cursor.fetchone()

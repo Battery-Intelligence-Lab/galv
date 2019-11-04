@@ -21,9 +21,7 @@ dataset_selector = html.Div(
     [
         html.P("placeholder dataset selector"),
         html.Button(
-            id="main_get_dataset",
-            type="button",
-            children="Get Dataset",
+            id="main_get_dataset", type="button", children="Get Dataset"
         ),
     ]
 )
@@ -274,7 +272,9 @@ def register_callbacks(app, config):
             # available_columns = ["volts", "amps"]
             if selected_row_ids:
                 selected_row_id = selected_row_ids[0]
-                available_columns = TimeseriesDataColumn.select_experiment_columns(selected_row_id, conn)
+                available_columns = TimeseriesDataColumn.select_experiment_columns(
+                    selected_row_id, conn
+                )
                 try:
                     metadatas = RangeLabelRow.select_from_dataset_id(
                         selected_row_id, conn

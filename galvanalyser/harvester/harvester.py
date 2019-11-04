@@ -5,9 +5,7 @@ import psutil
 import psycopg2
 from datetime import datetime, timezone
 from galvanalyser.database.harvester.harvester_row import HarvesterRow
-from galvanalyser.database.harvester.monitored_path_row import (
-    MonitoredPathRow,
-)
+from galvanalyser.database.harvester.monitored_path_row import MonitoredPathRow
 from galvanalyser.database.harvester.observed_file_row import (
     ObservedFileRow,
     ObservedFilePathRow,
@@ -15,7 +13,9 @@ from galvanalyser.database.harvester.observed_file_row import (
 from galvanalyser.database.experiment.institution_row import InstitutionRow
 from galvanalyser.database.experiment.dataset_row import DatasetRow
 from galvanalyser.database.experiment.access_row import AccessRow
-from galvanalyser.database.experiment.timeseries_data_row import TimeseriesDataRow
+from galvanalyser.database.experiment.timeseries_data_row import (
+    TimeseriesDataRow,
+)
 from galvanalyser.harvester.input_file import InputFile
 from galvanalyser.database.experiment.range_label_row import RangeLabelRow
 
@@ -160,14 +160,14 @@ def import_file(file_path_row, institution_id, harvester_name, conn):
             dataset_id = dataset_row.id
             for user in file_path_row.monitored_for:
                 print("  Allowing access to " + user)
-                access_row = AccessRow(
-                    dataset_id=dataset_id, user_name=user
-                )
+                access_row = AccessRow(dataset_id=dataset_id, user_name=user)
                 access_row.insert(conn)
             input_file.metadata["dataset_id"] = dataset_id
             if is_new_dataset:
                 print("Inserting Data")
-                TimeseriesDataRow.insert_input_file(input_file, dataset_id, conn)
+                TimeseriesDataRow.insert_input_file(
+                    input_file, dataset_id, conn
+                )
                 RangeLabelRow(
                     dataset_id,
                     "all",
@@ -178,7 +178,11 @@ def import_file(file_path_row, institution_id, harvester_name, conn):
                 for label, sample_range in input_file.get_data_labels():
                     print("inserting {}".format(label))
                     RangeLabelRow(
-                        dataset_id, label, harvester_name, sample_range[0], sample_range[1]
+                        dataset_id,
+                        label,
+                        harvester_name,
+                        sample_range[0],
+                        sample_range[1],
                     ).insert(conn)
             elif (
                 TimeseriesDataRow.select_one_from_dataset_id_and_sample_no(
@@ -192,7 +196,9 @@ def import_file(file_path_row, institution_id, harvester_name, conn):
             ):
                 # This is more data for an existing experiment
                 print("Inserting Additional Data")
-                TimeseriesDataRow.insert_input_file(input_file, dataset_id, conn)
+                TimeseriesDataRow.insert_input_file(
+                    input_file, dataset_id, conn
+                )
                 # TODO handle inserting metadata when extending a dataset
             else:
                 print("Dataset already in database")
@@ -267,7 +273,12 @@ def main(argv):
         )
         for stable_observed_file_path_row in stable_observed_file_path_rows:
             # import the file
-            import_file(stable_observed_file_path_row, institution_id, config["machine_id"], conn)
+            import_file(
+                stable_observed_file_path_row,
+                institution_id,
+                config["machine_id"],
+                conn,
+            )
 
     finally:
         conn.close()

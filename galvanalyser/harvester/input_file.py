@@ -88,9 +88,7 @@ class InputFile:
     def __init__(self, file_path):
         self.file_path = file_path
         self.type = identify_file(file_path)
-        self.metadata, self.column_info = load_metadata(
-            self.type, file_path
-        )
+        self.metadata, self.column_info = load_metadata(self.type, file_path)
 
     def get_file_column_to_standard_column_mapping(self):
         """
@@ -111,13 +109,15 @@ class InputFile:
 
     def get_standard_column_to_file_column_mapping(self):
         file_col_to_std_col = self.get_file_column_to_standard_column_mapping()
-        return {value: key for key, value in file_col_to_std_col.items() if value is not None}
+        return {
+            value: key
+            for key, value in file_col_to_std_col.items()
+            if value is not None
+        }
 
     def get_names_of_columns_with_data(self):
         return {
-            key
-            for key, value in self.column_info.items()
-            if value["has_data"]
+            key for key, value in self.column_info.items() if value["has_data"]
         }
 
     def get_names_of_numeric_columns_with_data(self):
@@ -127,20 +127,24 @@ class InputFile:
             if value["has_data"] and value["is_numeric"]
         }
 
-    def get_unknown_numeric_columns_with_data_names(self, standard_cols_to_file_cols=None):
+    def get_unknown_numeric_columns_with_data_names(
+        self, standard_cols_to_file_cols=None
+    ):
         if standard_cols_to_file_cols is None:
             standard_cols_to_file_cols = {}
         known_map = self.get_file_column_to_standard_column_mapping()
         columns_with_data = self.get_names_of_numeric_columns_with_data()
-        return (columns_with_data -
-            (set(known_map.keys()) | set(standard_cols_to_file_cols.values()))
-            )
+        return columns_with_data - (
+            set(known_map.keys()) | set(standard_cols_to_file_cols.values())
+        )
 
     def get_test_start_date(self):
         # TODO look check file type, ask specific implementation for metadata value
         return self.metadata["Date of Test"]
 
-    def complete_columns(self, required_column_ids, file_cols_to_data_generator):
+    def complete_columns(
+        self, required_column_ids, file_cols_to_data_generator
+    ):
         """
             Generates missing columns, returns generator of lists that match
             required_column_ids
@@ -152,14 +156,14 @@ class InputFile:
         capacity_total = 0.0
         for row_no, file_data_row in enumerate(file_cols_to_data_generator, 1):
             missing_colums = rec_col_set - set(file_data_row.keys())
-#            if (
-#                "dataset_id" in missing_colums
-#                and "dataset_id" in self.metadata
-#            ):
-#                file_data_row["dataset_id"] = self.metadata["dataset_id"]
-            if 0 in missing_colums: # sample_no
+            #            if (
+            #                "dataset_id" in missing_colums
+            #                and "dataset_id" in self.metadata
+            #            ):
+            #                file_data_row["dataset_id"] = self.metadata["dataset_id"]
+            if 0 in missing_colums:  # sample_no
                 file_data_row[0] = row_no
-            if 5 in missing_colums: # "capacity" / Charge Capacity
+            if 5 in missing_colums:  # "capacity" / Charge Capacity
                 current_amps = float(file_data_row[3])
                 current_time = float(file_data_row[1])
                 capacity_total += ((prev_amps + current_amps) / 2.0) * (
@@ -168,19 +172,21 @@ class InputFile:
                 file_data_row[5] = capacity_total
                 prev_amps = current_amps
                 prev_time = current_time
-#            if "power" in missing_colums:
-#                file_data_row["power"] = float(file_data_row["volts"]) * float(
-#                    file_data_row["amps"]
-#                )
-                # file_data_row[col_name] if col_name in file_data_row else None
+            #            if "power" in missing_colums:
+            #                file_data_row["power"] = float(file_data_row["volts"]) * float(
+            #                    file_data_row["amps"]
+            #                )
+            # file_data_row[col_name] if col_name in file_data_row else None
             if flag:
                 print("Debug info")
                 print(repr(file_data_row))
                 print(repr(required_column_ids))
                 flag = False
             # Should we just yield file_data_row, it should be exactly the same now
-            yield {col_id: file_data_row[col_id] for col_id in required_column_ids}
-            #yield [file_data_row[col_id] for col_id in required_column_ids]
+            yield {
+                col_id: file_data_row[col_id] for col_id in required_column_ids
+            }
+            # yield [file_data_row[col_id] for col_id in required_column_ids]
 
     def get_data_with_standard_colums(
         self, required_column_ids, standard_cols_to_file_cols=None
@@ -223,7 +229,7 @@ class InputFile:
         return self.complete_columns(
             required_column_ids, file_cols_to_data_generator
         )
-        #return file_cols_to_data_generator
+        # return file_cols_to_data_generator
 
     def get_desired_data_if_present(self, desired_file_cols_to_std_cols=None):
         """
@@ -271,7 +277,13 @@ class InputFile:
 
         raise battery_exceptions.UnsupportedFileTypeError
 
-    def get_data_row_generator(self, required_column_ids, dataset_id, record_no_column_id, standard_cols_to_file_cols=None):
+    def get_data_row_generator(
+        self,
+        required_column_ids,
+        dataset_id,
+        record_no_column_id,
+        standard_cols_to_file_cols=None,
+    ):
         # given list of columns, map file columns to desired columns
         # load available columns
         # generate missing columns
@@ -280,6 +292,7 @@ class InputFile:
         # yield a single line of tab separated quoted values
         if standard_cols_to_file_cols is None:
             standard_cols_to_file_cols = {}
+
         def tsv_format(value):
             # The psycopg2 cursor.copy_from method needs null values to be
             # represented as a literal '\N'
@@ -292,7 +305,12 @@ class InputFile:
                 rec_no = row[record_no_column_id]
                 del row[record_no_column_id]
                 for column_id, value in row.items():
-                    timeseries_data_row = [dataset_id, rec_no, column_id, value]
+                    timeseries_data_row = [
+                        dataset_id,
+                        rec_no,
+                        column_id,
+                        value,
+                    ]
                     yield "\t".join(map(tsv_format, timeseries_data_row))
         except:
             traceback.print_exc()

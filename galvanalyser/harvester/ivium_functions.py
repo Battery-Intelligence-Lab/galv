@@ -61,9 +61,7 @@ def load_metadata_ivium_text(file_path):
     """
     metadata = {}
     metadata["Machine Type"] = "Ivium"
-    metadata["Dataset Name"] = os.path.splitext(ntpath.basename(file_path))[
-        0
-    ]
+    metadata["Dataset Name"] = os.path.splitext(ntpath.basename(file_path))[0]
     metadata["Date of Test"] = datetime.fromtimestamp(
         os.path.getctime(file_path)
     )

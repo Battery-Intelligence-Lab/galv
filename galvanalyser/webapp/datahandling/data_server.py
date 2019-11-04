@@ -4,7 +4,10 @@ import flask
 from flask import request, abort
 import flask_login
 
-from galvanalyser.database.experiment.timeseries_data_row import TimeseriesDataRow, RECORD_NO_COLUMN_ID
+from galvanalyser.database.experiment.timeseries_data_row import (
+    TimeseriesDataRow,
+    RECORD_NO_COLUMN_ID,
+)
 from galvanalyser.database.experiment.access_row import AccessRow
 import galvanalyser.database.experiment.timeseries_data_column as TimeseriesDataColumn
 import math
@@ -53,14 +56,12 @@ def register_handlers(app, config):
         conn = None
         try:
             conn = config["get_db_connection_for_current_user"]()
-            if AccessRow.current_user_has_access_to_dataset(
-                dataset_id, conn
-            ):
+            if AccessRow.current_user_has_access_to_dataset(dataset_id, conn):
                 # log("Getting results")
-                if int(column_id) == RECORD_NO_COLUMN_ID: # sample_no id
+                if int(column_id) == RECORD_NO_COLUMN_ID:  # sample_no id
                     results = TimeseriesDataColumn.select_timeseries_data_record_nos_in_range(
-                    dataset_id, data_from, data_to, conn
-                )
+                        dataset_id, data_from, data_to, conn
+                    )
                 else:
                     results = TimeseriesDataColumn.select_timeseries_data_column_in_range(
                         dataset_id, column_id, data_from, data_to, conn
