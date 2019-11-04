@@ -3,6 +3,7 @@ import psycopg2
 
 class DatasetRow:
     def __init__(self, name, date, institution_id, dataset_type, id_=None):
+        self.id=id_
         self.name = name
         self.date = date
         self.institution_id = institution_id
