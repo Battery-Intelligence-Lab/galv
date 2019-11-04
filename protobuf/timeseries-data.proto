@@ -8,7 +8,7 @@ message DataRange {
 }
 
 message DataRanges{
-  int64 experiment_id = 1;
-  string column = 2;
+  int64 dataset_id = 1;
+  int64 column_id = 2;
   repeated DataRange ranges = 3;
 }
