@@ -214,7 +214,6 @@ function update_graph() {
                         }
                         return data;
                     };
-                    // TODO insert dummy x values and null y values in gaps between data arrays
                     let x_data = fuse_data(x_ranges);
                     let y_data = fuse_data(y_ranges);
                     let trace = {
