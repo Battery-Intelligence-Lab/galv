@@ -135,7 +135,7 @@ INSERT INTO harvesters.harvester (machine_id) VALUES ('test_machine_01');
 INSERT INTO experiment.institution (name) VALUES ('Oxford');
 # The name you use should match the name in your harvester config json files
 
-# Create some users
+# Create some accounts for the users of the application
 CREATE USER alice WITH
   LOGIN
   NOSUPERUSER
