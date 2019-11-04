@@ -44,7 +44,7 @@ build-webstack: builder-docker-run
 
 format:
 	black --line-length 79 --exclude "libs|.venv|_pb2\.py" ./ && \
-  find . \( -type f -name "*.js" ! -path "*/libs/*" ! -path "./.venv/*" \) -exec js-beautify -r {} \;
+  find . \( -type f -name "*.js" ! -path "*/libs/*" ! -path "./.venv/*" ! -path "./.pnpm-store/*" \) -exec js-beautify -r {} \;
 
 harvester-docker-build:
 	docker build -t harvester -f harvester/Dockerfile .
