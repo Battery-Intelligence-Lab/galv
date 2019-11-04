@@ -7,6 +7,7 @@ import dash_table
 
 from galvanalyser.database.experiment.dataset_row import DatasetRow
 from galvanalyser.database.experiment.range_label_row import RangeLabelRow
+import galvanalyser.database.experiment.timeseries_data_column as TimeseriesDataColumn
 import psycopg2
 from galvanalyser.webapp.datahandling import data_server
 
@@ -270,9 +271,10 @@ def register_callbacks(app, config):
         try:
             conn = config["get_db_connection_for_current_user"]()
             # populate columns properly, don't include "test_time"
-            available_columns = ["volts", "amps"]
+            # available_columns = ["volts", "amps"]
             if selected_row_ids:
                 selected_row_id = selected_row_ids[0]
+                available_columns = TimeseriesDataColumn.select_experiment_columns(selected_row_id, conn)
                 try:
                     metadatas = RangeLabelRow.select_from_dataset_id(
                         selected_row_id, conn
@@ -282,7 +284,8 @@ def register_callbacks(app, config):
                             "id": f"{selected_row_id}:{col}:{m.label_name}",
                             "dataset_id": selected_row_id,
                             "label_name": m.label_name,
-                            "column": col,
+                            "column": col[1],
+                            "column_id": col[0],
                             "samples_from": m.lower_bound,
                             "samples_to": m.upper_bound,
                             "info": m.info,

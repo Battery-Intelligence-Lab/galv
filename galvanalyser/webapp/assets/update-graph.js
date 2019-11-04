@@ -7,7 +7,7 @@ var graph_traces = [];
 var all_dataset_data = new Map();
 var dataset_data_requested_from_server = new Map(); //new datarange.DatasetData();
 
-const x_axis_column_name = "test_time";
+const x_axis_column_id = 1; // Test Time
 
 goog.require('proto.galvanalyser.DataRanges');
 goog.require('datarange');
@@ -27,14 +27,14 @@ function graph_substate_equal(a, b) {
 /**
  * Send request to server for data, update requested data
  * @param {int} dataset_id 
- * @param {string} column 
+ * @param {int} column_id 
  * @param {int} start_sample_no 
  * @param {int} end_sample_no 
  */
-function send_data_request(dataset_id, column, start_sample_no, end_sample_no) {
-    //console.log(`send_data_request Requesting ${dataset_id} , ${column} , ${start_sample_no} , ${end_sample_no}`);
+function send_data_request(dataset_id, column_id, start_sample_no, end_sample_no) {
+    //console.log(`send_data_request Requesting ${dataset_id} , ${column_id} , ${start_sample_no} , ${end_sample_no}`);
     let oReq = new XMLHttpRequest();
-    oReq.open("GET", `/dataset/${dataset_id}/data?column=${column}&from=${start_sample_no}&to=${end_sample_no}`, true);
+    oReq.open("GET", `/dataset/${dataset_id}/data?column_id=${column_id}&from=${start_sample_no}&to=${end_sample_no}`, true);
     oReq.responseType = "arraybuffer";
 
     oReq.onload = function(oEvent) {
@@ -44,14 +44,14 @@ function send_data_request(dataset_id, column, start_sample_no, end_sample_no) {
             let message = proto.galvanalyser.DataRanges.deserializeBinary(arrayBuffer);
             let ranges_list = message.getRangesList();
             let received_dataset_id = message.getDatasetId();
-            let received_column = message.getColumn();
-            //console.log(`send_data_request Received ${received_dataset_id} , ${column}`);
+            let received_column_id = message.getColumnId();
+            //console.log(`send_data_request Received ${received_dataset_id} , ${column_id}`);
             if (!all_dataset_data.has(received_dataset_id)) {
                 all_dataset_data.set(received_dataset_id, new datarange.DatasetData());
             }
             let dataset_data = all_dataset_data.get(received_dataset_id);
             ranges_list.forEach(function(range) {
-                dataset_data.add_protobuf_data_range(received_column, range);
+                dataset_data.add_protobuf_data_range(received_column_id, range);
             });
             update_graph();
         }
@@ -62,7 +62,7 @@ function send_data_request(dataset_id, column, start_sample_no, end_sample_no) {
         dataset_data_requested_from_server.set(dataset_id, new datarange.DatasetData());
     }
     let requested_dataset_data = dataset_data_requested_from_server.get(dataset_id);
-    requested_dataset_data.add_empty_data_range(column, start_sample_no, end_sample_no);
+    requested_dataset_data.add_empty_data_range(column_id, start_sample_no, end_sample_no);
 }
 
 /**
@@ -118,32 +118,32 @@ function get_list_of_missing_ranges(reading_data, start_sample_no, end_sample_no
  * Check if we have already sent a request for data, send requests for parts not already requested.
  * Returns true if a request for data was sent
  * @param {int} dataset_id 
- * @param {string} column 
+ * @param {int} column_id 
  * @param {int} start_sample_no 
  * @param {int} end_sample_no 
  */
-function request_dataset_data(dataset_id, column, start_sample_no, end_sample_no) {
-    //console.log(`request_dataset_data start ${dataset_id} , ${column} , ${start_sample_no} , ${end_sample_no}`);
+function request_dataset_data(dataset_id, column_id, start_sample_no, end_sample_no) {
+    //console.log(`request_dataset_data start ${dataset_id} , ${column_id} , ${start_sample_no} , ${end_sample_no}`);
     //check we haven't requested this data already
     if (!dataset_data_requested_from_server.has(dataset_id)) {
         // we don't have any data for this dataset, get it all.
         //console.log(`request_dataset_data have no ${dataset_id}`);
-        send_data_request(dataset_id, column, start_sample_no, end_sample_no);
+        send_data_request(dataset_id, column_id, start_sample_no, end_sample_no);
         return true;
     }
     let requested_dataset_data = dataset_data_requested_from_server.get(dataset_id);
-    if (!requested_dataset_data.columns.has(column)) {
+    if (!requested_dataset_data.columns.has(column_id)) {
         // we don't have any data for this column, get it all.
-        //console.log(`request_dataset_data has no ${dataset_id} , ${column}`);
-        send_data_request(dataset_id, column, start_sample_no, end_sample_no);
+        //console.log(`request_dataset_data has no ${dataset_id} , ${column_id}`);
+        send_data_request(dataset_id, column_id, start_sample_no, end_sample_no);
         return true;
     }
-    let requested_column_data = requested_dataset_data.columns.get(column);
+    let requested_column_data = requested_dataset_data.columns.get(column_id);
     let missing_data_ranges = get_list_of_missing_ranges(requested_column_data, start_sample_no, end_sample_no);
     let data_requested = false;
     for (const missing_range of missing_data_ranges) {
         //console.log(`request_dataset_data has missing range ${dataset_id} , ${column} , ${missing_range.from} , ${missing_range.to}`);
-        send_data_request(dataset_id, column, missing_range.from, missing_range.to);
+        send_data_request(dataset_id, column_id, missing_range.from, missing_range.to);
         data_requested = true;
     }
     //console.log(`request_dataset_data data_requested: ${data_requested}`);
@@ -162,12 +162,12 @@ function update_graph() {
     let updates_requested = false;
     for (const [requested_dataset_id, requested_dataset_data] of requested_graph_ranges) {
         //console.log(`update_graph iterating ${requested_dataset_id}`);
-        for (const [column, reading_data] of requested_dataset_data.columns) {
-            //console.log(`update_graph iterating ${requested_dataset_id} , ${column}`);
+        for (const [column_id, reading_data] of requested_dataset_data.columns) {
+            //console.log(`update_graph iterating ${requested_dataset_id} , ${column_id}`);
             reading_data.iterate_ranges(function(data_range) {
                 // get the sample times and requested data
-                updates_requested |= request_dataset_data(requested_dataset_id, x_axis_column_name, data_range.from, data_range.to);
-                updates_requested |= request_dataset_data(requested_dataset_id, column, data_range.from, data_range.to);
+                updates_requested |= request_dataset_data(requested_dataset_id, x_axis_column_id, data_range.from, data_range.to);
+                updates_requested |= request_dataset_data(requested_dataset_id, column_id, data_range.from, data_range.to);
             });
         }
     }
@@ -180,17 +180,17 @@ function update_graph() {
         for (const [requested_dataset_id, requested_dataset_data] of requested_metadata_ranges) {
             if (all_dataset_data.has(requested_dataset_id)) {
                 let available_dataset_data = all_dataset_data.get(requested_dataset_id);
-                if (!available_dataset_data.columns.has(x_axis_column_name)) {
+                if (!available_dataset_data.columns.has(x_axis_column_id)) {
                     //console.log(`update_graph NO X-AXIS ${requested_dataset_id}`);
                     // no x axis, can't plot
                     continue;
                 }
-                let sample_time_data = available_dataset_data.columns.get(x_axis_column_name);
-                for (const [requested_column_name, requested_reading_data] of requested_dataset_data) {
+                let sample_time_data = available_dataset_data.columns.get(x_axis_column_id);
+                for (const [requested_column_id, requested_reading_data] of requested_dataset_data) {
                     let y_ranges = [];
                     let x_ranges = [];
-                    if (available_dataset_data.columns.has(requested_column_name)) {
-                        let available_column_reading_data = available_dataset_data.columns.get(requested_column_name);
+                    if (available_dataset_data.columns.has(requested_column_id)) {
+                        let available_column_reading_data = available_dataset_data.columns.get(requested_column_id);
                         for (const requested_data_range of requested_reading_data) {
                             let available_y_ranges = available_column_reading_data.get_ranges_between(requested_data_range.from, requested_data_range.to);
                             for (const available_y_range of available_y_ranges) {
@@ -221,7 +221,7 @@ function update_graph() {
                         y: y_data,
                         mode: 'lines',
                         type: 'scattergl',
-                        name: `${requested_dataset_id} ${requested_column_name}`
+                        name: `${requested_dataset_id} ${requested_column_id}`
                     };
                     traces.push(trace);
                 }
@@ -246,12 +246,12 @@ window.dash_clientside.clientside_graph = {
                 new_dataset_ranges.set(row.dataset_id, new Map());
             }
             let dataset_data = new_config.get(row.dataset_id);
-            dataset_data.add_empty_data_range(row.column, row.samples_from, row.samples_to);
+            dataset_data.add_empty_data_range(row.column_id, row.samples_from, row.samples_to);
             let dataset_ranges = new_dataset_ranges.get(row.dataset_id);
-            if (!dataset_ranges.has(row.column)) {
-                dataset_ranges.set(row.column, []);
+            if (!dataset_ranges.has(row.column_id)) {
+                dataset_ranges.set(row.column_id, []);
             }
-            dataset_ranges.get(row.column).push({
+            dataset_ranges.get(row.column_id).push({
                 from: row.samples_from,
                 to: row.samples_to,
                 offset: row.offset || 0.0

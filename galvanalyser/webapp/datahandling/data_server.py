@@ -4,9 +4,9 @@ import flask
 from flask import request, abort
 import flask_login
 
-from galvanalyser.database.experiment.data_row import TimeseriesDataRow
+from galvanalyser.database.experiment.timeseries_data_row import TimeseriesDataRow, RECORD_NO_COLUMN_ID
 from galvanalyser.database.experiment.access_row import AccessRow
-import galvanalyser.database.experiment.data_columns as DataColumns
+import galvanalyser.database.experiment.timeseries_data_column as TimeseriesDataColumn
 import math
 import psycopg2
 
@@ -48,7 +48,7 @@ def register_handlers(app, config):
     def dataset_data(dataset_id):
         data_from = request.args.get("from", None)
         data_to = request.args.get("to", None)
-        column = request.args.get("column", None)
+        column_id = int(request.args.get("column_id", RECORD_NO_COLUMN_ID))
         # log(f"You asked for data for dataset {dataset_id} in range {data_from} - {data_to} and columns {columns}")
         conn = None
         try:
@@ -57,19 +57,19 @@ def register_handlers(app, config):
                 dataset_id, conn
             ):
                 # log("Getting results")
-                select_columns = (
-                    ["sample_no"]
-                    if "sample_no" == column
-                    else ["sample_no", column]
+                if int(column_id) == RECORD_NO_COLUMN_ID: # sample_no id
+                    results = TimeseriesDataColumn.select_timeseries_data_record_nos_in_range(
+                    dataset_id, data_from, data_to, conn
                 )
-                results = DataColumns.select_dataset_data_columns_in_range(
-                    dataset_id, select_columns, data_from, data_to, conn
-                )
+                else:
+                    results = TimeseriesDataColumn.select_timeseries_data_column_in_range(
+                        dataset_id, column_id, data_from, data_to, conn
+                    )
                 # log("got results")
                 message = timeseries_data_pb2.DataRanges()
                 # log("made message")
                 message.dataset_id = dataset_id
-                message.column = column
+                message.column_id = column_id
                 iters = [iter(col) for col in results]
                 sample_no_iter = iters[0]
                 data_iter = iters[1]
