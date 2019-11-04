@@ -1,0 +1,9 @@
+{
+    "database_name": "galvanalyser", 
+    "database_port": 5432, 
+    "database_username": "harvester_user", 
+    "database_password": "password", 
+    "machine_id": "test_machine_01", 
+    "database_host": "127.0.0.1",
+    "institution": "Oxford"
+}

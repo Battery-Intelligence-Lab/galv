@@ -4,21 +4,22 @@ var graph_state = new Map();
 var requested_metadata_ranges = new Map();
 var requested_graph_ranges = new Map();
 var graph_traces = [];
-var all_experiment_data = new Map();
-var experiment_data_requested_from_server = new Map(); //new datarange.ExperimentData();
+var all_dataset_data = new Map();
+var dataset_data_requested_from_server = new Map(); //new datarange.DatasetData();
+var column_names = new Map();
 
-const x_axis_column_name = "test_time";
+const x_axis_column_id = 1; // Test Time
 
 goog.require('proto.galvanalyser.DataRanges');
 goog.require('datarange');
 
 function graph_substate_same_column(a, b) {
-    return a.experiment == b.experiment &&
+    return a.dataset == b.dataset &&
         a.column == b.column;
 }
 
 function graph_substate_equal(a, b) {
-    return a.experiment == b.experiment &&
+    return a.dataset == b.dataset &&
         a.column == b.column &&
         a.samples_from == b.samples_from &&
         a.samples_to == b.samples_to;
@@ -26,15 +27,15 @@ function graph_substate_equal(a, b) {
 
 /**
  * Send request to server for data, update requested data
- * @param {int} experiment_id 
- * @param {string} column 
+ * @param {int} dataset_id 
+ * @param {int} column_id 
  * @param {int} start_sample_no 
  * @param {int} end_sample_no 
  */
-function send_data_request(experiment_id, column, start_sample_no, end_sample_no) {
-    //console.log(`send_data_request Requesting ${experiment_id} , ${column} , ${start_sample_no} , ${end_sample_no}`);
+function send_data_request(dataset_id, column_id, start_sample_no, end_sample_no) {
+    //console.log(`send_data_request Requesting ${dataset_id} , ${column_id} , ${start_sample_no} , ${end_sample_no}`);
     let oReq = new XMLHttpRequest();
-    oReq.open("GET", `/experiment/${experiment_id}/data?column=${column}&from=${start_sample_no}&to=${end_sample_no}`, true);
+    oReq.open("GET", `/dataset/${dataset_id}/data?column_id=${column_id}&from=${start_sample_no}&to=${end_sample_no}`, true);
     oReq.responseType = "arraybuffer";
 
     oReq.onload = function(oEvent) {
@@ -43,26 +44,26 @@ function send_data_request(experiment_id, column, start_sample_no, end_sample_no
             //var byteArray = new Uint8Array(arrayBuffer);
             let message = proto.galvanalyser.DataRanges.deserializeBinary(arrayBuffer);
             let ranges_list = message.getRangesList();
-            let received_experiment_id = message.getExperimentId();
-            let received_column = message.getColumn();
-            //console.log(`send_data_request Received ${received_experiment_id} , ${column}`);
-            if (!all_experiment_data.has(received_experiment_id)) {
-                all_experiment_data.set(received_experiment_id, new datarange.ExperimentData());
+            let received_dataset_id = message.getDatasetId();
+            let received_column_id = message.getColumnId();
+            //console.log(`send_data_request Received ${received_dataset_id} , ${column_id}`);
+            if (!all_dataset_data.has(received_dataset_id)) {
+                all_dataset_data.set(received_dataset_id, new datarange.DatasetData());
             }
-            let experiment_data = all_experiment_data.get(received_experiment_id);
+            let dataset_data = all_dataset_data.get(received_dataset_id);
             ranges_list.forEach(function(range) {
-                experiment_data.add_protobuf_data_range(received_column, range);
+                dataset_data.add_protobuf_data_range(received_column_id, range);
             });
             update_graph();
         }
     };
     oReq.send(null);
     // update requested data
-    if (!experiment_data_requested_from_server.has(experiment_id)) {
-        experiment_data_requested_from_server.set(experiment_id, new datarange.ExperimentData());
+    if (!dataset_data_requested_from_server.has(dataset_id)) {
+        dataset_data_requested_from_server.set(dataset_id, new datarange.DatasetData());
     }
-    let requested_experiment_data = experiment_data_requested_from_server.get(experiment_id);
-    requested_experiment_data.add_empty_data_range(column, start_sample_no, end_sample_no);
+    let requested_dataset_data = dataset_data_requested_from_server.get(dataset_id);
+    requested_dataset_data.add_empty_data_range(column_id, start_sample_no, end_sample_no);
 }
 
 /**
@@ -117,36 +118,36 @@ function get_list_of_missing_ranges(reading_data, start_sample_no, end_sample_no
 /**
  * Check if we have already sent a request for data, send requests for parts not already requested.
  * Returns true if a request for data was sent
- * @param {int} experiment_id 
- * @param {string} column 
+ * @param {int} dataset_id 
+ * @param {int} column_id 
  * @param {int} start_sample_no 
  * @param {int} end_sample_no 
  */
-function request_experiment_data(experiment_id, column, start_sample_no, end_sample_no) {
-    //console.log(`request_experiment_data start ${experiment_id} , ${column} , ${start_sample_no} , ${end_sample_no}`);
+function request_dataset_data(dataset_id, column_id, start_sample_no, end_sample_no) {
+    //console.log(`request_dataset_data start ${dataset_id} , ${column_id} , ${start_sample_no} , ${end_sample_no}`);
     //check we haven't requested this data already
-    if (!experiment_data_requested_from_server.has(experiment_id)) {
-        // we don't have any data for this experiment, get it all.
-        //console.log(`request_experiment_data have no ${experiment_id}`);
-        send_data_request(experiment_id, column, start_sample_no, end_sample_no);
+    if (!dataset_data_requested_from_server.has(dataset_id)) {
+        // we don't have any data for this dataset, get it all.
+        //console.log(`request_dataset_data have no ${dataset_id}`);
+        send_data_request(dataset_id, column_id, start_sample_no, end_sample_no);
         return true;
     }
-    let requested_experiment_data = experiment_data_requested_from_server.get(experiment_id);
-    if (!requested_experiment_data.columns.has(column)) {
+    let requested_dataset_data = dataset_data_requested_from_server.get(dataset_id);
+    if (!requested_dataset_data.columns.has(column_id)) {
         // we don't have any data for this column, get it all.
-        //console.log(`request_experiment_data has no ${experiment_id} , ${column}`);
-        send_data_request(experiment_id, column, start_sample_no, end_sample_no);
+        //console.log(`request_dataset_data has no ${dataset_id} , ${column_id}`);
+        send_data_request(dataset_id, column_id, start_sample_no, end_sample_no);
         return true;
     }
-    let requested_column_data = requested_experiment_data.columns.get(column);
+    let requested_column_data = requested_dataset_data.columns.get(column_id);
     let missing_data_ranges = get_list_of_missing_ranges(requested_column_data, start_sample_no, end_sample_no);
     let data_requested = false;
     for (const missing_range of missing_data_ranges) {
-        //console.log(`request_experiment_data has missing range ${experiment_id} , ${column} , ${missing_range.from} , ${missing_range.to}`);
-        send_data_request(experiment_id, column, missing_range.from, missing_range.to);
+        //console.log(`request_dataset_data has missing range ${dataset_id} , ${column} , ${missing_range.from} , ${missing_range.to}`);
+        send_data_request(dataset_id, column_id, missing_range.from, missing_range.to);
         data_requested = true;
     }
-    //console.log(`request_experiment_data data_requested: ${data_requested}`);
+    //console.log(`request_dataset_data data_requested: ${data_requested}`);
     return data_requested;
 }
 
@@ -160,14 +161,14 @@ function apply_offset(data, offset) {
 function update_graph() {
     // Add or update new plots
     let updates_requested = false;
-    for (const [requested_experiment_id, requested_experiment_data] of requested_graph_ranges) {
-        //console.log(`update_graph iterating ${requested_experiment_id}`);
-        for (const [column, reading_data] of requested_experiment_data.columns) {
-            //console.log(`update_graph iterating ${requested_experiment_id} , ${column}`);
+    for (const [requested_dataset_id, requested_dataset_data] of requested_graph_ranges) {
+        //console.log(`update_graph iterating ${requested_dataset_id}`);
+        for (const [column_id, reading_data] of requested_dataset_data.columns) {
+            //console.log(`update_graph iterating ${requested_dataset_id} , ${column_id}`);
             reading_data.iterate_ranges(function(data_range) {
                 // get the sample times and requested data
-                updates_requested |= request_experiment_data(requested_experiment_id, x_axis_column_name, data_range.from, data_range.to);
-                updates_requested |= request_experiment_data(requested_experiment_id, column, data_range.from, data_range.to);
+                updates_requested |= request_dataset_data(requested_dataset_id, x_axis_column_id, data_range.from, data_range.to);
+                updates_requested |= request_dataset_data(requested_dataset_id, column_id, data_range.from, data_range.to);
             });
         }
     }
@@ -177,20 +178,20 @@ function update_graph() {
         let plot = document.getElementById('main-graph');
         //update graph
         let traces = [];
-        for (const [requested_experiment_id, requested_experiment_data] of requested_metadata_ranges) {
-            if (all_experiment_data.has(requested_experiment_id)) {
-                let available_experiment_data = all_experiment_data.get(requested_experiment_id);
-                if (!available_experiment_data.columns.has(x_axis_column_name)) {
-                    //console.log(`update_graph NO X-AXIS ${requested_experiment_id}`);
+        for (const [requested_dataset_id, requested_dataset_data] of requested_metadata_ranges) {
+            if (all_dataset_data.has(requested_dataset_id)) {
+                let available_dataset_data = all_dataset_data.get(requested_dataset_id);
+                if (!available_dataset_data.columns.has(x_axis_column_id)) {
+                    //console.log(`update_graph NO X-AXIS ${requested_dataset_id}`);
                     // no x axis, can't plot
                     continue;
                 }
-                let sample_time_data = available_experiment_data.columns.get(x_axis_column_name);
-                for (const [requested_column_name, requested_reading_data] of requested_experiment_data) {
+                let sample_time_data = available_dataset_data.columns.get(x_axis_column_id);
+                for (const [requested_column_id, requested_reading_data] of requested_dataset_data) {
                     let y_ranges = [];
                     let x_ranges = [];
-                    if (available_experiment_data.columns.has(requested_column_name)) {
-                        let available_column_reading_data = available_experiment_data.columns.get(requested_column_name);
+                    if (available_dataset_data.columns.has(requested_column_id)) {
+                        let available_column_reading_data = available_dataset_data.columns.get(requested_column_id);
                         for (const requested_data_range of requested_reading_data) {
                             let available_y_ranges = available_column_reading_data.get_ranges_between(requested_data_range.from, requested_data_range.to);
                             for (const available_y_range of available_y_ranges) {
@@ -213,7 +214,6 @@ function update_graph() {
                         }
                         return data;
                     };
-                    // TODO insert dummy x values and null y values in gaps between data arrays
                     let x_data = fuse_data(x_ranges);
                     let y_data = fuse_data(y_ranges);
                     let trace = {
@@ -221,12 +221,12 @@ function update_graph() {
                         y: y_data,
                         mode: 'lines',
                         type: 'scattergl',
-                        name: `${requested_experiment_id} ${requested_column_name}`
+                        name: `${requested_dataset_id} ${column_names[requested_column_id]}`
                     };
                     traces.push(trace);
                 }
             } else {
-                //console.log(`update_graph NO DATA for ${requested_experiment_id}`);
+                //console.log(`update_graph NO DATA for ${requested_dataset_id}`);
             }
         }
         Plotly.react(plot, traces);
@@ -239,34 +239,35 @@ if (!window.dash_clientside) {
 window.dash_clientside.clientside_graph = {
     update_graph_trigger: function(data) {
         let new_config = new Map();
-        let new_experiment_ranges = new Map();
+        let new_dataset_ranges = new Map();
         for (const row of data) {
-            if (!new_config.has(row.experiment_id)) {
-                new_config.set(row.experiment_id, new datarange.ExperimentData());
-                new_experiment_ranges.set(row.experiment_id, new Map());
+            column_names[row.column_id] = row.column;
+            if (!new_config.has(row.dataset_id)) {
+                new_config.set(row.dataset_id, new datarange.DatasetData());
+                new_dataset_ranges.set(row.dataset_id, new Map());
             }
-            let experiment_data = new_config.get(row.experiment_id);
-            experiment_data.add_empty_data_range(row.column, row.samples_from, row.samples_to);
-            let experiment_ranges = new_experiment_ranges.get(row.experiment_id);
-            if (!experiment_ranges.has(row.column)) {
-                experiment_ranges.set(row.column, []);
+            let dataset_data = new_config.get(row.dataset_id);
+            dataset_data.add_empty_data_range(row.column_id, row.samples_from, row.samples_to);
+            let dataset_ranges = new_dataset_ranges.get(row.dataset_id);
+            if (!dataset_ranges.has(row.column_id)) {
+                dataset_ranges.set(row.column_id, []);
             }
-            experiment_ranges.get(row.column).push({
+            dataset_ranges.get(row.column_id).push({
                 from: row.samples_from,
                 to: row.samples_to,
                 offset: row.offset || 0.0
             });
-            //console.log(`update_graph_trigger wants ${row.experiment_id} , ${row.column} , ${row.samples_from} , ${row.samples_to}`);
+            //console.log(`update_graph_trigger wants ${row.dataset_id} , ${row.column} , ${row.samples_from} , ${row.samples_to}`);
         }
         requested_graph_ranges = new_config;
-        requested_metadata_ranges = new_experiment_ranges;
+        requested_metadata_ranges = new_dataset_ranges;
         update_graph();
         //for (const row of data) {
-        //    let foo = new datarange.ExperimentData();
+        //    let foo = new datarange.DatasetData();
         //
         //    let oReq = new XMLHttpRequest();
-        //    //oReq.open("GET", `/experiment/${row.experiment}/data?from=${row.samples_from}&to=${row.samples_to}&column=test_time,volts,amps`, true);
-        //    oReq.open("GET", `/experiment/${row.experiment}/data?from=${row.samples_from}&to=${row.samples_to}&column=${row.column}`, true);
+        //    //oReq.open("GET", `/dataset/${row.dataset}/data?from=${row.samples_from}&to=${row.samples_to}&column=test_time,volts,amps`, true);
+        //    oReq.open("GET", `/dataset/${row.dataset}/data?from=${row.samples_from}&to=${row.samples_to}&column=${row.column}`, true);
         //    oReq.responseType = "arraybuffer";
         //
         //    oReq.onload = function(oEvent) {
@@ -275,18 +276,18 @@ window.dash_clientside.clientside_graph = {
         //            //var byteArray = new Uint8Array(arrayBuffer);
         //            let message = proto.galvanalyser.DataRanges.deserializeBinary(arrayBuffer);
         //            let ranges_list = message.getRangesList();
-        //            let experiment_id = message.getExperimentId();
-        //            //if(! all_experiment_data.has(experiment_id)){
-        //            //    all_experiment_data.set(experiment_id, new datarange.ExperimentData());
+        //            let dataset_id = message.getDatasetId();
+        //            //if(! all_dataset_data.has(dataset_id)){
+        //            //    all_dataset_data.set(dataset_id, new datarange.DatasetData());
         //            //}
-        //            //let experiment_data = all_experiment_data.get(experiment_id);
+        //            //let dataset_data = all_dataset_data.get(dataset_id);
         //            //ranges_list.forEach(function(range){
-        //            //    experiment_data.add_protobuf_data_range(range);
+        //            //    dataset_data.add_protobuf_data_range(range);
         //            //});
         //            ////console.log(ranges_list);
         //            //ranges_list.forEach(function(range){
         //            //    let volt_list = range.getVoltsList();
-        //            //    let data_name = `${message.getExperimentId()}_${range.getStartSampleNo()}_${volt_list.length}_volts`;
+        //            //    let data_name = `${message.getDatasetId()}_${range.getStartSampleNo()}_${volt_list.length}_volts`;
         //            //    if (!(data_name in graph_state)) {
         //            //        alert("Adding data plot")
         //            //        let trace = {

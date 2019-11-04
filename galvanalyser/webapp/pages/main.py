@@ -5,8 +5,9 @@ from dash.dependencies import Input, Output, State, ClientsideFunction
 from galvanalyser.webapp.pages import all_layouts
 import dash_table
 
-from galvanalyser.database.experiment.experiments_row import ExperimentsRow
-from galvanalyser.database.experiment.metadata_row import MetaDataRow
+from galvanalyser.database.experiment.dataset_row import DatasetRow
+from galvanalyser.database.experiment.range_label_row import RangeLabelRow
+import galvanalyser.database.experiment.timeseries_data_column as TimeseriesDataColumn
 import psycopg2
 from galvanalyser.webapp.datahandling import data_server
 
@@ -16,24 +17,24 @@ def log(text):
         myfile.write(text + "\n")
 
 
-experiment_selector = html.Div(
+dataset_selector = html.Div(
     [
-        html.P("placeholder experiment selector"),
+        html.P("placeholder dataset selector"),
         html.Button(
-            id="main_get_experiments",
+            id="main_get_dataset",
             type="button",
-            children="Get Experiments",
+            children="Get Dataset",
         ),
     ]
 )
-experiment_list = html.Div(
+dataset_list = html.Div(
     [
-        html.P("placeholder experiment list"),
-        dcc.RadioItems(id="main_experiments"),
+        html.P("placeholder dataset list"),
+        dcc.RadioItems(id="main_dataset"),
         html.Form(
             children=[
                 dash_table.DataTable(
-                    id="experiment_table",
+                    id="dataset_table",
                     row_selectable="single",
                     columns=[
                         {"name": i, "id": i}
@@ -48,7 +49,7 @@ experiment_list = html.Div(
 data_ranges = html.Div(
     [
         html.P("placeholder data ranges"),
-        html.P(id="main_selected_experiment"),
+        html.P(id="main_selected_dataset"),
         html.Form(
             children=[
                 dash_table.DataTable(
@@ -90,7 +91,7 @@ plotting_controls = html.Div(
                             "editable": True if i == "offset" else False,
                         }
                         for i in [
-                            "experiment_id",
+                            "dataset_id",
                             "label_name",
                             "column",
                             "samples_from",
@@ -132,9 +133,9 @@ tab_graph_content = html.Div(
     ],
 )
 
-tab_experiments_content = html.Div(
-    id="tab_experiments_content",
-    children=[experiment_selector, experiment_list, data_ranges],
+tab_dataset_content = html.Div(
+    id="tab_dataset_content",
+    children=[dataset_selector, dataset_list, data_ranges],
     hidden=True,
 )
 
@@ -157,12 +158,12 @@ main_tabs_container = html.Div(
             value="tab_graph",
             children=[
                 dcc.Tab(label="Plotting", value="tab_graph"),
-                dcc.Tab(label="Select Experiments", value="tab_experiments"),
+                dcc.Tab(label="Select Dataset", value="tab_dataset"),
             ],
         ),
         html.Div(
             id="main_tabs_content",
-            children=[tab_graph_content, tab_experiments_content],
+            children=[tab_graph_content, tab_dataset_content],
         ),
     ],
 )
@@ -195,7 +196,7 @@ all_layouts.extend(
     [
         layout,
         tab_graph_content,
-        tab_experiments_content,
+        tab_dataset_content,
         tab_legend_content,
         tab_export_content,
     ]
@@ -206,14 +207,14 @@ def register_callbacks(app, config):
     @app.callback(
         [
             Output("tab_graph_content", "hidden"),
-            Output("tab_experiments_content", "hidden"),
+            Output("tab_dataset_content", "hidden"),
         ],
         [Input("main_tabs", "value")],
     )
     def render_main_tabs_content(tab):
         if tab == "tab_graph":
             return False, True
-        elif tab == "tab_experiments":
+        elif tab == "tab_dataset":
             return True, False
 
     @app.callback(
@@ -230,25 +231,25 @@ def register_callbacks(app, config):
             return True, False
 
     @app.callback(
-        Output("experiment_table", "data"),
-        [Input("main_get_experiments", "n_clicks")],
+        Output("dataset_table", "data"),
+        [Input("main_get_dataset", "n_clicks")],
     )
-    def get_experiments(n_clicks):
-        log("in get_experiments")
+    def get_dataset(n_clicks):
+        log("in get_dataset")
         options = []
         if n_clicks:
             conn = None
             try:
                 conn = config["get_db_connection_for_current_user"]()
-                experiments = ExperimentsRow.select_all_experiments(conn)
+                dataset = DatasetRow.select_all_dataset(conn)
                 options = [
                     {
                         "id": exp.id,
                         "name": exp.name,
                         "date": exp.date,
-                        "type": exp.experiment_type,
+                        "type": exp.dataset_type,
                     }
-                    for exp in experiments
+                    for exp in dataset
                 ]
             finally:
                 if conn:
@@ -257,32 +258,34 @@ def register_callbacks(app, config):
 
     @app.callback(
         [
-            Output("main_selected_experiment", "children"),
+            Output("main_selected_dataset", "children"),
             Output("metadata_table", "data"),
             Output("metadata_table", "selected_rows"),
         ],
-        [Input("experiment_table", "selected_row_ids")],
+        [Input("dataset_table", "selected_row_ids")],
     )
-    def experiment_selected(selected_row_ids):
+    def dataset_selected(selected_row_ids):
         info_line = f"Selected: {selected_row_ids}"
         table_rows = []
         conn = None
         try:
             conn = config["get_db_connection_for_current_user"]()
             # populate columns properly, don't include "test_time"
-            available_columns = ["volts", "amps"]
+            # available_columns = ["volts", "amps"]
             if selected_row_ids:
                 selected_row_id = selected_row_ids[0]
+                available_columns = TimeseriesDataColumn.select_experiment_columns(selected_row_id, conn)
                 try:
-                    metadatas = MetaDataRow.select_from_experiment_id(
+                    metadatas = RangeLabelRow.select_from_dataset_id(
                         selected_row_id, conn
                     )
                     table_rows = [
                         {
                             "id": f"{selected_row_id}:{col}:{m.label_name}",
-                            "experiment_id": selected_row_id,
+                            "dataset_id": selected_row_id,
                             "label_name": m.label_name,
-                            "column": col,
+                            "column": col[1],
+                            "column_id": col[0],
                             "samples_from": m.lower_bound,
                             "samples_to": m.upper_bound,
                             "info": m.info,
@@ -292,7 +295,7 @@ def register_callbacks(app, config):
                         for col in available_columns
                     ]
                 except psycopg2.errors.InsufficientPrivilege:
-                    info_line = f"Permission denied when retrieving metadata for experiment id {selected_row_ids}"
+                    info_line = f"Permission denied when retrieving metadata for dataset id {selected_row_ids}"
         finally:
             if conn:
                 conn.close()

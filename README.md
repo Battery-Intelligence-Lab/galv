@@ -3,7 +3,7 @@
 Folder Structure
 ----------------
 ```
-├── config -- Doesn't actually exist in the repo, can be created locally and used to store test a harvester config
+├── config -- Has an example harvester config in, can be used to store test harvester configs locally
 ├── galvanalyser -- The python code goes here, all under the galvanalyser namespace
 │   ├── database -- Library files for interacting with the database
 │   ├── harvester -- The harvester app

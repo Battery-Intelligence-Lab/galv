@@ -98,8 +98,8 @@ function data_range_comp(a, b) {
 }
 
 class ReadingData {
-    constructor(column_name) {
-        this.column = column_name;
+    constructor(column_id) {
+        this.column_id = column_id;
         this.tree = new goog.structs.AvlTree(data_range_comp);
     }
 
@@ -156,17 +156,17 @@ class ReadingData {
 
 }
 
-class ExperimentData {
+class DatasetData {
 
     constructor() {
         this.columns = new Map();
     }
 
-    add_protobuf_data_range(column, pb_data_range) {
-        if (!this.columns.has(column)) {
-            this.columns.set(column, new ReadingData(column));
+    add_protobuf_data_range(column_id, pb_data_range) {
+        if (!this.columns.has(column_id)) {
+            this.columns.set(column_id, new ReadingData(column_id));
         }
-        let reading_data = this.columns.get(column);
+        let reading_data = this.columns.get(column_id);
         let start_sample_no = pb_data_range.getStartSampleNo();
         let data = pb_data_range.getValuesList();
         if (data.length > 0) {
@@ -174,14 +174,14 @@ class ExperimentData {
         }
     }
 
-    add_empty_data_range(column, start_sample_no, end_sample_no) {
-        if (!this.columns.has(column)) {
-            this.columns.set(column, new ReadingData(column));
+    add_empty_data_range(column_id, start_sample_no, end_sample_no) {
+        if (!this.columns.has(column_id)) {
+            this.columns.set(column_id, new ReadingData(column_id));
         }
-        let reading_data = this.columns.get(column);
+        let reading_data = this.columns.get(column_id);
         reading_data.add_data_range(new DataRange(start_sample_no, end_sample_no));
     }
 }
 
 exports.DataRange = DataRange;
-exports.ExperimentData = ExperimentData;
+exports.DatasetData = DatasetData;

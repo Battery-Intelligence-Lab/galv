@@ -9,9 +9,9 @@ test:
 
 protobuf: webapp-static-content/libs/galvanalyser-protobuf.js
 
-webapp-static-content/libs/galvanalyser-protobuf.js: protobuf/experiment-data.proto webapp-static-content/js/data-range.js
+webapp-static-content/libs/galvanalyser-protobuf.js: protobuf/timeseries-data.proto webapp-static-content/js/data-range.js
 	mkdir -p galvanalyser/protobuf && mkdir -p libs/galvanalyser-js-protobufs && \
-	protoc -I=protobuf --python_out=galvanalyser/protobuf --js_out=binary:libs/galvanalyser-js-protobufs protobuf/experiment-data.proto && \
+	protoc -I=protobuf --python_out=galvanalyser/protobuf --js_out=binary:libs/galvanalyser-js-protobufs protobuf/timeseries-data.proto && \
 	libs/closure-library/closure/bin/build/closurebuilder.py \
   --root=libs/closure-library \
   --root=libs/protobuf/js \
@@ -24,7 +24,6 @@ webapp-static-content/libs/galvanalyser-protobuf.js: protobuf/experiment-data.pr
   sed -i -e "s/^goog\.global\.CLOSURE_NO_DEPS;/goog\.global\.CLOSURE_NO_DEPS = true;/" "webapp-static-content/libs/galvanalyser-protobuf.js" && \
   rm -f webapp-static-content/libs/galvanalyser-protobuf.js-e
 
-custom-dash-components: libs/galvanalyser-dash-components/dist/galvanalyser_dash_components-0.0.1.tar.gz
 
 
 custom-dash-components libs/galvanalyser-dash-components/dist/galvanalyser_dash_components-0.0.1.tar.gz: libs/galvanalyser-dash-components/src/lib/index.js libs/galvanalyser-dash-components/src/lib/components/*.react.js 
@@ -33,13 +32,13 @@ custom-dash-components libs/galvanalyser-dash-components/dist/galvanalyser_dash_
 	python setup.py sdist
 
 builder-docker-build:
-	docker build -t builder -f builder/Dockerfile .
+	docker rm -f galvanalyser_webstack_builder ; docker build -t builder -f builder/Dockerfile .
 
 builder-docker-run:
-	docker run --rm -it -v ${CURDIR}:/workdir/project:rw builder
+	docker start --attach galvanalyser_webstack_builder || { echo "Creating container galvanalyser_webstack_builder" ; docker run -it -v ${CURDIR}:/workdir/project:rw --name="galvanalyser_webstack_builder" builder ;}
 
 build-webstack: builder-docker-run
-	pushd webstack && \
+	cd webstack && \
 	docker-compose down && \
 	docker-compose build
 
@@ -51,6 +50,9 @@ harvester-docker-build:
 	docker build -t harvester -f harvester/Dockerfile .
 
 harvester-docker-run:
-	docker run --rm -it -v ${CURDIR}/galvanalyser:/usr/src/app/galvanalyser -v ${CURDIR}/harvester-test:/usr/src/app/config --net host harvester
+	docker run --rm -it -v ${CURDIR}/galvanalyser:/usr/src/app/galvanalyser -v ${CURDIR}/../harvester-test:/usr/src/app/config --net host harvester
 
-.PHONY: init update-submodules test protobuf custom-dash-components builder-docker-build builder-docker-run build-webstack format harvester-docker-build harvester-docker-run
+harvester-run:
+	python -m galvanalyser.harvester.harvester
+
+.PHONY: init update-submodules test protobuf custom-dash-components builder-docker-build builder-docker-run build-webstack format harvester-docker-build harvester-docker-run harvester-run

@@ -31,7 +31,7 @@ def get_ivium_column_to_standard_column_mapping():
         mapping exists
     """
     print("get_ivium_column_to_standard_column_mapping")
-    return {"amps": "amps", "volts": "volts", "test_time": "test_time"}
+    return {"amps": 3, "volts": 2, "test_time": 1}
 
 
 def isfloat(value):
@@ -61,7 +61,7 @@ def load_metadata_ivium_text(file_path):
     """
     metadata = {}
     metadata["Machine Type"] = "Ivium"
-    metadata["Experiment Name"] = os.path.splitext(ntpath.basename(file_path))[
+    metadata["Dataset Name"] = os.path.splitext(ntpath.basename(file_path))[
         0
     ]
     metadata["Date of Test"] = datetime.fromtimestamp(

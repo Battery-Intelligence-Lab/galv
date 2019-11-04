@@ -19,16 +19,25 @@ StopIfError $? "Failed to activate python virtual env"
 cd /workdir/project
 StopIfError $? "Failed to set working directory to project directory"
 
+echo "
+make init:
+"
 make init
 StopIfError $? "Failed to install python requirements"
 
+echo "
+npm install:
+"
 pushd libs/galvanalyser-dash-components
 StopIfError $? "Failed to set working directory to libs/galvanalyser-dash-components"
-npm install
+pnpm install
 StopIfError $? "Failed to install npm dependencies"
 popd
 StopIfError $? "Failed to set working directory back to project directory"
 
+echo "
+make custom-dash-components:
+"
 make custom-dash-components
 StopIfError $? "Failed to make custom-dash-components"
 

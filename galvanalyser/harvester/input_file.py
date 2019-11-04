@@ -88,52 +88,102 @@ class InputFile:
     def __init__(self, file_path):
         self.file_path = file_path
         self.type = identify_file(file_path)
-        self.metadata, self.columns_with_data = load_metadata(
+        self.metadata, self.column_info = load_metadata(
             self.type, file_path
         )
+
+    def get_file_column_to_standard_column_mapping(self):
+        """
+            returns map of file column name strings to column id numbers
+        """
+        if "MACCOR" in self.type:
+            print("Type is MACCOR")
+            return (
+                maccor_functions.get_maccor_column_to_standard_column_mapping()
+            )
+        elif "IVIUM" in self.type:
+            print("Type is IVIUM")
+            return (
+                ivium_functions.get_ivium_column_to_standard_column_mapping()
+            )
+        else:
+            raise battery_exceptions.UnsupportedFileTypeError
+
+    def get_standard_column_to_file_column_mapping(self):
+        file_col_to_std_col = self.get_file_column_to_standard_column_mapping()
+        return {value: key for key, value in file_col_to_std_col.items() if value is not None}
+
+    def get_names_of_columns_with_data(self):
+        return {
+            key
+            for key, value in self.column_info.items()
+            if value["has_data"]
+        }
+
+    def get_names_of_numeric_columns_with_data(self):
+        return {
+            key
+            for key, value in self.column_info.items()
+            if value["has_data"] and value["is_numeric"]
+        }
+
+    def get_unknown_numeric_columns_with_data_names(self, standard_cols_to_file_cols=None):
+        if standard_cols_to_file_cols is None:
+            standard_cols_to_file_cols = {}
+        known_map = self.get_file_column_to_standard_column_mapping()
+        columns_with_data = self.get_names_of_numeric_columns_with_data()
+        return (columns_with_data -
+            (set(known_map.keys()) | set(standard_cols_to_file_cols.values()))
+            )
 
     def get_test_start_date(self):
         # TODO look check file type, ask specific implementation for metadata value
         return self.metadata["Date of Test"]
 
-    def complete_columns(self, required_columns, file_cols_to_data_generator):
+    def complete_columns(self, required_column_ids, file_cols_to_data_generator):
         """
             Generates missing columns, returns generator of lists that match
-            required_columns
+            required_column_ids
         """
-        rec_col_set = set(required_columns)
+        flag = True
+        rec_col_set = set(required_column_ids)
         prev_time = 0.0
         prev_amps = 0.0
         capacity_total = 0.0
         for row_no, file_data_row in enumerate(file_cols_to_data_generator, 1):
             missing_colums = rec_col_set - set(file_data_row.keys())
-            if (
-                "experiment_id" in missing_colums
-                and "experiment_id" in self.metadata
-            ):
-                file_data_row["experiment_id"] = self.metadata["experiment_id"]
-            if "sample_no" in missing_colums:
-                file_data_row["sample_no"] = row_no
-            if "temperature" in missing_colums:
-                file_data_row["temperature"] = None
-            if "capacity" in missing_colums:
-                current_amps = float(file_data_row["amps"])
-                current_time = float(file_data_row["test_time"])
+#            if (
+#                "dataset_id" in missing_colums
+#                and "dataset_id" in self.metadata
+#            ):
+#                file_data_row["dataset_id"] = self.metadata["dataset_id"]
+            if 0 in missing_colums: # sample_no
+                file_data_row[0] = row_no
+            if 5 in missing_colums: # "capacity" / Charge Capacity
+                current_amps = float(file_data_row[3])
+                current_time = float(file_data_row[1])
                 capacity_total += ((prev_amps + current_amps) / 2.0) * (
                     current_time - prev_time
                 )
-                file_data_row["capacity"] = capacity_total
+                file_data_row[5] = capacity_total
                 prev_amps = current_amps
                 prev_time = current_time
-            if "power" in missing_colums:
-                file_data_row["power"] = float(file_data_row["volts"]) * float(
-                    file_data_row["amps"]
-                )
+#            if "power" in missing_colums:
+#                file_data_row["power"] = float(file_data_row["volts"]) * float(
+#                    file_data_row["amps"]
+#                )
                 # file_data_row[col_name] if col_name in file_data_row else None
-            yield [file_data_row[col_name] for col_name in required_columns]
+            if flag:
+                print("Debug info")
+                print(repr(file_data_row))
+                print(repr(required_column_ids))
+                flag = False
+            # Should we just yield file_data_row, it should be exactly the same now
+            yield {col_id: file_data_row[col_id] for col_id in required_column_ids}
+            #yield [file_data_row[col_id] for col_id in required_column_ids]
 
     def get_data_with_standard_colums(
-        self, required_columns, standard_cols_to_file_cols={}
+        self, required_column_ids, standard_cols_to_file_cols=None
     ):
         """
             Given a map of standard columns to file columns; return a map
@@ -141,25 +191,14 @@ class InputFile:
             as values.
         """
         print("get_data_with_standard_colums")
-        print("Required columns: " + str(required_columns))
-        output_columns = set(required_columns) | set(
-            standard_cols_to_file_cols.keys()
-        )
-        print("output_columns: " + str(output_columns))
+        if standard_cols_to_file_cols is None:
+            standard_cols_to_file_cols = {}
+        print("Required columns: " + str(required_column_ids))
         # first determine
         file_col_to_std_col = {}
         print("Full type is " + str(self.type))
         # Get the column mappings the file type knows about
-        if "MACCOR" in self.type:
-            print("Type is MACCOR")
-            file_col_to_std_col = (
-                maccor_functions.get_maccor_column_to_standard_column_mapping()
-            )
-        elif "IVIUM" in self.type:
-            print("Type is IVIUM")
-            file_col_to_std_col = (
-                ivium_functions.get_ivium_column_to_standard_column_mapping()
-            )
+        file_col_to_std_col = self.get_file_column_to_standard_column_mapping()
         print("file_col_to_std_col 1: " + str(file_col_to_std_col))
         # extend those mappings with any custom ones provided
         file_col_to_std_col.update(
@@ -174,7 +213,7 @@ class InputFile:
         desired_file_cols_to_std_cols = {
             key: value
             for key, value in file_col_to_std_col.items()
-            if value in required_columns
+            if value in required_column_ids
         }
         file_cols_to_data_generator = self.get_desired_data_if_present(
             desired_file_cols_to_std_cols
@@ -182,27 +221,26 @@ class InputFile:
         # pass file_cols_to_data_generator to generate missing column
 
         return self.complete_columns(
-            required_columns, file_cols_to_data_generator
+            required_column_ids, file_cols_to_data_generator
         )
+        #return file_cols_to_data_generator
 
-    def get_desired_data_if_present(self, desired_file_cols_to_std_cols={}):
+    def get_desired_data_if_present(self, desired_file_cols_to_std_cols=None):
         """
             now a generator
             Given a map of file_columns to standard_columns,
             get the file columns that are present,
-            return a map of standard_colums to lists of data
+            returns generator for each row of map of column id to value
         """
+        if desired_file_cols_to_std_cols is None:
+            desired_file_cols_to_std_cols = {}
         print("get_desired_data_if_present")
         print(
             "desired_file_cols_to_std_cols: "
             + str(desired_file_cols_to_std_cols)
         )
         # first find which desired columns are available
-        available_columns = {
-            key
-            for key, value in self.columns_with_data.items()
-            if value["has_data"]
-        }
+        available_columns = self.get_names_of_columns_with_data()
         available_desired_columns = available_columns & set(
             desired_file_cols_to_std_cols.keys()
         )
@@ -233,13 +271,15 @@ class InputFile:
 
         raise battery_exceptions.UnsupportedFileTypeError
 
-    def get_data_row_generator(self, required_column_names):
+    def get_data_row_generator(self, required_column_ids, dataset_id, record_no_column_id, standard_cols_to_file_cols=None):
         # given list of columns, map file columns to desired columns
         # load available columns
         # generate missing columns
         # store data values in map of standard columns to lists of data values
         # generate list of iterators of data columns in order of input list
         # yield a single line of tab separated quoted values
+        if standard_cols_to_file_cols is None:
+            standard_cols_to_file_cols = {}
         def tsv_format(value):
             # The psycopg2 cursor.copy_from method needs null values to be
             # represented as a literal '\N'
@@ -247,9 +287,13 @@ class InputFile:
 
         try:
             for row in self.get_data_with_standard_colums(
-                required_column_names
+                required_column_ids, standard_cols_to_file_cols
             ):
-                yield "\t".join(map(tsv_format, row))
+                rec_no = row[record_no_column_id]
+                del row[record_no_column_id]
+                for column_id, value in row.items():
+                    timeseries_data_row = [dataset_id, rec_no, column_id, value]
+                    yield "\t".join(map(tsv_format, timeseries_data_row))
         except:
             traceback.print_exc()
             raise
@@ -261,7 +305,7 @@ class InputFile:
                 self.file_path,
                 [
                     column
-                    for column, info in self.columns_with_data.items()
+                    for column, info in self.column_info.items()
                     if info["has_data"]
                 ],
             )
@@ -271,7 +315,7 @@ class InputFile:
                 self.file_path,
                 [
                     column
-                    for column, info in self.columns_with_data.items()
+                    for column, info in self.column_info.items()
                     if info["has_data"]
                 ],
             )

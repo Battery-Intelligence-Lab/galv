@@ -47,21 +47,21 @@ def get_maccor_column_to_standard_column_mapping():
     """
     print("get_maccor_column_to_standard_column_mapping")
     all_values = {
-        "Amp-hr": None,
-        "Amps": "amps",
+        "Amp-hr": 5,
+        "Amps": 3,
         "Cyc#": None,
         "DPt Time": None,
-        "Watt-hr": None,
+        "Watt-hr": 4,
         "State": None,
         "Step": None,
-        "StepTime": None,
-        "Volts": "volts",
-        "Capacity": "capacity",
+        "StepTime": 7,
+        "Volts": 2,
+        "Capacity": None,
         "Energy": None,
         "Power": None,
-        "TestTime": "test_time",
-        "Rec#": "sample_no",
-        "Temp 1": "temperature",
+        "TestTime": 1,
+        "Rec#": 0,
+        "Temp 1": 6,
     }
     print("all_values: " + str(all_values))
     filtered_values = {
@@ -160,16 +160,16 @@ def identify_columns_maccor_excel(wbook):
                 last_rec = total_rows
         print("Unloading sheet " + str(sheet_id))
         wbook.unload_sheet(sheet_id)
-    columns_with_data = {
+    column_info = {
         headers[i]: {
             "has_data": column_has_data[i],
             "is_numeric": column_is_numeric[i],
         }
         for i in range(0, len(headers))
     }
-    print(columns_with_data)
+    print(column_info)
     print("Num rows {}".format(total_rows))
-    return columns_with_data, total_rows, first_rec, last_rec
+    return column_info, total_rows, first_rec, last_rec
 
 
 def handle_recno(row, correct_number_of_columns, recno_col, row_idx):
@@ -243,7 +243,7 @@ def identify_columns_maccor_text(reader):
                         row_idx,
                     )
                 )
-    columns_with_data = {
+    column_info = {
         headers[i]: {
             "has_data": column_has_data[i],
             "is_numeric": column_is_numeric[i],
@@ -259,9 +259,9 @@ def identify_columns_maccor_text(reader):
     else:
         first_rec = first_data[recno_col]
         last_rec = row[recno_col]
-    print(columns_with_data)
+    print(column_info)
     print("Num rows {}".format(total_rows))
-    return columns_with_data, total_rows, first_rec, last_rec
+    return column_info, total_rows, first_rec, last_rec
 
 
 def clean_key(key):
@@ -322,15 +322,15 @@ def load_metadata_maccor_excel(file_path):
                 col = col + 1
             col = col + 1
         metadata["Machine Type"] = "Maccor"
-        metadata["Experiment Name"] = ntpath.basename(metadata["Filename"])
-        columns_with_data, total_rows, first_rec, last_rec = identify_columns_maccor_excel(
+        metadata["Dataset Name"] = ntpath.basename(metadata["Filename"])
+        column_info, total_rows, first_rec, last_rec = identify_columns_maccor_excel(
             wbook
         )
         metadata["num_rows"] = total_rows
         metadata["first_sample_no"] = first_rec
         metadata["last_sample_no"] = last_rec
         print(metadata)
-        return metadata, columns_with_data
+        return metadata, column_info
 
 
 def load_metadata_maccor_text(file_type, file_path):
@@ -350,18 +350,18 @@ def load_metadata_maccor_text(file_type, file_path):
         second = next(reader)
         key = clean_key(second[0])
         metadata[key] = maya.parse(second[1]).datetime()
-        metadata["Experiment Name"] = os.path.splitext(
+        metadata["Dataset Name"] = os.path.splitext(
             ntpath.basename(file_path)
         )[0]
         metadata["Machine Type"] = "Maccor"
-        columns_with_data, total_rows, first_rec, last_rec = identify_columns_maccor_text(
+        column_info, total_rows, first_rec, last_rec = identify_columns_maccor_text(
             reader
         )
         metadata["num_rows"] = total_rows
         metadata["first_sample_no"] = first_rec
         metadata["last_sample_no"] = last_rec
         print(metadata)
-        return metadata, columns_with_data
+        return metadata, column_info
 
 
 def load_data_maccor_excel(file_path, columns, column_renames=None):

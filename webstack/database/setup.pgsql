@@ -47,16 +47,16 @@ GRANT ALL ON SCHEMA harvesters TO postgres;
 
 GRANT USAGE ON SCHEMA harvesters TO harvester;
 
--- Table: harvesters.harvesters
+-- Table: harvesters.harvester
 
--- DROP TABLE harvesters.harvesters;
+-- DROP TABLE harvesters.harvester;
 
-CREATE TABLE harvesters.harvesters
+CREATE TABLE harvesters.harvester
 (
-    id_no bigserial NOT NULL,
+    id bigserial NOT NULL,
     machine_id text NOT NULL,
-    CONSTRAINT harvesters_pkey PRIMARY KEY (id_no),
-    CONSTRAINT harvesters_machine_id_key UNIQUE (machine_id)
+    PRIMARY KEY (id),
+    UNIQUE (machine_id)
 
 )
 WITH (
@@ -64,28 +64,27 @@ WITH (
 )
 TABLESPACE pg_default;
 
-ALTER TABLE harvesters.harvesters
+ALTER TABLE harvesters.harvester
     OWNER to postgres;
 
-GRANT SELECT ON TABLE harvesters.harvesters TO harvester;
+GRANT SELECT ON TABLE harvesters.harvester TO harvester;
 
-GRANT ALL ON TABLE harvesters.harvesters TO postgres;
+GRANT ALL ON TABLE harvesters.harvester TO postgres;
 
--- Table: harvesters.monitored_paths
+-- Table: harvesters.monitored_path
 
--- DROP TABLE harvesters.monitored_paths;
+-- DROP TABLE harvesters.monitored_path;
 
-CREATE TABLE harvesters.monitored_paths
+CREATE TABLE harvesters.monitored_path
 (
     harvester_id bigint NOT NULL,
     path text NOT NULL,
     monitored_for text[] NOT NULL,
-    monitor_path_id bigint NOT NULL DEFAULT nextval('harvesters.monitored_paths_monitor_id_seq'::regclass) ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 9223372036854775807 CACHE 1 ),
-    CONSTRAINT monitored_paths_pkey PRIMARY KEY (path, harvester_id),
-    CONSTRAINT monitored_paths_path_id_key UNIQUE (monitor_path_id)
-,
-    CONSTRAINT monitored_paths_harvester_id_fkey FOREIGN KEY (harvester_id)
-        REFERENCES harvesters.harvesters (id_no) MATCH SIMPLE
+    monitor_path_id bigserial NOT NULL,
+    PRIMARY KEY (path, harvester_id),
+    UNIQUE (monitor_path_id),
+    FOREIGN KEY (harvester_id)
+        REFERENCES harvesters.harvester (id) MATCH SIMPLE
         ON UPDATE CASCADE
         ON DELETE CASCADE
 )
@@ -94,27 +93,38 @@ WITH (
 )
 TABLESPACE pg_default;
 
-ALTER TABLE harvesters.monitored_paths
+ALTER TABLE harvesters.monitored_path
     OWNER to postgres;
 
-GRANT SELECT ON TABLE harvesters.monitored_paths TO harvester;
+GRANT SELECT ON TABLE harvesters.monitored_path TO harvester;
 
-GRANT ALL ON TABLE harvesters.monitored_paths TO postgres;
+GRANT ALL ON TABLE harvesters.monitored_path TO postgres;
 
--- Table: harvesters.observed_files
+-- Type: file_state_t
 
--- DROP TABLE harvesters.observed_files;
+-- DROP TYPE harvesters.file_state_t;
 
-CREATE TABLE harvesters.observed_files
+CREATE TYPE harvesters.file_state_t AS ENUM
+    ('IMPORTED', 'IMPORTING', 'STABLE', 'UNSTABLE', 'IMPORT_FAILED');
+
+ALTER TYPE harvesters.file_state_t
+    OWNER TO postgres;
+
+
+-- Table: harvesters.observed_file
+
+-- DROP TABLE harvesters.observed_file;
+
+CREATE TABLE harvesters.observed_file
 (
     monitor_path_id bigint NOT NULL,
     path text NOT NULL,
     last_observed_size bigint NOT NULL,
     last_observed_time timestamp with time zone NOT NULL,
     file_state harvesters.file_state_t NOT NULL DEFAULT 'UNSTABLE'::harvesters.file_state_t,
-    CONSTRAINT observed_files_pkey PRIMARY KEY (monitor_path_id, path),
-    CONSTRAINT observed_files_monitor_path_id_fkey FOREIGN KEY (monitor_path_id)
-        REFERENCES harvesters.monitored_paths (monitor_path_id) MATCH SIMPLE
+    CONSTRAINT observed_file_pkey PRIMARY KEY (monitor_path_id, path),
+    FOREIGN KEY (monitor_path_id)
+        REFERENCES harvesters.monitored_path (monitor_path_id) MATCH SIMPLE
         ON UPDATE NO ACTION
         ON DELETE NO ACTION
 )
@@ -123,12 +133,12 @@ WITH (
 )
 TABLESPACE pg_default;
 
-ALTER TABLE harvesters.observed_files
+ALTER TABLE harvesters.observed_file
     OWNER to postgres;
 
-GRANT INSERT, SELECT, UPDATE, DELETE ON TABLE harvesters.observed_files TO harvester;
+GRANT INSERT, SELECT, UPDATE, DELETE ON TABLE harvesters.observed_file TO harvester;
 
-GRANT ALL ON TABLE harvesters.observed_files TO postgres;
+GRANT ALL ON TABLE harvesters.observed_file TO postgres;
 
 -- SCHEMA: experiment
 
@@ -141,36 +151,64 @@ GRANT ALL ON SCHEMA experiment TO postgres;
 
 GRANT USAGE ON SCHEMA experiment TO harvester;
 
--- Table: experiment.experiments
+GRANT USAGE ON SCHEMA experiment TO normal_user;
 
--- DROP TABLE experiment.experiments;
+-- Table: experiment.institution
 
-CREATE TABLE experiment.experiments
+-- DROP TABLE experiment.institution;
+
+CREATE TABLE experiment.institution
 (
     id bigserial NOT NULL,
-    name text,
-    date timestamp with time zone,
-    type text NOT NULL,
-    PRIMARY KEY (name, date),
-    UNIQUE (id)
-
+    name text NOT NULL,
+    PRIMARY KEY (id),
+    UNIQUE (name)
 )
 WITH (
     OIDS = FALSE
 );
 
-ALTER TABLE experiment.experiments
+ALTER TABLE experiment.institution
     OWNER to postgres;
 
-GRANT INSERT, SELECT, TRIGGER ON TABLE experiment.experiments TO harvester;
+GRANT SELECT ON TABLE experiment.institution TO harvester;
 
-GRANT ALL ON TABLE experiment.experiments TO postgres;
+GRANT SELECT ON TABLE experiment.institution TO normal_user;
 
-GRANT ALL ON SEQUENCE experiment.experiments_id_seq TO postgres;
+-- Table: experiment.dataset
 
-GRANT USAGE ON SEQUENCE experiment.experiments_id_seq TO harvester;
+-- DROP TABLE experiment.dataset;
 
-GRANT SELECT ON TABLE experiment.experiments TO normal_user;
+CREATE TABLE experiment.dataset
+(
+    id bigserial NOT NULL,
+    name text NOT NULL,
+    date timestamp with time zone NOT NULL,
+    institution_id bigint NOT NULL,
+    type text NOT NULL,
+    PRIMARY KEY (name, date, institution_id),
+    UNIQUE (id),
+    FOREIGN KEY (institution_id)
+        REFERENCES experiment.institution (id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
+)
+WITH (
+    OIDS = FALSE
+);
+
+ALTER TABLE experiment.dataset
+    OWNER to postgres;
+
+GRANT INSERT, SELECT, TRIGGER ON TABLE experiment.dataset TO harvester;
+
+GRANT SELECT ON TABLE experiment.dataset TO normal_user;
+
+GRANT ALL ON TABLE experiment.dataset TO postgres;
+
+GRANT ALL ON SEQUENCE experiment.dataset_id_seq TO postgres;
+
+GRANT USAGE ON SEQUENCE experiment.dataset_id_seq TO harvester;
 
 -- Table: experiment.access
 
@@ -178,11 +216,11 @@ GRANT SELECT ON TABLE experiment.experiments TO normal_user;
 
 CREATE TABLE experiment.access
 (
-    experiment_id bigint NOT NULL,
+    dataset_id bigint NOT NULL,
     user_name text NOT NULL,
-    PRIMARY KEY (experiment_id, user_name),
-    FOREIGN KEY (experiment_id)
-        REFERENCES experiment.experiments (id) MATCH SIMPLE
+    PRIMARY KEY (dataset_id, user_name),
+    FOREIGN KEY (dataset_id)
+        REFERENCES experiment.dataset (id) MATCH SIMPLE
         ON UPDATE CASCADE
         ON DELETE CASCADE
 )
@@ -199,53 +237,164 @@ GRANT ALL ON TABLE experiment.access TO postgres;
 
 GRANT SELECT ON TABLE experiment.access TO normal_user;
 
--- Table: experiment.data
-
--- DROP TABLE experiment.data;
-
-CREATE TABLE experiment.data
+CREATE TABLE experiment.unit
 (
-    experiment_id bigint NOT NULL,
-    sample_no bigint NOT NULL,
-    test_time double precision NOT NULL,
-    volts double precision NOT NULL,
-    amps double precision NOT NULL,
-    capacity double precision,
-    temperature double precision,
-    CONSTRAINT data_pkey PRIMARY KEY (experiment_id, sample_no),
-    CONSTRAINT data_experiment_id_fkey FOREIGN KEY (experiment_id)
-        REFERENCES experiment.experiments (id) MATCH SIMPLE
-        ON UPDATE CASCADE
-        ON DELETE CASCADE
-) --PARTITION BY LIST (experiment_id) 
+    id bigserial NOT NULL,
+    name text NOT NULL,
+    symbol text NOT NULL,
+    description text,
+    PRIMARY KEY (id)
+)
 WITH (
     OIDS = FALSE
 )
 TABLESPACE pg_default;
 
-ALTER TABLE experiment.data
+ALTER TABLE experiment.unit
     OWNER to harvester;
 
-GRANT ALL ON TABLE experiment.data TO harvester;
+GRANT SELECT ON TABLE experiment.unit TO normal_user;
 
--- Partitions SQL
+ALTER SEQUENCE experiment.unit_id_seq
+    OWNER TO harvester;
 
---CREATE TABLE experiment.data_default PARTITION OF experiment.data
---    DEFAULT;
+-- Table: experiment.column_type
 
--- Table: experiment.metadata
+-- DROP TABLE experiment.column_type;
 
--- DROP TABLE experiment.metadata;
-
-CREATE TABLE experiment.metadata
+CREATE TABLE experiment.column_type
 (
-    experiment_id bigint NOT NULL,
+    id bigserial NOT NULL,
+    name text NOT NULL,
+    unit_id bigint,
+    PRIMARY KEY (id),
+    FOREIGN KEY (unit_id)
+        REFERENCES experiment.unit (id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE SET NULL
+)
+WITH (
+    OIDS = FALSE
+)
+TABLESPACE pg_default;
+
+ALTER TABLE experiment.column_type
+    OWNER to harvester;
+
+GRANT SELECT ON TABLE experiment.column_type TO normal_user;
+
+ALTER SEQUENCE experiment.column_type_id_seq
+    OWNER TO harvester;
+
+-- Table: experiment."column"
+
+-- DROP TABLE experiment."column";
+
+CREATE TABLE experiment."column"
+(
+    id bigserial NOT NULL,
+    type_id bigint NOT NULL,
+    name text NOT NULL,
+    description text,
+    PRIMARY KEY (id),
+    FOREIGN KEY (type_id)
+        REFERENCES experiment.column_type (id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
+)
+WITH (
+    OIDS = FALSE
+)
+TABLESPACE pg_default;
+
+ALTER TABLE experiment."column"
+    OWNER to harvester;
+
+GRANT SELECT ON TABLE experiment."column" TO normal_user;
+
+ALTER SEQUENCE experiment.column_id_seq
+    OWNER TO harvester;
+
+-- Add required column
+
+INSERT INTO experiment.unit (id, name, symbol, description) VALUES (0, 'Unitless', '', 'A value with no units');
+INSERT INTO experiment.unit (id, name, symbol, description) VALUES (1, 'Time', 's', 'Time in seconds');
+INSERT INTO experiment.unit (id, name, symbol, description) VALUES (2, 'Volts', 'V', 'Voltage');
+INSERT INTO experiment.unit (id, name, symbol, description) VALUES (3, 'Amps', 'A', 'Current');
+INSERT INTO experiment.unit (id, name, symbol, description) VALUES (4, 'Energy', 'Wh', 'Energy in Watt-Hours');
+INSERT INTO experiment.unit (id, name, symbol, description) VALUES (5, 'Charge', 'Ah', 'Charge in Amp-Hours');
+INSERT INTO experiment.unit (id, name, symbol, description) VALUES (6, 'Temperature', '°c', 'Temperature in Centigrade');
+INSERT INTO experiment.unit (id, name, symbol, description) VALUES (7, 'Power', 'W', 'Power in Watts');
+INSERT INTO experiment.unit (id, name, symbol, description) VALUES (8, 'Ohm', 'Ω', 'Resistance or impediance in Ohms');
+INSERT INTO experiment.unit (id, name, symbol, description) VALUES (9, 'Degrees', '°', 'Angle in degrees');
+INSERT INTO experiment.unit (id, name, symbol, description) VALUES (10, 'Frequency', 'Hz', 'Frequency in Hz');
+SELECT setval('experiment.unit_id_seq'::regclass, 10);
+
+INSERT INTO experiment.column_type (id, name, unit_id) VALUES (-1, 'Unknown', NULL);
+INSERT INTO experiment.column_type (id, name, unit_id) VALUES (0, 'Sample Number', 0);
+INSERT INTO experiment.column_type (id, name, unit_id) VALUES (1, 'Time', 1);
+INSERT INTO experiment.column_type (id, name, unit_id) VALUES (2, 'Volts', 2);
+INSERT INTO experiment.column_type (id, name, unit_id) VALUES (3, 'Amps', 3);
+INSERT INTO experiment.column_type (id, name, unit_id) VALUES (4, 'Energy Capacity', 4);
+INSERT INTO experiment.column_type (id, name, unit_id) VALUES (5, 'Charge Capacity', 5);
+INSERT INTO experiment.column_type (id, name, unit_id) VALUES (6, 'Temperature', 6);
+SELECT setval('experiment.column_type_id_seq'::regclass, 6);
+
+INSERT INTO experiment."column" (id, type_id, name, description) VALUES (0, 0, 'Sample Number', 'The sample or record number. Is increased by one each time a test machine records a reading. Usually counts from 1 at the start of a test');
+INSERT INTO experiment."column" (id, type_id, name, description) VALUES (1, 1, 'Test Time', 'The time in seconds since the test run began.');
+INSERT INTO experiment."column" (id, type_id, name, description) VALUES (2, 2, 'Volts', 'The voltage of the cell.');
+INSERT INTO experiment."column" (id, type_id, name, description) VALUES (3, 3, 'Amps', 'The current current.');
+INSERT INTO experiment."column" (id, type_id, name, description) VALUES (4, 4, 'Energy Capacity', 'The Energy Capacity.');
+INSERT INTO experiment."column" (id, type_id, name, description) VALUES (5, 5, 'Charge Capacity', 'The Charge Capacity.');
+INSERT INTO experiment."column" (id, type_id, name, description) VALUES (6, 6, 'Temperature', 'The temperature.');
+INSERT INTO experiment."column" (id, type_id, name, description) VALUES (7, 1, 'Step Time', 'The time in seconds since the current step began.');
+SELECT setval('experiment.column_id_seq'::regclass, 7);
+
+
+-- Table: experiment.timeseries_data
+
+-- DROP TABLE experiment.timeseries_data;
+
+CREATE TABLE experiment.timeseries_data
+(
+    dataset_id bigint NOT NULL,
+    sample_no bigint NOT NULL,
+    column_id bigint NOT NULL,
+    value double precision NOT NULL,
+    PRIMARY KEY (dataset_id, sample_no, column_id),
+    FOREIGN KEY (column_id)
+        REFERENCES experiment."column" (id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
+    FOREIGN KEY (dataset_id)
+        REFERENCES experiment.dataset (id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
+)
+WITH (
+    OIDS = FALSE
+)
+TABLESPACE pg_default;
+
+ALTER TABLE experiment.timeseries_data
+    OWNER to harvester;
+
+GRANT SELECT ON TABLE experiment.timeseries_data TO normal_user;
+
+-- Table: experiment.range_label
+
+-- DROP TABLE experiment.range_label;
+
+CREATE TABLE experiment.range_label
+(
+    dataset_id bigint NOT NULL,
     label_name text NOT NULL,
+	created_by text NOT NULL,
     sample_range int8range NOT NULL,
     info jsonb,
-    PRIMARY KEY (experiment_id, label_name),
-    FOREIGN KEY (experiment_id)
-        REFERENCES experiment.experiments (id) MATCH SIMPLE
+    PRIMARY KEY (dataset_id, label_name, created_by),
+    FOREIGN KEY (dataset_id)
+        REFERENCES experiment.dataset (id) MATCH SIMPLE
         ON UPDATE CASCADE
         ON DELETE CASCADE
 )
@@ -253,17 +402,17 @@ WITH (
     OIDS = FALSE
 );
 
-ALTER TABLE experiment.metadata
+ALTER TABLE experiment.range_label
     OWNER to postgres;
 
-GRANT INSERT ON TABLE experiment.metadata TO harvester;
+GRANT INSERT, SELECT, UPDATE ON TABLE experiment.range_label TO harvester;
 
-GRANT SELECT ON TABLE experiment.metadata TO normal_user;
+GRANT SELECT ON TABLE experiment.range_label TO normal_user;
 
 -- SELECT * FROM experiment.data as d
--- INNER JOIN experiment.metadata AS m ON
--- d.experiment_id = m.experiment_id
--- WHERE m.experiment_id = 46 and
+-- INNER JOIN experiment.range_label AS m ON
+-- d.dataset_id = m.dataset_id
+-- WHERE m.dataset_id = 46 and
 --       texteq(m.label_name, 'test_label_1') and
 -- 	     d.sample_no <@ m.sample_range
 
@@ -272,23 +421,53 @@ ALTER TABLE experiment.access ENABLE ROW LEVEL SECURITY;
 CREATE POLICY access_access_policy ON experiment.access
 FOR SELECT USING ( user_name = current_user);
 
-ALTER TABLE experiment.experiments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE experiment.dataset ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY experiments_access_policy ON experiment.experiments
+CREATE POLICY dataset_access_policy ON experiment.dataset
 FOR SELECT USING ( current_user in (SELECT user_name FROM experiment.access
-									WHERE experiment_id = experiment.experiments.id));
+									WHERE dataset_id = experiment.dataset.id));
 
-ALTER TABLE experiment.metadata ENABLE ROW LEVEL SECURITY;
+ALTER TABLE experiment.range_label ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY metadata_access_policy ON experiment.metadata
+CREATE POLICY range_label_access_policy ON experiment.range_label
 FOR SELECT USING ( current_user in (SELECT user_name FROM experiment.access
-									WHERE experiment_id = experiment.metadata.experiment_id));
+									WHERE dataset_id = experiment.range_label.dataset_id));
 
-CREATE POLICY experiments_harvester_policy ON experiment.experiments
+CREATE POLICY dataset_harvester_policy ON experiment.dataset
 FOR ALL TO harvester USING (true);
 
 CREATE POLICY access_harvester_policy ON experiment.access
 FOR ALL TO harvester USING (true);
 
-CREATE POLICY metadata_harvester_policy ON experiment.metadata
+CREATE POLICY range_label_harvester_policy ON experiment.range_label
 FOR ALL TO harvester USING (true);
+
+-- SCHEMA: user_data
+
+-- DROP SCHEMA user_data ;
+
+CREATE SCHEMA user_data
+    AUTHORIZATION postgres;
+
+GRANT ALL ON SCHEMA user_data TO postgres;
+
+GRANT USAGE ON SCHEMA user_data TO normal_user;
+
+CREATE TABLE user_data.range_label
+(
+    access text[],
+    PRIMARY KEY (dataset_id, label_name, created_by),
+    FOREIGN KEY (dataset_id)
+        REFERENCES experiment.dataset (id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+)
+    INHERITS (experiment.range_label)
+WITH (
+    OIDS = FALSE
+);
+
+ALTER TABLE user_data.range_label
+    OWNER to postgres;
+
+GRANT INSERT, SELECT, UPDATE ON TABLE user_data.range_label TO normal_user;

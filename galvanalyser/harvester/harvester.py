@@ -4,19 +4,20 @@ import json
 import psutil
 import psycopg2
 from datetime import datetime, timezone
-from galvanalyser.database.harvester.harvesters_row import HarvestersRow
-from galvanalyser.database.harvester.monitored_paths_row import (
-    MonitoredPathsRow,
+from galvanalyser.database.harvester.harvester_row import HarvesterRow
+from galvanalyser.database.harvester.monitored_path_row import (
+    MonitoredPathRow,
 )
-from galvanalyser.database.harvester.observed_files_row import (
-    ObservedFilesRow,
+from galvanalyser.database.harvester.observed_file_row import (
+    ObservedFileRow,
     ObservedFilePathRow,
 )
-from galvanalyser.database.experiment.experiments_row import ExperimentsRow
+from galvanalyser.database.experiment.institution_row import InstitutionRow
+from galvanalyser.database.experiment.dataset_row import DatasetRow
 from galvanalyser.database.experiment.access_row import AccessRow
-from galvanalyser.database.experiment.data_row import DataRow
+from galvanalyser.database.experiment.timeseries_data_row import TimeseriesDataRow
 from galvanalyser.harvester.input_file import InputFile
-from galvanalyser.database.experiment.metadata_row import MetaDataRow
+from galvanalyser.database.experiment.range_label_row import RangeLabelRow
 
 import traceback
 
@@ -49,6 +50,7 @@ def write_config_template(config_template_path):
         "database_port": 5432,
         "database_name": "galvanalyser",
         "machine_id": "my_machine_01",
+        "institution": "Oxford",
     }
     with open(config_template_path, "w") as json_file:
         json.dump(template, json_file, indent=4)
@@ -56,17 +58,21 @@ def write_config_template(config_template_path):
 
 def monitor_path(monitor_path_id, path, monitored_for, conn):
     print("Examining " + path + " for users " + str(monitored_for))
-    current_files = os.listdir(path)
+    try:
+        current_files = os.listdir(path)
+    except FileNotFoundError:
+        print("ERROR: Requested path not found on this machine: " + path)
+        return
     for file_path in current_files:
         full_file_path = os.path.join(path, file_path)
         print("Found " + full_file_path)
-        current_observation = ObservedFilesRow(
+        current_observation = ObservedFileRow(
             monitor_path_id,
             file_path,
             os.path.getsize(full_file_path),
             datetime.now(timezone.utc),
         )
-        database_observation = ObservedFilesRow.select_from_id_and_path(
+        database_observation = ObservedFileRow.select_from_id_and_path(
             monitor_path_id, file_path, conn
         )
         if database_observation is None:
@@ -113,7 +119,7 @@ def monitor_path(monitor_path_id, path, monitored_for, conn):
     print("Done monitoring paths")
 
 
-def import_file(file_path_row, conn):
+def import_file(file_path_row, institution_id, harvester_name, conn):
     """
         Attempts to import a given file
     """
@@ -125,65 +131,68 @@ def import_file(file_path_row, conn):
     try:
         # Attempt reading the file before updating the database to avoid
         # creating rows for a file we can't read.
-        # TODO handle rows in the experiments and access tables with no
+        # TODO handle rows in the dataset and access tables with no
         # corresponding data since the import might fail while reading the data
         # anyway
         input_file = InputFile(fullpath)
-        # use a transaction to avoid generating experiment rows if import fails
+        # use a transaction to avoid generating dataset rows if import fails
         conn.autocommit = False
         with conn:
-            # Check if this experiment is already in the db
-            experiment_row = ExperimentsRow.select_from_name_and_date(
-                name=input_file.metadata["Experiment Name"],
+            # Check if this dataset is already in the db
+            dataset_row = DatasetRow.select_from_name_date_and_institution_id(
+                name=input_file.metadata["Dataset Name"],
                 date=input_file.metadata["Date of Test"],
+                institution_id=institution_id,
                 conn=conn,
             )
-            is_new_experiment = experiment_row is None
-            if is_new_experiment:
-                experiment_row = ExperimentsRow(
-                    name=input_file.metadata["Experiment Name"],
+            is_new_dataset = dataset_row is None
+            if is_new_dataset:
+                dataset_row = DatasetRow(
+                    name=input_file.metadata["Dataset Name"],
                     date=input_file.metadata["Date of Test"],
-                    experiment_type=input_file.metadata["Machine Type"],
+                    institution_id=institution_id,
+                    dataset_type=input_file.metadata["Machine Type"],
                 )
-                experiment_row.insert(conn)
-                print("Added experiment id " + str(experiment_row.id))
+                dataset_row.insert(conn)
+                print("Added dataset id " + str(dataset_row.id))
             else:
-                print("This experiment is already in the database")
-            experiment_id = experiment_row.id
+                print("This dataset is already in the database")
+            dataset_id = dataset_row.id
             for user in file_path_row.monitored_for:
                 print("  Allowing access to " + user)
                 access_row = AccessRow(
-                    experiment_id=experiment_id, user_name=user
+                    dataset_id=dataset_id, user_name=user
                 )
                 access_row.insert(conn)
-            input_file.metadata["experiment_id"] = experiment_id
-            if is_new_experiment:
+            input_file.metadata["dataset_id"] = dataset_id
+            if is_new_dataset:
                 print("Inserting Data")
-                DataRow.insert_input_file(input_file, conn)
-                MetaDataRow(
-                    experiment_id,
+                TimeseriesDataRow.insert_input_file(input_file, dataset_id, conn)
+                RangeLabelRow(
+                    dataset_id,
                     "all",
+                    harvester_name,
                     int(input_file.metadata["first_sample_no"]),
                     int(input_file.metadata["last_sample_no"]) + 1,
                 ).insert(conn)
                 for label, sample_range in input_file.get_data_labels():
                     print("inserting {}".format(label))
-                    MetaDataRow(
-                        experiment_id, label, sample_range[0], sample_range[1]
+                    RangeLabelRow(
+                        dataset_id, label, harvester_name, sample_range[0], sample_range[1]
                     ).insert(conn)
             elif (
-                DataRow.select_from_experiment_id_and_sample_no(
-                    experiment_id, input_file.metadata["first_sample_no"], conn
+                TimeseriesDataRow.select_one_from_dataset_id_and_sample_no(
+                    dataset_id, input_file.metadata["first_sample_no"], conn
                 )
                 is None
-                and DataRow.select_from_experiment_id_and_sample_no(
-                    experiment_id, input_file.metadata["last_sample_no"], conn
+                and TimeseriesDataRow.select_one_from_dataset_id_and_sample_no(
+                    dataset_id, input_file.metadata["last_sample_no"], conn
                 )
                 is None
             ):
                 # This is more data for an existing experiment
                 print("Inserting Additional Data")
-                DataRow.insert_input_file(input_file, conn)
+                TimeseriesDataRow.insert_input_file(input_file, dataset_id, conn)
                 # TODO handle inserting metadata when extending a dataset
             else:
                 print("Dataset already in database")
@@ -214,18 +223,30 @@ def main(argv):
         conn.autocommit = True
 
         try:
-            my_harvester_id_no = HarvestersRow.select_from_machine_id(
+            my_harvester_id = HarvesterRow.select_from_machine_id(
                 config["machine_id"], conn
-            ).id_no
+            ).id
         except AttributeError:
             print(
                 "Error: Could not find a harvester id for a machine called "
                 + config["machine_id"]
-                + " harvester in the database"
+                + " in the harvester database"
             )
             sys.exit(1)
-        monitored_paths_rows = MonitoredPathsRow.select_from_harvester_id(
-            my_harvester_id_no, conn
+        try:
+            institution_id = InstitutionRow.select_from_name(
+                config["institution"], conn
+            ).id
+        except AttributeError:
+            print(
+                "Error: Could not find a institution id for an institution "
+                "called "
+                + config["institution"]
+                + " in the experiment database"
+            )
+            sys.exit(1)
+        monitored_paths_rows = MonitoredPathRow.select_from_harvester_id(
+            my_harvester_id, conn
         )
         print(
             config["machine_id"]
@@ -241,12 +262,12 @@ def main(argv):
                 conn,
             )
         # files for import
-        stable_observed_file_path_rows = ObservedFilePathRow.select_from_harvester_id_no_with_state(
-            my_harvester_id_no, "STABLE", conn
+        stable_observed_file_path_rows = ObservedFilePathRow.select_from_harvester_id_with_state(
+            my_harvester_id, "STABLE", conn
         )
         for stable_observed_file_path_row in stable_observed_file_path_rows:
             # import the file
-            import_file(stable_observed_file_path_row, conn)
+            import_file(stable_observed_file_path_row, institution_id, config["machine_id"], conn)
 
     finally:
         conn.close()

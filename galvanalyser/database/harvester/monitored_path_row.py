@@ -1,7 +1,7 @@
 import psycopg2
 
 
-class MonitoredPathsRow:
+class MonitoredPathRow:
     def __init__(
         self, harvester_id, monitored_for, path, monitor_path_id=None
     ):
@@ -15,7 +15,7 @@ class MonitoredPathsRow:
         with conn.cursor() as cursor:
             cursor.execute(
                 (
-                    "INSERT INTO harvesters.monitored_paths "
+                    "INSERT INTO harvesters.monitored_path "
                     "(harvester_id, monitored_for, path) VALUES (%s, %s, %s)"
                 ),
                 [self.harvester_id, self.monitored_for, self.path],
@@ -27,14 +27,14 @@ class MonitoredPathsRow:
             cursor.execute(
                 (
                     "SELECT monitored_for, path, monitor_path_id FROM "
-                    "harvesters.monitored_paths "
+                    "harvesters.monitored_path "
                     "WHERE harvester_id=(%s)"
                 ),
                 [harvester_id],
             )
             records = cursor.fetchall()
             return [
-                MonitoredPathsRow(
+                MonitoredPathRow(
                     harvester_id=harvester_id,
                     monitored_for=result[0],
                     path=result[1],
@@ -49,14 +49,14 @@ class MonitoredPathsRow:
             cursor.execute(
                 (
                     "SELECT harvester_id, path, monitor_path_id FROM "
-                    "harvesters.monitored_paths "
+                    "harvesters.monitored_path "
                     "WHERE monitored_for=(%s)"
                 ),
                 [monitored_for],
             )
             records = cursor.fetchall()
             return [
-                MonitoredPathsRow(
+                MonitoredPathRow(
                     harvester_id=result[0],
                     monitored_for=monitored_for,
                     path=result[1],
