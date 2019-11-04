@@ -102,7 +102,7 @@ GRANT harvester TO harvester_user;
 ```
 
 ## Setting up for the first time
-The following are some example commands you'd need to run to get started. This assumes you have `make`, docker and docker-compose installed
+The following are some example commands you'd need to run to get started. This assumes you have `make`, `docker` and `docker-compose` installed
 ```
 # Download the submodules
 make update-submodules
