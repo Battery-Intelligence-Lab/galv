@@ -6,6 +6,7 @@ var requested_graph_ranges = new Map();
 var graph_traces = [];
 var all_dataset_data = new Map();
 var dataset_data_requested_from_server = new Map(); //new datarange.DatasetData();
+var column_names = new Map();
 
 const x_axis_column_id = 1; // Test Time
 
@@ -221,7 +222,7 @@ function update_graph() {
                         y: y_data,
                         mode: 'lines',
                         type: 'scattergl',
-                        name: `${requested_dataset_id} ${requested_column_id}`
+                        name: `${requested_dataset_id} ${column_names[requested_column_id]}`
                     };
                     traces.push(trace);
                 }
@@ -241,6 +242,7 @@ window.dash_clientside.clientside_graph = {
         let new_config = new Map();
         let new_dataset_ranges = new Map();
         for (const row of data) {
+            column_names[row.column_id] = row.column;
             if (!new_config.has(row.dataset_id)) {
                 new_config.set(row.dataset_id, new datarange.DatasetData());
                 new_dataset_ranges.set(row.dataset_id, new Map());
