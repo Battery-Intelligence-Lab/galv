@@ -175,6 +175,6 @@ make harvester-run
 # To run in a venv use
 make init
 make harvester-run
-# Note in this case teh harvester will be looking for its config at ./config/harvester-config.json 
+# Note in this case the harvester will be looking for its config at ./config/harvester-config.json 
 
 ```
