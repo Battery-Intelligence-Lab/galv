@@ -53,4 +53,7 @@ harvester-docker-build:
 harvester-docker-run:
 	docker run --rm -it -v ${CURDIR}/galvanalyser:/usr/src/app/galvanalyser -v ${CURDIR}/../harvester-test:/usr/src/app/config --net host harvester
 
-.PHONY: init update-submodules test protobuf custom-dash-components builder-docker-build builder-docker-run build-webstack format harvester-docker-build harvester-docker-run
+harvester-run:
+	python -m galvanalyser.harvester.harvester
+
+.PHONY: init update-submodules test protobuf custom-dash-components builder-docker-build builder-docker-run build-webstack format harvester-docker-build harvester-docker-run harvester-run
