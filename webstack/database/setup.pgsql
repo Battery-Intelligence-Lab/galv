@@ -151,6 +151,8 @@ GRANT ALL ON SCHEMA experiment TO postgres;
 
 GRANT USAGE ON SCHEMA experiment TO harvester;
 
+GRANT USAGE ON SCHEMA experiment TO normal_user;
+
 -- Table: experiment.institution
 
 -- DROP TABLE experiment.institution;
@@ -251,6 +253,8 @@ TABLESPACE pg_default;
 ALTER TABLE experiment.unit
     OWNER to harvester;
 
+GRANT SELECT ON TABLE experiment.unit TO normal_user;
+
 ALTER SEQUENCE experiment.unit_id_seq
     OWNER TO harvester;
 
@@ -276,6 +280,8 @@ TABLESPACE pg_default;
 
 ALTER TABLE experiment.column_type
     OWNER to harvester;
+
+GRANT SELECT ON TABLE experiment.column_type TO normal_user;
 
 ALTER SEQUENCE experiment.column_type_id_seq
     OWNER TO harvester;
@@ -303,6 +309,8 @@ TABLESPACE pg_default;
 
 ALTER TABLE experiment."column"
     OWNER to harvester;
+
+GRANT SELECT ON TABLE experiment."column" TO normal_user;
 
 ALTER SEQUENCE experiment.column_id_seq
     OWNER TO harvester;
