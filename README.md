@@ -177,4 +177,12 @@ make init
 make harvester-run
 # Note in this case the harvester will be looking for its config at ./config/harvester-config.json 
 
+# The harvester needs to see that a file hasn't changed in the past minute before it tries uploading it.
+# This means that hte first time you run it and for the next minute it won't actually upload anything each time you run it as it will just record the state of the file in the database.
+
 ```
+
+## Connecting to things
+Postgres in the docker image should be accessible at localhost:5432 as usual.
+The webapp should be available at http://localhost:8081/ .
+The webapp login details are the same as the user accounts you created in Postgres earlier.
