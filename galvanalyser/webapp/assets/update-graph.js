@@ -230,6 +230,9 @@ function update_graph() {
             }
         }
         Plotly.react(plot, traces);
+        if(window.legend_update_callback){
+            window.legend_update_callback([]);
+        }
     }
 }
 

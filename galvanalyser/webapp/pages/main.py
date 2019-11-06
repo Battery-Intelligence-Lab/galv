@@ -148,7 +148,7 @@ tab_legend_content = html.Div(
     id="tab_legend_content",
     children=[html.P("placeholder legend content"), plotting_controls, 
     GalvanalyserLegend(id='my-first-legend', graphId="main-graph",
-        entries=[{"foo":x} for x in ["foo", "bar", "spam", "eggs", "harry", "bear"]],
+        #entries=[{"foo":x} for x in ["foo", "bar", "spam", "eggs", "harry", "bear"]],
         label='my-label')
     ],
 )
@@ -376,16 +376,16 @@ def register_callbacks(app, config):
                     )
         return results, plotted_selected_rows or []
 
-    app.clientside_callback(
-        ClientsideFunction(
-            namespace="clientside_graph", function_name="update_graph_trigger"
-        ),
-        [Output("graph_update_dummy", "children")],
-        [Input("plot_ranges_table", "data")],
-    )
+    #app.clientside_callback(
+    #    ClientsideFunction(
+    #        namespace="clientside_graph", function_name="update_graph_trigger"
+    #    ),
+    #    [Output("graph_update_dummy", "children")],
+    #    [Input("plot_ranges_table", "data")],
+    #)
 
     @app.callback(
-        [ Output("my-first-legend", "entries")]
+        [ Output("my-first-legend", "requested_ranges")]
         ,
         [
             Input("plot_ranges_table", "data"),
