@@ -155,7 +155,7 @@ function apply_offset(data, offset) {
     if (offset == 0.0) {
         return data;
     }
-    return data.map(x => x - offset);
+    return data.map(x => x + offset);
 }
 
 function update_graph() {
@@ -178,6 +178,7 @@ function update_graph() {
         let plot = document.getElementById('main-graph');
         //update graph
         let traces = [];
+        let legend_entries = new Map();
         for (const [requested_dataset_id, requested_dataset_data] of requested_metadata_ranges) {
             if (all_dataset_data.has(requested_dataset_id)) {
                 let available_dataset_data = all_dataset_data.get(requested_dataset_id);
@@ -193,6 +194,15 @@ function update_graph() {
                     if (available_dataset_data.columns.has(requested_column_id)) {
                         let available_column_reading_data = available_dataset_data.columns.get(requested_column_id);
                         for (const requested_data_range of requested_reading_data) {
+                            let legend_entry_id = `${requested_dataset_id}_${requested_column_id}_range_from_range_to`
+                            legend_entries[legend_entry_id] = {
+                                range_name: `${requested_dataset_id} ${column_names[requested_column_id]}`,
+                                colour: '0x0000FF',
+                                dataset_id: requested_dataset_id,
+                                column_id: requested_column_id,
+                                column_name: column_names[requested_column_id],
+                                requested_data_range: requested_data_range
+                            }
                             let available_y_ranges = available_column_reading_data.get_ranges_between(requested_data_range.from, requested_data_range.to);
                             for (const available_y_range of available_y_ranges) {
                                 let available_x_ranges = sample_time_data.get_ranges_between(available_y_range.from, available_y_range.to);
@@ -202,6 +212,8 @@ function update_graph() {
                                 }
                             }
                         }
+                    } else {
+                        continue;
                     }
                     let fuse_data = function(data_range_values_array) {
                         let data = new Array(0);
@@ -231,7 +243,7 @@ function update_graph() {
         }
         Plotly.react(plot, traces);
         if(window.legend_update_callback){
-            window.legend_update_callback([]);
+            window.legend_update_callback(legend_entries);
         }
     }
 }
