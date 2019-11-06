@@ -384,4 +384,15 @@ def register_callbacks(app, config):
         [Input("plot_ranges_table", "data")],
     )
 
+    @app.callback(
+        [ Output("my-first-legend", "entries")]
+        ,
+        [
+            Input("plot_ranges_table", "data"),
+        ]
+    )
+    def update_legend(requested_ranges):
+        log(repr(requested_ranges))
+        return (requested_ranges,)
+
     data_server.register_handlers(app, config)
