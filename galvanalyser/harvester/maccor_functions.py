@@ -321,8 +321,9 @@ def load_metadata_maccor_excel(file_path):
                 metadata[key] = sheet.cell_value(0, col + 1)
                 col = col + 1
             col = col + 1
-        metadata["Machine Type"] = "Maccor"
         metadata["Dataset Name"] = ntpath.basename(metadata["Filename"])
+        metadata["misc_file_data"] = {"excel format metadata": (dict(metadata), None)}
+        metadata["Machine Type"] = "Maccor"
         column_info, total_rows, first_rec, last_rec = identify_columns_maccor_excel(
             wbook
         )

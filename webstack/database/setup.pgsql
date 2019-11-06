@@ -210,6 +210,30 @@ GRANT ALL ON SEQUENCE experiment.dataset_id_seq TO postgres;
 
 GRANT USAGE ON SEQUENCE experiment.dataset_id_seq TO harvester;
 
+-- Table: experiment.misc_file_data
+
+-- DROP TABLE experiment.misc_file_data;
+
+CREATE TABLE experiment.misc_file_data
+(
+    dataset_id bigint NOT NULL,
+    sample_range int8range NOT NULL,
+    key text NOT NULL,
+    json_data jsonb,
+    binary_data bytea,
+    PRIMARY KEY (dataset_id, sample_range, key),
+    FOREIGN KEY (dataset_id)
+        REFERENCES experiment.dataset (id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+)
+WITH (
+    OIDS = FALSE
+);
+
+ALTER TABLE experiment.misc_file_data
+    OWNER to harvester_user;
+
 -- Table: experiment.access
 
 -- DROP TABLE experiment.access;

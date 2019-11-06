@@ -18,6 +18,8 @@ from galvanalyser.database.experiment.timeseries_data_row import (
 )
 from galvanalyser.harvester.input_file import InputFile
 from galvanalyser.database.experiment.range_label_row import RangeLabelRow
+from galvanalyser.database.experiment.misc_file_data_row import MiscFileDataRow
+import galvanalyser.harvester.battery_exceptions as battery_exceptions
 
 import traceback
 
@@ -126,6 +128,7 @@ def import_file(file_path_row, institution_id, harvester_name, conn):
     fullpath = os.path.join(
         file_path_row.monitored_path, file_path_row.observed_path
     )
+    print("")
     print("Importing " + fullpath)
     file_path_row.update_observed_file_state("IMPORTING", conn)
     try:
@@ -163,6 +166,7 @@ def import_file(file_path_row, institution_id, harvester_name, conn):
                 access_row = AccessRow(dataset_id=dataset_id, user_name=user)
                 access_row.insert(conn)
             input_file.metadata["dataset_id"] = dataset_id
+            new_data = True
             if is_new_dataset:
                 print("Inserting Data")
                 TimeseriesDataRow.insert_input_file(
@@ -202,15 +206,28 @@ def import_file(file_path_row, institution_id, harvester_name, conn):
                 # TODO handle inserting metadata when extending a dataset
             else:
                 print("Dataset already in database")
+                new_data = False
+            if new_data and "misc_file_data" in input_file.metadata:
+                print("Storing misc file metadata")
+                for key, value in input_file.metadata["misc_file_data"].items():
+                    (json_dict, binary_blob) = value
+                    mfdr = MiscFileDataRow(dataset_id,
+                    int(input_file.metadata["first_sample_no"]),
+                    int(input_file.metadata["last_sample_no"]) + 1,
+                    key, json_dict, binary_blob)
+                    mfdr.insert(conn)
             file_path_row.update_observed_file_state("IMPORTED", conn)
             print("File successfully imported")
-    except:
+    except Exception as e:
         conn.autocommit = True
         file_path_row.update_observed_file_state("IMPORT_FAILED", conn)
         print("Import failed for " + fullpath)
         # perhaps the exception should be saved to the database
         # print it for now during development
-        traceback.print_exc()
+        if isinstance(e, battery_exceptions.UnsupportedFileTypeError):
+            print("File format not supported")
+        else:
+            traceback.print_exc()
     finally:
         conn.autocommit = True
 
