@@ -10,7 +10,9 @@ class RangeLabelRow:
         lower_bound,
         upper_bound,
         info=None,
+        id_=None
     ):
+        self.id=id_
         self.dataset_id = dataset_id
         self.label_name = label_name
         self.created_by = created_by
@@ -24,7 +26,7 @@ class RangeLabelRow:
                 (
                     "INSERT INTO experiment.range_label "
                     "(dataset_id, label_name, created_by, sample_range, info) "
-                    "VALUES (%s, %s, %s, '[%s, %s)', %s)"
+                    "VALUES (%s, %s, %s, '[%s, %s)', %s) RETURNING id"
                 ),
                 [
                     self.dataset_id,
@@ -35,13 +37,14 @@ class RangeLabelRow:
                     self.info,
                 ],
             )
+            self.id = cursor.fetchone()[0]
 
     @staticmethod
     def select_from_dataset_id(dataset_id, conn):
         with conn.cursor() as cursor:
             cursor.execute(
                 (
-                    "SELECT label_name, created_by, sample_range, info "
+                    "SELECT id, label_name, created_by, sample_range, info "
                     "FROM experiment.range_label "
                     "WHERE dataset_id=(%s)"
                 ),
@@ -50,12 +53,13 @@ class RangeLabelRow:
             records = cursor.fetchall()
             return [
                 RangeLabelRow(
+                    id_=result[0],
                     dataset_id=dataset_id,
-                    label_name=result[0],
-                    created_by=result[1],
-                    lower_bound=result[2].lower,
-                    upper_bound=result[2].upper,
-                    info=result[3],
+                    label_name=result[1],
+                    created_by=result[2],
+                    lower_bound=result[3].lower,
+                    upper_bound=result[3].upper,
+                    info=result[4],
                 )
                 for result in records
             ]
@@ -65,7 +69,8 @@ class RangeLabelRow:
         with conn.cursor() as cursor:
             cursor.execute(
                 (
-                    "SELECT created_by, sample_range, info FROM experiment.range_label "
+                    "SELECT id, created_by, sample_range, info "
+                    "FROM experiment.range_label "
                     "WHERE dataset_id=(%s) AND label_name=(%s)"
                 ),
                 [dataset_id, label_name],
@@ -74,10 +79,11 @@ class RangeLabelRow:
             if result is None:
                 return None
             return RangeLabelRow(
+                id_=result[0],
                 dataset_id=dataset_id,
                 label_name=label_name,
-                created_by=result[0],
-                lower_bound=result[1][0],
-                upper_bound=result[1][1],
-                info=result[2],
+                created_by=result[1],
+                lower_bound=result[2][0],
+                upper_bound=result[2][1],
+                info=result[3],
             )
