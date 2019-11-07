@@ -342,6 +342,7 @@ def register_callbacks(app, config):
         graph_relayout_data,
     ):
         requested_ranges = plotted_table_rows if plotted_table_rows is not None else []
+        current_range_ids = set(range["id"] for range in requested_ranges)
         ctx = dash.callback_context
         if ctx.triggered:
             button_id = ctx.triggered[0]["prop_id"].split(".")[0]
@@ -351,7 +352,7 @@ def register_callbacks(app, config):
                 and metadata_selected_rows
             ):
                 for row_idx in metadata_selected_rows:
-                    if metadata_table_rows[row_idx] not in requested_ranges:
+                    if metadata_table_rows[row_idx]["id"] not in current_range_ids:
                         requested_ranges.append(metadata_table_rows[row_idx])
             if (
                 button_id == "btn_remove_data_range_from_plot"
