@@ -271,6 +271,8 @@ window.dash_clientside.clientside_graph = {
             dataset_ranges.get(row.column_id).push({
                 from: row.samples_from,
                 to: row.samples_to,
+                from_value: row.start_time,
+                to_value: row.end_time,
                 offset: row.offset || 0.0
             });
             //console.log(`update_graph_trigger wants ${row.dataset_id} , ${row.column} , ${row.samples_from} , ${row.samples_to}`);

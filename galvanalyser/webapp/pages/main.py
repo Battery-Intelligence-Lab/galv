@@ -8,6 +8,9 @@ import dash_table
 from galvanalyser.database.experiment.dataset_row import DatasetRow
 from galvanalyser.database.experiment.range_label_row import RangeLabelRow
 import galvanalyser.database.experiment.timeseries_data_column as TimeseriesDataColumn
+from galvanalyser.database.experiment.timeseries_data_row import (
+    TimeseriesDataRow, TEST_TIME_COLUMN_ID,
+)
 import psycopg2
 from galvanalyser.webapp.datahandling import data_server
 from galvanalyser_dash_components import GalvanalyserLegend
@@ -292,19 +295,22 @@ def register_callbacks(app, config):
                     )
                     table_rows = [
                         {
-                            "id": f"{selected_row_id}:{col}:{m.label_name}",
+                            "id": f"{selected_row_id}:{m.id}:{col}:{m.label_name}",
+                            "range_id": m.id,
                             "dataset_id": selected_row_id,
                             "label_name": m.label_name,
                             "column": col[1],
                             "column_id": col[0],
                             "samples_from": m.lower_bound,
-                            "samples_to": m.upper_bound,
+                            "samples_to": m.upper_bound - 1,
+                            "start_time": TimeseriesDataRow.select_from_dataset_id_column_id_and_sample_no(selected_row_id, TEST_TIME_COLUMN_ID, m.lower_bound, conn).value,
+                            "end_time": TimeseriesDataRow.select_from_dataset_id_column_id_and_sample_no(selected_row_id, TEST_TIME_COLUMN_ID, m.upper_bound - 1, conn).value,
                             "info": m.info,
                             "offset": 0.0,
                         }
                         for m in metadatas
                         for col in available_columns
-                    ]
+                    ]                        
                 except psycopg2.errors.InsufficientPrivilege:
                     info_line = f"Permission denied when retrieving metadata for dataset id {selected_row_ids}"
         finally:
@@ -314,33 +320,28 @@ def register_callbacks(app, config):
 
     @app.callback(
         [
-            Output("plot_ranges_table", "data"),
-            Output("plot_ranges_table", "selected_rows"),
+            Output("my-first-legend", "requested_ranges"),
         ],
         [
             Input("btn_add_data_range_to_plot", "n_clicks"),
-            Input("btn_remove_data_range_from_plot", "n_clicks"),
-            Input("btn_apply_offset_to_data_range", "n_clicks"),
+            Input("my-first-legend", "n_updated"),
         ],
         [
             State("metadata_table", "selected_rows"),
             State("metadata_table", "data"),
-            State("plot_ranges_table", "data"),
-            State("plot_ranges_table", "selected_rows"),
+            State("my-first-legend", "requested_ranges"),
             State("main-graph", "relayoutData"),
         ],
     )
     def add_data_range_to_plot(
         add_n_clicks,
-        remove_n_clicks,
-        offset_n_clicks,
+        legend_n_updated,
         metadata_selected_rows,
         metadata_table_rows,
         plotted_table_rows,
-        plotted_selected_rows,
         graph_relayout_data,
     ):
-        results = plotted_table_rows if plotted_table_rows is not None else []
+        requested_ranges = plotted_table_rows if plotted_table_rows is not None else []
         ctx = dash.callback_context
         if ctx.triggered:
             button_id = ctx.triggered[0]["prop_id"].split(".")[0]
@@ -350,8 +351,8 @@ def register_callbacks(app, config):
                 and metadata_selected_rows
             ):
                 for row_idx in metadata_selected_rows:
-                    if metadata_table_rows[row_idx] not in results:
-                        results.append(metadata_table_rows[row_idx])
+                    if metadata_table_rows[row_idx] not in requested_ranges:
+                        requested_ranges.append(metadata_table_rows[row_idx])
             if (
                 button_id == "btn_remove_data_range_from_plot"
                 and add_n_clicks
@@ -374,7 +375,7 @@ def register_callbacks(app, config):
                     results[row_idx]["offset"] = graph_relayout_data.get(
                         "xaxis.range[0]", 0.0
                     )
-        return results, plotted_selected_rows or []
+        return (requested_ranges,)
 
     #app.clientside_callback(
     #    ClientsideFunction(
@@ -383,16 +384,5 @@ def register_callbacks(app, config):
     #    [Output("graph_update_dummy", "children")],
     #    [Input("plot_ranges_table", "data")],
     #)
-
-    @app.callback(
-        [ Output("my-first-legend", "requested_ranges")]
-        ,
-        [
-            Input("plot_ranges_table", "data"),
-        ]
-    )
-    def update_legend(requested_ranges):
-        log(repr(requested_ranges))
-        return (requested_ranges,)
 
     data_server.register_handlers(app, config)
