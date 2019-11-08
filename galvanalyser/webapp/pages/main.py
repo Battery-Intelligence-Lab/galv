@@ -296,7 +296,6 @@ def register_callbacks(app, config):
                     table_rows = [
                         {
                             "id": f"{selected_row_id}:{m.id}:{col}:{m.label_name}",
-                            "range_id": m.id,
                             "dataset_id": selected_row_id,
                             "label_name": m.label_name,
                             "column": col[1],
