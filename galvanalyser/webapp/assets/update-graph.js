@@ -274,7 +274,8 @@ window.dash_clientside.clientside_graph = {
                 to: row.samples_to,
                 from_value: row.start_time,
                 to_value: row.end_time,
-                offset: row.offset || 0.0
+                offset: row.offset || 0.0,
+                colour: row.colour || '0x0000FF',
             });
             //console.log(`update_graph_trigger wants ${row.dataset_id} , ${row.column} , ${row.samples_from} , ${row.samples_to}`);
         }
