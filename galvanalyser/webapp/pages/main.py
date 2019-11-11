@@ -113,14 +113,9 @@ plotting_controls = html.Div(
             ]
         ),
         html.Button(
-            id="btn_remove_data_range_from_plot",
+            id="btn_set_reference_value_to_view",
             type="button",
-            children="Remove Data Range",
-        ),
-        html.Button(
-            id="btn_apply_offset_to_data_range",
-            type="button",
-            children="Apply offset",
+            children="Set Reference Value to View",
         ),
     ]
 )
@@ -353,29 +348,40 @@ def register_callbacks(app, config):
                 for row_idx in metadata_selected_rows:
                     if metadata_table_rows[row_idx]["id"] not in current_range_ids:
                         requested_ranges.append(metadata_table_rows[row_idx])
+        return (requested_ranges,)
+
+    
+    @app.callback(
+    [
+        Output("my-first-legend", "reference_value"),
+    ],
+    [
+        Input("btn_set_reference_value_to_view", "n_clicks"),
+    ],
+    [
+        State("main-graph", "relayoutData"),
+        State("my-first-legend", "reference_value"),
+    ],
+    )
+    def set_reference_value_to_view(
+        set_ref_n_clicks,
+        graph_relayout_data,
+        current_reference_value,
+    ):
+        reference_value = current_reference_value
+        ctx = dash.callback_context
+        if ctx.triggered:
+            button_id = ctx.triggered[0]["prop_id"].split(".")[0]
             if (
-                button_id == "btn_remove_data_range_from_plot"
-                and add_n_clicks
-                and plotted_selected_rows
-            ):
-                reverse_index_list = sorted(
-                    plotted_selected_rows, reverse=True
-                )
-                for row_idx in reverse_index_list:
-                    del results[row_idx]
-                plotted_selected_rows = []
-            if (
-                button_id == "btn_apply_offset_to_data_range"
-                and offset_n_clicks
-                and plotted_selected_rows
+                button_id == "btn_set_reference_value_to_view"
+                and set_ref_n_clicks
                 and graph_relayout_data
             ):
                 log(repr(graph_relayout_data))
-                for row_idx in plotted_selected_rows:
-                    results[row_idx]["offset"] = graph_relayout_data.get(
+                reference_value = graph_relayout_data.get(
                         "xaxis.range[0]", 0.0
                     )
-        return (requested_ranges,)
+        return (reference_value,)
 
     #app.clientside_callback(
     #    ClientsideFunction(
