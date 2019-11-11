@@ -86,32 +86,6 @@ data_ranges = html.Div(
 )
 plotting_controls = html.Div(
     [
-        html.P("placeholder plotting_controls"),
-        html.Form(
-            children=[
-                dash_table.DataTable(
-                    id="plot_ranges_table",
-                    row_selectable="multi",
-                    columns=[
-                        {
-                            "name": i,
-                            "id": i,
-                            "editable": True if i == "offset" else False,
-                        }
-                        for i in [
-                            "dataset_id",
-                            "label_name",
-                            "column",
-                            "samples_from",
-                            "samples_to",
-                            "info",
-                            "offset",
-                        ]
-                    ],
-                    # data=[{"hello":"aa","world":"bb","id":1}]
-                )
-            ]
-        ),
         html.Button(
             id="btn_set_reference_value_to_view",
             type="button",
@@ -144,7 +118,7 @@ tab_dataset_content = html.Div(
 
 tab_legend_content = html.Div(
     id="tab_legend_content",
-    children=[html.P("placeholder legend content"), plotting_controls, 
+    children=[plotting_controls, 
     GalvanalyserLegend(id='my-first-legend', graphId="main-graph",
         #entries=[{"foo":x} for x in ["foo", "bar", "spam", "eggs", "harry", "bear"]],
         label='my-label')
