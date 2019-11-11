@@ -198,7 +198,6 @@ function update_graph() {
                             legend_entries.push({
                                 legend_entry_id: legend_entry_id,
                                 range_name: `${requested_dataset_id} ${column_names[requested_column_id]}`,
-                                colour: '0x0000FF',
                                 dataset_id: requested_dataset_id,
                                 column_id: requested_column_id,
                                 column_name: column_names[requested_column_id],
