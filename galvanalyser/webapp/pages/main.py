@@ -14,6 +14,7 @@ from galvanalyser.database.experiment.timeseries_data_row import (
 import psycopg2
 from galvanalyser.webapp.datahandling import data_server
 from galvanalyser_dash_components import GalvanalyserLegend
+from galvanalyser.webapp.colours import D3 as colours_D3, Light24 as colours_Light24
 
 # Reference for selection interaction https://dash.plot.ly/interactive-graphing
 # Plotly python reference https://plot.ly/python/reference/
@@ -275,6 +276,7 @@ def register_callbacks(app, config):
                             "end_time": TimeseriesDataRow.select_from_dataset_id_column_id_and_sample_no(selected_row_id, TEST_TIME_COLUMN_ID, m.upper_bound - 1, conn).value,
                             "info": m.info,
                             "offset": 0.0,
+                            "colour": "#000000",
                         }
                         for m in metadatas
                         for col in available_columns
@@ -322,6 +324,23 @@ def register_callbacks(app, config):
                 for row_idx in metadata_selected_rows:
                     if metadata_table_rows[row_idx]["id"] not in current_range_ids:
                         requested_ranges.append(metadata_table_rows[row_idx])
+                dataset_ids = sorted(list(set(row["dataset_id"] for row in requested_ranges)))
+                dataset_columns = {id:set() for id in dataset_ids}
+                for row in requested_ranges:
+                    dataset_columns[row["dataset_id"]].add(row["column_id"])
+                total_plots = 0
+                plot_colour_indices = {}
+                for dataset_id in dataset_ids:
+                    dataset_columns[dataset_id] = sorted(list(dataset_columns[dataset_id]))
+                    for column_id in dataset_columns[dataset_id]:
+                        plot_colour_indices[(dataset_id, column_id)] = total_plots
+                        total_plots = total_plots + 1
+                if total_plots < 10:
+                    colours = colours_D3
+                else:
+                    colours = colours_Light24
+                for row in requested_ranges:
+                    row["colour"] = colours[plot_colour_indices[(row["dataset_id"], row["column_id"])]]
         return (requested_ranges,)
 
     
