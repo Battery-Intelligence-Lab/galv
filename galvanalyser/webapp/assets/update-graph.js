@@ -271,6 +271,7 @@ window.dash_clientside.clientside_graph = {
                 dataset_ranges.set(row.column_id, []);
             }
             dataset_ranges.get(row.column_id).push({
+                name: row.label_name,
                 range_id: row.id,
                 from: row.samples_from,
                 to: row.samples_to,
