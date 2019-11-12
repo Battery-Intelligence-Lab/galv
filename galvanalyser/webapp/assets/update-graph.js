@@ -236,7 +236,7 @@ function update_graph() {
                         mode: 'lines',
                         type: 'scattergl',
                         name: `${requested_dataset_id} ${column_names[requested_column_id]}`,
-                        marker: {line:{color: colour}},
+                        line:{color: colour},
                     };
                     traces.push(trace);
                 }
