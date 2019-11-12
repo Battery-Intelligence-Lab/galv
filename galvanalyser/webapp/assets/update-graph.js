@@ -191,9 +191,11 @@ function update_graph() {
                 for (const [requested_column_id, requested_reading_data] of requested_dataset_data) {
                     let y_ranges = [];
                     let x_ranges = [];
+                    let colour = '#000000';
                     if (available_dataset_data.columns.has(requested_column_id)) {
                         let available_column_reading_data = available_dataset_data.columns.get(requested_column_id);
                         for (const requested_data_range of requested_reading_data) {
+                            colour = requested_data_range.colour;
                             let legend_entry_id = `${requested_dataset_id}_${requested_column_id}_${requested_data_range.from}_${requested_data_range.to}`
                             legend_entries.push({
                                 legend_entry_id: legend_entry_id,
@@ -233,7 +235,8 @@ function update_graph() {
                         y: y_data,
                         mode: 'lines',
                         type: 'scattergl',
-                        name: `${requested_dataset_id} ${column_names[requested_column_id]}`
+                        name: `${requested_dataset_id} ${column_names[requested_column_id]}`,
+                        marker: {line:{color: colour}},
                     };
                     traces.push(trace);
                 }
