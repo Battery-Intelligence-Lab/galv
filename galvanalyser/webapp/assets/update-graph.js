@@ -155,7 +155,7 @@ function apply_offset(data, offset) {
     if (offset == 0.0) {
         return data;
     }
-    return data.map(x => x - offset);
+    return data.map(x => x + offset);
 }
 
 function update_graph() {
@@ -178,6 +178,7 @@ function update_graph() {
         let plot = document.getElementById('main-graph');
         //update graph
         let traces = [];
+        let legend_entries = [];
         for (const [requested_dataset_id, requested_dataset_data] of requested_metadata_ranges) {
             if (all_dataset_data.has(requested_dataset_id)) {
                 let available_dataset_data = all_dataset_data.get(requested_dataset_id);
@@ -190,9 +191,20 @@ function update_graph() {
                 for (const [requested_column_id, requested_reading_data] of requested_dataset_data) {
                     let y_ranges = [];
                     let x_ranges = [];
+                    let colour = '#000000';
                     if (available_dataset_data.columns.has(requested_column_id)) {
                         let available_column_reading_data = available_dataset_data.columns.get(requested_column_id);
                         for (const requested_data_range of requested_reading_data) {
+                            colour = requested_data_range.colour;
+                            let legend_entry_id = `${requested_dataset_id}_${requested_column_id}_${requested_data_range.from}_${requested_data_range.to}`
+                            legend_entries.push({
+                                legend_entry_id: legend_entry_id,
+                                range_name: `${requested_dataset_id} ${column_names[requested_column_id]}`,
+                                dataset_id: requested_dataset_id,
+                                column_id: requested_column_id,
+                                column_name: column_names[requested_column_id],
+                                requested_data_range: requested_data_range
+                            });
                             let available_y_ranges = available_column_reading_data.get_ranges_between(requested_data_range.from, requested_data_range.to);
                             for (const available_y_range of available_y_ranges) {
                                 let available_x_ranges = sample_time_data.get_ranges_between(available_y_range.from, available_y_range.to);
@@ -202,6 +214,8 @@ function update_graph() {
                                 }
                             }
                         }
+                    } else {
+                        continue;
                     }
                     let fuse_data = function(data_range_values_array) {
                         let data = new Array(0);
@@ -221,7 +235,8 @@ function update_graph() {
                         y: y_data,
                         mode: 'lines',
                         type: 'scattergl',
-                        name: `${requested_dataset_id} ${column_names[requested_column_id]}`
+                        name: `${requested_dataset_id} ${column_names[requested_column_id]}`,
+                        line:{color: colour},
                     };
                     traces.push(trace);
                 }
@@ -230,6 +245,9 @@ function update_graph() {
             }
         }
         Plotly.react(plot, traces);
+        if(window.legend_update_callback){
+            window.legend_update_callback(legend_entries);
+        }
     }
 }
 
@@ -253,9 +271,14 @@ window.dash_clientside.clientside_graph = {
                 dataset_ranges.set(row.column_id, []);
             }
             dataset_ranges.get(row.column_id).push({
+                name: row.label_name,
+                range_id: row.id,
                 from: row.samples_from,
                 to: row.samples_to,
-                offset: row.offset || 0.0
+                from_value: row.start_time,
+                to_value: row.end_time,
+                offset: row.offset || 0.0,
+                colour: row.colour || '0x0000FF',
             });
             //console.log(`update_graph_trigger wants ${row.dataset_id} , ${row.column} , ${row.samples_from} , ${row.samples_to}`);
         }

@@ -411,6 +411,7 @@ GRANT SELECT ON TABLE experiment.timeseries_data TO normal_user;
 
 CREATE TABLE experiment.range_label
 (
+    id bigserial NOT NULL,
     dataset_id bigint NOT NULL,
     label_name text NOT NULL,
 	created_by text NOT NULL,
@@ -420,7 +421,8 @@ CREATE TABLE experiment.range_label
     FOREIGN KEY (dataset_id)
         REFERENCES experiment.dataset (id) MATCH SIMPLE
         ON UPDATE CASCADE
-        ON DELETE CASCADE
+        ON DELETE CASCADE,
+    UNIQUE (id)
 )
 WITH (
     OIDS = FALSE
@@ -432,6 +434,8 @@ ALTER TABLE experiment.range_label
 GRANT INSERT, SELECT, UPDATE ON TABLE experiment.range_label TO harvester;
 
 GRANT SELECT ON TABLE experiment.range_label TO normal_user;
+
+GRANT USAGE ON SEQUENCE experiment.range_label_id_seq TO harvester;
 
 -- SELECT * FROM experiment.data as d
 -- INNER JOIN experiment.range_label AS m ON

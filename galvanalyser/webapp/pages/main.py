@@ -8,10 +8,21 @@ import dash_table
 from galvanalyser.database.experiment.dataset_row import DatasetRow
 from galvanalyser.database.experiment.range_label_row import RangeLabelRow
 import galvanalyser.database.experiment.timeseries_data_column as TimeseriesDataColumn
+from galvanalyser.database.experiment.timeseries_data_row import (
+    TimeseriesDataRow, TEST_TIME_COLUMN_ID,
+)
 import psycopg2
 from galvanalyser.webapp.datahandling import data_server
+from galvanalyser_dash_components import GalvanalyserLegend
+from galvanalyser.webapp.colours import D3 as colours_D3, Light24 as colours_Light24
 
-
+# Reference for selection interaction https://dash.plot.ly/interactive-graphing
+# Plotly python reference https://plot.ly/python/reference/
+# Plotly js reference https://plot.ly/javascript/reference/
+# and https://dash.plot.ly/dash-core-components
+# also https://raw.githubusercontent.com/plotly/plotly.py/master/packages/python/plotly/plotly/graph_objs/__init__.py
+# and https://github.com/plotly/dash-core-components/blob/dev/dash_core_components/Graph.py
+# and https://github.com/plotly/dash-html-components/blob/master/dash_html_components/Div.py
 def log(text):
     with open("/tmp/log.txt", "a") as myfile:
         myfile.write(text + "\n")
@@ -76,41 +87,10 @@ data_ranges = html.Div(
 )
 plotting_controls = html.Div(
     [
-        html.P("placeholder plotting_controls"),
-        html.Form(
-            children=[
-                dash_table.DataTable(
-                    id="plot_ranges_table",
-                    row_selectable="multi",
-                    columns=[
-                        {
-                            "name": i,
-                            "id": i,
-                            "editable": True if i == "offset" else False,
-                        }
-                        for i in [
-                            "dataset_id",
-                            "label_name",
-                            "column",
-                            "samples_from",
-                            "samples_to",
-                            "info",
-                            "offset",
-                        ]
-                    ],
-                    # data=[{"hello":"aa","world":"bb","id":1}]
-                )
-            ]
-        ),
         html.Button(
-            id="btn_remove_data_range_from_plot",
+            id="btn_set_reference_value_to_view",
             type="button",
-            children="Remove Data Range",
-        ),
-        html.Button(
-            id="btn_apply_offset_to_data_range",
-            type="button",
-            children="Apply offset",
+            children="Set Reference Value to View",
         ),
     ]
 )
@@ -139,7 +119,11 @@ tab_dataset_content = html.Div(
 
 tab_legend_content = html.Div(
     id="tab_legend_content",
-    children=[html.P("placeholder legend content"), plotting_controls],
+    children=[plotting_controls, 
+    GalvanalyserLegend(id='my-first-legend', graphId="main-graph",
+        #entries=[{"foo":x} for x in ["foo", "bar", "spam", "eggs", "harry", "bear"]],
+        label='my-label')
+    ],
 )
 
 tab_export_content = html.Div(
@@ -281,19 +265,22 @@ def register_callbacks(app, config):
                     )
                     table_rows = [
                         {
-                            "id": f"{selected_row_id}:{col}:{m.label_name}",
+                            "id": f"{selected_row_id}:{m.id}:{col}:{m.label_name}",
                             "dataset_id": selected_row_id,
                             "label_name": m.label_name,
                             "column": col[1],
                             "column_id": col[0],
                             "samples_from": m.lower_bound,
-                            "samples_to": m.upper_bound,
+                            "samples_to": m.upper_bound - 1,
+                            "start_time": TimeseriesDataRow.select_from_dataset_id_column_id_and_sample_no(selected_row_id, TEST_TIME_COLUMN_ID, m.lower_bound, conn).value,
+                            "end_time": TimeseriesDataRow.select_from_dataset_id_column_id_and_sample_no(selected_row_id, TEST_TIME_COLUMN_ID, m.upper_bound - 1, conn).value,
                             "info": m.info,
                             "offset": 0.0,
+                            "colour": "#000000",
                         }
                         for m in metadatas
                         for col in available_columns
-                    ]
+                    ]                        
                 except psycopg2.errors.InsufficientPrivilege:
                     info_line = f"Permission denied when retrieving metadata for dataset id {selected_row_ids}"
         finally:
@@ -303,33 +290,29 @@ def register_callbacks(app, config):
 
     @app.callback(
         [
-            Output("plot_ranges_table", "data"),
-            Output("plot_ranges_table", "selected_rows"),
+            Output("my-first-legend", "requested_ranges"),
         ],
         [
             Input("btn_add_data_range_to_plot", "n_clicks"),
-            Input("btn_remove_data_range_from_plot", "n_clicks"),
-            Input("btn_apply_offset_to_data_range", "n_clicks"),
+            Input("my-first-legend", "n_updated"),
         ],
         [
             State("metadata_table", "selected_rows"),
             State("metadata_table", "data"),
-            State("plot_ranges_table", "data"),
-            State("plot_ranges_table", "selected_rows"),
+            State("my-first-legend", "requested_ranges"),
             State("main-graph", "relayoutData"),
         ],
     )
     def add_data_range_to_plot(
         add_n_clicks,
-        remove_n_clicks,
-        offset_n_clicks,
+        legend_n_updated,
         metadata_selected_rows,
         metadata_table_rows,
         plotted_table_rows,
-        plotted_selected_rows,
         graph_relayout_data,
     ):
-        results = plotted_table_rows if plotted_table_rows is not None else []
+        requested_ranges = plotted_table_rows if plotted_table_rows is not None else []
+        current_range_ids = set(range["id"] for range in requested_ranges)
         ctx = dash.callback_context
         if ctx.triggered:
             button_id = ctx.triggered[0]["prop_id"].split(".")[0]
@@ -339,38 +322,66 @@ def register_callbacks(app, config):
                 and metadata_selected_rows
             ):
                 for row_idx in metadata_selected_rows:
-                    if metadata_table_rows[row_idx] not in results:
-                        results.append(metadata_table_rows[row_idx])
+                    if metadata_table_rows[row_idx]["id"] not in current_range_ids:
+                        requested_ranges.append(metadata_table_rows[row_idx])
+        dataset_ids = sorted(list(set(row["dataset_id"] for row in requested_ranges)))
+        dataset_columns = {id:set() for id in dataset_ids}
+        for row in requested_ranges:
+            dataset_columns[row["dataset_id"]].add(row["column_id"])
+        total_plots = 0
+        plot_colour_indices = {}
+        for dataset_id in dataset_ids:
+            dataset_columns[dataset_id] = sorted(list(dataset_columns[dataset_id]))
+            for column_id in dataset_columns[dataset_id]:
+                plot_colour_indices[(dataset_id, column_id)] = total_plots
+                total_plots = total_plots + 1
+        if total_plots < 10:
+            colours = colours_D3
+        else:
+            colours = colours_Light24
+        for row in requested_ranges:
+            row["colour"] = colours[plot_colour_indices[(row["dataset_id"], row["column_id"])]]
+        return (requested_ranges,)
+
+    
+    @app.callback(
+    [
+        Output("my-first-legend", "reference_value"),
+    ],
+    [
+        Input("btn_set_reference_value_to_view", "n_clicks"),
+    ],
+    [
+        State("main-graph", "relayoutData"),
+        State("my-first-legend", "reference_value"),
+    ],
+    )
+    def set_reference_value_to_view(
+        set_ref_n_clicks,
+        graph_relayout_data,
+        current_reference_value,
+    ):
+        reference_value = current_reference_value
+        ctx = dash.callback_context
+        if ctx.triggered:
+            button_id = ctx.triggered[0]["prop_id"].split(".")[0]
             if (
-                button_id == "btn_remove_data_range_from_plot"
-                and add_n_clicks
-                and plotted_selected_rows
-            ):
-                reverse_index_list = sorted(
-                    plotted_selected_rows, reverse=True
-                )
-                for row_idx in reverse_index_list:
-                    del results[row_idx]
-                plotted_selected_rows = []
-            if (
-                button_id == "btn_apply_offset_to_data_range"
-                and offset_n_clicks
-                and plotted_selected_rows
+                button_id == "btn_set_reference_value_to_view"
+                and set_ref_n_clicks
                 and graph_relayout_data
             ):
                 log(repr(graph_relayout_data))
-                for row_idx in plotted_selected_rows:
-                    results[row_idx]["offset"] = graph_relayout_data.get(
+                reference_value = graph_relayout_data.get(
                         "xaxis.range[0]", 0.0
                     )
-        return results, plotted_selected_rows or []
+        return (reference_value,)
 
-    app.clientside_callback(
-        ClientsideFunction(
-            namespace="clientside_graph", function_name="update_graph_trigger"
-        ),
-        [Output("graph_update_dummy", "children")],
-        [Input("plot_ranges_table", "data")],
-    )
+    #app.clientside_callback(
+    #    ClientsideFunction(
+    #        namespace="clientside_graph", function_name="update_graph_trigger"
+    #    ),
+    #    [Output("graph_update_dummy", "children")],
+    #    [Input("plot_ranges_table", "data")],
+    #)
 
     data_server.register_handlers(app, config)

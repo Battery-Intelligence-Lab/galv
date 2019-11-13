@@ -118,3 +118,26 @@ class TimeseriesDataRow:
                 column_id=result[0],
                 value=result[1],
             )
+
+    @staticmethod
+    def select_from_dataset_id_column_id_and_sample_no(dataset_id, column_id, sample_no, conn):
+        with conn.cursor() as cursor:
+            cursor.execute(
+                (
+                    "SELECT value "
+                    "FROM experiment.timeseries_data "
+                    "WHERE dataset_id=(%s) AND "
+                    "column_id=(%s) AND "
+                    "sample_no=(%s)"
+                ),
+                [dataset_id, column_id, sample_no],
+            )
+            result = cursor.fetchone()
+            if result is None:
+                return None
+            return TimeseriesDataRow(
+                dataset_id=dataset_id,
+                sample_no=sample_no,
+                column_id=column_id,
+                value=result[0],
+            )
