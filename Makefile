@@ -46,7 +46,7 @@ format:
 	black --line-length 79 --exclude "libs|.venv|_pb2\.py|.pnpm-store" ./ && \
   find . \( -type f -name "*.js" ! -path "*/libs/*" ! -path "./.venv/*" ! -path "./.pnpm-store/*" \) -exec js-beautify -r {} \; && \
   find . \( -type f -name "*.css" ! -path "*/libs/*" ! -path "./.venv/*" ! -path "./.pnpm-store/*" \) -exec js-beautify -r --type css {} \; && \
-  find "./libs/galvanalyser-dash-components/src" \( -type f -name "*.js" \) -exec js-beautify -r {} \; && \
+  find "./libs/galvanalyser-dash-components/src" \( -type f -name "*.js" \) -exec js-beautify -r {} -X \; && \
   find "./libs/galvanalyser-dash-components/src" \( -type f -name "*.css" \) -exec js-beautify -r --type css {} \;
 
 harvester-docker-build:
