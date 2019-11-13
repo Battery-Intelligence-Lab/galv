@@ -232,7 +232,7 @@ WITH (
 );
 
 ALTER TABLE experiment.misc_file_data
-    OWNER to harvester_user;
+    OWNER to harvester;
 
 -- Table: experiment.access
 
