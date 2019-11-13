@@ -10,7 +10,7 @@ test:
 protobuf: webapp-static-content/libs/galvanalyser-protobuf.js
 
 webapp-static-content/libs/galvanalyser-protobuf.js: protobuf/timeseries-data.proto webapp-static-content/js/data-range.js
-	mkdir -p galvanalyser/protobuf && mkdir -p libs/galvanalyser-js-protobufs && \
+	mkdir -p galvanalyser/protobuf && mkdir -p libs/galvanalyser-js-protobufs && mkdir -p webapp-static-content/libs && \
 	protoc -I=protobuf --python_out=galvanalyser/protobuf --js_out=binary:libs/galvanalyser-js-protobufs protobuf/timeseries-data.proto && \
 	libs/closure-library/closure/bin/build/closurebuilder.py \
   --root=libs/closure-library \
