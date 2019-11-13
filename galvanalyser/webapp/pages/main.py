@@ -9,12 +9,16 @@ from galvanalyser.database.experiment.dataset_row import DatasetRow
 from galvanalyser.database.experiment.range_label_row import RangeLabelRow
 import galvanalyser.database.experiment.timeseries_data_column as TimeseriesDataColumn
 from galvanalyser.database.experiment.timeseries_data_row import (
-    TimeseriesDataRow, TEST_TIME_COLUMN_ID,
+    TimeseriesDataRow,
+    TEST_TIME_COLUMN_ID,
 )
 import psycopg2
 from galvanalyser.webapp.datahandling import data_server
 from galvanalyser_dash_components import GalvanalyserLegend
-from galvanalyser.webapp.colours import D3 as colours_D3, Light24 as colours_Light24
+from galvanalyser.webapp.colours import (
+    D3 as colours_D3,
+    Light24 as colours_Light24,
+)
 
 # Reference for selection interaction https://dash.plot.ly/interactive-graphing
 # Plotly python reference https://plot.ly/python/reference/
@@ -91,7 +95,7 @@ plotting_controls = html.Div(
             id="btn_set_reference_value_to_view",
             type="button",
             children="Set Reference Value to View",
-        ),
+        )
     ]
 )
 tab_graph_content = html.Div(
@@ -119,55 +123,73 @@ tab_dataset_content = html.Div(
 
 tab_legend_content = html.Div(
     id="tab_legend_content",
-    children=[plotting_controls, 
-    GalvanalyserLegend(id='my-first-legend', graphId="main-graph",
-        #entries=[{"foo":x} for x in ["foo", "bar", "spam", "eggs", "harry", "bear"]],
-        label='my-label')
+    children=[
+        plotting_controls,
+        GalvanalyserLegend(
+            id="my-first-legend",
+            graphId="main-graph",
+            # entries=[{"foo":x} for x in ["foo", "bar", "spam", "eggs", "harry", "bear"]],
+            label="my-label",
+        ),
     ],
 )
 
 tab_export_content = html.Div(
     id="tab_export_content",
     children=[
-    html.Div(children=["Export format",
-    dcc.RadioItems(
-        id="export-format-options",
-        options=[
-            {'label': 'PNG', 'value': 'png'},
-            {'label': 'SVG', 'value': 'svg'},
-            {'label': 'JPG', 'value': 'jpg'},
-            {'label': 'WEBP', 'value': 'webp'},
-        ],
-        value='png',
-    ),
-    ]),
-    html.Div(children=["Width", dcc.Input(
-        id="export-width-input",
-    type='number',
-    value='1920'
-) ]),
-html.Div(children=["Height", dcc.Input(
-        id="export-height-input",
-    type='number',
-    value='1080'
-) ]),
-html.Div(children=["Scale", dcc.Input(
-        id="export-scale-input",
-    type='number',
-    value='1.0'
-) ]),
-html.Div(children=["File name", dcc.Input(
-        id="export-filename-input",
-        placeholder='(without extension)',
-    type='text',
-    value=''
-) ]),
-html.Button(
-            id="btn_export_image",
-            type="button",
-            children="Save Image",
+        html.Div(
+            children=[
+                "Export format",
+                dcc.RadioItems(
+                    id="export-format-options",
+                    options=[
+                        {"label": "PNG", "value": "png"},
+                        {"label": "SVG", "value": "svg"},
+                        {"label": "JPG", "value": "jpg"},
+                        {"label": "WEBP", "value": "webp"},
+                    ],
+                    value="png",
+                ),
+            ]
         ),
-    html.Div(id="export_plot_dummy", hidden=True),],
+        html.Div(
+            children=[
+                "Width",
+                dcc.Input(
+                    id="export-width-input", type="number", value="1920"
+                ),
+            ]
+        ),
+        html.Div(
+            children=[
+                "Height",
+                dcc.Input(
+                    id="export-height-input", type="number", value="1080"
+                ),
+            ]
+        ),
+        html.Div(
+            children=[
+                "Scale",
+                dcc.Input(id="export-scale-input", type="number", value="1.0"),
+            ]
+        ),
+        html.Div(
+            children=[
+                "File name",
+                dcc.Input(
+                    id="export-filename-input",
+                    placeholder="(without extension)",
+                    type="text",
+                    value="",
+                ),
+            ]
+        ),
+        html.Button(
+            id="btn_export_image", type="button", children="Save Image"
+        ),
+        html.Div(id="export_plot_dummy", hidden=True),
+    ],
     hidden=True,
 )
 
@@ -311,15 +333,25 @@ def register_callbacks(app, config):
                             "column_id": col[0],
                             "samples_from": m.lower_bound,
                             "samples_to": m.upper_bound - 1,
-                            "start_time": TimeseriesDataRow.select_from_dataset_id_column_id_and_sample_no(selected_row_id, TEST_TIME_COLUMN_ID, m.lower_bound, conn).value,
-                            "end_time": TimeseriesDataRow.select_from_dataset_id_column_id_and_sample_no(selected_row_id, TEST_TIME_COLUMN_ID, m.upper_bound - 1, conn).value,
+                            "start_time": TimeseriesDataRow.select_from_dataset_id_column_id_and_sample_no(
+                                selected_row_id,
+                                TEST_TIME_COLUMN_ID,
+                                m.lower_bound,
+                                conn,
+                            ).value,
+                            "end_time": TimeseriesDataRow.select_from_dataset_id_column_id_and_sample_no(
+                                selected_row_id,
+                                TEST_TIME_COLUMN_ID,
+                                m.upper_bound - 1,
+                                conn,
+                            ).value,
                             "info": m.info,
                             "offset": 0.0,
                             "colour": "#000000",
                         }
                         for m in metadatas
                         for col in available_columns
-                    ]                        
+                    ]
                 except psycopg2.errors.InsufficientPrivilege:
                     info_line = f"Permission denied when retrieving metadata for dataset id {selected_row_ids}"
         finally:
@@ -328,9 +360,7 @@ def register_callbacks(app, config):
         return info_line, table_rows, []
 
     @app.callback(
-        [
-            Output("my-first-legend", "requested_ranges"),
-        ],
+        [Output("my-first-legend", "requested_ranges")],
         [
             Input("btn_add_data_range_to_plot", "n_clicks"),
             Input("my-first-legend", "n_updated"),
@@ -350,7 +380,9 @@ def register_callbacks(app, config):
         plotted_table_rows,
         graph_relayout_data,
     ):
-        requested_ranges = plotted_table_rows if plotted_table_rows is not None else []
+        requested_ranges = (
+            plotted_table_rows if plotted_table_rows is not None else []
+        )
         current_range_ids = set(range["id"] for range in requested_ranges)
         ctx = dash.callback_context
         if ctx.triggered:
@@ -361,16 +393,23 @@ def register_callbacks(app, config):
                 and metadata_selected_rows
             ):
                 for row_idx in metadata_selected_rows:
-                    if metadata_table_rows[row_idx]["id"] not in current_range_ids:
+                    if (
+                        metadata_table_rows[row_idx]["id"]
+                        not in current_range_ids
+                    ):
                         requested_ranges.append(metadata_table_rows[row_idx])
-        dataset_ids = sorted(list(set(row["dataset_id"] for row in requested_ranges)))
-        dataset_columns = {id:set() for id in dataset_ids}
+        dataset_ids = sorted(
+            list(set(row["dataset_id"] for row in requested_ranges))
+        )
+        dataset_columns = {id: set() for id in dataset_ids}
         for row in requested_ranges:
             dataset_columns[row["dataset_id"]].add(row["column_id"])
         total_plots = 0
         plot_colour_indices = {}
         for dataset_id in dataset_ids:
-            dataset_columns[dataset_id] = sorted(list(dataset_columns[dataset_id]))
+            dataset_columns[dataset_id] = sorted(
+                list(dataset_columns[dataset_id])
+            )
             for column_id in dataset_columns[dataset_id]:
                 plot_colour_indices[(dataset_id, column_id)] = total_plots
                 total_plots = total_plots + 1
@@ -379,26 +418,21 @@ def register_callbacks(app, config):
         else:
             colours = colours_Light24
         for row in requested_ranges:
-            row["colour"] = colours[plot_colour_indices[(row["dataset_id"], row["column_id"])]]
+            row["colour"] = colours[
+                plot_colour_indices[(row["dataset_id"], row["column_id"])]
+            ]
         return (requested_ranges,)
 
-    
     @app.callback(
-    [
-        Output("my-first-legend", "reference_value"),
-    ],
-    [
-        Input("btn_set_reference_value_to_view", "n_clicks"),
-    ],
-    [
-        State("main-graph", "relayoutData"),
-        State("my-first-legend", "reference_value"),
-    ],
+        [Output("my-first-legend", "reference_value")],
+        [Input("btn_set_reference_value_to_view", "n_clicks")],
+        [
+            State("main-graph", "relayoutData"),
+            State("my-first-legend", "reference_value"),
+        ],
     )
     def set_reference_value_to_view(
-        set_ref_n_clicks,
-        graph_relayout_data,
-        current_reference_value,
+        set_ref_n_clicks, graph_relayout_data, current_reference_value
     ):
         reference_value = current_reference_value
         ctx = dash.callback_context
@@ -411,8 +445,8 @@ def register_callbacks(app, config):
             ):
                 log(repr(graph_relayout_data))
                 reference_value = graph_relayout_data.get(
-                        "xaxis.range[0]", 0.0
-                    )
+                    "xaxis.range[0]", 0.0
+                )
         return (reference_value,)
 
     app.clientside_callback(
@@ -421,13 +455,14 @@ def register_callbacks(app, config):
         ),
         [Output("export_plot_dummy", "children")],
         [Input("btn_export_image", "n_clicks")],
-        [State("main-graph","id"),
-        State("export-format-options","value"),
-        State("export-width-input","value"),
-        State("export-height-input","value"),
-        State("export-scale-input","value"),
-        State("export-filename-input","value"),
-        ]
+        [
+            State("main-graph", "id"),
+            State("export-format-options", "value"),
+            State("export-width-input", "value"),
+            State("export-height-input", "value"),
+            State("export-scale-input", "value"),
+            State("export-filename-input", "value"),
+        ],
     )
 
     data_server.register_handlers(app, config)

@@ -236,7 +236,9 @@ function update_graph() {
                         mode: 'lines',
                         type: 'scattergl',
                         name: `${requested_dataset_id} ${column_names[requested_column_id]}`,
-                        line:{color: colour},
+                        line: {
+                            color: colour
+                        },
                     };
                     traces.push(trace);
                 }
@@ -245,7 +247,7 @@ function update_graph() {
             }
         }
         Plotly.react(plot, traces);
-        if(window.legend_update_callback){
+        if (window.legend_update_callback) {
             window.legend_update_callback(legend_entries);
         }
     }

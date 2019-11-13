@@ -10,9 +10,9 @@ class RangeLabelRow:
         lower_bound,
         upper_bound,
         info=None,
-        id_=None
+        id_=None,
     ):
-        self.id=id_
+        self.id = id_
         self.dataset_id = dataset_id
         self.label_name = label_name
         self.created_by = created_by

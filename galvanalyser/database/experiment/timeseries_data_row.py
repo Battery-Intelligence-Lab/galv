@@ -120,7 +120,9 @@ class TimeseriesDataRow:
             )
 
     @staticmethod
-    def select_from_dataset_id_column_id_and_sample_no(dataset_id, column_id, sample_no, conn):
+    def select_from_dataset_id_column_id_and_sample_no(
+        dataset_id, column_id, sample_no, conn
+    ):
         with conn.cursor() as cursor:
             cursor.execute(
                 (

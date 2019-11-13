@@ -209,12 +209,18 @@ def import_file(file_path_row, institution_id, harvester_name, conn):
                 new_data = False
             if new_data and "misc_file_data" in input_file.metadata:
                 print("Storing misc file metadata")
-                for key, value in input_file.metadata["misc_file_data"].items():
+                for key, value in input_file.metadata[
+                    "misc_file_data"
+                ].items():
                     (json_dict, binary_blob) = value
-                    mfdr = MiscFileDataRow(dataset_id,
-                    int(input_file.metadata["first_sample_no"]),
-                    int(input_file.metadata["last_sample_no"]) + 1,
-                    key, json_dict, binary_blob)
+                    mfdr = MiscFileDataRow(
+                        dataset_id,
+                        int(input_file.metadata["first_sample_no"]),
+                        int(input_file.metadata["last_sample_no"]) + 1,
+                        key,
+                        json_dict,
+                        binary_blob,
+                    )
                     mfdr.insert(conn)
             file_path_row.update_observed_file_state("IMPORTED", conn)
             print("File successfully imported")
