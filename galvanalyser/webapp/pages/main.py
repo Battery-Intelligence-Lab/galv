@@ -128,7 +128,46 @@ tab_legend_content = html.Div(
 
 tab_export_content = html.Div(
     id="tab_export_content",
-    children=[html.P("placeholder export content")],
+    children=[
+    html.Div(children=["Export format",
+    dcc.RadioItems(
+        id="export-format-options",
+        options=[
+            {'label': 'PNG', 'value': 'png'},
+            {'label': 'SVG', 'value': 'svg'},
+            {'label': 'JPG', 'value': 'jpg'},
+            {'label': 'WEBP', 'value': 'webp'},
+        ],
+        value='png',
+    ),
+    ]),
+    html.Div(children=["Width", dcc.Input(
+        id="export-width-input",
+    type='number',
+    value='1920'
+) ]),
+html.Div(children=["Height", dcc.Input(
+        id="export-height-input",
+    type='number',
+    value='1080'
+) ]),
+html.Div(children=["Scale", dcc.Input(
+        id="export-scale-input",
+    type='number',
+    value='1.0'
+) ]),
+html.Div(children=["File name", dcc.Input(
+        id="export-filename-input",
+        placeholder='(without extension)',
+    type='text',
+    value=''
+) ]),
+html.Button(
+            id="btn_export_image",
+            type="button",
+            children="Save Image",
+        ),
+    html.Div(id="export_plot_dummy", hidden=True),],
     hidden=True,
 )
 
@@ -376,12 +415,19 @@ def register_callbacks(app, config):
                     )
         return (reference_value,)
 
-    #app.clientside_callback(
-    #    ClientsideFunction(
-    #        namespace="clientside_graph", function_name="update_graph_trigger"
-    #    ),
-    #    [Output("graph_update_dummy", "children")],
-    #    [Input("plot_ranges_table", "data")],
-    #)
+    app.clientside_callback(
+        ClientsideFunction(
+            namespace="plot_export", function_name="export_plot"
+        ),
+        [Output("export_plot_dummy", "children")],
+        [Input("btn_export_image", "n_clicks")],
+        [State("main-graph","id"),
+        State("export-format-options","value"),
+        State("export-width-input","value"),
+        State("export-height-input","value"),
+        State("export-scale-input","value"),
+        State("export-filename-input","value"),
+        ]
+    )
 
     data_server.register_handlers(app, config)
