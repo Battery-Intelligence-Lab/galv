@@ -2,12 +2,12 @@
 #main_page_container {
     display: flex;
     flex-wrap: wrap;
-  }
-  
-  #main_tabs_container {
+}
+
+#main_tabs_container {
     flex: 3 1 65%;
-  }
-  
-  #side_tabs_container {
+}
+
+#side_tabs_container {
     flex: 1 0 200px;
-  }
+}
