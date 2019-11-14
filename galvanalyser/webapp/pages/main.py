@@ -34,15 +34,14 @@ def log(text):
 
 dataset_selector = html.Div(
     [
-        html.P("placeholder dataset selector"),
         html.Button(
-            id="main_get_dataset", type="button", children="Get Dataset"
+            id="main_get_dataset", type="button", children="Get Datasets"
         ),
     ]
 )
 dataset_list = html.Div(
     [
-        html.P("placeholder dataset list"),
+        html.P("Dataset list"),
         dcc.RadioItems(id="main_dataset"),
         html.Form(
             children=[
@@ -61,7 +60,7 @@ dataset_list = html.Div(
 )
 data_ranges = html.Div(
     [
-        html.P("placeholder data ranges"),
+        html.P("Data ranges"),
         html.P(id="main_selected_dataset"),
         html.Form(
             children=[
