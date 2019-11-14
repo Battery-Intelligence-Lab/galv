@@ -6,7 +6,6 @@ After=docker.service
 [Service]
 Type=oneshot
 RemainAfterExit=yes
-Restart=always
 StandardError=null
 StandardOutput=null
 WorkingDirectory=<DOCKER-COMPOSE-YAML-DIR>
