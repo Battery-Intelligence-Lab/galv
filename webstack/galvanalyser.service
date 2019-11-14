@@ -1,5 +1,5 @@
 [Unit]
-Description=%i service with docker compose
+Description=Galvanalyser service with docker compose
 Requires=docker.service
 After=docker.service
 
@@ -10,7 +10,6 @@ Restart=always
 StandardError=null
 StandardOutput=null
 WorkingDirectory=<DOCKER-COMPOSE-YAML-DIR>
-
 
 # Compose up
 ExecStart=/usr/local/bin/docker-compose up -d
