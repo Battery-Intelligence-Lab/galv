@@ -1,0 +1,22 @@
+[Unit]
+Description=%i service with docker compose
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+Restart=always
+StandardError=null
+StandardOutput=null
+WorkingDirectory=<DOCKER-COMPOSE-YAML-DIR>
+
+
+# Compose up
+ExecStart=/usr/local/bin/docker-compose up -d
+
+# Compose down
+ExecStop=/usr/local/bin/docker-compose down
+
+[Install]
+WantedBy=multi-user.target
