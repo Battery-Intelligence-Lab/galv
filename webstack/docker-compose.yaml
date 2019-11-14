@@ -7,6 +7,11 @@ services:
     volumes:
      - ../galvanalyser:/usr/src/app/galvanalyser
      - ../webapp-static-content:/usr/src/app/static_content
+    restart: unless-stopped
+    deploy:
+      restart_policy:
+        condition: any
+        delay: 5s
   nginx:
     image: "nginx"
     ports:
@@ -15,6 +20,11 @@ services:
       - ./nginx-config/nginx.conf:/etc/nginx/nginx.conf:ro
       - ../webapp-static-content/libs:/var/www/webapp-static/libs:ro
       - ../webapp-static-content/css:/var/www/webapp-static/css:ro
+    restart: unless-stopped
+    deploy:
+      restart_policy:
+        condition: any
+        delay: 5s
   postgres:
     image: "postgres"
     stop_signal: SIGINT                 # Fast Shutdown mode
@@ -22,3 +32,8 @@ services:
       - "5432:5432"
     volumes:
       - "${PG_DATA_PATH}:/var/lib/postgresql/data"
+    restart: unless-stopped
+    deploy:
+      restart_policy:
+        condition: any
+        delay: 5s
