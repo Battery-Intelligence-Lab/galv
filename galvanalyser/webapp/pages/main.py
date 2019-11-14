@@ -90,10 +90,20 @@ data_ranges = html.Div(
     ]
 )
 range_editor = html.Div(
+    children = [
+        html.Button(
+            id="btn_show_hide_range_editor",
+            type="button",
+            children="Show Range Editor",
+        ),
+html.Div(
     id="range_editor",
     hidden=True,
-    children=[]
+    children=[
+        html.P("Range Editor")
+    ]
 )
+])
 plotting_controls = html.Div(
     [
         range_editor,
@@ -471,5 +481,20 @@ def register_callbacks(app, config):
             State("export-filename-input", "value"),
         ],
     )
+
+    @app.callback(
+        [
+            Output("btn_show_hide_range_editor", "children"),
+            Output("range_editor", "hidden"),
+        ],
+        [Input("btn_show_hide_range_editor", "n_clicks")],
+        [State("range_editor", "hidden")]
+    )
+    def toggle_range_editor(n_clicks, editor_hidden):
+        hide_editor = True
+        if n_clicks:
+            hide_editor = not editor_hidden
+        button_label = "Show Range Editor" if hide_editor else "Hide Range Editor"
+        return (button_label, hide_editor)
 
     data_server.register_handlers(app, config)
