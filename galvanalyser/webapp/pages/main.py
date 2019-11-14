@@ -97,7 +97,43 @@ range_editor = html.Div(
             children="Show Range Editor",
         ),
         html.Div(
-            id="range_editor", hidden=True, children=[html.P("Range Editor")]
+            id="range_editor", hidden=True, children=[
+                html.P("Range Editor"),
+                html.Button(
+                        id="btn_custom_range_from_view",
+                        type="button",
+                        children="Use Current Chart Range",
+                    ),
+                html.P(children=[
+                    "From: ",
+                    dcc.Input(
+                    id="custom_range_from_value", type="number", value="0"
+                    ),
+                    html.Br(),
+                    "Closest lower sample number: ",
+                    html.Span(id="custom_range_from_display", children="")
+                ]),
+                html.P(children=[
+                    "To: ",
+                    dcc.Input(
+                    id="custom_range_to_value", type="number", value="0"
+                    ),
+                    html.Br(),
+                    "Closest higher sample number: ",
+                    html.Span(id="custom_range_to_display", children="")
+                ]),
+                html.P(children=[
+                    "Range Name: ",
+                    dcc.Input(
+                    id="custom_range_name", type="text", value=""
+                    ),
+                    html.Button(
+                        id="btn_save_custom_range",
+                        type="button",
+                        children="Save Custom Range",
+                    )
+                ]),
+            ]
         ),
     ]
 )
