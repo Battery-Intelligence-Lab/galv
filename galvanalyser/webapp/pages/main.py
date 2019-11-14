@@ -89,8 +89,14 @@ data_ranges = html.Div(
         ),
     ]
 )
+range_editor = html.Div(
+    id="range_editor",
+    hidden=True,
+    children=[]
+)
 plotting_controls = html.Div(
     [
+        range_editor,
         html.Button(
             id="btn_set_reference_value_to_view",
             type="button",
