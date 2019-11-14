@@ -532,4 +532,22 @@ def register_callbacks(app, config):
         )
         return (button_label, hide_editor)
 
+    @app.callback(
+        [
+            Output("custom_range_from_display", "children"),
+        ],
+        [Input("custom_range_from_value", "value")]
+    )
+    def update_range_from_sample_no(xaxis_value):
+        return (xaxis_value,)
+
+    @app.callback(
+        [
+            Output("custom_range_to_display", "children"),
+        ],
+        [Input("custom_range_to_value", "value")]
+    )
+    def update_range_to_sample_no(xaxis_value):
+        return (xaxis_value,)
+
     data_server.register_handlers(app, config)
