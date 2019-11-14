@@ -59,6 +59,6 @@ harvester-run:
 	python -m galvanalyser.harvester.harvester
 
 install-systemd-service:
-	sed "s_<DOCKER-COMPOSE-YAML-DIR>_\"${CURDIR}/webstack\"_g" ./webstack/galvanalyser.service  > /etc/systemd/system/galvanalyser.service
+	sed "s_<DOCKER-COMPOSE-YAML-DIR>_${CURDIR}/webstack_g" ./webstack/galvanalyser.service  > /etc/systemd/system/galvanalyser.service
 
 .PHONY: init update-submodules test protobuf custom-dash-components builder-docker-build builder-docker-run build-webstack format harvester-docker-build harvester-docker-run harvester-run install-systemd-service
