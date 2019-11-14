@@ -75,6 +75,7 @@ data_ranges = html.Div(
                             "samples_from",
                             "samples_to",
                             "info",
+                            "user_created",
                         ]
                     ],
                     # data=[{"hello":"aa","world":"bb","id":1}]
@@ -345,6 +346,7 @@ def register_callbacks(app, config):
                                 conn,
                             ).value,
                             "info": m.info,
+                            "user_created": m.user_created,
                             "offset": 0.0,
                             "colour": "#000000",
                         }
