@@ -133,6 +133,7 @@ range_editor = html.Div(
                         children="Save Custom Range",
                     )
                 ]),
+                html.P(id="create_range_result", children=""),
             ]
         ),
     ]
@@ -532,6 +533,20 @@ def register_callbacks(app, config):
         )
         return (button_label, hide_editor)
 
+    # This is clientside to avoid shipping all the plot data back to the server
+    # just to get the current xaxis range
+    app.clientside_callback(
+        ClientsideFunction(
+            namespace="plot_export", function_name="export_plot"
+        ),
+        [
+            Output("custom_range_from_value", "value"),
+            Output("custom_range_to_value", "value"),
+        ],
+        [Input("btn_custom_range_from_view", "n_clicks")],
+        [State("main-graph", "id")],
+    )
+
     @app.callback(
         [
             Output("custom_range_from_display", "children"),
@@ -539,6 +554,7 @@ def register_callbacks(app, config):
         [Input("custom_range_from_value", "value")]
     )
     def update_range_from_sample_no(xaxis_value):
+        # query db for value
         return (xaxis_value,)
 
     @app.callback(
@@ -548,6 +564,24 @@ def register_callbacks(app, config):
         [Input("custom_range_to_value", "value")]
     )
     def update_range_to_sample_no(xaxis_value):
+        # query db for value 
         return (xaxis_value,)
+
+    @app.callback(
+        [
+            Output("create_range_result", "children"),
+        ],
+        [Input("btn_save_custom_range", "n_clicks")],
+        [State("custom_range_from_display", "children"),
+            State("custom_range_to_display", "children"),
+            State("custom_range_name", "value"),]
+    )
+    def save_custom_range(n_clicks, from_sample_no, to_sample_no, range_name):
+        result = ""
+        if n_clicks and len(range_name) > 0:
+            pass
+            # try and create a range
+            result = f'"Created range: {range_name} between [{from_sample_no},{to_sample_no})'
+        return (result,)
 
     data_server.register_handlers(app, config)
