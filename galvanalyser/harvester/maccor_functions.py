@@ -55,11 +55,13 @@ def get_maccor_column_to_standard_column_mapping():
         "State": None,
         "Step": None,
         "StepTime": 7,
+        "Step (Sec)": 7,
         "Volts": 2,
         "Capacity": None,
         "Energy": None,
         "Power": None,
         "TestTime": 1,
+        "Test (Sec)": 1,
         "Rec#": 0,
         "Temp 1": 6,
     }
