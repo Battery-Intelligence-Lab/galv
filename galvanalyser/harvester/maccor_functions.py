@@ -82,6 +82,32 @@ def isfloat(value):
     except ValueError:
         return False
 
+def is_maccor_raw_file(file_path):
+    with open(file_path, "r") as f:
+        line = f.readline()
+        line_start = "Today's Date"
+        if not line.startswith(line_start):
+            return False
+        line_bits = line.split('\t')
+        if not len(line_bits) == 5:
+            return False
+        date_regex = "\d\d\/\d\d\/\d\d\d\d"
+        dates_regex = line_start + " "+date_regex+"  Date of Test:"
+        if not re.match(dates_regex, line_bits[0]):
+            return False
+        if not re.match(date_regex, line_bits[1]):
+            return False
+        if not line_bits[2] == " Filename:":
+            return False
+        if not line_bits[4].startswith("Comment/Barcode: "):
+            return False
+        line = f.readline()
+        standard_columns = (
+            "Rec#\tCyc#\tStep\tTest (Sec)\tStep (Sec)\tAmp-hr\tWatt-hr\tAmps\t"
+            "Volts\tState\tES\tDPt Time")
+        if not line.startswith(standard_columns):
+            return False
+        return True
 
 def is_maccor_text_file(file_path, delimiter):
     with open(file_path, "r") as f:
