@@ -68,6 +68,10 @@ def identify_file(file_path):
             return {"TSV", "MACCOR"}
         elif ivium_functions.is_ivium_text_file(file_path):
             return {"TXT", "IVIUM"}
+    else:
+        # No extension or unrecognised extension
+        if maccor_functions.is_maccor_raw_file(file_path):
+            return {"RAW", "MACCOR"}
     raise battery_exceptions.UnsupportedFileTypeError
 
 
