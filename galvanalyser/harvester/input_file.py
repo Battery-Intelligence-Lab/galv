@@ -34,6 +34,8 @@ def load_metadata(file_type, file_path):
     if "MACCOR" in file_type:
         if "EXCEL" in file_type:
             return maccor_functions.load_metadata_maccor_excel(file_path)
+        elif "RAW" in file_type:
+            return maccor_functions.load_metadata_maccor_raw(file_path)
         else:
             return maccor_functions.load_metadata_maccor_text(
                 file_type, file_path

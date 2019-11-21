@@ -394,6 +394,22 @@ def load_metadata_maccor_text(file_type, file_path):
         print(metadata)
         return metadata, column_info
 
+def load_metadata_maccor_raw(file_path):
+    """
+        Load metadata in a maccor raw file"
+    """
+    metadata = {}
+    column_info = {}
+    with open(file_path, "r") as csvfile:
+        reader = csv.reader(csvfile, delimiter="\t")
+        first = next(reader)
+        metadata["Today's Date"] = maya.parse(first.split(" ")[2], year_first=False).datetime()
+        metadata["Date of Test"] = maya.parse(first[1], year_first=False).datetime()
+        # what to do about filename?
+        # Comment/barcode field?
+        # Identify columns, what happens with the aux fields
+
+    return metadata, column_info
 
 def load_data_maccor_excel(file_path, columns, column_renames=None):
     """
