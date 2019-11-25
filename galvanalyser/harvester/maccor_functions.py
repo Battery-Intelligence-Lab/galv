@@ -425,6 +425,13 @@ def load_metadata_maccor_raw(file_path):
         ## This question can't be answered for a few months so just make this
         ## parse what we have and leave handling anything different to some
         ## future person
+        column_info, total_rows, first_rec, last_rec = identify_columns_maccor_text(
+            reader
+        )
+        metadata["num_rows"] = total_rows
+        metadata["first_sample_no"] = first_rec
+        metadata["last_sample_no"] = last_rec
+        print(metadata)
 
     return metadata, column_info
 
