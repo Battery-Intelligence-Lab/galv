@@ -403,17 +403,27 @@ def load_metadata_maccor_raw(file_path):
     with open(file_path, "r") as csvfile:
         reader = csv.reader(csvfile, delimiter="\t")
         first = next(reader)
-        metadata["Today's Date"] = maya.parse(first.split(" ")[2], year_first=False).datetime()
+        metadata["Today's Date"] = maya.parse(first[0].split(" ")[2], year_first=False).datetime()
         metadata["Date of Test"] = maya.parse(first[1], year_first=False).datetime()
-        # what to do about filename?
-        # Comment/barcode field?
-        # Identify columns, what happens with the aux fields
+        metadata["Filename"] = first[3].split(" Procedure:")[0]
+        metadata["Dataset Name"] = ntpath.basename(metadata["Filename"])
+        # Just shove everything in the misc_file_data for now rather than
+        # trying to parse it
+        metadata["File Header Parts"] = first
+        metadata["misc_file_data"] = {
+            "raw format metadata": (dict(metadata), None)
+        }
+        # Identify columns, what happens with the aux fields?
+        ## This question can't be answered for a few months so just make this
+        ## parse what we have and leave handling anything different to some
+        ## future person
+
 
     return metadata, column_info
 
 def load_data_maccor_excel(file_path, columns, column_renames=None):
     """
-        Load metadata  in a maccor excel file"
+        Load metadata in a maccor excel file"
     """
     import xlrd
 
