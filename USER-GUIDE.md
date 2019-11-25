@@ -43,3 +43,41 @@ Existing rows in the `monitored_path` table can be modified but changing which u
 ## Changing user dataset access
 The table that controls which users have permissions to see which datasets is the `access` table in the `experiment` schema. If you wish to grant new users permissions to see existing datasets or revoke permissions to see existing datasets then you will need to create or delete rows from this table. Each row in this table contains a `dataset_id` number that uniquely identifies a dataset and a `user_name` that identifies a users. Each row grants the user named in tht row permission to see the dataset named in that row.
 When adding or removing rows you will need to know the `dataset_id` number for the dataset you wish to grant or revoke permissions for. That can be found in the `id` column in the `dataset` table in the `experiment` schema.
+
+# Setting up Harvesters
+The harvester can be setup in one of two ways. you can either run the harvester in a docker container or run it natively with python3 installed on the system. Both options will require a harvester config json file to be created.
+
+## Harvester config json file
+The harvester config json file tells the harvester which database to connect to, which credentials to use and which harvester this particular harvester is. There is an example in the README and in config/harvester-config.json .
+The database login details should be for a postgres user with the `harvesters` group as described in the Configuring harvesters section above. The `machine_id` in the config file should match the `machine_id` used in the `harvester` table described in that section.
+
+## Harvester in a docker
+As described in the README you will first need to build the harvester image. If you have make installed you can build it as described in the README, otherwise you can look up the `harvester-docker-build` target in the `Makefile` to figure out how to build it without make.
+Once you have the harvester image built you will need to decide which file paths to expose to the container so that it can harvest files from the host system. The directory in the container the host directory is mounted in does not matter too much so long as it does not already exist in the container. The directory it is mounted in in the container is also the directory to monitor you would configure in the previous `Configuring monitored directories` section.
+You will also need to mount the directory containing your harvester-config.json in the container in the `/usr/src/app/config` directory.
+
+As an example if you wanted to harvest files from `D:\example data\path\` you might choose to mount that directory in the container in `/data/example_data/path`. If you have the harvester-config.json file located at `C:\galvanalyser\harvester\config` you could then start the container with the following command to map those paths to the correct places:
+```
+docker run --rm -it -v "D:\example data\path\":/data/example_data/path:ro -v "C:\galvanalyser\harvester\config":/usr/src/app/config:ro --net host harvester
+```
+The `/data/example_data/path` is the path you would have configured this harvester to monitor in the database as described in the earlier section `Configuring monitored directories`.
+
+## Harvester running with system installed python
+The following assumes you have the python 3 executable directory in your `PATH` environmental variable. If you don't then you will need to use the full path to python in the commands.
+While not essential it is recommended you use a python virtual environment to install the harvester's dependencies in. See https://docs.python.org/3/library/venv.html about setting up a virtual environment.
+Once you have created and then activated the venv you can use `make init` in the galvanalyser project root directory to install the harvester dependencies. If you are on windows you will instead need to (assuming pip is on your `PATH`) use from the galvanalyser root directory:
+```
+pip install -r .\galvanalyser\harvester\requirements.txt
+```
+
+Once the harvester's dependencies have been setup you will need to configure the `config/harvester-config.json` file as described previously. Currently the harvester is hard coded to look for the config file on the path `./config/harvester-config.json`.
+
+### Running the harvester with system installed python
+To actually run the harvester once you have set it up as described in the previous section you will need to do the following.
+First activate the python venv if you are using one and it is not presently activated.
+Second start the harvester by running in the galvanalyser project root directory:
+```
+python -m galvanalyser.harvester.harvester
+```
+Assuming python is on your PATH environmental variable.
+
