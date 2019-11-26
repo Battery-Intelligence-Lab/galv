@@ -129,6 +129,9 @@ def import_file(file_path_row, institution_id, harvester_name, conn):
         file_path_row.monitored_path, file_path_row.observed_path
     )
     print("")
+    if not os.path.isfile(fullpath):
+        print("Is not file, skipping: " + fullpath)
+        return
     print("Importing " + fullpath)
     file_path_row.update_observed_file_state("IMPORTING", conn)
     try:

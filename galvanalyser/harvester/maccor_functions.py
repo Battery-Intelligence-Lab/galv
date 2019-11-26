@@ -55,11 +55,13 @@ def get_maccor_column_to_standard_column_mapping():
         "State": None,
         "Step": None,
         "StepTime": 7,
+        "Step (Sec)": 7,
         "Volts": 2,
         "Capacity": None,
         "Energy": None,
         "Power": None,
         "TestTime": 1,
+        "Test (Sec)": 1,
         "Rec#": 0,
         "Temp 1": 6,
     }
@@ -79,6 +81,35 @@ def isfloat(value):
         return True
     except ValueError:
         return False
+
+
+def is_maccor_raw_file(file_path):
+    with open(file_path, "r") as f:
+        line = f.readline()
+        line_start = "Today's Date"
+        if not line.startswith(line_start):
+            return False
+        line_bits = line.split("\t")
+        if not len(line_bits) == 5:
+            return False
+        date_regex = "\d\d\/\d\d\/\d\d\d\d"
+        dates_regex = line_start + " " + date_regex + "  Date of Test:"
+        if not re.match(dates_regex, line_bits[0]):
+            return False
+        if not re.match(date_regex, line_bits[1]):
+            return False
+        if not line_bits[2] == " Filename:":
+            return False
+        if not line_bits[4].startswith("Comment/Barcode: "):
+            return False
+        line = f.readline()
+        standard_columns = (
+            "Rec#\tCyc#\tStep\tTest (Sec)\tStep (Sec)\tAmp-hr\tWatt-hr\tAmps\t"
+            "Volts\tState\tES\tDPt Time"
+        )
+        if not line.startswith(standard_columns):
+            return False
+        return True
 
 
 def is_maccor_text_file(file_path, delimiter):
@@ -367,9 +398,48 @@ def load_metadata_maccor_text(file_type, file_path):
         return metadata, column_info
 
 
+def load_metadata_maccor_raw(file_path):
+    """
+        Load metadata in a maccor raw file"
+    """
+    metadata = {}
+    column_info = {}
+    with open(file_path, "r") as csvfile:
+        reader = csv.reader(csvfile, delimiter="\t")
+        first = next(reader)
+        metadata["Today's Date"] = maya.parse(
+            first[0].split(" ")[2], year_first=False
+        ).datetime()
+        metadata["Date of Test"] = maya.parse(
+            first[1], year_first=False
+        ).datetime()
+        metadata["Filename"] = first[3].split(" Procedure:")[0]
+        metadata["Dataset Name"] = ntpath.basename(metadata["Filename"])
+        # Just shove everything in the misc_file_data for now rather than
+        # trying to parse it
+        metadata["File Header Parts"] = first
+        metadata["misc_file_data"] = {
+            "raw format metadata": (dict(metadata), None)
+        }
+        # Identify columns, what happens with the aux fields?
+        ## This question can't be answered for a few months so just make this
+        ## parse what we have and leave handling anything different to some
+        ## future person
+        metadata["Machine Type"] = "Maccor"
+        column_info, total_rows, first_rec, last_rec = identify_columns_maccor_text(
+            reader
+        )
+        metadata["num_rows"] = total_rows
+        metadata["first_sample_no"] = first_rec
+        metadata["last_sample_no"] = last_rec
+        print(metadata)
+
+    return metadata, column_info
+
+
 def load_data_maccor_excel(file_path, columns, column_renames=None):
     """
-        Load metadata  in a maccor excel file"
+        Load metadata in a maccor excel file"
     """
     import xlrd
 
@@ -415,11 +485,14 @@ def load_data_maccor_text(file_type, file_path, columns, column_renames=None):
 
     with open(file_path, "r") as csvfile:
         first = csvfile.readline()
-        second = csvfile.readline()
+        if "RAW" not in file_type:
+            second = csvfile.readline()
         reader = None
         if "CSV" in file_type:
             reader = csv.reader(csvfile, delimiter=",")
         elif "TSV" in file_type:
+            reader = csv.reader(csvfile, delimiter="\t")
+        elif "RAW" in file_type:
             reader = csv.reader(csvfile, delimiter="\t")
         columns_of_interest = []
         column_names = [header for header in next(reader) if header is not ""]
