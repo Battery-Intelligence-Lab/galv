@@ -78,8 +78,10 @@ class TimeseriesDataRow:
         )
         iter_file = IteratorFile(row_generator)
         num_value_columns = len(required_column_ids) - 1
+        start_row = 0 if last_values is None else last_values[0].sample_no
+        num_rows_to_insert = input_file.metadata["num_rows"] - start_row
         expected_insert_count = (
-            input_file.metadata["num_rows"] * num_value_columns
+            num_rows_to_insert * num_value_columns
         )
         with conn.cursor() as cursor:
             print("Copying data to table")
@@ -91,14 +93,14 @@ class TimeseriesDataRow:
                     "Insert failed. Inserted {} of {} values ({} rows * {} columns) before failure".format(
                         cursor.rowcount,
                         expected_insert_count,
-                        input_file.metadata["num_rows"],
+                        num_rows_to_insert,
                         num_value_columns,
                     )
                 )
             print("Done copying data to table")
             print(
-                "Inserted {} rows in {:.2f} seconds".format(
-                    cursor.rowcount, end - start
+                "Inserted {} rows ({} sample sets) in {:.2f} seconds".format(
+                    cursor.rowcount, num_rows_to_insert, end - start
                 )
             )
 

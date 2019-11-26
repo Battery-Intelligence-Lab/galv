@@ -108,8 +108,7 @@ def monitor_path(monitor_path_id, path, monitored_for, conn):
                 current_observation.insert(conn)
                 continue
             elif (
-                database_observation.file_state != "UNSTABLE"
-                or database_observation.file_state != "GROWING"
+                database_observation.file_state in {"IMPORTED", "IMPORT_FAILED"}
             ):
                 # This file has already been handled
                 print(
@@ -221,12 +220,7 @@ def import_file(file_path_row, institution_id, harvester_name, conn):
                         sample_range[0],
                         sample_range[1],
                     ).insert(conn)
-            elif (
-                TimeseriesDataRow.select_one_from_dataset_id_and_sample_no(
-                    dataset_id, input_file.metadata["first_sample_no"], conn
-                )
-                is None
-                and TimeseriesDataRow.select_one_from_dataset_id_and_sample_no(
+            elif (TimeseriesDataRow.select_one_from_dataset_id_and_sample_no(
                     dataset_id, input_file.metadata["last_sample_no"], conn
                 )
                 is None
@@ -234,7 +228,7 @@ def import_file(file_path_row, institution_id, harvester_name, conn):
                 # This is more data for an existing experiment
                 print("Inserting Additional Data")
                 TimeseriesDataRow.insert_input_file(
-                    input_file, dataset_id, conn
+                    input_file, dataset_id, conn, last_values=last_data
                 )
                 # TODO handle inserting metadata when extending a dataset
             else:

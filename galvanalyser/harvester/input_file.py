@@ -171,13 +171,10 @@ class InputFile:
         existing_values = {}
         if last_values is not None:
             existing_values = {
-                tsdr.column_id: tsdr.value for tsdr in last_values.items()
+                tsdr.column_id: tsdr.value for tsdr in last_values
             }
             if RECORD_NO_COLUMN_ID not in existing_values:
-                existing_values[RECORD_NO_COLUMN_ID] = next(
-                    iter(last_values.values())
-                ).sample_no
-
+                existing_values[RECORD_NO_COLUMN_ID] = last_values[0].sample_no
         prev_time = existing_values.get(TEST_TIME_COLUMN_ID, 0.0)
         prev_amps = existing_values.get(3, 0.0)
         capacity_total = existing_values.get(5, 0.0)
@@ -191,7 +188,7 @@ class InputFile:
             #                file_data_row["dataset_id"] = self.metadata["dataset_id"]
             if RECORD_NO_COLUMN_ID in missing_colums:  # sample_no
                 file_data_row[RECORD_NO_COLUMN_ID] = row_no
-            if file_data_row[RECORD_NO_COLUMN_ID] <= start_rec_no:
+            if int(file_data_row[RECORD_NO_COLUMN_ID]) <= start_rec_no:
                 # Skip rows that are already in the database
                 continue
             if 5 in missing_colums:  # "capacity" / Charge Capacity
