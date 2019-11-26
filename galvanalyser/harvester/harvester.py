@@ -142,7 +142,6 @@ def monitor_path(monitor_path_id, path, monitored_for, conn):
                 # the timestamp of our last observation and nothing else has
                 # changed
                 print("Waiting for file to become stable")
-                pass
     print("Done monitoring paths")
 
 
