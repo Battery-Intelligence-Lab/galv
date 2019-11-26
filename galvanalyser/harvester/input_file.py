@@ -162,9 +162,16 @@ class InputFile:
         """
         flag = True
         rec_col_set = set(required_column_ids)
-        prev_time = 0.0
-        prev_amps = 0.0
-        capacity_total = 0.0
+        existing_values = {}
+        if last_values is not None:
+            existing_values = {tsdr.column_id: tsdr.value for tsdr in last_values.items()}
+            if 0 not in existing_values:
+                existing_values[0] = next(iter(last_values.values())).sample_no
+        
+        prev_time = existing_values.get(1, 0.0)
+        prev_amps = existing_values.get(3, 0.0)
+        capacity_total = existing_values.get(5, 0.0)
+        start_rec_no = existing_values.get(0, 0)
         for row_no, file_data_row in enumerate(file_cols_to_data_generator, 1):
             missing_colums = rec_col_set - set(file_data_row.keys())
             #            if (
