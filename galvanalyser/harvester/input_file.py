@@ -21,6 +21,9 @@ import galvanalyser.harvester.maccor_functions as maccor_functions
 import galvanalyser.harvester.ivium_functions as ivium_functions
 from itertools import accumulate
 import traceback
+from galvanalyser.database.timeseries_data_row import (
+    RECORD_NO_COLUMN_ID, TEST_TIME_COLUMN_ID
+)
 
 # see https://gist.github.com/jsheedy/ed81cdf18190183b3b7d
 # https://stackoverflow.com/a/30721460
@@ -165,13 +168,13 @@ class InputFile:
         existing_values = {}
         if last_values is not None:
             existing_values = {tsdr.column_id: tsdr.value for tsdr in last_values.items()}
-            if 0 not in existing_values:
-                existing_values[0] = next(iter(last_values.values())).sample_no
+            if RECORD_NO_COLUMN_ID not in existing_values:
+                existing_values[RECORD_NO_COLUMN_ID] = next(iter(last_values.values())).sample_no
         
-        prev_time = existing_values.get(1, 0.0)
+        prev_time = existing_values.get(TEST_TIME_COLUMN_ID, 0.0)
         prev_amps = existing_values.get(3, 0.0)
         capacity_total = existing_values.get(5, 0.0)
-        start_rec_no = existing_values.get(0, 0)
+        start_rec_no = existing_values.get(RECORD_NO_COLUMN_ID, 0)
         for row_no, file_data_row in enumerate(file_cols_to_data_generator, 1):
             missing_colums = rec_col_set - set(file_data_row.keys())
             #            if (
@@ -179,9 +182,9 @@ class InputFile:
             #                and "dataset_id" in self.metadata
             #            ):
             #                file_data_row["dataset_id"] = self.metadata["dataset_id"]
-            if 0 in missing_colums:  # sample_no
-                file_data_row[0] = row_no
-            if file_data_row[0] <= start_rec_no:
+            if RECORD_NO_COLUMN_ID in missing_colums:  # sample_no
+                file_data_row[RECORD_NO_COLUMN_ID] = row_no
+            if file_data_row[RECORD_NO_COLUMN_ID] <= start_rec_no:
                 # Skip rows that are already in the database
                 continue
             if 5 in missing_colums:  # "capacity" / Charge Capacity
