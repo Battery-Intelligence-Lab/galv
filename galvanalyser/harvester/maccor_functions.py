@@ -484,11 +484,14 @@ def load_data_maccor_text(file_type, file_path, columns, column_renames=None):
 
     with open(file_path, "r") as csvfile:
         first = csvfile.readline()
-        second = csvfile.readline()
+        if "RAW" not in file_type:
+            second = csvfile.readline()
         reader = None
         if "CSV" in file_type:
             reader = csv.reader(csvfile, delimiter=",")
         elif "TSV" in file_type:
+            reader = csv.reader(csvfile, delimiter="\t")
+        elif "RAW" in file_type:
             reader = csv.reader(csvfile, delimiter="\t")
         columns_of_interest = []
         column_names = [header for header in next(reader) if header is not ""]
