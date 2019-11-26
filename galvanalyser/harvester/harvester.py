@@ -83,7 +83,32 @@ def monitor_path(monitor_path_id, path, monitored_for, conn):
         else:
             print(current_observation.last_observed_time)
             print(database_observation.last_observed_time)
-            if database_observation.file_state != "UNSTABLE":
+            if (
+                    database_observation.file_state == "STABLE"
+                    and current_observation.last_observed_size
+                    != database_observation.last_observed_size
+                ):
+                    print(
+                        "File has changed size since last it was checked, "
+                        "marking as unstable"
+                    )
+                    current_observation.file_state = "UNSTABLE"
+                    current_observation.insert(conn)
+                    continue
+            elif (
+                    database_observation.file_state == "IMPORTED"
+                    and current_observation.last_observed_size
+                    > database_observation.last_observed_size
+                ):
+                    print(
+                        "Imported file has changed size since last it was "
+                        "checked, marking as growing"
+                    )
+                    current_observation.file_state = "GROWING"
+                    current_observation.insert(conn)
+                    continue
+            elif (database_observation.file_state != "UNSTABLE" or
+                database_observation.file_state != "GROWING"):
                 # This file has already been handled
                 print(
                     "File has already been handled. State is currently "
