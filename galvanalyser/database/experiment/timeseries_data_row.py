@@ -30,7 +30,8 @@ class TimeseriesDataRow:
 
     @staticmethod
     def insert_input_file(
-        input_file, dataset_id, conn, standard_cols_to_file_cols=None
+        input_file, dataset_id, conn, standard_cols_to_file_cols=None,
+        last_values=None
     ):
         if standard_cols_to_file_cols is None:
             standard_cols_to_file_cols = {}
@@ -70,6 +71,7 @@ class TimeseriesDataRow:
             dataset_id,
             RECORD_NO_COLUMN_ID,
             standard_cols_to_file_cols,
+            last_values,
         )
         iter_file = IteratorFile(row_generator)
         num_value_columns = len(required_column_ids) - 1

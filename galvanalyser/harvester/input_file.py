@@ -153,7 +153,8 @@ class InputFile:
         return self.metadata["Date of Test"]
 
     def complete_columns(
-        self, required_column_ids, file_cols_to_data_generator
+        self, required_column_ids, file_cols_to_data_generator,
+        last_values=None
     ):
         """
             Generates missing columns, returns generator of lists that match
@@ -199,7 +200,8 @@ class InputFile:
             # yield [file_data_row[col_id] for col_id in required_column_ids]
 
     def get_data_with_standard_colums(
-        self, required_column_ids, standard_cols_to_file_cols=None
+        self, required_column_ids, standard_cols_to_file_cols=None,
+        last_values=None
     ):
         """
             Given a map of standard columns to file columns; return a map
@@ -231,13 +233,16 @@ class InputFile:
             for key, value in file_col_to_std_col.items()
             if value in required_column_ids
         }
+        # Possible optimisation here:
+        ## If we have last_values and the file has record numbers in
+        ## then skip ahead until we reach the record after the one we have
         file_cols_to_data_generator = self.get_desired_data_if_present(
             desired_file_cols_to_std_cols
         )
         # pass file_cols_to_data_generator to generate missing column
 
         return self.complete_columns(
-            required_column_ids, file_cols_to_data_generator
+            required_column_ids, file_cols_to_data_generator, last_values
         )
         # return file_cols_to_data_generator
 
@@ -294,6 +299,7 @@ class InputFile:
         dataset_id,
         record_no_column_id,
         standard_cols_to_file_cols=None,
+        last_values=None,
     ):
         # given list of columns, map file columns to desired columns
         # load available columns
@@ -311,7 +317,7 @@ class InputFile:
 
         try:
             for row in self.get_data_with_standard_colums(
-                required_column_ids, standard_cols_to_file_cols
+                required_column_ids, standard_cols_to_file_cols, last_values
             ):
                 rec_no = row[record_no_column_id]
                 del row[record_no_column_id]
