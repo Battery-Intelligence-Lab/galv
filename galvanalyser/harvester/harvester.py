@@ -178,6 +178,7 @@ def import_file(file_path_row, institution_id, harvester_name, conn):
                 conn=conn,
             )
             is_new_dataset = dataset_row is None
+            last_data = None
             if is_new_dataset:
                 dataset_row = DatasetRow(
                     name=input_file.metadata["Dataset Name"],
@@ -189,6 +190,9 @@ def import_file(file_path_row, institution_id, harvester_name, conn):
                 print("Added dataset id " + str(dataset_row.id))
             else:
                 print("This dataset is already in the database")
+                last_data = TimeseriesDataRow.select_latest_by_dataset_id(
+                    dataset_row.id, conn
+                )
             dataset_id = dataset_row.id
             for user in file_path_row.monitored_for:
                 print("  Allowing access to " + user)
