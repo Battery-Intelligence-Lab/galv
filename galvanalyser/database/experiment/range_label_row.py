@@ -26,12 +26,18 @@ class RangeLabelRow:
                 (
                     "INSERT INTO experiment.range_label "
                     "(dataset_id, label_name, created_by, sample_range, info) "
-                    "VALUES (%s, %s, %s, '[%s, %s)', %s) RETURNING id"
+                    "VALUES (%s, %s, %s, '[%s, %s)', %s) "
+                    "ON CONFLICT ON CONSTRAINT range_label_pkey DO UPDATE SET "
+                    "sample_range = '[%s, %s)', info = %s "
+                    "RETURNING id"
                 ),
                 [
                     self.dataset_id,
                     self.label_name,
                     self.created_by,
+                    self.lower_bound,
+                    self.upper_bound,
+                    self.info,
                     self.lower_bound,
                     self.upper_bound,
                     self.info,
