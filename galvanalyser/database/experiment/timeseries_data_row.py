@@ -143,3 +143,28 @@ class TimeseriesDataRow:
                 column_id=column_id,
                 value=result[0],
             )
+
+    @staticmethod
+    def select_latest_by_dataset_id(dataset_id, conn):
+        with conn.cursor() as cursor:
+            cursor.execute(
+                (
+                    "SELECT sample_no, column_id, value "
+                    "FROM experiment.timeseries_data "
+                    "WHERE dataset_id=(%s) AND sample_no=("
+                    "SELECT sample_no FROM experiment.timeseries_data WHERE "
+                    "dataset_id=(%s) ORDER BY sample_no DESC LIMIT 1"
+                    ")"
+                ),
+                [dataset_id, dataset_id],
+            )
+            records = cursor.fetchall()
+            return [
+                TimeseriesDataRow(
+                    dataset_id=dataset_id,
+                    sample_no=result[0],
+                    column_id=result[1],
+                    value=result[2],
+                )
+                for result in records
+            ]
