@@ -105,7 +105,7 @@ GRANT ALL ON TABLE harvesters.monitored_path TO postgres;
 -- DROP TYPE harvesters.file_state_t;
 
 CREATE TYPE harvesters.file_state_t AS ENUM
-    ('IMPORTED', 'IMPORTING', 'STABLE', 'UNSTABLE', 'IMPORT_FAILED');
+    ('IMPORTED', 'IMPORTING', 'STABLE', 'UNSTABLE', 'IMPORT_FAILED', 'GROWING');
 
 ALTER TYPE harvesters.file_state_t
     OWNER TO postgres;
