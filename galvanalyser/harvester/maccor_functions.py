@@ -425,6 +425,7 @@ def load_metadata_maccor_raw(file_path):
         ## This question can't be answered for a few months so just make this
         ## parse what we have and leave handling anything different to some
         ## future person
+        metadata["Machine Type"] = "Maccor"
         column_info, total_rows, first_rec, last_rec = identify_columns_maccor_text(
             reader
         )
