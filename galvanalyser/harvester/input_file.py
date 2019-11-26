@@ -181,6 +181,9 @@ class InputFile:
             #                file_data_row["dataset_id"] = self.metadata["dataset_id"]
             if 0 in missing_colums:  # sample_no
                 file_data_row[0] = row_no
+            if file_data_row[0] <= start_rec_no:
+                # Skip rows that are already in the database
+                continue
             if 5 in missing_colums:  # "capacity" / Charge Capacity
                 current_amps = float(file_data_row[3])
                 current_time = float(file_data_row[1])
