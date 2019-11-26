@@ -22,7 +22,8 @@ import galvanalyser.harvester.ivium_functions as ivium_functions
 from itertools import accumulate
 import traceback
 from galvanalyser.database.timeseries_data_row import (
-    RECORD_NO_COLUMN_ID, TEST_TIME_COLUMN_ID
+    RECORD_NO_COLUMN_ID,
+    TEST_TIME_COLUMN_ID,
 )
 
 # see https://gist.github.com/jsheedy/ed81cdf18190183b3b7d
@@ -156,8 +157,10 @@ class InputFile:
         return self.metadata["Date of Test"]
 
     def complete_columns(
-        self, required_column_ids, file_cols_to_data_generator,
-        last_values=None
+        self,
+        required_column_ids,
+        file_cols_to_data_generator,
+        last_values=None,
     ):
         """
             Generates missing columns, returns generator of lists that match
@@ -167,10 +170,14 @@ class InputFile:
         rec_col_set = set(required_column_ids)
         existing_values = {}
         if last_values is not None:
-            existing_values = {tsdr.column_id: tsdr.value for tsdr in last_values.items()}
+            existing_values = {
+                tsdr.column_id: tsdr.value for tsdr in last_values.items()
+            }
             if RECORD_NO_COLUMN_ID not in existing_values:
-                existing_values[RECORD_NO_COLUMN_ID] = next(iter(last_values.values())).sample_no
-        
+                existing_values[RECORD_NO_COLUMN_ID] = next(
+                    iter(last_values.values())
+                ).sample_no
+
         prev_time = existing_values.get(TEST_TIME_COLUMN_ID, 0.0)
         prev_amps = existing_values.get(3, 0.0)
         capacity_total = existing_values.get(5, 0.0)
@@ -213,8 +220,10 @@ class InputFile:
             # yield [file_data_row[col_id] for col_id in required_column_ids]
 
     def get_data_with_standard_colums(
-        self, required_column_ids, standard_cols_to_file_cols=None,
-        last_values=None
+        self,
+        required_column_ids,
+        standard_cols_to_file_cols=None,
+        last_values=None,
     ):
         """
             Given a map of standard columns to file columns; return a map
