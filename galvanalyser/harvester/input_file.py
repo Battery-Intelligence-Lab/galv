@@ -50,30 +50,34 @@ def identify_file(file_path):
     """
         Returns a string identifying the type of the input file
     """
-    if file_path.endswith(".xls"):
-        return {"EXCEL", "MACCOR"}
-    elif file_path.endswith(".xlsx"):
-        return {"EXCEL", "MACCOR"}
-    elif file_path.endswith(".csv"):
-        if maccor_functions.is_maccor_text_file(file_path, ","):
-            return {"CSV", "MACCOR"}
-        elif maccor_functions.is_maccor_text_file(file_path, "\t"):
-            return {"TSV", "MACCOR"}
-    elif file_path.endswith(".txt"):
-        if file_path.endswith(".mps.txt"):
-            # Bio-Logic settings file, doesn't contain data
-            pass
-        elif file_path.endswith(".mps.txt"):
-            # Bio-Logic text data file
-            pass
-        elif maccor_functions.is_maccor_text_file(file_path, "\t"):
-            return {"TSV", "MACCOR"}
-        elif ivium_functions.is_ivium_text_file(file_path):
-            return {"TXT", "IVIUM"}
-    else:
-        # No extension or unrecognised extension
-        if maccor_functions.is_maccor_raw_file(file_path):
-            return {"RAW", "MACCOR"}
+    try:
+        if file_path.endswith(".xls"):
+            return {"EXCEL", "MACCOR"}
+        elif file_path.endswith(".xlsx"):
+            return {"EXCEL", "MACCOR"}
+        elif file_path.endswith(".csv"):
+            if maccor_functions.is_maccor_text_file(file_path, ","):
+                return {"CSV", "MACCOR"}
+            elif maccor_functions.is_maccor_text_file(file_path, "\t"):
+                return {"TSV", "MACCOR"}
+        elif file_path.endswith(".txt"):
+            if file_path.endswith(".mps.txt"):
+                # Bio-Logic settings file, doesn't contain data
+                pass
+            elif file_path.endswith(".mps.txt"):
+                # Bio-Logic text data file
+                pass
+            elif maccor_functions.is_maccor_text_file(file_path, "\t"):
+                return {"TSV", "MACCOR"}
+            elif ivium_functions.is_ivium_text_file(file_path):
+                return {"TXT", "IVIUM"}
+        else:
+            # No extension or unrecognised extension
+            if maccor_functions.is_maccor_raw_file(file_path):
+                return {"RAW", "MACCOR"}
+    except Exception as ex:
+        print("Error identifying file: " + file_path)
+        print(ex)
     raise battery_exceptions.UnsupportedFileTypeError
 
 
