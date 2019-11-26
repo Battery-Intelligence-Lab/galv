@@ -271,6 +271,7 @@ class InputFile:
                     desired_file_cols_to_std_cols,
                 )
             else:
+                # Handle csv, tsv and raw
                 return maccor_functions.load_data_maccor_text(
                     self.type,
                     self.file_path,
