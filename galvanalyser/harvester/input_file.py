@@ -21,6 +21,10 @@ import galvanalyser.harvester.maccor_functions as maccor_functions
 import galvanalyser.harvester.ivium_functions as ivium_functions
 from itertools import accumulate
 import traceback
+from galvanalyser.database.experiment.timeseries_data_row import (
+    RECORD_NO_COLUMN_ID,
+    TEST_TIME_COLUMN_ID,
+)
 
 # see https://gist.github.com/jsheedy/ed81cdf18190183b3b7d
 # https://stackoverflow.com/a/30721460
@@ -34,6 +38,8 @@ def load_metadata(file_type, file_path):
     if "MACCOR" in file_type:
         if "EXCEL" in file_type:
             return maccor_functions.load_metadata_maccor_excel(file_path)
+        elif "RAW" in file_type:
+            return maccor_functions.load_metadata_maccor_raw(file_path)
         else:
             return maccor_functions.load_metadata_maccor_text(
                 file_type, file_path
@@ -48,26 +54,34 @@ def identify_file(file_path):
     """
         Returns a string identifying the type of the input file
     """
-    if file_path.endswith(".xls"):
-        return {"EXCEL", "MACCOR"}
-    elif file_path.endswith(".xlsx"):
-        return {"EXCEL", "MACCOR"}
-    elif file_path.endswith(".csv"):
-        if maccor_functions.is_maccor_text_file(file_path, ","):
-            return {"CSV", "MACCOR"}
-        elif maccor_functions.is_maccor_text_file(file_path, "\t"):
-            return {"TSV", "MACCOR"}
-    elif file_path.endswith(".txt"):
-        if file_path.endswith(".mps.txt"):
-            # Bio-Logic settings file, doesn't contain data
-            pass
-        elif file_path.endswith(".mps.txt"):
-            # Bio-Logic text data file
-            pass
-        elif maccor_functions.is_maccor_text_file(file_path, "\t"):
-            return {"TSV", "MACCOR"}
-        elif ivium_functions.is_ivium_text_file(file_path):
-            return {"TXT", "IVIUM"}
+    try:
+        if file_path.endswith(".xls"):
+            return {"EXCEL", "MACCOR"}
+        elif file_path.endswith(".xlsx"):
+            return {"EXCEL", "MACCOR"}
+        elif file_path.endswith(".csv"):
+            if maccor_functions.is_maccor_text_file(file_path, ","):
+                return {"CSV", "MACCOR"}
+            elif maccor_functions.is_maccor_text_file(file_path, "\t"):
+                return {"TSV", "MACCOR"}
+        elif file_path.endswith(".txt"):
+            if file_path.endswith(".mps.txt"):
+                # Bio-Logic settings file, doesn't contain data
+                pass
+            elif file_path.endswith(".mps.txt"):
+                # Bio-Logic text data file
+                pass
+            elif maccor_functions.is_maccor_text_file(file_path, "\t"):
+                return {"TSV", "MACCOR"}
+            elif ivium_functions.is_ivium_text_file(file_path):
+                return {"TXT", "IVIUM"}
+        else:
+            # No extension or unrecognised extension
+            if maccor_functions.is_maccor_raw_file(file_path):
+                return {"RAW", "MACCOR"}
+    except Exception as ex:
+        print("Error identifying file: " + file_path)
+        print(ex)
     raise battery_exceptions.UnsupportedFileTypeError
 
 
@@ -143,7 +157,10 @@ class InputFile:
         return self.metadata["Date of Test"]
 
     def complete_columns(
-        self, required_column_ids, file_cols_to_data_generator
+        self,
+        required_column_ids,
+        file_cols_to_data_generator,
+        last_values=None,
     ):
         """
             Generates missing columns, returns generator of lists that match
@@ -151,9 +168,17 @@ class InputFile:
         """
         flag = True
         rec_col_set = set(required_column_ids)
-        prev_time = 0.0
-        prev_amps = 0.0
-        capacity_total = 0.0
+        existing_values = {}
+        if last_values is not None:
+            existing_values = {
+                tsdr.column_id: tsdr.value for tsdr in last_values
+            }
+            if RECORD_NO_COLUMN_ID not in existing_values:
+                existing_values[RECORD_NO_COLUMN_ID] = last_values[0].sample_no
+        prev_time = existing_values.get(TEST_TIME_COLUMN_ID, 0.0)
+        prev_amps = existing_values.get(3, 0.0)
+        capacity_total = existing_values.get(5, 0.0)
+        start_rec_no = existing_values.get(RECORD_NO_COLUMN_ID, 0)
         for row_no, file_data_row in enumerate(file_cols_to_data_generator, 1):
             missing_colums = rec_col_set - set(file_data_row.keys())
             #            if (
@@ -161,8 +186,11 @@ class InputFile:
             #                and "dataset_id" in self.metadata
             #            ):
             #                file_data_row["dataset_id"] = self.metadata["dataset_id"]
-            if 0 in missing_colums:  # sample_no
-                file_data_row[0] = row_no
+            if RECORD_NO_COLUMN_ID in missing_colums:  # sample_no
+                file_data_row[RECORD_NO_COLUMN_ID] = row_no
+            if int(file_data_row[RECORD_NO_COLUMN_ID]) <= start_rec_no:
+                # Skip rows that are already in the database
+                continue
             if 5 in missing_colums:  # "capacity" / Charge Capacity
                 current_amps = float(file_data_row[3])
                 current_time = float(file_data_row[1])
@@ -189,7 +217,10 @@ class InputFile:
             # yield [file_data_row[col_id] for col_id in required_column_ids]
 
     def get_data_with_standard_colums(
-        self, required_column_ids, standard_cols_to_file_cols=None
+        self,
+        required_column_ids,
+        standard_cols_to_file_cols=None,
+        last_values=None,
     ):
         """
             Given a map of standard columns to file columns; return a map
@@ -221,13 +252,16 @@ class InputFile:
             for key, value in file_col_to_std_col.items()
             if value in required_column_ids
         }
+        # Possible optimisation here:
+        ## If we have last_values and the file has record numbers in
+        ## then skip ahead until we reach the record after the one we have
         file_cols_to_data_generator = self.get_desired_data_if_present(
             desired_file_cols_to_std_cols
         )
         # pass file_cols_to_data_generator to generate missing column
 
         return self.complete_columns(
-            required_column_ids, file_cols_to_data_generator
+            required_column_ids, file_cols_to_data_generator, last_values
         )
         # return file_cols_to_data_generator
 
@@ -261,6 +295,7 @@ class InputFile:
                     desired_file_cols_to_std_cols,
                 )
             else:
+                # Handle csv, tsv and raw
                 return maccor_functions.load_data_maccor_text(
                     self.type,
                     self.file_path,
@@ -283,6 +318,7 @@ class InputFile:
         dataset_id,
         record_no_column_id,
         standard_cols_to_file_cols=None,
+        last_values=None,
     ):
         # given list of columns, map file columns to desired columns
         # load available columns
@@ -300,7 +336,7 @@ class InputFile:
 
         try:
             for row in self.get_data_with_standard_colums(
-                required_column_ids, standard_cols_to_file_cols
+                required_column_ids, standard_cols_to_file_cols, last_values
             ):
                 rec_no = row[record_no_column_id]
                 del row[record_no_column_id]
@@ -319,22 +355,10 @@ class InputFile:
     def get_data_labels(self):
         if "MACCOR" in self.type:
             return maccor_functions.generate_maccor_data_labels(
-                self.type,
-                self.file_path,
-                [
-                    column
-                    for column, info in self.column_info.items()
-                    if info["has_data"]
-                ],
+                self.type, self.file_path, self.column_info
             )
         elif "IVIUM" in self.type:
             return ivium_functions.generate_ivium_data_labels(
-                self.type,
-                self.file_path,
-                [
-                    column
-                    for column, info in self.column_info.items()
-                    if info["has_data"]
-                ],
+                self.type, self.file_path, self.column_info
             )
         raise battery_exceptions.UnsupportedFileTypeError

@@ -189,7 +189,7 @@ class ObservedFilePathRow:
             cursor.execute(
                 (
                     "UPDATE harvesters.observed_file SET file_state = %s"
-                    "WHERE monitor_path_id=(%s)"
+                    "WHERE monitor_path_id=(%s) AND path=(%s)"
                 ),
-                [file_state, self.monitor_path_id],
+                [file_state, self.monitor_path_id, self.observed_path],
             )

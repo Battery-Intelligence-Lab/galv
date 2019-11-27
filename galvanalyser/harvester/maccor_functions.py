@@ -55,11 +55,13 @@ def get_maccor_column_to_standard_column_mapping():
         "State": None,
         "Step": None,
         "StepTime": 7,
+        "Step (Sec)": 7,
         "Volts": 2,
         "Capacity": None,
         "Energy": None,
         "Power": None,
         "TestTime": 1,
+        "Test (Sec)": 1,
         "Rec#": 0,
         "Temp 1": 6,
     }
@@ -79,6 +81,35 @@ def isfloat(value):
         return True
     except ValueError:
         return False
+
+
+def is_maccor_raw_file(file_path):
+    with open(file_path, "r") as f:
+        line = f.readline()
+        line_start = "Today's Date"
+        if not line.startswith(line_start):
+            return False
+        line_bits = line.split("\t")
+        if not len(line_bits) == 5:
+            return False
+        date_regex = "\d\d\/\d\d\/\d\d\d\d"
+        dates_regex = line_start + " " + date_regex + "  Date of Test:"
+        if not re.match(dates_regex, line_bits[0]):
+            return False
+        if not re.match(date_regex, line_bits[1]):
+            return False
+        if not line_bits[2] == " Filename:":
+            return False
+        if not line_bits[4].startswith("Comment/Barcode: "):
+            return False
+        line = f.readline()
+        standard_columns = (
+            "Rec#\tCyc#\tStep\tTest (Sec)\tStep (Sec)\tAmp-hr\tWatt-hr\tAmps\t"
+            "Volts\tState\tES\tDPt Time"
+        )
+        if not line.startswith(standard_columns):
+            return False
+        return True
 
 
 def is_maccor_text_file(file_path, delimiter):
@@ -367,9 +398,48 @@ def load_metadata_maccor_text(file_type, file_path):
         return metadata, column_info
 
 
+def load_metadata_maccor_raw(file_path):
+    """
+        Load metadata in a maccor raw file"
+    """
+    metadata = {}
+    column_info = {}
+    with open(file_path, "r") as csvfile:
+        reader = csv.reader(csvfile, delimiter="\t")
+        first = next(reader)
+        metadata["Today's Date"] = maya.parse(
+            first[0].split(" ")[2], year_first=False
+        ).datetime()
+        metadata["Date of Test"] = maya.parse(
+            first[1], year_first=False
+        ).datetime()
+        metadata["Filename"] = first[3].split(" Procedure:")[0]
+        metadata["Dataset Name"] = ntpath.basename(metadata["Filename"])
+        # Just shove everything in the misc_file_data for now rather than
+        # trying to parse it
+        metadata["File Header Parts"] = first
+        metadata["misc_file_data"] = {
+            "raw format metadata": (dict(metadata), None)
+        }
+        # Identify columns, what happens with the aux fields?
+        ## This question can't be answered for a few months so just make this
+        ## parse what we have and leave handling anything different to some
+        ## future person
+        metadata["Machine Type"] = "Maccor"
+        column_info, total_rows, first_rec, last_rec = identify_columns_maccor_text(
+            reader
+        )
+        metadata["num_rows"] = total_rows
+        metadata["first_sample_no"] = first_rec
+        metadata["last_sample_no"] = last_rec
+        print(metadata)
+
+    return metadata, column_info
+
+
 def load_data_maccor_excel(file_path, columns, column_renames=None):
     """
-        Load metadata  in a maccor excel file"
+        Load metadata in a maccor excel file"
     """
     import xlrd
 
@@ -415,11 +485,14 @@ def load_data_maccor_text(file_type, file_path, columns, column_renames=None):
 
     with open(file_path, "r") as csvfile:
         first = csvfile.readline()
-        second = csvfile.readline()
+        if "RAW" not in file_type:
+            second = csvfile.readline()
         reader = None
         if "CSV" in file_type:
             reader = csv.reader(csvfile, delimiter=",")
         elif "TSV" in file_type:
+            reader = csv.reader(csvfile, delimiter="\t")
+        elif "RAW" in file_type:
             reader = csv.reader(csvfile, delimiter="\t")
         columns_of_interest = []
         column_names = [header for header in next(reader) if header is not ""]
@@ -444,18 +517,44 @@ def load_data_maccor_text(file_type, file_path, columns, column_renames=None):
             }
 
 
-def generate_maccor_data_labels(file_type, file_path, columns):
+def generate_maccor_data_labels(file_type, file_path, column_info):
+    columns = [
+        column
+        for column, info in column_info.items()
+        if info["has_data"] or column == "Cyc#"
+    ]
     if "EXCEL" in file_type:
         data_generator = load_data_maccor_excel(file_path, columns)
     else:
         data_generator = load_data_maccor_text(file_type, file_path, columns)
 
+    # Generate labels for some specific numeric columns
+    numeric_columns = [
+        column
+        for column, info in column_info.items()
+        if column in {"Step", "ES"} and info["is_numeric"]
+    ]
+
+    non_numeric_columns = [
+        column
+        for column, info in column_info.items()
+        if info["has_data"] and not info["is_numeric"] and column != "DPt Time"
+    ]
+
     # note ranges returned are inclusive lower bound, exclusive upper bound
     cyc_no = None
     cyc_no_start = None
     cyc_amps = 0
+    numeric_value = {column: None for column in numeric_columns}
+    numeric_start = {column: 0 for column in numeric_columns}
+    numeric_value_counts = {column: {} for column in numeric_columns}
+    non_numeric_value = {column: None for column in non_numeric_columns}
+    non_numeric_start = {column: 0 for column in non_numeric_columns}
+    non_numeric_value_counts = {column: {} for column in non_numeric_columns}
     for row_idx, row in enumerate(data_generator):
         rec_no = int(row.get("Rec#", row_idx))
+
+        # Generate ranges for cycles
         if "Cyc#" in row:
             row_cyc = int(row["Cyc#"])
             if cyc_no is None:
@@ -469,7 +568,6 @@ def generate_maccor_data_labels(file_type, file_path, columns):
         elif "Amps" in row:
             # This file doesn't have cycles recorded, try and detect them from
             # amps
-            pass
             amps = float(row["Amps"])
             cyc_begin = cyc_amps <= 0 and amps > 0.0
             cyc_mid = cyc_amps > 0 and amps < 0.0
@@ -490,6 +588,60 @@ def generate_maccor_data_labels(file_type, file_path, columns):
                 # positive to 0 or negative
                 cyc_amps = -1
 
+        # Handle ranges for specific numeric data
+        for column in numeric_columns:
+            prev_val = numeric_value[column]
+            col_val = row[column]
+            # handle first iteration
+            if prev_val is None:
+                numeric_value[column] = col_val
+                numeric_start[column] = rec_no
+            elif prev_val != col_val:
+                # value has changed, end range
+                count = numeric_value_counts[column].get(prev_val, -1) + 1
+                numeric_value_counts[column][prev_val] = count
+                yield f"{column}_{prev_val}_{count}", (
+                    numeric_start[column],
+                    rec_no + 1,
+                )
+                numeric_value[column] = col_val
+                numeric_start[column] = rec_no
+
+        # Handle ranges for non-numeric data
+        for column in non_numeric_columns:
+            prev_val = non_numeric_value[column]
+            col_val = row[column]
+            # handle first iteration
+            if prev_val is None:
+                non_numeric_value[column] = col_val
+                non_numeric_start[column] = rec_no
+            elif prev_val != col_val:
+                # value has changed, end range
+                count = non_numeric_value_counts[column].get(prev_val, -1) + 1
+                non_numeric_value_counts[column][prev_val] = count
+                yield f"{column}_{prev_val}_{count}", (
+                    non_numeric_start[column],
+                    rec_no + 1,
+                )
+                non_numeric_value[column] = col_val
+                non_numeric_start[column] = rec_no
+
     # return any partial ranges
     if cyc_no_start is not None:
         yield "cycle_{}".format(cyc_no), (cyc_no_start, rec_no + 1)
+    for column in numeric_columns:
+        prev_val = numeric_value[column]
+        if numeric_start[column] is not None:
+            count = numeric_value_counts[column].get(prev_val, -1) + 1
+            yield f"{column}_{prev_val}_{count}", (
+                numeric_start[column],
+                rec_no + 1,
+            )
+    for column in non_numeric_columns:
+        prev_val = non_numeric_value[column]
+        if non_numeric_start[column] is not None:
+            count = non_numeric_value_counts[column].get(prev_val, -1) + 1
+            yield f"{column}_{prev_val}_{count}", (
+                non_numeric_start[column],
+                rec_no + 1,
+            )

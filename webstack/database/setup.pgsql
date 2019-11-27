@@ -1,16 +1,3 @@
--- Database: galvanalyser
-
--- DROP DATABASE galvanalyser;
-
-CREATE DATABASE galvanalyser
-    WITH 
-    OWNER = postgres
-    ENCODING = 'UTF8'
-    LC_COLLATE = 'en_US.utf8'
-    LC_CTYPE = 'en_US.utf8'
-    TABLESPACE = pg_default
-    CONNECTION LIMIT = -1;
-
 ALTER DATABASE galvanalyser SET timezone TO 'UTC';
 SELECT pg_reload_conf();
 
@@ -105,7 +92,7 @@ GRANT ALL ON TABLE harvesters.monitored_path TO postgres;
 -- DROP TYPE harvesters.file_state_t;
 
 CREATE TYPE harvesters.file_state_t AS ENUM
-    ('IMPORTED', 'IMPORTING', 'STABLE', 'UNSTABLE', 'IMPORT_FAILED');
+    ('IMPORTED', 'IMPORTING', 'STABLE', 'UNSTABLE', 'IMPORT_FAILED', 'GROWING');
 
 ALTER TYPE harvesters.file_state_t
     OWNER TO postgres;

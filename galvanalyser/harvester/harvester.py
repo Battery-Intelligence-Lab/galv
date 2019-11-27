@@ -66,6 +66,7 @@ def monitor_path(monitor_path_id, path, monitored_for, conn):
         print("ERROR: Requested path not found on this machine: " + path)
         return
     for file_path in current_files:
+        print("")
         full_file_path = os.path.join(path, file_path)
         print("Found " + full_file_path)
         current_observation = ObservedFileRow(
@@ -83,7 +84,34 @@ def monitor_path(monitor_path_id, path, monitored_for, conn):
         else:
             print(current_observation.last_observed_time)
             print(database_observation.last_observed_time)
-            if database_observation.file_state != "UNSTABLE":
+            if (
+                database_observation.file_state == "STABLE"
+                and current_observation.last_observed_size
+                != database_observation.last_observed_size
+            ):
+                print(
+                    "File has changed size since last it was checked, "
+                    "marking as unstable"
+                )
+                current_observation.file_state = "UNSTABLE"
+                current_observation.insert(conn)
+                continue
+            elif (
+                database_observation.file_state == "IMPORTED"
+                and current_observation.last_observed_size
+                > database_observation.last_observed_size
+            ):
+                print(
+                    "Imported file has changed size since last it was "
+                    "checked, marking as growing"
+                )
+                current_observation.file_state = "GROWING"
+                current_observation.insert(conn)
+                continue
+            elif database_observation.file_state in {
+                "IMPORTED",
+                "IMPORT_FAILED",
+            }:
                 # This file has already been handled
                 print(
                     "File has already been handled. State is currently "
@@ -117,8 +145,7 @@ def monitor_path(monitor_path_id, path, monitored_for, conn):
                 # the timestamp of our last observation and nothing else has
                 # changed
                 print("Waiting for file to become stable")
-                pass
-    print("Done monitoring paths")
+    print("Done monitoring paths\n")
 
 
 def import_file(file_path_row, institution_id, harvester_name, conn):
@@ -129,6 +156,9 @@ def import_file(file_path_row, institution_id, harvester_name, conn):
         file_path_row.monitored_path, file_path_row.observed_path
     )
     print("")
+    if not os.path.isfile(fullpath):
+        print("Is not file, skipping: " + fullpath)
+        return
     print("Importing " + fullpath)
     file_path_row.update_observed_file_state("IMPORTING", conn)
     try:
@@ -149,6 +179,7 @@ def import_file(file_path_row, institution_id, harvester_name, conn):
                 conn=conn,
             )
             is_new_dataset = dataset_row is None
+            last_data = None
             if is_new_dataset:
                 dataset_row = DatasetRow(
                     name=input_file.metadata["Dataset Name"],
@@ -160,6 +191,9 @@ def import_file(file_path_row, institution_id, harvester_name, conn):
                 print("Added dataset id " + str(dataset_row.id))
             else:
                 print("This dataset is already in the database")
+                last_data = TimeseriesDataRow.select_latest_by_dataset_id(
+                    dataset_row.id, conn
+                )
             dataset_id = dataset_row.id
             for user in file_path_row.monitored_for:
                 print("  Allowing access to " + user)
@@ -172,6 +206,22 @@ def import_file(file_path_row, institution_id, harvester_name, conn):
                 TimeseriesDataRow.insert_input_file(
                     input_file, dataset_id, conn
                 )
+            elif (
+                TimeseriesDataRow.select_one_from_dataset_id_and_sample_no(
+                    dataset_id, input_file.metadata["last_sample_no"], conn
+                )
+                is None
+            ):
+                # This is more data for an existing experiment
+                print("Inserting Additional Data")
+                TimeseriesDataRow.insert_input_file(
+                    input_file, dataset_id, conn, last_values=last_data
+                )
+                # TODO handle inserting metadata when extending a dataset
+            else:
+                print("Dataset already in database")
+                new_data = False
+            if new_data:
                 RangeLabelRow(
                     dataset_id,
                     "all",
@@ -188,40 +238,21 @@ def import_file(file_path_row, institution_id, harvester_name, conn):
                         sample_range[0],
                         sample_range[1],
                     ).insert(conn)
-            elif (
-                TimeseriesDataRow.select_one_from_dataset_id_and_sample_no(
-                    dataset_id, input_file.metadata["first_sample_no"], conn
-                )
-                is None
-                and TimeseriesDataRow.select_one_from_dataset_id_and_sample_no(
-                    dataset_id, input_file.metadata["last_sample_no"], conn
-                )
-                is None
-            ):
-                # This is more data for an existing experiment
-                print("Inserting Additional Data")
-                TimeseriesDataRow.insert_input_file(
-                    input_file, dataset_id, conn
-                )
-                # TODO handle inserting metadata when extending a dataset
-            else:
-                print("Dataset already in database")
-                new_data = False
-            if new_data and "misc_file_data" in input_file.metadata:
-                print("Storing misc file metadata")
-                for key, value in input_file.metadata[
-                    "misc_file_data"
-                ].items():
-                    (json_dict, binary_blob) = value
-                    mfdr = MiscFileDataRow(
-                        dataset_id,
-                        int(input_file.metadata["first_sample_no"]),
-                        int(input_file.metadata["last_sample_no"]) + 1,
-                        key,
-                        json_dict,
-                        binary_blob,
-                    )
-                    mfdr.insert(conn)
+                if "misc_file_data" in input_file.metadata:
+                    print("Storing misc file metadata")
+                    for key, value in input_file.metadata[
+                        "misc_file_data"
+                    ].items():
+                        (json_dict, binary_blob) = value
+                        mfdr = MiscFileDataRow(
+                            dataset_id,
+                            int(input_file.metadata["first_sample_no"]),
+                            int(input_file.metadata["last_sample_no"]) + 1,
+                            key,
+                            json_dict,
+                            binary_blob,
+                        )
+                        mfdr.insert(conn)
             file_path_row.update_observed_file_state("IMPORTED", conn)
             print("File successfully imported")
     except Exception as e:

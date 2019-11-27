@@ -30,7 +30,11 @@ class TimeseriesDataRow:
 
     @staticmethod
     def insert_input_file(
-        input_file, dataset_id, conn, standard_cols_to_file_cols=None
+        input_file,
+        dataset_id,
+        conn,
+        standard_cols_to_file_cols=None,
+        last_values=None,
     ):
         if standard_cols_to_file_cols is None:
             standard_cols_to_file_cols = {}
@@ -70,12 +74,13 @@ class TimeseriesDataRow:
             dataset_id,
             RECORD_NO_COLUMN_ID,
             standard_cols_to_file_cols,
+            last_values,
         )
         iter_file = IteratorFile(row_generator)
         num_value_columns = len(required_column_ids) - 1
-        expected_insert_count = (
-            input_file.metadata["num_rows"] * num_value_columns
-        )
+        start_row = 0 if last_values is None else last_values[0].sample_no
+        num_rows_to_insert = input_file.metadata["num_rows"] - start_row
+        expected_insert_count = num_rows_to_insert * num_value_columns
         with conn.cursor() as cursor:
             print("Copying data to table")
             start = timer()
@@ -86,14 +91,14 @@ class TimeseriesDataRow:
                     "Insert failed. Inserted {} of {} values ({} rows * {} columns) before failure".format(
                         cursor.rowcount,
                         expected_insert_count,
-                        input_file.metadata["num_rows"],
+                        num_rows_to_insert,
                         num_value_columns,
                     )
                 )
             print("Done copying data to table")
             print(
-                "Inserted {} rows in {:.2f} seconds".format(
-                    cursor.rowcount, end - start
+                "Inserted {} rows ({} sample sets) in {:.2f} seconds".format(
+                    cursor.rowcount, num_rows_to_insert, end - start
                 )
             )
 
@@ -143,3 +148,28 @@ class TimeseriesDataRow:
                 column_id=column_id,
                 value=result[0],
             )
+
+    @staticmethod
+    def select_latest_by_dataset_id(dataset_id, conn):
+        with conn.cursor() as cursor:
+            cursor.execute(
+                (
+                    "SELECT sample_no, column_id, value "
+                    "FROM experiment.timeseries_data "
+                    "WHERE dataset_id=(%s) AND sample_no=("
+                    "SELECT sample_no FROM experiment.timeseries_data WHERE "
+                    "dataset_id=(%s) ORDER BY sample_no DESC LIMIT 1"
+                    ")"
+                ),
+                [dataset_id, dataset_id],
+            )
+            records = cursor.fetchall()
+            return [
+                TimeseriesDataRow(
+                    dataset_id=dataset_id,
+                    sample_no=result[0],
+                    column_id=result[1],
+                    value=result[2],
+                )
+                for result in records
+            ]
