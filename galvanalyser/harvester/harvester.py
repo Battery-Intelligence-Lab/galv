@@ -107,9 +107,10 @@ def monitor_path(monitor_path_id, path, monitored_for, conn):
                 current_observation.file_state = "GROWING"
                 current_observation.insert(conn)
                 continue
-            elif (
-                database_observation.file_state in {"IMPORTED", "IMPORT_FAILED"}
-            ):
+            elif database_observation.file_state in {
+                "IMPORTED",
+                "IMPORT_FAILED",
+            }:
                 # This file has already been handled
                 print(
                     "File has already been handled. State is currently "
@@ -204,7 +205,8 @@ def import_file(file_path_row, institution_id, harvester_name, conn):
                 TimeseriesDataRow.insert_input_file(
                     input_file, dataset_id, conn
                 )
-            elif (TimeseriesDataRow.select_one_from_dataset_id_and_sample_no(
+            elif (
+                TimeseriesDataRow.select_one_from_dataset_id_and_sample_no(
                     dataset_id, input_file.metadata["last_sample_no"], conn
                 )
                 is None

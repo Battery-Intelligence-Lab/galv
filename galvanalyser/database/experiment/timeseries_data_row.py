@@ -80,9 +80,7 @@ class TimeseriesDataRow:
         num_value_columns = len(required_column_ids) - 1
         start_row = 0 if last_values is None else last_values[0].sample_no
         num_rows_to_insert = input_file.metadata["num_rows"] - start_row
-        expected_insert_count = (
-            num_rows_to_insert * num_value_columns
-        )
+        expected_insert_count = num_rows_to_insert * num_value_columns
         with conn.cursor() as cursor:
             print("Copying data to table")
             start = timer()
