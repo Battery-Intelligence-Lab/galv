@@ -600,3 +600,10 @@ def generate_maccor_data_labels(file_type, file_path, column_info):
     # return any partial ranges
     if cyc_no_start is not None:
         yield "cycle_{}".format(cyc_no), (cyc_no_start, rec_no + 1)
+    for column in non_numeric_columns:
+        if non_numeric_start[column] is not None:
+            count = non_numeric_value_counts[column].get(prev_val, -1) + 1
+            yield f"{column}_{prev_val}_{count}", (
+                non_numeric_start[column],
+                rec_no + 1,
+            )
