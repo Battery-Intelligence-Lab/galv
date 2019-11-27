@@ -517,7 +517,12 @@ def load_data_maccor_text(file_type, file_path, columns, column_renames=None):
             }
 
 
-def generate_maccor_data_labels(file_type, file_path, columns):
+def generate_maccor_data_labels(file_type, file_path, column_info):
+    columns = [
+        column
+        for column, info in column_info.items()
+        if info["has_data"] or column == "Cyc#"
+    ]
     if "EXCEL" in file_type:
         data_generator = load_data_maccor_excel(file_path, columns)
     else:
