@@ -66,6 +66,7 @@ def monitor_path(monitor_path_id, path, monitored_for, conn):
         print("ERROR: Requested path not found on this machine: " + path)
         return
     for file_path in current_files:
+        print("")
         full_file_path = os.path.join(path, file_path)
         print("Found " + full_file_path)
         current_observation = ObservedFileRow(
@@ -144,7 +145,7 @@ def monitor_path(monitor_path_id, path, monitored_for, conn):
                 # the timestamp of our last observation and nothing else has
                 # changed
                 print("Waiting for file to become stable")
-    print("Done monitoring paths")
+    print("Done monitoring paths\n")
 
 
 def import_file(file_path_row, institution_id, harvester_name, conn):
