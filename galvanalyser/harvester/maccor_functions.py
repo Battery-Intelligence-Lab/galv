@@ -528,6 +528,13 @@ def generate_maccor_data_labels(file_type, file_path, column_info):
     else:
         data_generator = load_data_maccor_text(file_type, file_path, columns)
 
+    # Generate labels for some specific numeric columns
+    numeric_columns = [
+        column
+        for column, info in column_info.items()
+        if column in {"Step", "ES"} and info["is_numeric"]
+    ]
+
     non_numeric_columns = [
         column
         for column, info in column_info.items()
@@ -538,6 +545,9 @@ def generate_maccor_data_labels(file_type, file_path, column_info):
     cyc_no = None
     cyc_no_start = None
     cyc_amps = 0
+    numeric_value = {column: None for column in numeric_columns}
+    numeric_start = {column: 0 for column in numeric_columns}
+    numeric_value_counts = {column: {} for column in numeric_columns}
     non_numeric_value = {column: None for column in non_numeric_columns}
     non_numeric_start = {column: 0 for column in non_numeric_columns}
     non_numeric_value_counts = {column: {} for column in non_numeric_columns}
@@ -578,6 +588,25 @@ def generate_maccor_data_labels(file_type, file_path, column_info):
                 # positive to 0 or negative
                 cyc_amps = -1
 
+        # Handle ranges for specific numeric data
+        for column in numeric_columns:
+            prev_val = numeric_value[column]
+            col_val = row[column]
+            # handle first iteration
+            if prev_val is None:
+                numeric_value[column] = col_val
+                numeric_start[column] = rec_no
+            elif prev_val != col_val:
+                # value has changed, end range
+                count = numeric_value_counts[column].get(prev_val, -1) + 1
+                numeric_value_counts[column][prev_val] = count
+                yield f"{column}_{prev_val}_{count}", (
+                    numeric_start[column],
+                    rec_no + 1,
+                )
+                numeric_value[column] = col_val
+                numeric_start[column] = rec_no
+
         # Handle ranges for non-numeric data
         for column in non_numeric_columns:
             prev_val = non_numeric_value[column]
@@ -600,6 +629,13 @@ def generate_maccor_data_labels(file_type, file_path, column_info):
     # return any partial ranges
     if cyc_no_start is not None:
         yield "cycle_{}".format(cyc_no), (cyc_no_start, rec_no + 1)
+    for column in numeric_columns:
+        if numeric_start[column] is not None:
+            count = numeric_value_counts[column].get(prev_val, -1) + 1
+            yield f"{column}_{prev_val}_{count}", (
+                numeric_start[column],
+                rec_no + 1,
+            )
     for column in non_numeric_columns:
         if non_numeric_start[column] is not None:
             count = non_numeric_value_counts[column].get(prev_val, -1) + 1
