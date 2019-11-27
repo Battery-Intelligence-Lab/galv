@@ -108,6 +108,9 @@ def load_data_ivium_text(file_path, columns, column_renames=None):
             }
 
 
-def generate_ivium_data_labels(file_type, file_path, columns):
+def generate_ivium_data_labels(file_type, file_path, column_info):
+    columns = [
+        column for column, info in column_info.items() if info["has_data"]
+    ]
     for item in []:
         yield item
