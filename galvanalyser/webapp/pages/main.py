@@ -2,6 +2,7 @@ import dash
 import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output, State, ClientsideFunction
+from dash.exceptions import PreventUpdate
 from galvanalyser.webapp.pages import all_layouts
 import dash_table
 
@@ -557,6 +558,17 @@ def register_callbacks(app, config):
     )
     def update_range_from_sample_no(xaxis_value):
         # query db for value
+        conn = None
+        try:
+            conn = config["get_db_connection_for_current_user"]()
+            #return TimeseriesDataColumn.select_closest_record_no_above_or_below(
+            #    #Which dataset?,
+            #    TEST_TIME_COLUMN_ID,
+            #    xaxis_value,
+            #    below=True,
+            #)
+        except:
+            raise PreventUpdate
         return (xaxis_value,)
 
     @app.callback(
