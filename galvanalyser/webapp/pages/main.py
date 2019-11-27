@@ -416,7 +416,9 @@ def register_callbacks(app, config):
         return info_line, table_rows, []
 
     @app.callback(
-        [Output("my-first-legend", "requested_ranges")],
+        [Output("my-first-legend", "requested_ranges"),
+         Output("range_dataset_dropdown", "options"),
+         Output("range_dataset_dropdown", "value"),],
         [
             Input("btn_add_data_range_to_plot", "n_clicks"),
             Input("my-first-legend", "n_updated"),
@@ -426,6 +428,8 @@ def register_callbacks(app, config):
             State("metadata_table", "data"),
             State("my-first-legend", "requested_ranges"),
             State("main-graph", "relayoutData"),
+            State("dataset_table", "data"),
+            State("range_dataset_dropdown", "value")
         ],
     )
     def add_data_range_to_plot(
@@ -435,6 +439,8 @@ def register_callbacks(app, config):
         metadata_table_rows,
         plotted_table_rows,
         graph_relayout_data,
+        dataset_table_data,
+        range_dataset_value,
     ):
         requested_ranges = (
             plotted_table_rows if plotted_table_rows is not None else []
@@ -454,6 +460,7 @@ def register_callbacks(app, config):
                         not in current_range_ids
                     ):
                         requested_ranges.append(metadata_table_rows[row_idx])
+        # Graph colours
         dataset_ids = sorted(
             list(set(row["dataset_id"] for row in requested_ranges))
         )
@@ -477,7 +484,13 @@ def register_callbacks(app, config):
             row["colour"] = colours[
                 plot_colour_indices[(row["dataset_id"], row["column_id"])]
             ]
-        return (requested_ranges,)
+        # Custom range dataset dropdown population
+        dataset_names = {row["id"]: row["name"] for row in dataset_table_data}
+        range_options = [ {'label':dataset_names[id_], 'value':id_} for id_ in
+        dataset_ids]
+        if len(dataset_ids) > 0 and (range_dataset_value is None or range_dataset_value == ""):
+            range_dataset_value = dataset_ids[0]
+        return (requested_ranges,range_options, range_dataset_value)
 
     @app.callback(
         [Output("my-first-legend", "reference_value")],
