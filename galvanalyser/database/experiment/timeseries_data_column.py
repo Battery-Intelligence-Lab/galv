@@ -57,6 +57,27 @@ def select_timeseries_data_column_in_range(
         )
         return tuple(column for column in zip(*(sample for sample in cursor)))
 
+def select_closest_record_no_above_or_below(dataset_id, column_id, value, conn, below=True):
+    with conn.cursor() as cursor:
+        cursor.execute(
+            (
+                "SELECT sample_no FROM "
+                "("
+                "(SELECT sample_no, value from experiment.timeseries_data"
+                " WHERE dataset_id=%s AND column_id=%s AND value >= %s "
+                "ORDER BY value LIMIT 1) "
+                "UNION ALL "
+                "(SELECT sample_no, value from experiment.timeseries_data"
+                " WHERE dataset_id=%s AND column_id=%s AND value <= %s "
+                "ORDER BY value DESC LIMIT 1)"
+                ") as foo "
+                "ORDER BY sample_no " + ("ASC" if below else "DESC") +" "
+                "LIMIT 1"
+            ),
+            [dataset_id, column_id, value, dataset_id, column_id, value],
+        )
+        return cursor.fetchone()[0]
+
 
 ## http://aklaver.org/wordpress/2018/04/21/building-dynamic-sql-using-psycopg2/
 # def select_dataset_data_columns_in_range(
