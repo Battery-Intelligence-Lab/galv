@@ -528,12 +528,23 @@ def generate_maccor_data_labels(file_type, file_path, column_info):
     else:
         data_generator = load_data_maccor_text(file_type, file_path, columns)
 
+    non_numeric_columns = [
+        column
+        for column, info in column_info.items()
+        if info["has_data"] and not info["is_numeric"]
+    ]
+
     # note ranges returned are inclusive lower bound, exclusive upper bound
     cyc_no = None
     cyc_no_start = None
     cyc_amps = 0
+    non_numeric_value = {column: None for column in non_numeric_columns}
+    non_numeric_start = {column: 0 for column in non_numeric_columns}
+    non_numeric_value_counts = {column: {} for column in non_numeric_columns}
     for row_idx, row in enumerate(data_generator):
         rec_no = int(row.get("Rec#", row_idx))
+
+        # Generate ranges for cycles
         if "Cyc#" in row:
             row_cyc = int(row["Cyc#"])
             if cyc_no is None:
@@ -547,7 +558,6 @@ def generate_maccor_data_labels(file_type, file_path, column_info):
         elif "Amps" in row:
             # This file doesn't have cycles recorded, try and detect them from
             # amps
-            pass
             amps = float(row["Amps"])
             cyc_begin = cyc_amps <= 0 and amps > 0.0
             cyc_mid = cyc_amps > 0 and amps < 0.0
@@ -567,6 +577,25 @@ def generate_maccor_data_labels(file_type, file_path, column_info):
             elif cyc_mid:
                 # positive to 0 or negative
                 cyc_amps = -1
+
+        # Handle ranges for non-numeric data
+        for column in non_numeric_columns:
+            prev_val = non_numeric_value[column]
+            col_val = row[column]
+            # handle first iteration
+            if prev_val is None:
+                non_numeric_value[column] = col_val
+                non_numeric_start[column] = rec_no
+            elif prev_val != col_val:
+                # value has changed, end range
+                count = non_numeric_value_counts[column].get(prev_val, -1) + 1
+                non_numeric_value_counts[column] = count
+                yield f"{column}_{prev_val}_{count}", (
+                    non_numeric_start[column],
+                    rec_no + 1,
+                )
+                non_numeric_value[column] = col_val
+                non_numeric_start[column] = rec_no
 
     # return any partial ranges
     if cyc_no_start is not None:
