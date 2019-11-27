@@ -589,7 +589,7 @@ def generate_maccor_data_labels(file_type, file_path, column_info):
             elif prev_val != col_val:
                 # value has changed, end range
                 count = non_numeric_value_counts[column].get(prev_val, -1) + 1
-                non_numeric_value_counts[column] = count
+                non_numeric_value_counts[column][prev_val] = count
                 yield f"{column}_{prev_val}_{count}", (
                     non_numeric_start[column],
                     rec_no + 1,
