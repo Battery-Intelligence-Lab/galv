@@ -355,22 +355,10 @@ class InputFile:
     def get_data_labels(self):
         if "MACCOR" in self.type:
             return maccor_functions.generate_maccor_data_labels(
-                self.type,
-                self.file_path,
-                [
-                    column
-                    for column, info in self.column_info.items()
-                    if info["has_data"]
-                ],
+                self.type, self.file_path, self.column_info
             )
         elif "IVIUM" in self.type:
             return ivium_functions.generate_ivium_data_labels(
-                self.type,
-                self.file_path,
-                [
-                    column
-                    for column, info in self.column_info.items()
-                    if info["has_data"]
-                ],
+                self.type, self.file_path, self.column_info
             )
         raise battery_exceptions.UnsupportedFileTypeError
