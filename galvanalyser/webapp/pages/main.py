@@ -537,14 +537,16 @@ def register_callbacks(app, config):
     # just to get the current xaxis range
     app.clientside_callback(
         ClientsideFunction(
-            namespace="plot_export", function_name="export_plot"
+            namespace="custom_range", function_name="get_from_plot_view"
         ),
         [
             Output("custom_range_from_value", "value"),
             Output("custom_range_to_value", "value"),
         ],
         [Input("btn_custom_range_from_view", "n_clicks")],
-        [State("main-graph", "id")],
+        [State("main-graph", "id"),
+        State("custom_range_from_value", "value"),
+        State("custom_range_to_value", "value"),],
     )
 
     @app.callback(
