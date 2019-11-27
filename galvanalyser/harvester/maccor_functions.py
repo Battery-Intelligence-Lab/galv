@@ -531,7 +531,7 @@ def generate_maccor_data_labels(file_type, file_path, column_info):
     non_numeric_columns = [
         column
         for column, info in column_info.items()
-        if info["has_data"] and not info["is_numeric"]
+        if info["has_data"] and not info["is_numeric"] and column != "DPt Time"
     ]
 
     # note ranges returned are inclusive lower bound, exclusive upper bound
