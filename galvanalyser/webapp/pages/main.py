@@ -100,6 +100,10 @@ range_editor = html.Div(
         html.Div(
             id="range_editor", hidden=True, children=[
                 html.P("Range Editor"),
+                html.P(children=[
+                    "Range for Dataset:",
+                    dcc.Dropdown(id="range_dataset_dropdown")
+                ]),
                 html.Button(
                         id="btn_custom_range_from_view",
                         type="button",
