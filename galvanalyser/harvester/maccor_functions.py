@@ -630,6 +630,7 @@ def generate_maccor_data_labels(file_type, file_path, column_info):
     if cyc_no_start is not None:
         yield "cycle_{}".format(cyc_no), (cyc_no_start, rec_no + 1)
     for column in numeric_columns:
+        prev_val = numeric_value[column]
         if numeric_start[column] is not None:
             count = numeric_value_counts[column].get(prev_val, -1) + 1
             yield f"{column}_{prev_val}_{count}", (
@@ -637,6 +638,7 @@ def generate_maccor_data_labels(file_type, file_path, column_info):
                 rec_no + 1,
             )
     for column in non_numeric_columns:
+        prev_val = non_numeric_value[column]
         if non_numeric_start[column] is not None:
             count = non_numeric_value_counts[column].get(prev_val, -1) + 1
             yield f"{column}_{prev_val}_{count}", (
