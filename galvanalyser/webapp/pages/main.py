@@ -571,32 +571,45 @@ def register_callbacks(app, config):
         [
             Output("custom_range_from_display", "children"),
         ],
-        [Input("custom_range_from_value", "value")]
+        [Input("custom_range_from_value", "value"),
+        Input("range_dataset_dropdown", "value")]
     )
-    def update_range_from_sample_no(xaxis_value):
+    def update_range_from_sample_no(xaxis_value, dataset_id):
         # query db for value
         conn = None
         try:
             conn = config["get_db_connection_for_current_user"]()
-            #return TimeseriesDataColumn.select_closest_record_no_above_or_below(
-            #    #Which dataset?,
-            #    TEST_TIME_COLUMN_ID,
-            #    xaxis_value,
-            #    below=True,
-            #)
+            return (TimeseriesDataColumn.select_closest_record_no_above_or_below(
+                dataset_id,
+                TEST_TIME_COLUMN_ID,
+                xaxis_value,
+                conn,
+                below=True,
+            ),)
         except:
             raise PreventUpdate
-        return (xaxis_value,)
 
     @app.callback(
         [
             Output("custom_range_to_display", "children"),
         ],
-        [Input("custom_range_to_value", "value")]
+        [Input("custom_range_to_value", "value"),
+        Input("range_dataset_dropdown", "value")]
     )
-    def update_range_to_sample_no(xaxis_value):
+    def update_range_to_sample_no(xaxis_value, dataset_id):
         # query db for value 
-        return (xaxis_value,)
+        conn = None
+        try:
+            conn = config["get_db_connection_for_current_user"]()
+            return (TimeseriesDataColumn.select_closest_record_no_above_or_below(
+                dataset_id,
+                TEST_TIME_COLUMN_ID,
+                xaxis_value,
+                conn,
+                below=False,
+            ),)
+        except:
+            raise PreventUpdate
 
     @app.callback(
         [
