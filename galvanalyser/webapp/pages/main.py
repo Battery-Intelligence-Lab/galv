@@ -588,6 +588,9 @@ def register_callbacks(app, config):
             ),)
         except:
             raise PreventUpdate
+        finally:
+            if conn:
+                conn.close()
 
     @app.callback(
         [
@@ -610,6 +613,9 @@ def register_callbacks(app, config):
             ),)
         except:
             raise PreventUpdate
+        finally:
+            if conn:
+                conn.close()
 
     @app.callback(
         [
