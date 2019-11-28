@@ -66,6 +66,8 @@ data_ranges = html.Div(
         html.P(id="main_selected_dataset"),
         html.Form(
             children=[
+                dcc.Loading(id="dataset_range_table_loading",
+                children=[
                 dash_table.DataTable(
                     id="metadata_table",
                     row_selectable="multi",
@@ -81,6 +83,8 @@ data_ranges = html.Div(
                         ]
                     ],
                     # data=[{"hello":"aa","world":"bb","id":1}]
+                ),
+                ]
                 )
             ]
         ),
