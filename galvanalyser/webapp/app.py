@@ -42,9 +42,14 @@ if __name__ == "__main__":
         conn.autocommit = True
         return conn
 
+    def get_current_user_name():
+        username, password = current_user.id.split(":", 1)
+        return username
+
     config[
         "get_db_connection_for_current_user"
     ] = get_db_connection_for_current_user
+    config["get_current_user_name"] = get_current_user_name
     layouts = [url_bar_and_content_div] + pages.all_layouts
     # pages.login.add_layouts(layouts)
     # pages.main.add_layouts(layouts)
