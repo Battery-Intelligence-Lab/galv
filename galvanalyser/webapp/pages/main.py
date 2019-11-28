@@ -48,6 +48,8 @@ dataset_list = html.Div(
         dcc.RadioItems(id="main_dataset"),
         html.Form(
             children=[
+                dcc.Loading(id="dataset_range_table_loading",
+                children=[
                 dash_table.DataTable(
                     id="dataset_table",
                     row_selectable="single",
@@ -56,7 +58,7 @@ dataset_list = html.Div(
                         for i in ["id", "name", "date", "type"]
                     ],
                     # data=[{"hello":"aa","world":"bb","id":1}]
-                )
+                ),])
             ]
         ),
     ]
