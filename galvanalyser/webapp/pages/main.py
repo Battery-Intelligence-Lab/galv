@@ -8,6 +8,7 @@ import dash_table
 
 from galvanalyser.database.experiment.dataset_row import DatasetRow
 from galvanalyser.database.experiment.range_label_row import RangeLabelRow
+from galvanalyser.database.user_data.range_label_row import RangeLabelRow as UserRangeLabelRow
 import galvanalyser.database.experiment.timeseries_data_column as TimeseriesDataColumn
 from galvanalyser.database.experiment.timeseries_data_row import (
     TimeseriesDataRow,
@@ -130,7 +131,8 @@ range_editor = html.Div(
                 html.P(children=[
                     "Range Name: ",
                     dcc.Input(
-                    id="custom_range_name", type="text", value=""
+                    id="custom_range_name", type="text", value="",
+                    placeholder="Enter name for range"
                     ),
                     html.Button(
                         id="btn_save_custom_range",
@@ -624,14 +626,33 @@ def register_callbacks(app, config):
         [Input("btn_save_custom_range", "n_clicks")],
         [State("custom_range_from_display", "children"),
             State("custom_range_to_display", "children"),
-            State("custom_range_name", "value"),]
+            State("custom_range_name", "value"),
+            State("range_dataset_dropdown", "value")]
     )
-    def save_custom_range(n_clicks, from_sample_no, to_sample_no, range_name):
+    def save_custom_range(btn_save_n_clicks, from_sample_no, to_sample_no,
+    range_name, dataset_id):
         result = ""
-        if n_clicks and len(range_name) > 0:
-            pass
-            # try and create a range
-            result = f'"Created range: {range_name} between [{from_sample_no},{to_sample_no})'
+        conn = None
+        if btn_save_n_clicks:
+            if len(range_name) == 0:
+                return ("Range name is required",)
+            try:
+                conn = config["get_db_connection_for_current_user"]()
+                username = config["get_current_user_name"]()
+                user_range_label = UserRangeLabelRow(dataset_id=dataset_id,
+                label_name=range_name,
+                created_by=username,
+                lower_bound=from_sample_no,
+                upper_bound=to_sample_no,
+                access=[username])
+                y = user_range_label.insert(conn)
+                x = user_range_label.id
+                result = f'"Created range: {range_name} between [{from_sample_no},{to_sample_no}) {x} {username} {y}'
+            except:
+                result = "Failed to create range"
+            finally:
+                if conn:
+                    conn.close()
         return (result,)
 
     data_server.register_handlers(app, config)
