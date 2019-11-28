@@ -21,6 +21,7 @@ from galvanalyser.webapp.colours import (
     D3 as colours_D3,
     Light24 as colours_Light24,
 )
+import sys
 
 # Reference for selection interaction https://dash.plot.ly/interactive-graphing
 # Plotly python reference https://plot.ly/python/reference/
@@ -678,6 +679,7 @@ def register_callbacks(app, config):
                     result = "Range already exists, use update button to modify it."
                 except:
                     result = "Failed to create range"
+                    log(f"Exception:\n{repr(sys.exc_info())}")
                 finally:
                     if conn:
                         conn.close()
