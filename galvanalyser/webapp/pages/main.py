@@ -142,6 +142,11 @@ range_editor = html.Div(
                         id="btn_save_custom_range",
                         type="button",
                         children="Save Custom Range",
+                    ),
+                    html.Button(
+                        id="btn_update_custom_range",
+                        type="button",
+                        children="Update Custom Range",
                     )
                 ]),
                 html.P(id="create_range_result", children=""),
@@ -627,37 +632,55 @@ def register_callbacks(app, config):
         [
             Output("create_range_result", "children"),
         ],
-        [Input("btn_save_custom_range", "n_clicks")],
+        [Input("btn_save_custom_range", "n_clicks"),
+        Input("btn_update_custom_range", "n_clicks")],
         [State("custom_range_from_display", "children"),
             State("custom_range_to_display", "children"),
             State("custom_range_name", "value"),
             State("range_dataset_dropdown", "value")]
     )
-    def save_custom_range(btn_save_n_clicks, from_sample_no, to_sample_no,
+    def save_custom_range(btn_save_n_clicks, btn_update_n_clicks, from_sample_no, to_sample_no,
     range_name, dataset_id):
         result = ""
         conn = None
-        if btn_save_n_clicks:
-            if len(range_name) == 0:
-                return ("Range name is required",)
-            try:
-                conn = config["get_db_connection_for_current_user"]()
-                conn.autocommit = True
-                username = config["get_current_user_name"]()
-                user_range_label = UserRangeLabelRow(dataset_id=dataset_id,
-                label_name=range_name,
-                created_by=username,
-                lower_bound=from_sample_no,
-                upper_bound=to_sample_no,
-                access=[username])
-                y = user_range_label.insert(conn)
-                x = user_range_label.id
-                result = f'"Created range: {range_name} between [{from_sample_no},{to_sample_no}) {x} {username} {y}'
-            except:
-                result = "Failed to create range"
-            finally:
-                if conn:
-                    conn.close()
+        ctx = dash.callback_context
+        if ctx.triggered:
+            button_id = ctx.triggered[0]["prop_id"].split(".")[0]
+            if (
+                (button_id == "btn_save_custom_range"
+                and btn_save_n_clicks)
+                or
+                (button_id == "btn_update_custom_range"
+                and btn_update_n_clicks)
+            ):
+                if len(range_name) == 0:
+                    return ("Range name is required",)
+                try:
+                    conn = config["get_db_connection_for_current_user"]()
+                    conn.autocommit = True
+                    username = config["get_current_user_name"]()
+                    user_range_label = UserRangeLabelRow(dataset_id=dataset_id,
+                    label_name=range_name,
+                    created_by=username,
+                    lower_bound=from_sample_no,
+                    upper_bound=to_sample_no,
+                    access=[username])
+                    if button_id == "btn_save_custom_range":
+                        user_range_label.insert(conn)
+                        result = f'"Created range: {range_name} between [{from_sample_no},{to_sample_no})'
+                    else:
+                        change_count = user_range_label.update(conn)
+                        if change_count == 1:
+                            result = f'"Updated range: {range_name} between [{from_sample_no},{to_sample_no})'
+                        else:
+                            result = "Named range doesn't exist. Use save button to create it."
+                except psycopg2.errors.UniqueViolation:
+                    result = "Range already exists, use update button to modify it."
+                except:
+                    result = "Failed to create range"
+                finally:
+                    if conn:
+                        conn.close()
         return (result,)
 
     data_server.register_handlers(app, config)
