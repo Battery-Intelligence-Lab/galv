@@ -49,7 +49,7 @@ class RangeLabelRow:
         with conn.cursor() as cursor:
             cursor.execute(
                 (
-                    "UPDATE user_data.range_label SET"
+                    "UPDATE user_data.range_label SET "
                     "sample_range='[%s, %s)', info=%s "
                     "WHERE dataset_id=%s AND label_name=%s AND created_by=%s"
                 ),
