@@ -642,6 +642,7 @@ def register_callbacks(app, config):
                 return ("Range name is required",)
             try:
                 conn = config["get_db_connection_for_current_user"]()
+                conn.autocommit = True
                 username = config["get_current_user_name"]()
                 user_range_label = UserRangeLabelRow(dataset_id=dataset_id,
                 label_name=range_name,
