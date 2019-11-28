@@ -49,6 +49,29 @@ class DatasetRow:
             )
 
     @staticmethod
+    def select_from_id(
+        id_, conn
+    ):
+        with conn.cursor() as cursor:
+            cursor.execute(
+                (
+                    "SELECT name, date, institution_id, type "
+                    "FROM experiment.dataset WHERE id=(%s)"
+                ),
+                [id_],
+            )
+            result = cursor.fetchone()
+            if result is None:
+                return None
+            return DatasetRow(
+                id_=id_,
+                name=result[0],
+                date=result[1],
+                institution_id=result[2],
+                dataset_type=result[3],
+            )
+
+    @staticmethod
     def select_all_dataset(conn):
         with conn.cursor() as cursor:
             cursor.execute(
