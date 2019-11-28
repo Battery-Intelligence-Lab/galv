@@ -423,6 +423,7 @@ GRANT INSERT, SELECT, UPDATE ON TABLE experiment.range_label TO harvester;
 GRANT SELECT ON TABLE experiment.range_label TO normal_user;
 
 GRANT USAGE ON SEQUENCE experiment.range_label_id_seq TO harvester;
+GRANT USAGE ON SEQUENCE experiment.range_label_id_seq TO normal_user;
 
 -- SELECT * FROM experiment.data as d
 -- INNER JOIN experiment.range_label AS m ON
