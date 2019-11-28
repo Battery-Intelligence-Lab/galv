@@ -62,3 +62,4 @@ class RangeLabelRow:
                     self.created_by,
                 ],
             )
+            return cursor.rowcount
