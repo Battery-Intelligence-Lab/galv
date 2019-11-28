@@ -32,15 +32,13 @@ if __name__ == "__main__":
 
     def get_db_connection_for_current_user():
         username, password = current_user.id.split(":", 1)
-        conn = psycopg2.connect(
+        return psycopg2.connect(
             host=config["db_conf"]["database_host"],
             port=config["db_conf"]["database_port"],
             database=config["db_conf"]["database_name"],
             user=username,
             password=password,
         )
-        conn.autocommit = True
-        return conn
 
     def get_current_user_name():
         username, password = current_user.id.split(":", 1)
