@@ -173,6 +173,7 @@ CREATE TABLE experiment.dataset
     date timestamp with time zone NOT NULL,
     institution_id bigint NOT NULL,
     type text NOT NULL,
+    original_collector text NOT NULL,
     PRIMARY KEY (name, date, institution_id),
     UNIQUE (id),
     FOREIGN KEY (institution_id)

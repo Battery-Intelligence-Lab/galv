@@ -2,23 +2,24 @@ import psycopg2
 
 
 class DatasetRow:
-    def __init__(self, name, date, institution_id, dataset_type, id_=None):
+    def __init__(self, name, date, institution_id, dataset_type, original_collector, id_=None):
         self.id = id_
         self.name = name
         self.date = date
         self.institution_id = institution_id
         self.dataset_type = dataset_type
+        self.original_collector = original_collector
 
     def insert(self, conn):
         with conn.cursor() as cursor:
             cursor.execute(
                 (
                     "INSERT INTO experiment.dataset (name, date, "
-                    "institution_id, type) "
-                    "VALUES (%s, %s, %s, %s) "
+                    "institution_id, type, original_collector) "
+                    "VALUES (%s, %s, %s, %s, %s) "
                     "RETURNING id"
                 ),
-                [self.name, self.date, self.institution_id, self.dataset_type],
+                [self.name, self.date, self.institution_id, self.dataset_type, self.original_collector],
             )
             self.id = cursor.fetchone()[0]
             # except
@@ -32,7 +33,7 @@ class DatasetRow:
         with conn.cursor() as cursor:
             cursor.execute(
                 (
-                    "SELECT id, type FROM experiment.dataset "
+                    "SELECT id, type, original_collector FROM experiment.dataset "
                     "WHERE name=(%s) AND date=(%s) AND institution_id=(%s)"
                 ),
                 [name, date, institution_id],
@@ -46,6 +47,7 @@ class DatasetRow:
                 date=date,
                 institution_id=institution_id,
                 dataset_type=result[1],
+                original_collector=result[2],
             )
 
     @staticmethod
@@ -53,7 +55,7 @@ class DatasetRow:
         with conn.cursor() as cursor:
             cursor.execute(
                 (
-                    "SELECT name, date, institution_id, type "
+                    "SELECT name, date, institution_id, type, original_collector "
                     "FROM experiment.dataset WHERE id=(%s)"
                 ),
                 [id_],
@@ -67,6 +69,7 @@ class DatasetRow:
                 date=result[1],
                 institution_id=result[2],
                 dataset_type=result[3],
+                original_collector=result[4],
             )
 
     @staticmethod
@@ -74,7 +77,8 @@ class DatasetRow:
         with conn.cursor() as cursor:
             cursor.execute(
                 (
-                    "SELECT id, name, date, institution_id, type "
+                    "SELECT id, name, date, institution_id, type, "
+                    "original_collector "
                     "FROM experiment.dataset"
                 )
             )
@@ -86,6 +90,7 @@ class DatasetRow:
                     date=result[2],
                     institution_id=result[3],
                     dataset_type=result[4],
+                    original_collector=result[5],
                 )
                 for result in records
             ]
