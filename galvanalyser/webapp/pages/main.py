@@ -8,7 +8,9 @@ import dash_table
 
 from galvanalyser.database.experiment.dataset_row import DatasetRow
 from galvanalyser.database.experiment.range_label_row import RangeLabelRow
-from galvanalyser.database.user_data.range_label_row import RangeLabelRow as UserRangeLabelRow
+from galvanalyser.database.user_data.range_label_row import (
+    RangeLabelRow as UserRangeLabelRow,
+)
 import galvanalyser.database.experiment.timeseries_data_column as TimeseriesDataColumn
 from galvanalyser.database.experiment.timeseries_data_row import (
     TimeseriesDataRow,
@@ -48,17 +50,20 @@ dataset_list = html.Div(
         dcc.RadioItems(id="main_dataset"),
         html.Form(
             children=[
-                dcc.Loading(id="dataset_range_table_loading",
-                children=[
-                dash_table.DataTable(
-                    id="dataset_table",
-                    row_selectable="single",
-                    columns=[
-                        {"name": i, "id": i}
-                        for i in ["id", "name", "date", "type"]
+                dcc.Loading(
+                    id="dataset_range_table_loading",
+                    children=[
+                        dash_table.DataTable(
+                            id="dataset_table",
+                            row_selectable="single",
+                            columns=[
+                                {"name": i, "id": i}
+                                for i in ["id", "name", "date", "type"]
+                            ],
+                            # data=[{"hello":"aa","world":"bb","id":1}]
+                        )
                     ],
-                    # data=[{"hello":"aa","world":"bb","id":1}]
-                ),])
+                )
             ]
         ),
     ]
@@ -69,25 +74,26 @@ data_ranges = html.Div(
         html.P(id="main_selected_dataset"),
         html.Form(
             children=[
-                dcc.Loading(id="dataset_range_table_loading",
-                children=[
-                dash_table.DataTable(
-                    id="metadata_table",
-                    row_selectable="multi",
-                    columns=[
-                        {"name": i, "id": i}
-                        for i in [
-                            "label_name",
-                            "column",
-                            "samples_from",
-                            "samples_to",
-                            "info",
-                            "user_created",
-                        ]
+                dcc.Loading(
+                    id="dataset_range_table_loading",
+                    children=[
+                        dash_table.DataTable(
+                            id="metadata_table",
+                            row_selectable="multi",
+                            columns=[
+                                {"name": i, "id": i}
+                                for i in [
+                                    "label_name",
+                                    "column",
+                                    "samples_from",
+                                    "samples_to",
+                                    "info",
+                                    "user_created",
+                                ]
+                            ],
+                            # data=[{"hello":"aa","world":"bb","id":1}]
+                        )
                     ],
-                    # data=[{"hello":"aa","world":"bb","id":1}]
-                ),
-                ]
                 )
             ]
         ),
@@ -106,54 +112,70 @@ range_editor = html.Div(
             children="Show Range Editor",
         ),
         html.Div(
-            id="range_editor", hidden=True, children=[
+            id="range_editor",
+            hidden=True,
+            children=[
                 html.P("Range Editor"),
-                html.P(children=[
-                    "Range for Dataset:",
-                    dcc.Dropdown(id="range_dataset_dropdown")
-                ]),
+                html.P(
+                    children=[
+                        "Range for Dataset:",
+                        dcc.Dropdown(id="range_dataset_dropdown"),
+                    ]
+                ),
                 html.Button(
-                        id="btn_custom_range_from_view",
-                        type="button",
-                        children="Use Current Chart Range",
-                    ),
-                html.P(children=[
-                    "From: ",
-                    dcc.Input(
-                    id="custom_range_from_value", type="number", value="0"
-                    ),
-                    html.Br(),
-                    "Closest lower sample number: ",
-                    html.Span(id="custom_range_from_display", children="")
-                ]),
-                html.P(children=[
-                    "To: ",
-                    dcc.Input(
-                    id="custom_range_to_value", type="number", value="0"
-                    ),
-                    html.Br(),
-                    "Closest higher sample number: ",
-                    html.Span(id="custom_range_to_display", children="")
-                ]),
-                html.P(children=[
-                    "Range Name: ",
-                    dcc.Input(
-                    id="custom_range_name", type="text", value="",
-                    placeholder="Enter name for range"
-                    ),
-                    html.Button(
-                        id="btn_save_custom_range",
-                        type="button",
-                        children="Save Custom Range",
-                    ),
-                    html.Button(
-                        id="btn_update_custom_range",
-                        type="button",
-                        children="Update Custom Range",
-                    )
-                ]),
+                    id="btn_custom_range_from_view",
+                    type="button",
+                    children="Use Current Chart Range",
+                ),
+                html.P(
+                    children=[
+                        "From: ",
+                        dcc.Input(
+                            id="custom_range_from_value",
+                            type="number",
+                            value="0",
+                        ),
+                        html.Br(),
+                        "Closest lower sample number: ",
+                        html.Span(id="custom_range_from_display", children=""),
+                    ]
+                ),
+                html.P(
+                    children=[
+                        "To: ",
+                        dcc.Input(
+                            id="custom_range_to_value",
+                            type="number",
+                            value="0",
+                        ),
+                        html.Br(),
+                        "Closest higher sample number: ",
+                        html.Span(id="custom_range_to_display", children=""),
+                    ]
+                ),
+                html.P(
+                    children=[
+                        "Range Name: ",
+                        dcc.Input(
+                            id="custom_range_name",
+                            type="text",
+                            value="",
+                            placeholder="Enter name for range",
+                        ),
+                        html.Button(
+                            id="btn_save_custom_range",
+                            type="button",
+                            children="Save Custom Range",
+                        ),
+                        html.Button(
+                            id="btn_update_custom_range",
+                            type="button",
+                            children="Update Custom Range",
+                        ),
+                    ]
+                ),
                 html.P(id="create_range_result", children=""),
-            ]
+            ],
         ),
     ]
 )
@@ -178,7 +200,8 @@ tab_graph_content = html.Div(
                 "responsive": True,
                 "fillFrame": False,
                 "editable": True,
-                #'modeBarButtonsToAdd': [{'name':x }for x in ['select2d','lasso2d']]
+                #'modeBarButtonsToAdd': [{'name':x }for x in ['select2d','lasso2d']],
+                "modeBarButtonsToRemove": ["toImage"],
             },
         ),
         html.Div(id="graph_update_dummy", hidden=True),
@@ -196,10 +219,7 @@ tab_legend_content = html.Div(
     children=[
         plotting_controls,
         GalvanalyserLegend(
-            id="my-first-legend",
-            graphId="main-graph",
-            # entries=[{"foo":x} for x in ["foo", "bar", "spam", "eggs", "harry", "bear"]],
-            label="my-label",
+            id="my-first-legend", graphId="main-graph", label="my-label"
         ),
     ],
 )
@@ -431,9 +451,11 @@ def register_callbacks(app, config):
         return info_line, table_rows, []
 
     @app.callback(
-        [Output("my-first-legend", "requested_ranges"),
-         Output("range_dataset_dropdown", "options"),
-         Output("range_dataset_dropdown", "value"),],
+        [
+            Output("my-first-legend", "requested_ranges"),
+            Output("range_dataset_dropdown", "options"),
+            Output("range_dataset_dropdown", "value"),
+        ],
         [
             Input("btn_add_data_range_to_plot", "n_clicks"),
             Input("my-first-legend", "n_updated"),
@@ -444,7 +466,7 @@ def register_callbacks(app, config):
             State("my-first-legend", "requested_ranges"),
             State("main-graph", "relayoutData"),
             State("dataset_table", "data"),
-            State("range_dataset_dropdown", "value")
+            State("range_dataset_dropdown", "value"),
         ],
     )
     def add_data_range_to_plot(
@@ -501,11 +523,14 @@ def register_callbacks(app, config):
             ]
         # Custom range dataset dropdown population
         dataset_names = {row["id"]: row["name"] for row in dataset_table_data}
-        range_options = [ {'label':dataset_names[id_], 'value':id_} for id_ in
-        dataset_ids]
-        if len(dataset_ids) > 0 and (range_dataset_value is None or range_dataset_value == ""):
+        range_options = [
+            {"label": dataset_names[id_], "value": id_} for id_ in dataset_ids
+        ]
+        if len(dataset_ids) > 0 and (
+            range_dataset_value is None or range_dataset_value == ""
+        ):
             range_dataset_value = dataset_ids[0]
-        return (requested_ranges,range_options, range_dataset_value)
+        return (requested_ranges, range_options, range_dataset_value)
 
     @app.callback(
         [Output("my-first-legend", "reference_value")],
@@ -577,30 +602,34 @@ def register_callbacks(app, config):
             Output("custom_range_to_value", "value"),
         ],
         [Input("btn_custom_range_from_view", "n_clicks")],
-        [State("main-graph", "id"),
-        State("custom_range_from_value", "value"),
-        State("custom_range_to_value", "value"),],
+        [
+            State("main-graph", "id"),
+            State("custom_range_from_value", "value"),
+            State("custom_range_to_value", "value"),
+        ],
     )
 
     @app.callback(
+        [Output("custom_range_from_display", "children")],
         [
-            Output("custom_range_from_display", "children"),
+            Input("custom_range_from_value", "value"),
+            Input("range_dataset_dropdown", "value"),
         ],
-        [Input("custom_range_from_value", "value"),
-        Input("range_dataset_dropdown", "value")]
     )
     def update_range_from_sample_no(xaxis_value, dataset_id):
         # query db for value
         conn = None
         try:
             conn = config["get_db_connection_for_current_user"]()
-            return (TimeseriesDataColumn.select_closest_record_no_above_or_below(
-                dataset_id,
-                TEST_TIME_COLUMN_ID,
-                xaxis_value,
-                conn,
-                below=True,
-            ),)
+            return (
+                TimeseriesDataColumn.select_closest_record_no_above_or_below(
+                    dataset_id,
+                    TEST_TIME_COLUMN_ID,
+                    xaxis_value,
+                    conn,
+                    below=True,
+                ),
+            )
         except:
             raise PreventUpdate
         finally:
@@ -608,24 +637,26 @@ def register_callbacks(app, config):
                 conn.close()
 
     @app.callback(
+        [Output("custom_range_to_display", "children")],
         [
-            Output("custom_range_to_display", "children"),
+            Input("custom_range_to_value", "value"),
+            Input("range_dataset_dropdown", "value"),
         ],
-        [Input("custom_range_to_value", "value"),
-        Input("range_dataset_dropdown", "value")]
     )
     def update_range_to_sample_no(xaxis_value, dataset_id):
-        # query db for value 
+        # query db for value
         conn = None
         try:
             conn = config["get_db_connection_for_current_user"]()
-            return (TimeseriesDataColumn.select_closest_record_no_above_or_below(
-                dataset_id,
-                TEST_TIME_COLUMN_ID,
-                xaxis_value,
-                conn,
-                below=False,
-            ),)
+            return (
+                TimeseriesDataColumn.select_closest_record_no_above_or_below(
+                    dataset_id,
+                    TEST_TIME_COLUMN_ID,
+                    xaxis_value,
+                    conn,
+                    below=False,
+                ),
+            )
         except:
             raise PreventUpdate
         finally:
@@ -633,29 +664,35 @@ def register_callbacks(app, config):
                 conn.close()
 
     @app.callback(
+        [Output("create_range_result", "children")],
         [
-            Output("create_range_result", "children"),
+            Input("btn_save_custom_range", "n_clicks"),
+            Input("btn_update_custom_range", "n_clicks"),
         ],
-        [Input("btn_save_custom_range", "n_clicks"),
-        Input("btn_update_custom_range", "n_clicks")],
-        [State("custom_range_from_display", "children"),
+        [
+            State("custom_range_from_display", "children"),
             State("custom_range_to_display", "children"),
             State("custom_range_name", "value"),
-            State("range_dataset_dropdown", "value")]
+            State("range_dataset_dropdown", "value"),
+        ],
     )
-    def save_custom_range(btn_save_n_clicks, btn_update_n_clicks, from_sample_no, to_sample_no,
-    range_name, dataset_id):
+    def save_custom_range(
+        btn_save_n_clicks,
+        btn_update_n_clicks,
+        from_sample_no,
+        to_sample_no,
+        range_name,
+        dataset_id,
+    ):
         result = ""
         conn = None
         ctx = dash.callback_context
         if ctx.triggered:
             button_id = ctx.triggered[0]["prop_id"].split(".")[0]
             if (
-                (button_id == "btn_save_custom_range"
-                and btn_save_n_clicks)
-                or
-                (button_id == "btn_update_custom_range"
-                and btn_update_n_clicks)
+                button_id == "btn_save_custom_range" and btn_save_n_clicks
+            ) or (
+                button_id == "btn_update_custom_range" and btn_update_n_clicks
             ):
                 if len(range_name) == 0:
                     return ("Range name is required",)
@@ -663,12 +700,14 @@ def register_callbacks(app, config):
                     conn = config["get_db_connection_for_current_user"]()
                     conn.autocommit = True
                     username = config["get_current_user_name"]()
-                    user_range_label = UserRangeLabelRow(dataset_id=dataset_id,
-                    label_name=range_name,
-                    created_by=username,
-                    lower_bound=from_sample_no,
-                    upper_bound=to_sample_no,
-                    access=[username])
+                    user_range_label = UserRangeLabelRow(
+                        dataset_id=dataset_id,
+                        label_name=range_name,
+                        created_by=username,
+                        lower_bound=from_sample_no,
+                        upper_bound=to_sample_no,
+                        access=[username],
+                    )
                     if button_id == "btn_save_custom_range":
                         user_range_label.insert(conn)
                         result = f'"Created range: {range_name} between [{from_sample_no},{to_sample_no})'
@@ -679,7 +718,9 @@ def register_callbacks(app, config):
                         else:
                             result = "Named range doesn't exist. Use save button to create it."
                 except psycopg2.errors.UniqueViolation:
-                    result = "Range already exists, use update button to modify it."
+                    result = (
+                        "Range already exists, use update button to modify it."
+                    )
                 except:
                     result = "Failed to create range"
                     log(f"Exception:\n{repr(sys.exc_info())}")

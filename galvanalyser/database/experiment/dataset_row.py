@@ -49,9 +49,7 @@ class DatasetRow:
             )
 
     @staticmethod
-    def select_from_id(
-        id_, conn
-    ):
+    def select_from_id(id_, conn):
         with conn.cursor() as cursor:
             cursor.execute(
                 (

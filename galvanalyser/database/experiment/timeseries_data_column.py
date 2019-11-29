@@ -57,7 +57,10 @@ def select_timeseries_data_column_in_range(
         )
         return tuple(column for column in zip(*(sample for sample in cursor)))
 
-def select_closest_record_no_above_or_below(dataset_id, column_id, value, conn, below=True):
+
+def select_closest_record_no_above_or_below(
+    dataset_id, column_id, value, conn, below=True
+):
     with conn.cursor() as cursor:
         cursor.execute(
             (
@@ -71,7 +74,7 @@ def select_closest_record_no_above_or_below(dataset_id, column_id, value, conn, 
                 " WHERE dataset_id=%s AND column_id=%s AND value <= %s "
                 "ORDER BY value DESC LIMIT 1)"
                 ") as foo "
-                "ORDER BY sample_no " + ("ASC" if below else "DESC") +" "
+                "ORDER BY sample_no " + ("ASC" if below else "DESC") + " "
                 "LIMIT 1"
             ),
             [dataset_id, column_id, value, dataset_id, column_id, value],
