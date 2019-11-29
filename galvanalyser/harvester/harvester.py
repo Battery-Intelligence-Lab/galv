@@ -186,7 +186,7 @@ def import_file(file_path_row, institution_id, harvester_name, conn):
                     date=input_file.metadata["Date of Test"],
                     institution_id=institution_id,
                     dataset_type=input_file.metadata["Machine Type"],
-                    original_collector="; ".join(file_path_row.monitored_for)
+                    original_collector="; ".join(file_path_row.monitored_for),
                 )
                 dataset_row.insert(conn)
                 print("Added dataset id " + str(dataset_row.id))

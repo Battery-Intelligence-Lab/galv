@@ -2,7 +2,15 @@ import psycopg2
 
 
 class DatasetRow:
-    def __init__(self, name, date, institution_id, dataset_type, original_collector, id_=None):
+    def __init__(
+        self,
+        name,
+        date,
+        institution_id,
+        dataset_type,
+        original_collector,
+        id_=None,
+    ):
         self.id = id_
         self.name = name
         self.date = date
@@ -19,7 +27,13 @@ class DatasetRow:
                     "VALUES (%s, %s, %s, %s, %s) "
                     "RETURNING id"
                 ),
-                [self.name, self.date, self.institution_id, self.dataset_type, self.original_collector],
+                [
+                    self.name,
+                    self.date,
+                    self.institution_id,
+                    self.dataset_type,
+                    self.original_collector,
+                ],
             )
             self.id = cursor.fetchone()[0]
             # except
