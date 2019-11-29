@@ -272,6 +272,7 @@ def import_file(file_path_row, institution_id, harvester_name, conn):
 def main(argv):
     config = load_config("./config/harvester-config.json")
     print(config)
+    conn = None
     try:
         conn = psycopg2.connect(
             host=config["database_host"],
@@ -333,9 +334,9 @@ def main(argv):
                 config["machine_id"],
                 conn,
             )
-
     finally:
-        conn.close()
+        if conn:
+            conn.close()
 
 
 if __name__ == "__main__":
