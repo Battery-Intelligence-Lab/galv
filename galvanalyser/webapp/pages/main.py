@@ -177,6 +177,7 @@ tab_graph_content = html.Div(
                 "displaylogo": False,
                 "responsive": True,
                 "fillFrame": False,
+                "editable": True,
                 #'modeBarButtonsToAdd': [{'name':x }for x in ['select2d','lasso2d']]
             },
         ),
