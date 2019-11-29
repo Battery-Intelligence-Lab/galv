@@ -392,6 +392,9 @@ ALTER TABLE experiment.timeseries_data
 
 GRANT SELECT ON TABLE experiment.timeseries_data TO normal_user;
 
+CREATE INDEX timeseries_data_dataset_id ON experiment.timeseries_data (dataset_id);
+CREATE INDEX timeseries_data_dataset_id_column_id ON experiment.timeseries_data (dataset_id, value) WHERE column_id = 1;
+
 -- Table: experiment.range_label
 
 -- DROP TABLE experiment.range_label;
