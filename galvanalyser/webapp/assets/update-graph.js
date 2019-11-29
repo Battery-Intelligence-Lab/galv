@@ -199,10 +199,10 @@ function update_graph() {
                             let legend_entry_id = `${requested_dataset_id}_${requested_column_id}_${requested_data_range.from}_${requested_data_range.to}`
                             legend_entries.push({
                                 legend_entry_id: legend_entry_id,
-                                range_name: `${requested_dataset_id} ${column_names[requested_column_id]}`,
+                                range_name: `${requested_dataset_id} ${column_names.get(requested_column_id)}`,
                                 dataset_id: requested_dataset_id,
                                 column_id: requested_column_id,
-                                column_name: column_names[requested_column_id],
+                                column_name: column_names.get(requested_column_id),
                                 requested_data_range: requested_data_range
                             });
                             let available_y_ranges = available_column_reading_data.get_ranges_between(requested_data_range.from, requested_data_range.to);
@@ -235,7 +235,7 @@ function update_graph() {
                         y: y_data,
                         mode: 'lines',
                         type: 'scattergl',
-                        name: `${requested_dataset_id} ${column_names[requested_column_id]}`,
+                        name: `${requested_dataset_id} ${column_names.get(requested_column_id)}`,
                         line: {
                             color: colour
                         },
@@ -261,7 +261,7 @@ window.dash_clientside.clientside_graph = {
         let new_config = new Map();
         let new_dataset_ranges = new Map();
         for (const row of data) {
-            column_names[row.column_id] = row.column;
+            column_names.set(row.column_id, row.column);
             if (!new_config.has(row.dataset_id)) {
                 new_config.set(row.dataset_id, new datarange.DatasetData());
                 new_dataset_ranges.set(row.dataset_id, new Map());
