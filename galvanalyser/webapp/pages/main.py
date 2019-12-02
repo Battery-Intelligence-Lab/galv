@@ -37,11 +37,69 @@ def log(text):
         myfile.write(text + "\n")
 
 
+dataset_filter = html.Div(
+    [
+        html.P("Dataset Filters"),  # populate these from the db
+        html.Span(
+            title="% matches 0 or more characters\n_ matches any single character",
+            children=[
+                "Name Like: ",
+                dcc.Input(
+                    "dataset_name_filter",
+                    type="text",
+                    placeholder="Dataset name",
+                    persistence=True,
+                    persistence_type="memory",
+                ),
+            ],
+        ),
+        html.Span(
+            title="Selection range is limited based on displayed datasets",
+            children=[
+                "Date From: ",
+                dcc.DatePickerSingle(
+                    id="dataset_date_from_filter",
+                    display_format="YYYY MM DD",
+                    clearable=True,
+                    persistence=True,
+                    persistence_type="memory",
+                ),
+                "Date To: ",
+                dcc.DatePickerSingle(
+                    id="dataset_date_to_filter",
+                    display_format="YYYY MM DD",
+                    clearable=True,
+                    persistence=True,
+                    persistence_type="memory",
+                ),
+            ],
+        ),
+        html.Span(
+            title="Available options are limited based on displayed datsets",
+            children=[
+                "Type: ",
+                dcc.Dropdown(
+                    id="dataset_machine_type_filter",
+                    multi=True,
+                    persistence=True,
+                    persistence_type="memory",
+                    placeholder="Search by machine type",
+                    style={
+                        "width": "auto",
+                        "display": "table-cell",
+                        "min-width": "220px",
+                    },
+                ),
+            ],
+        ),
+    ]
+)
 dataset_selector = html.Div(
     [
+        dataset_filter,
         html.Button(
             id="main_get_dataset", type="button", children="Get Datasets"
-        )
+        ),
     ]
 )
 dataset_list = html.Div(
@@ -364,18 +422,48 @@ def register_callbacks(app, config):
             return True, False
 
     @app.callback(
-        Output("dataset_table", "data"),
+        [
+            Output("dataset_table", "data"),
+            Output("dataset_date_from_filter", "min_date_allowed"),
+            Output("dataset_date_from_filter", "max_date_allowed"),
+            Output("dataset_date_to_filter", "min_date_allowed"),
+            Output("dataset_date_to_filter", "max_date_allowed"),
+            Output("dataset_date_from_filter", "initial_visible_month"),
+            Output("dataset_date_to_filter", "initial_visible_month"),
+            Output("dataset_machine_type_filter", "options"),
+        ],
         [Input("main_get_dataset", "n_clicks")],
+        [
+            State("dataset_name_filter", "value"),
+            State("dataset_date_from_filter", "date"),
+            State("dataset_date_to_filter", "date"),
+            State("dataset_machine_type_filter", "value"),
+        ],
     )
-    def get_dataset(n_clicks):
+    def get_dataset(
+        n_clicks,
+        name_filter,
+        date_min_filter,
+        date_max_filter,
+        machine_type_filter,
+    ):
         log("in get_dataset")
-        options = []
+        dataset_rows = []
+        min_date = None
+        max_date = None
+        machine_type_options = []
         if n_clicks:
             conn = None
             try:
                 conn = config["get_db_connection_for_current_user"]()
-                dataset = DatasetRow.select_all_dataset(conn)
-                options = [
+                dataset = DatasetRow.select_filtered_dataset(
+                    conn,
+                    name_filter,
+                    date_min_filter,
+                    date_max_filter,
+                    machine_type_filter,
+                )
+                dataset_rows = [
                     {
                         "id": exp.id,
                         "name": exp.name,
@@ -384,10 +472,27 @@ def register_callbacks(app, config):
                     }
                     for exp in dataset
                 ]
+                dates = [row["date"] for row in dataset_rows]
+                if len(dates) > 0:
+                    min_date = min(dates)
+                    max_date = max(dates)
+                machine_type_options = [
+                    {"label": machine_type, "value": machine_type}
+                    for machine_type in {row["type"] for row in dataset_rows}
+                ]
             finally:
                 if conn:
                     conn.close()
-        return options
+        return (
+            dataset_rows,
+            min_date,
+            max_date,
+            min_date,
+            max_date,
+            min_date,
+            max_date,
+            machine_type_options,
+        )
 
     @app.callback(
         [
@@ -401,6 +506,7 @@ def register_callbacks(app, config):
         info_line = f"Selected: {selected_row_ids}"
         table_rows = []
         conn = None
+        # TODO handle filtering of label ranges here
         try:
             conn = config["get_db_connection_for_current_user"]()
             # populate columns properly, don't include "test_time"
