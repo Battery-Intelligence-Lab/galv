@@ -520,6 +520,19 @@ def register_callbacks(app, config):
                     metadatas = RangeLabelRow.select_from_dataset_id(
                         selected_row_id, conn
                     )
+                    start_times = [TimeseriesDataRow.select_from_dataset_id_column_id_and_sample_no(
+                                selected_row_id,
+                                TEST_TIME_COLUMN_ID,
+                                m.lower_bound,
+                                conn,
+                            ) for m in metadatas]
+                    end_times = [TimeseriesDataRow.select_from_dataset_id_column_id_and_sample_no(
+                                selected_row_id,
+                                TEST_TIME_COLUMN_ID,
+                                m.upper_bound - 1,
+                                conn,
+                            ) for m in metadatas]
+                    
                     table_rows = [
                         {
                             "id": f"{selected_row_id}:{m.id}:{col}:{m.label_name}",
@@ -529,24 +542,14 @@ def register_callbacks(app, config):
                             "column_id": col[0],
                             "samples_from": m.lower_bound,
                             "samples_to": m.upper_bound - 1,
-                            "start_time": TimeseriesDataRow.select_from_dataset_id_column_id_and_sample_no(
-                                selected_row_id,
-                                TEST_TIME_COLUMN_ID,
-                                m.lower_bound,
-                                conn,
-                            ).value,
-                            "end_time": TimeseriesDataRow.select_from_dataset_id_column_id_and_sample_no(
-                                selected_row_id,
-                                TEST_TIME_COLUMN_ID,
-                                m.upper_bound - 1,
-                                conn,
-                            ).value,
+                            "start_time": start_times[m_idx].value if start_times[m_idx] is not None else "NaN",
+                            "end_time": end_times[m_idx].value if end_times[m_idx] is not None else "NaN",
                             "info": m.info,
                             "user_created": m.user_created,
                             "offset": 0.0,
                             "colour": "#000000",
                         }
-                        for m in metadatas
+                        for m_idx, m in enumerate(metadatas)
                         for col in available_columns
                     ]
                 except psycopg2.errors.InsufficientPrivilege:
