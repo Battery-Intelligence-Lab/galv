@@ -113,30 +113,29 @@ class DatasetRow:
     def select_filtered_dataset(
         conn, name_like, min_date, max_date, dataset_type
     ):
+        filter_query = ""
+        filter_values = []
+        if name_like is not None and len(name_like) > 0:
+            filter_query = "name LIKE %s"
+            filter_values.append(name_like)
+        if min_date is not None:
+            if filter_query != "":
+                filter_query = filter_query + " AND "
+            filter_query = filter_query + "date >= %s"
+            filter_values.append(min_date)
+        if max_date is not None:
+            if filter_query != "":
+                filter_query = filter_query + " AND "
+            filter_query = filter_query + "date <= %s"
+            filter_values.append(max_date)
+        if dataset_type is not None and len(dataset_type) > 0:
+            if filter_query != "":
+                filter_query = filter_query + " AND "
+            filter_query = filter_query + "type IN %s"
+            filter_values.append(tuple(dataset_type))
+        if filter_query == "":
+            return DatasetRow.select_all_dataset(conn)
         with conn.cursor() as cursor:
-            filter_query = ""
-            filter_values = []
-            if name_like is not None and len(name_like) > 0:
-                filter_query = "name LIKE %s"
-                filter_values.append(name_like)
-            if min_date is not None:
-                if filter_query != "":
-                    filter_query = filter_query + " AND "
-                filter_query = filter_query + "date >= %s"
-                filter_values.append(min_date)
-            if max_date is not None:
-                if filter_query != "":
-                    filter_query = filter_query + " AND "
-                filter_query = filter_query + "date <= %s"
-                filter_values.append(max_date)
-            if dataset_type is not None and len(dataset_type) > 0:
-                if filter_query != "":
-                    filter_query = filter_query + " AND "
-                filter_query = filter_query + "type IN %s"
-                filter_values.append(tuple(dataset_type))
-            if filter_query == "":
-                return DatasetRow.select_all_dataset(conn)
-
             cursor.execute(
                 (
                     "SELECT id, name, date, institution_id, type, "
