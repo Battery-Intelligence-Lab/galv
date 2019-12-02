@@ -45,7 +45,7 @@ dataset_filter = html.Div(
             children=[
                 html.Span(style={"padding-right": "0.5em"},children=["Name Like:"]),
                 dcc.Input(
-                    "dataset_name_filter",
+                    id="dataset_name_filter",
                     type="text",
                     placeholder="Dataset name",
                     persistence=True,
@@ -126,10 +126,64 @@ dataset_list = html.Div(
         ),
     ]
 )
+data_ranges_filter = html.Div(
+    [
+        html.P("Data Range Filters"),  # populate these from the db
+        html.Span(
+            title="% matches 0 or more characters\n_ matches any single character",
+            children=[
+                html.Span(style={"padding-right": "0.5em"},children=["Name Like:"]),
+                dcc.Input(
+                    id="data_range_name_filter",
+                    type="text",
+                    placeholder="Label name",
+                    debounce=True,
+                    persistence=True,
+                    persistence_type="memory",
+                ),
+            ],
+        ),
+        html.Span(
+            children=[
+                html.Span(style={"padding": "0.5em"},children=["Type:"]),
+                dcc.Dropdown(
+                    id="data_range_column_filter",
+                    multi=True,
+                    persistence=True,
+                    persistence_type="memory",
+                    placeholder="Search by machine type",
+                    style={
+                        "width": "auto",
+                        "display": "table-cell",
+                        "min-width": "400px",
+                    },
+                ),
+            ],
+        ),
+        html.Span(children=[
+            html.Span(style={"padding": "0.5em"},children=["Include:"]),
+            dcc.Checklist(
+                id="data_range_creation_type_filter",
+                options=[
+                    {'label': 'System Made', 'value': 'system'},
+                    {'label': 'User Made', 'value': 'user'},
+                ],
+                value=["system", "user"],
+                persistence=True,
+                persistence_type="memory",
+                style={
+                        "display": "table-cell",
+                    },
+                ),
+            ]
+        ),
+    ]
+)
 data_ranges = html.Div(
     [
         html.P("Data ranges"),
         html.P(id="main_selected_dataset"),
+        data_ranges_filter,
         html.Form(
             children=[
                 dcc.Loading(
@@ -499,13 +553,18 @@ def register_callbacks(app, config):
             Output("main_selected_dataset", "children"),
             Output("metadata_table", "data"),
             Output("metadata_table", "selected_rows"),
+            Output("data_range_column_filter", "options")
         ],
-        [Input("dataset_table", "selected_row_ids")],
+        [Input("dataset_table", "selected_row_ids"),
+        Input("data_range_name_filter", "value"),
+        Input("data_range_column_filter", "value"),
+        Input("data_range_creation_type_filter", "value")],
     )
-    def dataset_selected(selected_row_ids):
+    def dataset_selected(selected_row_ids, name_filter, column_filter, creation_type_filter):
         info_line = f"Selected: {selected_row_ids}"
         table_rows = []
         conn = None
+        coloum_filter_columns = []
         # TODO handle filtering of label ranges here
         try:
             conn = config["get_db_connection_for_current_user"]()
@@ -516,9 +575,14 @@ def register_callbacks(app, config):
                 available_columns = TimeseriesDataColumn.select_experiment_columns(
                     selected_row_id, conn
                 )
+                coloum_filter_columns = [ {'label': col[1], 'value': col[0]} for col in available_columns]
+                filtered_columns = available_columns
+                if column_filter is not None and len(column_filter) > 0:
+                    column_set = set(column_filter)
+                    filtered_columns = [col for col in available_columns if col[0] in column_set]
                 try:
-                    metadatas = RangeLabelRow.select_from_dataset_id(
-                        selected_row_id, conn
+                    metadatas = RangeLabelRow.select_filtered_from_dataset_id(
+                        selected_row_id, conn, name_filter, "system" in creation_type_filter, "user" in creation_type_filter
                     )
                     start_times = [TimeseriesDataRow.select_from_dataset_id_column_id_and_sample_no(
                                 selected_row_id,
@@ -550,14 +614,14 @@ def register_callbacks(app, config):
                             "colour": "#000000",
                         }
                         for m_idx, m in enumerate(metadatas)
-                        for col in available_columns
+                        for col in filtered_columns
                     ]
                 except psycopg2.errors.InsufficientPrivilege:
                     info_line = f"Permission denied when retrieving metadata for dataset id {selected_row_ids}"
         finally:
             if conn:
                 conn.close()
-        return info_line, table_rows, []
+        return info_line, table_rows, [], coloum_filter_columns
 
     @app.callback(
         [
