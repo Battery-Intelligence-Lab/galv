@@ -1,6 +1,5 @@
 "use strict";
 
-var graph_state = new Map();
 var requested_metadata_ranges = new Map();
 var requested_graph_ranges = new Map();
 var graph_traces = [];
@@ -199,10 +198,10 @@ function update_graph() {
                             let legend_entry_id = `${requested_dataset_id}_${requested_column_id}_${requested_data_range.from}_${requested_data_range.to}`
                             legend_entries.push({
                                 legend_entry_id: legend_entry_id,
-                                range_name: `${requested_dataset_id} ${column_names[requested_column_id]}`,
+                                range_name: `${requested_dataset_id} ${column_names.get(requested_column_id)}`,
                                 dataset_id: requested_dataset_id,
                                 column_id: requested_column_id,
-                                column_name: column_names[requested_column_id],
+                                column_name: column_names.get(requested_column_id),
                                 requested_data_range: requested_data_range
                             });
                             let available_y_ranges = available_column_reading_data.get_ranges_between(requested_data_range.from, requested_data_range.to);
@@ -235,7 +234,7 @@ function update_graph() {
                         y: y_data,
                         mode: 'lines',
                         type: 'scattergl',
-                        name: `${requested_dataset_id} ${column_names[requested_column_id]}`,
+                        name: `${requested_dataset_id} ${column_names.get(requested_column_id)}`,
                         line: {
                             color: colour
                         },
@@ -261,7 +260,7 @@ window.dash_clientside.clientside_graph = {
         let new_config = new Map();
         let new_dataset_ranges = new Map();
         for (const row of data) {
-            column_names[row.column_id] = row.column;
+            column_names.set(row.column_id, row.column);
             if (!new_config.has(row.dataset_id)) {
                 new_config.set(row.dataset_id, new datarange.DatasetData());
                 new_dataset_ranges.set(row.dataset_id, new Map());
@@ -287,103 +286,7 @@ window.dash_clientside.clientside_graph = {
         requested_graph_ranges = new_config;
         requested_metadata_ranges = new_dataset_ranges;
         update_graph();
-        //for (const row of data) {
-        //    let foo = new datarange.DatasetData();
-        //
-        //    let oReq = new XMLHttpRequest();
-        //    //oReq.open("GET", `/dataset/${row.dataset}/data?from=${row.samples_from}&to=${row.samples_to}&column=test_time,volts,amps`, true);
-        //    oReq.open("GET", `/dataset/${row.dataset}/data?from=${row.samples_from}&to=${row.samples_to}&column=${row.column}`, true);
-        //    oReq.responseType = "arraybuffer";
-        //
-        //    oReq.onload = function(oEvent) {
-        //        let arrayBuffer = oReq.response; // Note: not oReq.responseText
-        //        if (arrayBuffer) {
-        //            //var byteArray = new Uint8Array(arrayBuffer);
-        //            let message = proto.galvanalyser.DataRanges.deserializeBinary(arrayBuffer);
-        //            let ranges_list = message.getRangesList();
-        //            let dataset_id = message.getDatasetId();
-        //            //if(! all_dataset_data.has(dataset_id)){
-        //            //    all_dataset_data.set(dataset_id, new datarange.DatasetData());
-        //            //}
-        //            //let dataset_data = all_dataset_data.get(dataset_id);
-        //            //ranges_list.forEach(function(range){
-        //            //    dataset_data.add_protobuf_data_range(range);
-        //            //});
-        //            ////console.log(ranges_list);
-        //            //ranges_list.forEach(function(range){
-        //            //    let volt_list = range.getVoltsList();
-        //            //    let data_name = `${message.getDatasetId()}_${range.getStartSampleNo()}_${volt_list.length}_volts`;
-        //            //    if (!(data_name in graph_state)) {
-        //            //        alert("Adding data plot")
-        //            //        let trace = {
-        //            //            x: range.getTestTimeList(),
-        //            //            y: volt_list,
-        //            //            mode: 'markers',
-        //            //            type: 'scattergl'
-        //            //        };
-        //            //        graph_state[data_name] = trace;
-        //            //        Plotly.addTraces(plot, trace);
-        //            //    } else {
-        //            //        alert("Not adding data plot");
-        //            //    }
-        //            //});
-        //            
-        //            //if (!('dataplot' in graph_state)) {
-        //            //    alert("Adding data plot")
-        //            //    let trace1 = {
-        //            //        x: ranges_list[0].getTestTimeList(),
-        //            //        y: ranges_list[0].getVoltsList(),
-        //            //        mode: 'markers',
-        //            //        type: 'scattergl'
-        //            //    };
-        //            //    graph_state.dataplot = trace1;
-        //            //    Plotly.addTraces(plot, trace1);
-        //            //} else {
-        //            //    alert("Not adding data plot");
-        //            //}
-        //        }
-        //    };
-        //
-        //    oReq.send(null);
-        //}
-        //
-        //let plot = document.getElementById('main-graph');
-        //
-        //for (const current_trace of graph_traces) {
-        //    ////console.log(val);
-        //    // if(! (current_trace['id'] in data_ids)) -- we need to make a list of ids
-        //}
-
-        //if (!('first' in graph_state)) {
-        //    alert("Adding plot")
-        //    let trace1 = [{
-        //        x: [1, 2, 3, 4],
-        //        y: [10, 15, 13, 17],
-        //        mode: 'markers',
-        //        type: 'scattergl'
-        //    }];
-        //    graph_state.first = trace1;
-        //    Plotly.react(plot, trace1);
-        //} else {
-        //    alert("Updating plot");
-        //    let traces = [{
-        //        x: [1, 2, 3, 4],
-        //        y: [-10, 15, -13, 17],
-        //        mode: 'markers',
-        //        type: 'scattergl'
-        //    },
-        //    {
-        //        x: [1, 2, 3, 4],
-        //        y: [15, 10, -3, 7],
-        //        mode: 'markers',
-        //        type: 'scattergl'
-        //    }];
-        //    if(Math.random() < 0.5){
-        //        traces = [traces[1]];
-        //    }
-        //    //graph_state.first = trace1;
-        //    Plotly.react(plot, traces);
-        //}
+        
         return "";
     },
     login_refresh: function(children) {
