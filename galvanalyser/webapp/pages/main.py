@@ -43,7 +43,7 @@ dataset_filter = html.Div(
         html.Span(
             title="% matches 0 or more characters\n_ matches any single character",
             children=[
-                "Name Like: ",
+                html.Span(style={"padding-right": "0.5em"},children=["Name Like:"]),
                 dcc.Input(
                     "dataset_name_filter",
                     type="text",
@@ -56,7 +56,7 @@ dataset_filter = html.Div(
         html.Span(
             title="Selection range is limited based on displayed datasets",
             children=[
-                "Date From: ",
+                html.Span(style={"padding": "0.5em"},children=["Date From:"]),
                 dcc.DatePickerSingle(
                     id="dataset_date_from_filter",
                     display_format="YYYY MM DD",
@@ -64,7 +64,7 @@ dataset_filter = html.Div(
                     persistence=True,
                     persistence_type="memory",
                 ),
-                "Date To: ",
+                html.Span(style={"padding": "0.5em"},children=["Date to:"]),
                 dcc.DatePickerSingle(
                     id="dataset_date_to_filter",
                     display_format="YYYY MM DD",
@@ -77,7 +77,7 @@ dataset_filter = html.Div(
         html.Span(
             title="Available options are limited based on displayed datsets",
             children=[
-                "Type: ",
+                html.Span(style={"padding": "0.5em"},children=["Type:"]),
                 dcc.Dropdown(
                     id="dataset_machine_type_filter",
                     multi=True,
