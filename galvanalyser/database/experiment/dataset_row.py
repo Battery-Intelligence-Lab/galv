@@ -108,3 +108,53 @@ class DatasetRow:
                 )
                 for result in records
             ]
+
+    @staticmethod
+    def select_filtered_dataset(
+        conn, name_like, min_date, max_date, dataset_type
+    ):
+        with conn.cursor() as cursor:
+            filter_query = ""
+            filter_values = []
+            if name_like is not None and len(name_like) > 0:
+                filter_query = "name LIKE %s"
+                filter_values.append(name_like)
+            if min_date is not None:
+                if filter_query != "":
+                    filter_query = filter_query + " AND "
+                filter_query = filter_query + "date >= %s"
+                filter_values.append(min_date)
+            if max_date is not None:
+                if filter_query != "":
+                    filter_query = filter_query + " AND "
+                filter_query = filter_query + "date <= %s"
+                filter_values.append(max_date)
+            if dataset_type is not None and len(dataset_type) > 0:
+                if filter_query != "":
+                    filter_query = filter_query + " AND "
+                filter_query = filter_query + "type IN %s"
+                filter_values.append(tuple(dataset_type))
+            if filter_query == "":
+                return DatasetRow.select_all_dataset(conn)
+
+            cursor.execute(
+                (
+                    "SELECT id, name, date, institution_id, type, "
+                    "original_collector "
+                    "FROM experiment.dataset "
+                    "WHERE " + filter_query
+                ),
+                filter_values,
+            )
+            records = cursor.fetchall()
+            return [
+                DatasetRow(
+                    id_=result[0],
+                    name=result[1],
+                    date=result[2],
+                    institution_id=result[3],
+                    dataset_type=result[4],
+                    original_collector=result[5],
+                )
+                for result in records
+            ]
