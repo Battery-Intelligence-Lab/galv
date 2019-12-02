@@ -101,3 +101,48 @@ class RangeLabelRow:
                 info=result[3],
                 user_created=result[4],
             )
+
+    @staticmethod
+    def select_filtered_from_dataset_id(dataset_id, conn, name_like=None, system_made=True, user_made=True):
+        filter_query = []
+        filter_values = [dataset_id]
+        if name_like is not None and len(name_like) > 0:
+            filter_query.append("label_name LIKE %s")
+            filter_values.append(name_like)
+        if not system_made:
+            if not user_made:
+                return []
+            else:
+                filter_query.append("user_created = TRUE")
+        else:
+            if not user_made:
+                filter_query.append("user_created = FALSE")
+        if len(filter_query) == 0:
+            return RangeLabelRow.select_from_dataset_id(dataset_id, conn)
+        with conn.cursor() as cursor:
+            cursor.execute(
+                (
+                    "SELECT * FROM ("
+                    "SELECT id, label_name, created_by, sample_range, info, "
+                    "tableoid!='experiment.range_label'::regclass::oid as "
+                    "user_created "
+                    "FROM experiment.range_label "
+                    "WHERE dataset_id=(%s)"
+                    ") as t WHERE " + (" AND ".join(filter_query))
+                ),
+                filter_values,
+            )
+            records = cursor.fetchall()
+            return [
+                RangeLabelRow(
+                    id_=result[0],
+                    dataset_id=dataset_id,
+                    label_name=result[1],
+                    created_by=result[2],
+                    lower_bound=result[3].lower,
+                    upper_bound=result[3].upper,
+                    info=result[4],
+                    user_created=result[5],
+                )
+                for result in records
+            ]
