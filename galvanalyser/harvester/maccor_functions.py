@@ -551,7 +551,7 @@ def generate_maccor_data_labels(file_type, file_path, column_info):
     non_numeric_value = {column: None for column in non_numeric_columns}
     non_numeric_start = {column: 0 for column in non_numeric_columns}
     non_numeric_value_counts = {column: {} for column in non_numeric_columns}
-    for row_idx, row in enumerate(data_generator):
+    for row_idx, row in enumerate(data_generator, 1):
         rec_no = int(row.get("Rec#", row_idx))
 
         # Generate ranges for cycles
