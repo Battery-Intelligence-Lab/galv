@@ -107,7 +107,6 @@ def monitor_path(monitor_path_id, path, monitored_for, conn):
                 )
                 current_observation.file_state = "GROWING"
                 current_observation.insert(conn)
-                continue
             elif database_observation.file_state in {
                 "IMPORTED",
                 "IMPORT_FAILED",
@@ -117,7 +116,6 @@ def monitor_path(monitor_path_id, path, monitored_for, conn):
                     "File has already been handled. State is currently "
                     + str(database_observation.file_state)
                 )
-                continue
             elif (
                 current_observation.last_observed_size
                 != database_observation.last_observed_size
