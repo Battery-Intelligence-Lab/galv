@@ -138,6 +138,7 @@ def monitor_path(monitor_path_id, path, monitored_for, conn):
                 # the file hasn't changed in the last minute
                 current_observation.file_state = "STABLE"
                 current_observation.insert(conn)
+                print("Marking file as stable")
             else:
                 # The file hasn't changed this time, but it hasn't been over a
                 # minute since we last checked
