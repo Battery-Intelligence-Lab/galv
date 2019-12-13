@@ -193,3 +193,22 @@ class ObservedFilePathRow:
                 ),
                 [file_state, self.monitor_path_id, self.observed_path],
             )
+
+    def update_observed_file_state_if_state_is(
+        self, new_file_state, current_file_state, conn
+    ):
+        with conn.cursor() as cursor:
+            cursor.execute(
+                (
+                    "UPDATE harvesters.observed_file SET file_state = %s"
+                    "WHERE monitor_path_id=(%s) AND path=(%s) "
+                    "AND file_state=(%s)"
+                ),
+                [
+                    new_file_state,
+                    self.monitor_path_id,
+                    self.observed_path,
+                    current_file_state,
+                ],
+            )
+            return cursor.rowcount

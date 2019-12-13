@@ -159,7 +159,12 @@ def import_file(file_path_row, institution_id, harvester_name, conn):
         print("Is not a file, skipping: " + fullpath)
         return
     print("Importing " + fullpath)
-    file_path_row.update_observed_file_state("IMPORTING", conn)
+    rows_updated = file_path_row.update_observed_file_state_if_state_is(
+        "IMPORTING", "STABLE", conn
+    )
+    if rows_updated == 0:
+        print("File was not stable as expected, skipping import")
+        return
     try:
         # Attempt reading the file before updating the database to avoid
         # creating rows for a file we can't read.
