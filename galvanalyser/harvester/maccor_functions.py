@@ -227,7 +227,7 @@ def identify_columns_maccor_text(reader):
     """
         Identifies columns in a maccor csv or tsv file"
     """
-    headers = [header for header in next(reader) if header is not ""]
+    headers = [header for header in next(reader) if header != ""]
     correct_number_of_columns = len(headers)
     try:
         recno_col = headers.index("Rec#")
@@ -495,7 +495,7 @@ def load_data_maccor_text(file_type, file_path, columns, column_renames=None):
         elif "RAW" in file_type:
             reader = csv.reader(csvfile, delimiter="\t")
         columns_of_interest = []
-        column_names = [header for header in next(reader) if header is not ""]
+        column_names = [header for header in next(reader) if header != ""]
         correct_number_of_columns = len(column_names)
         try:
             recno_col = column_names.index("Rec#")
