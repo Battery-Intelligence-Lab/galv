@@ -43,7 +43,9 @@ dataset_filter = html.Div(
         html.Span(
             title="% matches 0 or more characters\n_ matches any single character",
             children=[
-                html.Span(style={"padding-right": "0.5em"},children=["Name Like:"]),
+                html.Span(
+                    style={"padding-right": "0.5em"}, children=["Name Like:"]
+                ),
                 dcc.Input(
                     id="dataset_name_filter",
                     type="text",
@@ -56,7 +58,7 @@ dataset_filter = html.Div(
         html.Span(
             title="Selection range is limited based on displayed datasets",
             children=[
-                html.Span(style={"padding": "0.5em"},children=["Date From:"]),
+                html.Span(style={"padding": "0.5em"}, children=["Date From:"]),
                 dcc.DatePickerSingle(
                     id="dataset_date_from_filter",
                     display_format="YYYY MM DD",
@@ -64,7 +66,7 @@ dataset_filter = html.Div(
                     persistence=True,
                     persistence_type="memory",
                 ),
-                html.Span(style={"padding": "0.5em"},children=["Date to:"]),
+                html.Span(style={"padding": "0.5em"}, children=["Date to:"]),
                 dcc.DatePickerSingle(
                     id="dataset_date_to_filter",
                     display_format="YYYY MM DD",
@@ -77,7 +79,7 @@ dataset_filter = html.Div(
         html.Span(
             title="Available options are limited based on displayed datsets",
             children=[
-                html.Span(style={"padding": "0.5em"},children=["Type:"]),
+                html.Span(style={"padding": "0.5em"}, children=["Type:"]),
                 dcc.Dropdown(
                     id="dataset_machine_type_filter",
                     multi=True,
@@ -132,7 +134,9 @@ data_ranges_filter = html.Div(
         html.Span(
             title="% matches 0 or more characters\n_ matches any single character",
             children=[
-                html.Span(style={"padding-right": "0.5em"},children=["Name Like:"]),
+                html.Span(
+                    style={"padding-right": "0.5em"}, children=["Name Like:"]
+                ),
                 dcc.Input(
                     id="data_range_name_filter",
                     type="text",
@@ -145,7 +149,7 @@ data_ranges_filter = html.Div(
         ),
         html.Span(
             children=[
-                html.Span(style={"padding": "0.5em"},children=["Type:"]),
+                html.Span(style={"padding": "0.5em"}, children=["Type:"]),
                 dcc.Dropdown(
                     id="data_range_column_filter",
                     multi=True,
@@ -158,22 +162,21 @@ data_ranges_filter = html.Div(
                         "min-width": "400px",
                     },
                 ),
-            ],
+            ]
         ),
-        html.Span(children=[
-            html.Span(style={"padding": "0.5em"},children=["Include:"]),
-            dcc.Checklist(
-                id="data_range_creation_type_filter",
-                options=[
-                    {'label': 'System Made', 'value': 'system'},
-                    {'label': 'User Made', 'value': 'user'},
-                ],
-                value=["system", "user"],
-                persistence=True,
-                persistence_type="memory",
-                style={
-                        "display": "table-cell",
-                    },
+        html.Span(
+            children=[
+                html.Span(style={"padding": "0.5em"}, children=["Include:"]),
+                dcc.Checklist(
+                    id="data_range_creation_type_filter",
+                    options=[
+                        {"label": "System Made", "value": "system"},
+                        {"label": "User Made", "value": "user"},
+                    ],
+                    value=["system", "user"],
+                    persistence=True,
+                    persistence_type="memory",
+                    style={"display": "table-cell"},
                 ),
             ]
         ),
@@ -553,14 +556,18 @@ def register_callbacks(app, config):
             Output("main_selected_dataset", "children"),
             Output("metadata_table", "data"),
             Output("metadata_table", "selected_rows"),
-            Output("data_range_column_filter", "options")
+            Output("data_range_column_filter", "options"),
         ],
-        [Input("dataset_table", "selected_row_ids"),
-        Input("data_range_name_filter", "value"),
-        Input("data_range_column_filter", "value"),
-        Input("data_range_creation_type_filter", "value")],
+        [
+            Input("dataset_table", "selected_row_ids"),
+            Input("data_range_name_filter", "value"),
+            Input("data_range_column_filter", "value"),
+            Input("data_range_creation_type_filter", "value"),
+        ],
     )
-    def dataset_selected(selected_row_ids, name_filter, column_filter, creation_type_filter):
+    def dataset_selected(
+        selected_row_ids, name_filter, column_filter, creation_type_filter
+    ):
         info_line = f"Selected: {selected_row_ids}"
         table_rows = []
         conn = None
@@ -575,28 +582,45 @@ def register_callbacks(app, config):
                 available_columns = TimeseriesDataColumn.select_experiment_columns(
                     selected_row_id, conn
                 )
-                coloum_filter_columns = [ {'label': col[1], 'value': col[0]} for col in available_columns]
+                coloum_filter_columns = [
+                    {"label": col[1], "value": col[0]}
+                    for col in available_columns
+                ]
                 filtered_columns = available_columns
                 if column_filter is not None and len(column_filter) > 0:
                     column_set = set(column_filter)
-                    filtered_columns = [col for col in available_columns if col[0] in column_set]
+                    filtered_columns = [
+                        col
+                        for col in available_columns
+                        if col[0] in column_set
+                    ]
                 try:
                     metadatas = RangeLabelRow.select_filtered_from_dataset_id(
-                        selected_row_id, conn, name_filter, "system" in creation_type_filter, "user" in creation_type_filter
+                        selected_row_id,
+                        conn,
+                        name_filter,
+                        "system" in creation_type_filter,
+                        "user" in creation_type_filter,
                     )
-                    start_times = [TimeseriesDataRow.select_from_dataset_id_column_id_and_sample_no(
-                                selected_row_id,
-                                TEST_TIME_COLUMN_ID,
-                                m.lower_bound,
-                                conn,
-                            ) for m in metadatas]
-                    end_times = [TimeseriesDataRow.select_from_dataset_id_column_id_and_sample_no(
-                                selected_row_id,
-                                TEST_TIME_COLUMN_ID,
-                                m.upper_bound - 1,
-                                conn,
-                            ) for m in metadatas]
-                    
+                    start_times = [
+                        TimeseriesDataRow.select_from_dataset_id_column_id_and_sample_no(
+                            selected_row_id,
+                            TEST_TIME_COLUMN_ID,
+                            m.lower_bound,
+                            conn,
+                        )
+                        for m in metadatas
+                    ]
+                    end_times = [
+                        TimeseriesDataRow.select_from_dataset_id_column_id_and_sample_no(
+                            selected_row_id,
+                            TEST_TIME_COLUMN_ID,
+                            m.upper_bound - 1,
+                            conn,
+                        )
+                        for m in metadatas
+                    ]
+
                     table_rows = [
                         {
                             "id": f"{selected_row_id}:{m.id}:{col}:{m.label_name}",
@@ -606,8 +630,12 @@ def register_callbacks(app, config):
                             "column_id": col[0],
                             "samples_from": m.lower_bound,
                             "samples_to": m.upper_bound - 1,
-                            "start_time": start_times[m_idx].value if start_times[m_idx] is not None else "NaN",
-                            "end_time": end_times[m_idx].value if end_times[m_idx] is not None else "NaN",
+                            "start_time": start_times[m_idx].value
+                            if start_times[m_idx] is not None
+                            else "NaN",
+                            "end_time": end_times[m_idx].value
+                            if end_times[m_idx] is not None
+                            else "NaN",
                             "info": m.info,
                             "user_created": m.user_created,
                             "offset": 0.0,

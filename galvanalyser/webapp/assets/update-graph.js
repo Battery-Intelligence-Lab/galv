@@ -286,7 +286,7 @@ window.dash_clientside.clientside_graph = {
         requested_graph_ranges = new_config;
         requested_metadata_ranges = new_dataset_ranges;
         update_graph();
-        
+
         return "";
     },
     login_refresh: function(children) {

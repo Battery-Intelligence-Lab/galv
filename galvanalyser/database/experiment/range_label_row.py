@@ -103,7 +103,9 @@ class RangeLabelRow:
             )
 
     @staticmethod
-    def select_filtered_from_dataset_id(dataset_id, conn, name_like=None, system_made=True, user_made=True):
+    def select_filtered_from_dataset_id(
+        dataset_id, conn, name_like=None, system_made=True, user_made=True
+    ):
         filter_query = []
         filter_values = [dataset_id]
         if name_like is not None and len(name_like) > 0:
