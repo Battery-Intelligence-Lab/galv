@@ -111,7 +111,7 @@ dataset_list = html.Div(
         html.Form(
             children=[
                 dcc.Loading(
-                    id="dataset_range_table_loading",
+                    id="dataset_table_loading",
                     children=[
                         dash_table.DataTable(
                             id="dataset_table",
@@ -443,10 +443,6 @@ layout = html.Div(
 all_layouts.extend(
     [
         layout,
-        tab_graph_content,
-        tab_dataset_content,
-        tab_legend_content,
-        tab_export_content,
     ]
 )
 
@@ -723,7 +719,11 @@ def register_callbacks(app, config):
                 plot_colour_indices[(row["dataset_id"], row["column_id"])]
             ]
         # Custom range dataset dropdown population
-        dataset_names = {row["id"]: row["name"] for row in dataset_table_data}
+        dataset_names = (
+            {row["id"]: row["name"] for row in dataset_table_data}
+            if dataset_table_data is not None
+            else {}
+        )
         range_options = [
             {"label": dataset_names[id_], "value": id_} for id_ in dataset_ids
         ]
