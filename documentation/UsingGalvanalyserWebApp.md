@@ -51,3 +51,27 @@ The third method filters the rows based on whether or not the data range was cre
 
 ## Plotting Data
 
+The Plotting tab consists of two main sections. The biggest is the plotting area to the left which is used for displaying the plots of the data ranges selected for plotting. The second section is the right hand side side bar. The right ride bar has two tabs, the first it the Legend tab and the second is the Export tab. The Legend tab contains the interactive graph legend. The Export tab contains options for saving the current plot as an image file to disk.
+
+Hovering the mouse over the plot will reveal a selection of tools in the top right. These tools allow the user to perform various actions including autoscaling the plot to the data, zooming in on sections of data in either or both axes or panning the view around the data. Both the plotting are and the tools have hover over text to help the user.
+
+### The Interactive Legend
+
+The Legend tab of the right sidebar contains the interactive plot legend. When data ranges have been selected for plotting it contains a list of each data range that is to be plotted, each contained within a box with the same colour as the line used to plot that range on the chart. The box includes the name of the time series column, the name of the data range, the samples numbers that describe that range and the offset value that will be described later. The top of the Legend tab has a button labelled SHOW RANGE EDITOR which will be discussed in the **Creating User Data Ranges** section; a button labelled SET REFERENCE VALUE TO VIEW; a sideways facing arrow shaped button that is used to switch the legend in and out of editing mode; and a numeric display/entry box labelled Reference Value. The reference value is a number representing a sample number that is used for aligning data ranges in the plot. The SET REFERENCE VALUE TO VIEW button sets the refernce value to the sample number at the left most end of the currently visible sample range.
+
+#### Legend Editing Mode
+
+When the left pointing arrow button at the top of the interactive legend is clicked the legend switches to editing mode and the button changes to a right facing arrow. In the editing mode each of the enteries in the legend contain a selection of buttons. Each of these buttons has hover over text to indicate what the button does as well as an icon relevant to the buttons function. The buttons have the following functions:
+* Set Ref To Start - Sets the reference value to the first sample in this data range.
+* Set Ref To End - Sets the reference value to the last sample in this data range.
+* Align Start To Ref - Sets the Offset value for the data range such that when the data range is plotted the first sample in the range is aligned to the reference value.
+* Align End To Ref - Sets the Offset value for the data range such that when the data range is plotted the last sample in the range is aligned to the reference value.
+* Remove Range From Plot - This button removes the data range from the legend and the plot. The data range can be added once again by adding it from the Select Dataset tab.
+
+If the user has the data ranges for several cycles plotted and wishes to align the cycles then the user may do the following. Click the Set Ref To Start button in the box for the cycle they wish to align the other cycles to. Then in each of the other cycles click the Align Start To Ref button. Alternativly the user could click the Align Start To Ref in all the cycles to align all the cycles to the current reference value.
+
+#### Creating User Data Ranges
+
+Clicking the SHOW RANGE EDITOR reveals the controls for creating and modifying user created ranges. To create a user defined range first select the dataset you wish to create the range for from the dropdown labelled "Range for Dataset". Next define the sample range using the numeric entry boxes labelled From and To, alternativly you can click the USE CURRENT CHART RANGE button to set the From and To boxes to the minimum and maximum sample numbers currently displayed on the chart. The numbers will then appear next to the labels "Closest lower sample number" and "Closest higher sample number" indicating the closest sample numbers found within the selected dataset to those requested in the From and To boxes. The sample numbers displayed in the labels are the ones that will be used for the sample range. Next Enter a name for the sample range in the Range Name text box. Clicking the SAVE CUSTOM RANGE button will create a new data range if the chosen name is not already used for that dataset. If the name has already been used then an error will be displayed. If a range with the same name already exists clicking the UPDATE CUSTOM RANGE button will update that range's from and to values to the currently selected values which is how you modify an existing range.
+
+### Exporting Images of the Current Plot
