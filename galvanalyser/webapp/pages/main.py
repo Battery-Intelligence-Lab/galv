@@ -744,6 +744,7 @@ def register_callbacks(app, config):
     def set_reference_value_to_view(
         set_ref_n_clicks, graph_relayout_data, current_reference_value
     ):
+        # TODO This needs to be a client side callback
         reference_value = current_reference_value
         ctx = dash.callback_context
         if ctx.triggered:
