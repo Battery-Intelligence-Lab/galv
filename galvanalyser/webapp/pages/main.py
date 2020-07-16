@@ -149,13 +149,13 @@ data_ranges_filter = html.Div(
         ),
         html.Span(
             children=[
-                html.Span(style={"padding": "0.5em"}, children=["Type:"]),
+                html.Span(style={"padding": "0.5em"}, children=["Dataset Column:"]),
                 dcc.Dropdown(
                     id="data_range_column_filter",
                     multi=True,
                     persistence=True,
                     persistence_type="memory",
-                    placeholder="Search by machine type",
+                    placeholder="Display only these dataset column types",
                     style={
                         "width": "auto",
                         "display": "table-cell",
