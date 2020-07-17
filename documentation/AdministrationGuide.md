@@ -14,10 +14,10 @@ This role should be assigned to accounts that are used by harvesters to upload d
 ## Creating users
 User accounts for the galvanalyser app are created by creating users in postgres and assigning them the `normal_user` role. Users should be assigned a password.
 
-There are many GUI and commandline tools for interacting with postgres servers. PgAdmin is one such GUI tool and it provides a GUI to create login roles. There is documentation elsewhere on the internet describing how to do so. If you wish to use SQL to create users, the README for this project includes example SQL commands to create users called `alice` and `bob` in the `Setting up for the first time` section.
+There are many GUI and command line tools for interacting with postgres servers. PgAdmin is one such GUI tool and it provides a GUI to create login roles. There is documentation elsewhere on the internet describing how to do so. If you wish to use SQL to create users, [FirstTimeQuickSetup.md](./FirstTimeQuickSetup.md) includes example SQL commands to create users called `alice` and `bob` in the **Setting up user accounts**` section.
 
 ## Creating harvester database credentials
-Creating accounts to let harvesters connect to the database is done exactly the same way as creating users except that instead of assigning the account the `normal_user` role they are assigned the `harvester` role.
+Creating accounts to let harvesters connect to the database is done exactly the same way as creating users except that instead of assigning the account the `normal_user` role they are assigned the `harvester` role. Step 1 in the **Setting up the Harvesters** section of [FirstTimeQuickSetup.md](./FirstTimeQuickSetup.md) has example SQL will create a user with the appropriate permissions. You will want to change the password and possibly the user name. The database already has a `harvester` role defined with the appropriate permissions for a harvester user. The final GRANT statement of the example SQL gives the new user the appropriate permissions.
 
 ## Configuring harvesters (database)
 
@@ -26,6 +26,7 @@ Once you have created some login credentials for the harvester you will need to 
 ```
 INSERT INTO harvesters.harvester (machine_id) VALUES ('machine_name_goes_here');
 ```
+You will want to change `machine_name_goes_here` to the name of the harvester you are setting up. This is the value that will be used in the `machine_id` section of the harvester config file described in the **Harvester config json file** section later.
 
 ### Configuring monitored directories
 The directories the harvesters monitor are configured in the `monitored_path` table in the `harvesters` schema. You will need to know the id number for the particular harvester you wish to configure. The id number is stored in the `harvester` table in the `harvesters` schema. A GUI tool will let you look at the data in the table. You could also use an SQL query like the following to find it
@@ -41,15 +42,16 @@ That would tell the harvester with the id number `1` to monitor `/example/direct
 Existing rows in the `monitored_path` table can be modified but changing which users have access to data from a particular directory won't update the permissions for already uploaded data.
 
 ## Changing user dataset access
-The table that controls which users have permissions to see which datasets is the `access` table in the `experiment` schema. If you wish to grant new users permissions to see existing datasets or revoke permissions to see existing datasets then you will need to create or delete rows from this table. Each row in this table contains a `dataset_id` number that uniquely identifies a dataset and a `user_name` that identifies a users. Each row grants the user named in tht row permission to see the dataset named in that row.
+The table that controls which users have permissions to see which datasets is the `access` table in the `experiment` schema. If you wish to grant new users permissions to see existing datasets or revoke permissions to see existing datasets then you will need to create or delete rows from this table. Each row in this table contains a `dataset_id` number that uniquely identifies a dataset and a `user_name` that identifies a user. Each row grants the user named in that row permission to see the dataset named in that row.
 When adding or removing rows you will need to know the `dataset_id` number for the dataset you wish to grant or revoke permissions for. That can be found in the `id` column in the `dataset` table in the `experiment` schema.
 
 # Setting up Harvesters
 The harvester can be setup in one of two ways. you can either run the harvester in a docker container or run it natively with python3 installed on the system. Both options will require a harvester config json file to be created.
 
 ## Harvester config json file
-The harvester config json file tells the harvester which database to connect to, which credentials to use and which harvester this particular harvester is. There is an example in the README and in config/harvester-config.json .
-The database login details should be for a postgres user with the `harvesters` group as described in the Configuring harvesters section above. The `machine_id` in the config file should match the `machine_id` used in the `harvester` table described in that section.
+The harvester config json file tells the harvester which database to connect to, which credentials to use and which harvester this particular harvester is. An example is given for step 4 in the **Setting up the Harvesters** section of [FirstTimeQuickSetup.md](./FirstTimeQuickSetup.md) and in `config/harvester-config.json`. Harvester that runs in a docker container will use the `harvester-config.json` file in the `config` directory by default.
+
+The database login details should be for a postgres user with the `harvesters` group as described in the Configuring harvesters section above. The `machine_id` in the config file should match the `machine_id` used in the `harvester` table described in that section. The value of the institution field should match your institution name as entered in the `experiment.institution` table. The [FirstTimeQuickSetup.md](./FirstTimeQuickSetup.md) described adding that value in the **Setting up the Harvesters** section.
 
 ## Harvester in a docker
 As described in the README you will first need to build the harvester image. If you have make installed you can build it as described in the README, otherwise you can look up the `harvester-docker-build` target in the `Makefile` to figure out how to build it without make.
