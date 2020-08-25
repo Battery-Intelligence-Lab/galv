@@ -6,4 +6,4 @@
 	url = https://github.com/LuAPi/protobuf.git
 [submodule "libs/galvanalyser-dash-components"]
 	path = libs/galvanalyser-dash-components
-    url=git@github.com:FaradayInstitution/galvanalyser-dash-components.git
+	url=git@gitlab.com:battery-intelligence-lab/galvanalyser-project/galvanalyser-dash-components.git
