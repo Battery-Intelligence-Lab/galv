@@ -5,13 +5,18 @@ services:
       dockerfile: ./webstack/dashapp/Dockerfile
       context: ../
     volumes:
-     - ../galvanalyser:/usr/src/app/galvanalyser
+     - ../galvanalyser/harvester:/usr/src/app/galvanalyser/harvester
+     - ../galvanalyser/webapp:/usr/src/app/galvanalyser/webapp
      - ../webapp-static-content:/usr/src/app/static_content
     restart: unless-stopped
+    working_dir: /usr/src/app/galvanalyser/webapp
+    command: python manage.py run -h 0.0.0.0
     deploy:
       restart_policy:
         condition: any
         delay: 5s
+    env_file:
+     - ./.env.app
   nginx:
     image: "nginx"
     ports:
@@ -32,6 +37,8 @@ services:
       - "5432:5432"
     volumes:
       - "${PG_DATA_PATH}:/var/lib/postgresql/data"
+    env_file:
+      - ./.env.db
     restart: unless-stopped
     deploy:
       restart_policy:

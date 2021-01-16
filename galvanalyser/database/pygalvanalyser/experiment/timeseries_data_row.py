@@ -1,10 +1,10 @@
 import psycopg2
-from galvanalyser.database.util.iter_file import IteratorFile
+from pygalvanalyser.util.iter_file import IteratorFile
 from timeit import default_timer as timer
 
-from galvanalyser.database.experiment.column_row import ColumnRow
+from pygalvanalyser.experiment.column_row import ColumnRow
 
-import galvanalyser.harvester.battery_exceptions as battery_exceptions
+import pygalvanalyser.util.battery_exceptions as battery_exceptions
 
 RECORD_NO_COLUMN_ID = 0
 TEST_TIME_COLUMN_ID = 1

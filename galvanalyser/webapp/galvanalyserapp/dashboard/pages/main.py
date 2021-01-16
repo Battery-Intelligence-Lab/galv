@@ -3,26 +3,22 @@ import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output, State, ClientsideFunction
 from dash.exceptions import PreventUpdate
-from galvanalyser.webapp.pages import all_layouts
+from . import all_layouts
 import dash_table
 
-from galvanalyser.database.experiment.dataset_row import DatasetRow
-from galvanalyser.database.experiment.range_label_row import RangeLabelRow
-from galvanalyser.database.user_data.range_label_row import (
+from pygalvanalyser.experiment.dataset_row import DatasetRow
+from pygalvanalyser.experiment.range_label_row import RangeLabelRow
+from pygalvanalyser.user_data.range_label_row import (
     RangeLabelRow as UserRangeLabelRow,
 )
-import galvanalyser.database.experiment.timeseries_data_column as TimeseriesDataColumn
-from galvanalyser.database.experiment.timeseries_data_row import (
+import pygalvanalyser.experiment.timeseries_data_column as TimeseriesDataColumn
+from pygalvanalyser.experiment.timeseries_data_row import (
     TimeseriesDataRow,
     TEST_TIME_COLUMN_ID,
 )
 import psycopg2
-from galvanalyser.webapp.datahandling import data_server
 from galvanalyser_dash_components import GalvanalyserLegend
-from galvanalyser.webapp.colours import (
-    D3 as colours_D3,
-    Light24 as colours_Light24,
-)
+from . import colours
 import sys
 
 # Reference for selection interaction https://dash.plot.ly/interactive-graphing
@@ -711,9 +707,9 @@ def register_callbacks(app, config):
                 plot_colour_indices[(dataset_id, column_id)] = total_plots
                 total_plots = total_plots + 1
         if total_plots < 10:
-            colours = colours_D3
+            colours = colours.D3
         else:
-            colours = colours_Light24
+            colours = colours.Light24
         for row in requested_ranges:
             row["colour"] = colours[
                 plot_colour_indices[(row["dataset_id"], row["column_id"])]
@@ -931,4 +927,3 @@ def register_callbacks(app, config):
                         conn.close()
         return (result,)
 
-    data_server.register_handlers(app, config)

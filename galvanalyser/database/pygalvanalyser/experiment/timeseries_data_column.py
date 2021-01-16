@@ -1,6 +1,6 @@
 from psycopg2 import sql
-import galvanalyser.harvester.battery_exceptions as battery_exceptions
-from galvanalyser.database.experiment.timeseries_data_row import (
+import pygalvanalyser.util.battery_exceptions as battery_exceptions
+from pygalvanalyser.experiment.timeseries_data_row import (
     TEST_TIME_COLUMN_ID,
 )
 

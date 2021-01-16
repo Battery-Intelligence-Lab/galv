@@ -9,7 +9,7 @@ from flask import redirect
 import flask
 import flask_login
 import psycopg2
-from galvanalyser.webapp.pages import all_layouts
+from . import all_layouts
 
 
 def log(text):
