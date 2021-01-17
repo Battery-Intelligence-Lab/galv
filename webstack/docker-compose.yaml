@@ -16,7 +16,7 @@ services:
         condition: any
         delay: 5s
     env_file:
-     - ./.env.app
+     - ./.env
   nginx:
     image: "nginx"
     ports:
@@ -38,7 +38,7 @@ services:
     volumes:
       - "${PG_DATA_PATH}:/var/lib/postgresql/data"
     env_file:
-      - ./.env.db
+      - ./.env
     restart: unless-stopped
     deploy:
       restart_policy:
