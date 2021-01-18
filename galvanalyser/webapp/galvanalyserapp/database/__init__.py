@@ -2,9 +2,12 @@ import psycopg2
 from psycopg2 import sql
 import os
 
-
 def create_user(config, username, password):
     conn = _create_superuser_connection(config)
+    _create_user(conn, username, password, is_harvester=False)
+    conn.close()
+
+def _create_user(conn, username, password, is_harvester=False):
     with conn.cursor() as cur:
         # drop user if they exist
         user_ident = sql.Identifier(username)
@@ -12,6 +15,10 @@ def create_user(config, username, password):
             sql.SQL("DROP USER IF EXISTS {user}").format(user=user_ident)
         )
         # create user
+        user_type = 'normal_user'
+        if is_harvester:
+            user_type = 'harvester'
+        user_type = sql.Identifier(user_type)
         cur.execute(sql.SQL(
             """
             CREATE USER {user} WITH
@@ -22,9 +29,10 @@ def create_user(config, username, password):
               NOCREATEROLE
               NOREPLICATION
               PASSWORD %(passwd)s;
-            GRANT normal_user TO {user};
+            GRANT {type} TO {user};
             """
-        ).format(user=user_ident), {'passwd': password})
+        ).format(user=user_ident, type=user_type),
+                    {'passwd': password})
     conn.commit()
 
 def create_institution(config, name):
@@ -38,6 +46,65 @@ def create_institution(config, name):
                 [name]
             )
     conn.commit()
+
+def _create_harvester_machine(conn, name):
+    with conn.cursor() as cur:
+        # don't do anything if machine already exists
+        cur.execute("SELECT name FROM experiment.institution;")
+        if (name,) not in cur.fetchall():
+            cur.execute(
+                "INSERT INTO experiment.institution (name) VALUES (%s);",
+                [name]
+            )
+    conn.commit()
+
+
+def create_harvester(config, machine_id, password):
+    conn = _create_superuser_connection(config)
+
+    # create harvester user
+    _create_user(conn, machine_id, password, is_harvester=True)
+
+    # if machine_id does not already exist then create it
+    with conn.cursor() as cur:
+        cur.execute("SELECT (machine_id) FROM harvesters.harvester;")
+        machine_ids = cur.fetchall()
+        if (machine_id,) not in machine_ids:
+            # create harvester machine
+            cur.execute(
+                "INSERT INTO harvesters.harvester (machine_id) VALUES (%s);",
+                [machine_id]
+            )
+    conn.commit()
+    conn.close()
+
+
+def add_harvester_path(config, machine_id, path, users):
+    conn = _create_superuser_connection(config)
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT id FROM harvesters.harvester WHERE machine_id=%s;",
+            [machine_id]
+        )
+        response = cur.fetchone()
+        if response is None:
+            raise RuntimeError(
+                'machine_id "{}" does not exist'.format(machine_id)
+            )
+        harvester_id = response[0]
+
+        cur.execute(
+            (
+                "INSERT INTO harvesters.monitored_path "
+                "(harvester_id, path, monitored_for) "
+                "VALUES (%s, %s, %s);"
+            ),
+            [harvester_id, path, '{' + ','.join(users) + '}']
+        )
+
+    conn.commit()
+    conn.close()
+
 
 
 def create_database(config):
