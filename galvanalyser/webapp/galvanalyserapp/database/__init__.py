@@ -54,11 +54,11 @@ def add_harvester_path(config, machine_id, path, users):
     conn.close()
 
 
-def create_database(config):
+def create_database(config, name):
     print('Creating database....')
-    _create(config)
+    _create(config, name)
     print('Applying initial migrations....')
-    _setup(config)
+    _setup(config, name)
     print('Finished creating database.')
 
 
@@ -91,19 +91,20 @@ def _create_user(conn, username, password, is_harvester=False):
     conn.commit()
 
 
-def _database_exists(cur):
+def _database_exists(cur, name):
     cur.execute("SELECT datname FROM pg_database;")
-    return ('galvanalyser',) in cur.fetchall()
+    return (name,) in cur.fetchall()
 
 
 def _create_superuser_connection(config):
     return psycopg2.connect(
         host=config["db_conf"]["database_host"],
         port=config["db_conf"]["database_port"],
-        database="galvanalyser",
+        database=config["db_conf"]["database_name"],
         user=config["db_conf"]["database_user"],
         password=config["db_conf"]["database_pwd"],
     )
+
 
 def _create(config):
     conn = psycopg2.connect(
@@ -115,22 +116,29 @@ def _create(config):
         )
 
     conn.autocommit = True
+    db_name = config["db_conf"]["database_name"]
     with conn.cursor() as cur:
-        if _database_exists(cur):
+        if _database_exists(cur, db_name):
             print(
-                'in create():"galvanalyser" database already exists, dropping'
+                'in create():"{}" database already exists, dropping'.format(db_name)
             )
-            cur.execute("DROP DATABASE galvanalyser;")
-        filename = os.path.join(
-            os.path.dirname(__file__),
-            "create-database.pgsql"
-        )
-        cur.execute(open(filename, "r").read())
+            cur.execute(sql.SQL("DROP DATABASE {db_name};").format(db_name=db_name))
+
+        cur.execute(sql.SQL("""
+            CREATE DATABASE {db_name}
+                WITH
+                OWNER = postgres
+                ENCODING = 'UTF8'
+                LC_COLLATE = 'en_US.utf8'
+                LC_CTYPE = 'en_US.utf8'
+                TABLESPACE = pg_default
+                CONNECTION LIMIT = -1;
+                """).format(db_name=db_name))
 
     conn.close()
 
 
-def _setup(config):
+def _setup(config, name):
     conn = _create_superuser_connection(config)
 
     with conn.cursor() as cur:
@@ -142,6 +150,17 @@ def _setup(config):
         if ('harvester',) in roles:
             cur.execute("DROP ROLE harvester;")
         conn.commit()
+
+        # set timezone
+        cur.execute(
+            sql.SQL(
+                "ALTER DATABASE {db_name} SET timezone TO 'UTC';"
+            ).format(db_name=config["db_conf"]["database_name"])
+        )
+
+        cur.execute("SELECT pg_reload_conf();")
+
+        # create initial database
         filename = os.path.join(
             os.path.dirname(__file__),
             "setup.pgsql"

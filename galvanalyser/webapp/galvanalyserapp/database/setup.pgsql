@@ -1,5 +1,3 @@
-ALTER DATABASE galvanalyser SET timezone TO 'UTC';
-SELECT pg_reload_conf();
 
 -- Role: normal_user
 -- DROP ROLE normal_user;
