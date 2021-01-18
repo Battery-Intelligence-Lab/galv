@@ -1,5 +1,31 @@
 import psycopg2
+from psycopg2 import sql
 import os
+
+
+def create_user(config, username, password):
+    conn = _create_superuser_connection(config)
+    with conn.cursor() as cur:
+        # drop user if they exist
+        user_ident = sql.Identifier(username)
+        cur.execute(
+            sql.SQL("DROP USER IF EXISTS {user}").format(user=user_ident)
+        )
+        # create user
+        cur.execute(sql.SQL(
+            """
+            CREATE USER {user} WITH
+              LOGIN
+              NOSUPERUSER
+              INHERIT
+              NOCREATEDB
+              NOCREATEROLE
+              NOREPLICATION
+              PASSWORD %(passwd)s;
+            GRANT normal_user TO {user};
+            """
+        ).format(user=user_ident), {'passwd': password})
+    conn.commit()
 
 def create_database(config):
     print('Creating database....')
@@ -13,6 +39,14 @@ def _database_exists(cur):
     cur.execute("SELECT datname FROM pg_database;")
     return ('galvanalyser',) in cur.fetchall()
 
+def _create_superuser_connection(config):
+    return psycopg2.connect(
+        host=config["db_conf"]["database_host"],
+        port=config["db_conf"]["database_port"],
+        database="galvanalyser",
+        user=config["db_conf"]["database_user"],
+        password=config["db_conf"]["database_pwd"],
+    )
 
 def _create(config):
     conn = psycopg2.connect(
@@ -38,13 +72,7 @@ def _create(config):
 
 
 def _setup(config):
-    conn = psycopg2.connect(
-            host=config["db_conf"]["database_host"],
-            port=config["db_conf"]["database_port"],
-            database="galvanalyser",
-            user=config["db_conf"]["database_user"],
-            password=config["db_conf"]["database_pwd"],
-        )
+    conn = _create_superuser_connection(config)
 
     with conn.cursor() as cur:
         # drop roles if they exist

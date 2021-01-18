@@ -21,12 +21,12 @@ import maya
 import ntpath
 import re
 from datetime import datetime
-import galvanalyser.harvester.battery_exceptions as battery_exceptions
+import pygalvanalyser.util.battery_exceptions as battery_exceptions
 
 
 def get_ivium_column_to_standard_column_mapping():
     """
-        Return a dict with a key of the column name in the file that maps to 
+        Return a dict with a key of the column name in the file that maps to
         the standard column name in the value. Only return values where a
         mapping exists
     """
