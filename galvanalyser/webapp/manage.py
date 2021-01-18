@@ -19,6 +19,13 @@ def create_db():
 def create_user(username, password):
     database.create_user(config, username, password)
 
+@cli.command("create_institution")
+@click.option('--name', prompt=True)
+def create_institution(name):
+    database.create_institution(config, name)
+
+
+
 
 if __name__ == "__main__":
     cli()

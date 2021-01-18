@@ -27,6 +27,19 @@ def create_user(config, username, password):
         ).format(user=user_ident), {'passwd': password})
     conn.commit()
 
+def create_institution(config, name):
+    conn = _create_superuser_connection(config)
+    with conn.cursor() as cur:
+        # don't do anything if institution already exists
+        cur.execute("SELECT name FROM experiment.institution;")
+        if (name,) not in cur.fetchall():
+            cur.execute(
+                "INSERT INTO experiment.institution (name) VALUES (%s);",
+                [name]
+            )
+    conn.commit()
+
+
 def create_database(config):
     print('Creating database....')
     _create(config)
