@@ -2,7 +2,7 @@ import psycopg2
 
 
 class InstitutionRow:
-    def __init__(self, id_, name):
+    def __init__(self, name, id_=None):
         self.id = id_
         self.name = name
 
@@ -10,10 +10,10 @@ class InstitutionRow:
         with conn.cursor() as cursor:
             cursor.execute(
                 (
-                    "INSERT INTO experiment.institution (id, name) "
-                    "VALUES (%s, %s) ON CONFLICT DO NOTHING"
+                    "INSERT INTO experiment.institution (name) "
+                    "VALUES (%s)"
                 ),
-                [self.id, self.name],
+                [self.name],
             )
 
     @staticmethod

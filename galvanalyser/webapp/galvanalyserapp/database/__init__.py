@@ -1,6 +1,9 @@
 import psycopg2
 from psycopg2 import sql
 import os
+from pygalvanalyser.harvester.harvester_row import HarvesterRow
+from pygalvanalyser.harvester.monitored_path_row import MonitoredPathRow
+from pygalvanalyser.experiment.institution_row import InstitutionRow
 
 def create_user(config, username, password):
     conn = _create_superuser_connection(config)
@@ -37,25 +40,10 @@ def _create_user(conn, username, password, is_harvester=False):
 
 def create_institution(config, name):
     conn = _create_superuser_connection(config)
-    with conn.cursor() as cur:
-        # don't do anything if institution already exists
-        cur.execute("SELECT name FROM experiment.institution;")
-        if (name,) not in cur.fetchall():
-            cur.execute(
-                "INSERT INTO experiment.institution (name) VALUES (%s);",
-                [name]
-            )
-    conn.commit()
+    institution = InstitutionRow.select_from_name(name, conn)
+    if institution is None:
+        InstitutionRow(name=name).insert(conn)
 
-def _create_harvester_machine(conn, name):
-    with conn.cursor() as cur:
-        # don't do anything if machine already exists
-        cur.execute("SELECT name FROM experiment.institution;")
-        if (name,) not in cur.fetchall():
-            cur.execute(
-                "INSERT INTO experiment.institution (name) VALUES (%s);",
-                [name]
-            )
     conn.commit()
 
 
@@ -66,41 +54,28 @@ def create_harvester(config, machine_id, password):
     _create_user(conn, machine_id, password, is_harvester=True)
 
     # if machine_id does not already exist then create it
-    with conn.cursor() as cur:
-        cur.execute("SELECT (machine_id) FROM harvesters.harvester;")
-        machine_ids = cur.fetchall()
-        if (machine_id,) not in machine_ids:
-            # create harvester machine
-            cur.execute(
-                "INSERT INTO harvesters.harvester (machine_id) VALUES (%s);",
-                [machine_id]
-            )
+    harvester = HarvesterRow.select_from_machine_id(machine_id, conn)
+    if harvester is None:
+        HarvesterRow(machine_id).insert(conn)
+
     conn.commit()
     conn.close()
 
 
 def add_harvester_path(config, machine_id, path, users):
     conn = _create_superuser_connection(config)
-    with conn.cursor() as cur:
-        cur.execute(
-            "SELECT id FROM harvesters.harvester WHERE machine_id=%s;",
-            [machine_id]
-        )
-        response = cur.fetchone()
-        if response is None:
-            raise RuntimeError(
-                'machine_id "{}" does not exist'.format(machine_id)
-            )
-        harvester_id = response[0]
 
-        cur.execute(
-            (
-                "INSERT INTO harvesters.monitored_path "
-                "(harvester_id, path, monitored_for) "
-                "VALUES (%s, %s, %s);"
-            ),
-            [harvester_id, path, '{' + ','.join(users) + '}']
+    harvester = HarvesterRow.select_from_machine_id(machine_id, conn)
+    if harvester is None:
+        raise RuntimeError(
+            'machine_id "{}" does not exist'.format(machine_id)
         )
+
+    MonitoredPathRow(
+        harvester.id,
+        '{' + ','.join(users) + '}',
+        path
+    ).insert(conn)
 
     conn.commit()
     conn.close()
