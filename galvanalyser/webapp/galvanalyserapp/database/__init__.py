@@ -10,33 +10,6 @@ def create_user(config, username, password):
     _create_user(conn, username, password, is_harvester=False)
     conn.close()
 
-def _create_user(conn, username, password, is_harvester=False):
-    with conn.cursor() as cur:
-        # drop user if they exist
-        user_ident = sql.Identifier(username)
-        cur.execute(
-            sql.SQL("DROP USER IF EXISTS {user}").format(user=user_ident)
-        )
-        # create user
-        user_type = 'normal_user'
-        if is_harvester:
-            user_type = 'harvester'
-        user_type = sql.Identifier(user_type)
-        cur.execute(sql.SQL(
-            """
-            CREATE USER {user} WITH
-              LOGIN
-              NOSUPERUSER
-              INHERIT
-              NOCREATEDB
-              NOCREATEROLE
-              NOREPLICATION
-              PASSWORD %(passwd)s;
-            GRANT {type} TO {user};
-            """
-        ).format(user=user_ident, type=user_type),
-                    {'passwd': password})
-    conn.commit()
 
 def create_institution(config, name):
     conn = _create_superuser_connection(config)
@@ -81,7 +54,6 @@ def add_harvester_path(config, machine_id, path, users):
     conn.close()
 
 
-
 def create_database(config):
     print('Creating database....')
     _create(config)
@@ -90,9 +62,39 @@ def create_database(config):
     print('Finished creating database.')
 
 
+def _create_user(conn, username, password, is_harvester=False):
+    with conn.cursor() as cur:
+        # drop user if they exist
+        user_ident = sql.Identifier(username)
+        cur.execute(
+            sql.SQL("DROP USER IF EXISTS {user}").format(user=user_ident)
+        )
+        # create user
+        user_type = 'normal_user'
+        if is_harvester:
+            user_type = 'harvester'
+        user_type = sql.Identifier(user_type)
+        cur.execute(sql.SQL(
+            """
+            CREATE USER {user} WITH
+              LOGIN
+              NOSUPERUSER
+              INHERIT
+              NOCREATEDB
+              NOCREATEROLE
+              NOREPLICATION
+              PASSWORD %(passwd)s;
+            GRANT {type} TO {user};
+            """
+        ).format(user=user_ident, type=user_type),
+                    {'passwd': password})
+    conn.commit()
+
+
 def _database_exists(cur):
     cur.execute("SELECT datname FROM pg_database;")
     return ('galvanalyser',) in cur.fetchall()
+
 
 def _create_superuser_connection(config):
     return psycopg2.connect(
@@ -115,7 +117,9 @@ def _create(config):
     conn.autocommit = True
     with conn.cursor() as cur:
         if _database_exists(cur):
-            print('in create():"galvanalyser" database already exists, dropping')
+            print(
+                'in create():"galvanalyser" database already exists, dropping'
+            )
             cur.execute("DROP DATABASE galvanalyser;")
         filename = os.path.join(
             os.path.dirname(__file__),
