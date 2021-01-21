@@ -16,7 +16,7 @@ from pygalvanalyser.experiment.access_row import AccessRow
 from pygalvanalyser.experiment.timeseries_data_row import (
     TimeseriesDataRow,
 )
-from input_file import InputFile
+from .input_file import InputFile
 from pygalvanalyser.experiment.range_label_row import RangeLabelRow
 from pygalvanalyser.experiment.misc_file_data_row import MiscFileDataRow
 import pygalvanalyser.util.battery_exceptions as battery_exceptions

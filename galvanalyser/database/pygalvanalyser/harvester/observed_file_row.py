@@ -16,6 +16,19 @@ class ObservedFileRow:
         self.last_observed_time = last_observed_time
         self.file_state = file_state
 
+    def __str__(self):
+        return (
+            'ObservedFileRow(monitor_path_id={}, path={} '
+            'last_observed_size={}, last_observed_time={} '
+            'file_state={})'
+        ).format(
+            self.monitor_path_id,
+            self.path,
+            self.last_observed_size,
+            self.last_observed_time,
+            self.file_state
+        )
+
     def insert(self, conn):
         with conn.cursor() as cursor:
             if self.file_state is None:

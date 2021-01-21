@@ -7,6 +7,9 @@ RUN pip install -r /usr/requirements.txt && \
     pip install /usr/galvanalyser_dash_components.tar.gz
 
 COPY ./galvanalyser/database /usr/src/app/galvanalyser/database
-RUN pip install /usr/src/app/galvanalyser/database
+RUN pip install -e /usr/src/app/galvanalyser/database
+
+COPY ./galvanalyser/harvester /usr/src/app/galvanalyser/harvester
+RUN pip install -e /usr/src/app/galvanalyser/harvester
 
 EXPOSE 8050

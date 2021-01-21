@@ -6,8 +6,10 @@ services:
       context: ../
     volumes:
      - ../galvanalyser/harvester:/usr/src/app/galvanalyser/harvester
+     - ../galvanalyser/database:/usr/src/app/galvanalyser/database
      - ../galvanalyser/webapp:/usr/src/app/galvanalyser/webapp
      - ../webapp-static-content:/usr/src/app/static_content
+     - "${TEST_DATA_PATH}:/usr/data"
     restart: unless-stopped
     working_dir: /usr/src/app/galvanalyser/webapp
     command: python manage.py run -h 0.0.0.0

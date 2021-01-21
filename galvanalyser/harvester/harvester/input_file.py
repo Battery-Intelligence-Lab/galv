@@ -17,8 +17,8 @@
 #
 
 import pygalvanalyser.util.battery_exceptions as battery_exceptions
-import maccor_functions
-import ivium_functions
+import harvester.maccor_functions as maccor_functions
+import harvester.ivium_functions as ivium_functions
 from itertools import accumulate
 import traceback
 from pygalvanalyser.experiment.timeseries_data_row import (

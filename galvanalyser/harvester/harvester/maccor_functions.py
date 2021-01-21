@@ -84,8 +84,11 @@ def isfloat(value):
 
 
 def is_maccor_raw_file(file_path):
+    print('is_maccor_raw_file')
     with open(file_path, "r") as f:
+        print('got line')
         line = f.readline()
+        print('got line', line)
         line_start = "Today's Date"
         if not line.startswith(line_start):
             return False

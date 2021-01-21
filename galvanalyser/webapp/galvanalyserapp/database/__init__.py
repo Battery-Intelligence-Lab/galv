@@ -54,11 +54,11 @@ def add_harvester_path(config, machine_id, path, users):
     conn.close()
 
 
-def create_database(config, name):
+def create_database(config):
     print('Creating database....')
-    _create(config, name)
+    _create(config)
     print('Applying initial migrations....')
-    _setup(config, name)
+    _setup(config)
     print('Finished creating database.')
 
 
@@ -122,7 +122,10 @@ def _create(config):
             print(
                 'in create():"{}" database already exists, dropping'.format(db_name)
             )
-            cur.execute(sql.SQL("DROP DATABASE {db_name};").format(db_name=db_name))
+            cur.execute(
+                sql.SQL(
+                    "DROP DATABASE {db_name};"
+                ).format(db_name=sql.Identifier(db_name)))
 
         cur.execute(sql.SQL("""
             CREATE DATABASE {db_name}
@@ -133,29 +136,49 @@ def _create(config):
                 LC_CTYPE = 'en_US.utf8'
                 TABLESPACE = pg_default
                 CONNECTION LIMIT = -1;
-                """).format(db_name=db_name))
+                """).format(db_name=sql.Identifier(db_name)))
 
     conn.close()
 
 
-def _setup(config, name):
+def _setup(config):
     conn = _create_superuser_connection(config)
 
     with conn.cursor() as cur:
-        # drop roles if they exist
+        # create roles if they dont exist
         cur.execute("SELECT rolname FROM pg_roles;")
         roles = cur.fetchall()
-        if ('normal_user',) in roles:
-            cur.execute("DROP ROLE normal_user;")
-        if ('harvester',) in roles:
-            cur.execute("DROP ROLE harvester;")
+        if ('normal_user',) not in roles:
+            cur.execute("""
+                CREATE ROLE normal_user WITH
+                  NOLOGIN
+                  NOSUPERUSER
+                  INHERIT
+                  NOCREATEDB
+                  NOCREATEROLE
+                  NOREPLICATION;
+            """)
+        if ('harvester',) not in roles:
+            cur.execute("""
+                CREATE ROLE harvester WITH
+                  NOLOGIN
+                  NOSUPERUSER
+                  INHERIT
+                  NOCREATEDB
+                  NOCREATEROLE
+                  NOREPLICATION;
+            """)
         conn.commit()
 
         # set timezone
         cur.execute(
             sql.SQL(
                 "ALTER DATABASE {db_name} SET timezone TO 'UTC';"
-            ).format(db_name=config["db_conf"]["database_name"])
+            ).format(
+                db_name=sql.Identifier(
+                    config["db_conf"]["database_name"]
+                )
+            )
         )
 
         cur.execute("SELECT pg_reload_conf();")
