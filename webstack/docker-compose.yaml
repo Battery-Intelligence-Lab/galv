@@ -1,6 +1,69 @@
-version: '3'
+version: "3"
+x-redash-service: &redash-service
+  image: redash/redash:8.0.2.b37747
+  depends_on:
+    - postgres
+    - redis
+  env_file: ./.env
+  restart: always
 services:
-  galvanalyserapp:
+  server:
+    <<: *redash-service
+    command: server
+    ports:
+      - "5000:5000"
+    environment:
+      REDASH_WEB_WORKERS: 4
+  scheduler:
+    <<: *redash-service
+    command: scheduler
+    environment:
+      QUEUES: "celery"
+      WORKERS_COUNT: 1
+  scheduled_worker:
+    <<: *redash-service
+    command: worker
+    environment:
+      QUEUES: "scheduled_queries,schemas"
+      WORKERS_COUNT: 1
+  adhoc_worker:
+    <<: *redash-service
+    command: worker
+    environment:
+      QUEUES: "queries"
+      WORKERS_COUNT: 2
+  redis:
+    image: redis:5.0-alpine
+    restart: always
+  postgres:
+    image: postgres:9.6-alpine
+    env_file: ./.env
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
+    restart: always
+  nginx:
+    image: redash/nginx:latest
+    ports:
+      - "80:80"
+    depends_on:
+      - server
+    links:
+      - server:redash
+    restart: always
+  galvanalyser_postgres:
+    image: "postgres"
+    stop_signal: SIGINT                 # Fast Shutdown mode
+    ports:
+      - "5433:5433"
+    command: -p 5433
+    volumes:
+      - "${PG_DATA_PATH}:/var/lib/postgresql/data"
+    env_file:
+      - ./.env
+    restart: unless-stopped
+  galvanalyser_app:
     build:
       dockerfile: ./webstack/dashapp/Dockerfile
       context: ../
@@ -8,7 +71,6 @@ services:
      - ../galvanalyser/harvester:/usr/src/app/galvanalyser/harvester
      - ../galvanalyser/database:/usr/src/app/galvanalyser/database
      - ../galvanalyser/webapp:/usr/src/app/galvanalyser/webapp
-     - ../webapp-static-content:/usr/src/app/static_content
      - "${TEST_DATA_PATH}:/usr/data"
     restart: unless-stopped
     working_dir: /usr/src/app/galvanalyser/webapp
@@ -19,30 +81,3 @@ services:
         delay: 5s
     env_file:
      - ./.env
-  nginx:
-    image: "nginx"
-    ports:
-     - "8081:80"
-    volumes:
-      - ./nginx-config/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ../webapp-static-content/libs:/var/www/webapp-static/libs:ro
-      - ../webapp-static-content/css:/var/www/webapp-static/css:ro
-    restart: unless-stopped
-    deploy:
-      restart_policy:
-        condition: any
-        delay: 5s
-  postgres:
-    image: "postgres"
-    stop_signal: SIGINT                 # Fast Shutdown mode
-    ports:
-      - "5432:5432"
-    volumes:
-      - "${PG_DATA_PATH}:/var/lib/postgresql/data"
-    env_file:
-      - ./.env
-    restart: unless-stopped
-    deploy:
-      restart_policy:
-        condition: any
-        delay: 5s

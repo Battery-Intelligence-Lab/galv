@@ -43,6 +43,17 @@ services:
     volumes:
       - ./postgres-data:/var/lib/postgresql/data
     restart: always
+  gpostgres:
+    image: "postgres"
+    stop_signal: SIGINT                 # Fast Shutdown mode
+    ports:
+      - "5433:5433"
+    command: -p 5433
+    volumes:
+      - "${PG_DATA_PATH}:/var/lib/postgresql/data"
+    env_file:
+      - ./.env
+    restart: unless-stopped
   nginx:
     image: redash/nginx:latest
     ports:
