@@ -1,4 +1,4 @@
-version: "3"
+version: "2"
 x-redash-service: &redash-service
   image: redash/redash:8.0.2.b37747
   depends_on:
@@ -41,7 +41,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - ./postgres-data:/var/lib/postgresql/data
+      - "${PG_DATA_PATH}/redash:/var/lib/postgresql/data"
     restart: always
   nginx:
     image: redash/nginx:latest
@@ -59,7 +59,7 @@ services:
       - "5433:5433"
     command: -p 5433
     volumes:
-      - "${PG_DATA_PATH}:/var/lib/postgresql/data"
+      - "${PG_DATA_PATH}/galvanalyser:/var/lib/postgresql/data"
     env_file:
       - ./.env
     restart: unless-stopped
@@ -67,6 +67,8 @@ services:
     build:
       dockerfile: ./webstack/dashapp/Dockerfile
       context: ../
+    depends_on:
+      - galvanalyser_postgres
     volumes:
      - ../galvanalyser/harvester:/usr/src/app/galvanalyser/harvester
      - ../galvanalyser/database:/usr/src/app/galvanalyser/database
@@ -75,9 +77,6 @@ services:
     restart: unless-stopped
     working_dir: /usr/src/app/galvanalyser/webapp
     command: python manage.py run -h 0.0.0.0
-    deploy:
-      restart_policy:
-        condition: any
-        delay: 5s
+    restart: always
     env_file:
      - ./.env

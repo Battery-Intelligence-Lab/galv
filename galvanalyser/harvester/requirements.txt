@@ -1,4 +1,0 @@
-psutil
-psycopg2
-maya
-xlrd

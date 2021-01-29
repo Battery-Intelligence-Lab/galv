@@ -7,8 +7,8 @@ def init_db():
     config = {
         "db_conf": {
             "database_name": "galvanalyser",
-            "database_port": 5432,
-            "database_host": "postgres",
+            "database_port": 5433,
+            "database_host": "galvanalyser_postgres",
             "database_user": "postgres",
             "database_pwd": os.getenv('POSTGRES_PASSWORD'),
         }
@@ -77,11 +77,5 @@ def init_app(config):
         # Import parts of our core Flask app
         from . import routes
 
-        # Import Dash application
-        from .dashboard import create_dashboard
-        app = create_dashboard(app, config)
-
-        return app
-
-    return app, config
+    return app
 

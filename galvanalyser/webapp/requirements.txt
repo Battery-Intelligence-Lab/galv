@@ -1,8 +1,2 @@
-psycopg2
-dash
-dash-renderer
-dash-html-components
-dash-core-components
-plotly
+psycopg2-binary
 flask-login
-protobuf

@@ -21,7 +21,7 @@ setuptools.setup(
     python_requires='>=3.5',
     install_requires=[
         'psutil',
-        'psycopg2',
+        'psycopg2-binary',
         'maya',
         'xlrd',
     ]
