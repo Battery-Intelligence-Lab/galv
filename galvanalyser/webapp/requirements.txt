@@ -1,2 +1,3 @@
-psycopg2-binary
-flask-login
+psycopg2-binary==2.8.6
+flask-login==0.5.0
+redash-toolbelt==0.1.1
