@@ -9,4 +9,6 @@ RUN pip install -e /usr/src/app/galvanalyser/database
 COPY ./galvanalyser/harvester /usr/src/app/galvanalyser/harvester
 RUN pip install -e /usr/src/app/galvanalyser/harvester
 
+ENV FLASK_APP=app.py
+
 EXPOSE 8050
