@@ -65,7 +65,7 @@ services:
     restart: unless-stopped
   galvanalyser_app:
     build:
-      dockerfile: ./webstack/dashapp/Dockerfile
+      dockerfile: ./webstack/flaskapp/Dockerfile
       context: ../
     depends_on:
       - galvanalyser_postgres
