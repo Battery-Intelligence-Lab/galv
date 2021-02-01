@@ -2,17 +2,35 @@ import os
 import flask
 from flask_login import current_user
 import psycopg2
+from urllib.parse import urlparse
 
 def init_db():
+
+    redash = urlparse(os.getenv('REDASH_DATABASE_URL'))
     config = {
         "db_conf": {
             "database_name": "galvanalyser",
-            "database_port": 5432,
-            "database_host": "postgres",
+            "database_port": 5433,
+            "database_host": "galvanalyser_postgres",
             "database_user": "postgres",
             "database_pwd": os.getenv('POSTGRES_PASSWORD'),
+            "redash_name": redash.path[1:],
+            "redash_port": redash.port,
+            "redash_host": redash.hostname,
+            "redash_user": redash.username,
+            "redash_pwd": redash.password,
+            "redash_url": os.getenv('REDASH_DATABASE_URL'),
         }
     }
+
+    def get_redash_db_connection():
+        return psycopg2.connect(
+            host=config["db_conf"]["redash_host"],
+            port=config["db_conf"]["redash_port"],
+            database=config["db_conf"]["redash_name"],
+            user=config["db_conf"]["redash_user"],
+            password=config["db_conf"]["redash_pwd"],
+        )
 
     def get_db_connection_for_superuser():
         print('password is ',os.getenv('POSTGRES_PASSWORD'), 'or',
@@ -45,6 +63,9 @@ def init_db():
     config[
         "get_db_connection_for_superuser"
     ] = get_db_connection_for_superuser
+    config[
+        "get_redash_db_connection"
+    ] = get_redash_db_connection
 
     config["get_current_user_name"] = get_current_user_name
     return config
@@ -77,11 +98,5 @@ def init_app(config):
         # Import parts of our core Flask app
         from . import routes
 
-        # Import Dash application
-        from .dashboard import create_dashboard
-        app = create_dashboard(app, config)
-
-        return app
-
-    return app, config
+    return app
 

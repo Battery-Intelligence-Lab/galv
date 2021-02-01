@@ -1,18 +1,20 @@
 from flask.cli import FlaskGroup
 import click
-import galvanalyserapp.database as database
 import psycopg2
 from app import app, config
 import copy
 import unittest
 import os
 import sys
-import test.gtestcase as gtestcase
+import galvanalyserapp.redash as redash
+import galvanalyserapp.database as database
 
 cli = FlaskGroup(app)
 
 @cli.command("test")
 def test():
+    import test.gtestcase as gtestcase
+
     test_config = copy.copy(config)
     test_config["db_conf"]["database_name"] = gtestcase.test_database
     database.create_database(test_config)
@@ -22,11 +24,10 @@ def test():
     runner = unittest.TextTestRunner()
     runner.run(test_suite)
 
+
 @cli.command("test_harvester")
 @click.option('--path', default='/usr/src/app/galvanalyser/harvester/test')
 def test(path):
-
-
     if not os.path.exists(os.path.join(path, 'harvester_test_case.py')):
         raise RuntimeError((
             'harvester_test_case.py does not exist in {}. '
@@ -69,14 +70,12 @@ def test(path):
     runner = unittest.TextTestRunner()
     runner.run(test_suite)
 
-
 @cli.command("create_db")
 @click.confirmation_option(
     prompt='This will delete the current database, are you sure?'
 )
 def create_db():
     database.create_database(config)
-
 
 @cli.command("create_user")
 @click.option('--username', prompt=True)
@@ -95,15 +94,21 @@ def create_institution(name):
 @click.option('--harvester', prompt=True)
 @click.option('--password', prompt=True, hide_input=True, confirmation_prompt=True)
 def create_harvester(harvester, password):
-    database.create_harvester(config, harvester, password)
+    database.create_harvester_user(config, harvester, password)
 
 
-@cli.command("add_harvester_path")
-@click.option('--harvester', prompt=True)
+@cli.command("create_machine_id")
+@click.option('--machine_id', prompt=True)
+def create_machine_id(machine_id):
+    database.create_machine_id(config, machine_id)
+
+
+@cli.command("add_machine_path")
+@click.option('--machine_id', prompt=True)
 @click.option('--path', prompt=True)
-@click.option('--user', multiple=True)
-def add_harvester_path(harvester, path, user):
-    database.add_harvester_path(config, harvester, path, user)
+@click.option('--user', multiple=True, prompt=True)
+def add_machine_path(machine_id, path, user):
+    database.add_machine_path(config, machine_id, path, user)
 
 
 if __name__ == "__main__":

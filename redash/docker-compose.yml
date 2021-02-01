@@ -41,8 +41,19 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - "${PG_DATA_PATH}/redash:/var/lib/postgresql/data"
+      - ./postgres-data:/var/lib/postgresql/data
     restart: always
+  gpostgres:
+    image: "postgres"
+    stop_signal: SIGINT                 # Fast Shutdown mode
+    ports:
+      - "5433:5433"
+    command: -p 5433
+    volumes:
+      - "${PG_DATA_PATH}:/var/lib/postgresql/data"
+    env_file:
+      - ./.env
+    restart: unless-stopped
   nginx:
     image: redash/nginx:latest
     ports:
@@ -52,31 +63,3 @@ services:
     links:
       - server:redash
     restart: always
-  galvanalyser_postgres:
-    image: "postgres"
-    stop_signal: SIGINT                 # Fast Shutdown mode
-    ports:
-      - "5433:5433"
-    command: -p 5433
-    volumes:
-      - "${PG_DATA_PATH}/galvanalyser:/var/lib/postgresql/data"
-    env_file:
-      - ./.env
-    restart: unless-stopped
-  galvanalyser_app:
-    build:
-      dockerfile: ./webstack/flaskapp/Dockerfile
-      context: ../
-    depends_on:
-      - galvanalyser_postgres
-    volumes:
-     - ../galvanalyser/harvester:/usr/src/app/galvanalyser/harvester
-     - ../galvanalyser/database:/usr/src/app/galvanalyser/database
-     - ../galvanalyser/webapp:/usr/src/app/galvanalyser/webapp
-     - "${TEST_DATA_PATH}:/usr/data"
-    restart: unless-stopped
-    working_dir: /usr/src/app/galvanalyser/webapp
-    command: python manage.py run -h 0.0.0.0
-    restart: always
-    env_file:
-     - ./.env
