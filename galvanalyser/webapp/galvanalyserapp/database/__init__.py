@@ -18,13 +18,20 @@ def create_institution(config, name):
         InstitutionRow(name=name).insert(conn)
 
     conn.commit()
+    conn.close()
 
 
-def create_harvester(config, machine_id, password):
+def create_harvester_user(config, harvester, password):
     conn = _create_superuser_connection(config)
 
     # create harvester user
-    _create_user(conn, machine_id, password, is_harvester=True)
+    _create_user(conn, harvester, password, is_harvester=True)
+
+    conn.close()
+
+
+def create_machine_id(config, machine_id):
+    conn = _create_superuser_connection(config)
 
     # if machine_id does not already exist then create it
     harvester = HarvesterRow.select_from_machine_id(machine_id, conn)
@@ -35,7 +42,7 @@ def create_harvester(config, machine_id, password):
     conn.close()
 
 
-def add_harvester_path(config, machine_id, path, users):
+def add_machine_path(config, machine_id, path, users):
     conn = _create_superuser_connection(config)
 
     harvester = HarvesterRow.select_from_machine_id(machine_id, conn)
