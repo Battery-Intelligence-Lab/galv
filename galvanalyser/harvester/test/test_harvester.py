@@ -1,9 +1,10 @@
 from harvester_test_case import HarvesterTestCase
 from timeit import default_timer as timer
-import harvester.harvester as harvester
+import harvester.__main__ as harvester
 from pygalvanalyser.harvester.harvester_row import HarvesterRow
 from pygalvanalyser.harvester.monitored_path_row import MonitoredPathRow
 from pygalvanalyser.harvester.observed_file_row import ObservedFileRow
+from pygalvanalyser.experiment.dataset_row import DatasetRow
 
 import os
 import json
@@ -11,14 +12,23 @@ from datetime import datetime, timezone, timedelta
 
 
 class TestHarvester(HarvesterTestCase):
+    # well capture all the filename that failed here
+    def setUp(self):
+        self.verificationErrors = []
+
+    # if any files failed, print errors here
+    def tearDown(self):
+        self.maxDiff = None
+        self.assertEqual([], self.verificationErrors)
+
     def test_main(self):
         template = {
-            "database_username": self.HARVESTER_ID,
+            "database_username": self.HARVESTER,
             "database_password": self.HARVESTER_PWD,
-            "database_host": "postgres",
-            "database_port": 5432,
+            "database_host": "galvanalyser_postgres",
+            "database_port": 5433,
             "database_name": self.DATABASE,
-            "machine_id": self.HARVESTER_ID,
+            "machine_id": self.MACHINE_ID,
             "institution": self.HARVESTER_INSTITUTION,
         }
         if not os.path.exists('./config'):
@@ -31,7 +41,7 @@ class TestHarvester(HarvesterTestCase):
 
         # should have added files to database
         harvester_row = HarvesterRow.select_from_machine_id(
-            self.HARVESTER_ID,
+            self.MACHINE_ID,
             self.conn
         )
         self.assertIsNotNone(harvester_row)
@@ -67,6 +77,22 @@ class TestHarvester(HarvesterTestCase):
 
         # files are now stable, rerun main to insert them
         harvester.main(None)
+
+        # check that they are all inserted successfully
+        for root, dirs, files in os.walk(self.DATA_DIR):
+            for name in files:
+                file = ObservedFileRow.select_from_id_and_path(
+                    monitor_path.monitor_path_id,
+                    name,
+                    self.conn
+                )
+                self.assertIsNotNone(file)
+                try:
+                    self.assertEqual(file.file_state, 'IMPORTED')
+                except AssertionError as e:
+                    self.verificationErrors.append(
+                        'filename = {}, error = {}'.format(name, e)
+                    )
 
 
 if __name__ == '__main__':

@@ -11,16 +11,58 @@ import galvanalyserapp.database as database
 
 cli = FlaskGroup(app)
 
-@cli.command("test")
-def test():
-    import test.gtestcase as gtestcase
+@cli.command("test_api")
+@click.option('--path', default='/usr/src/app/galvanalyser/harvester/test')
+def test_api(path):
+    if not os.path.exists(os.path.join(path, 'galvanalyser_test_case.py')):
+        raise RuntimeError((
+            'harvester_test_case.py does not exist in {}. '
+            'Is the path correct?').format(path)
+        )
+
+    sys.path.append(path)
+    from galvanalyser_test_case import GalvanalyserTestCase
 
     test_config = copy.copy(config)
-    test_config["db_conf"]["database_name"] = gtestcase.test_database
-    database.create_database(test_config)
+    test_config["db_conf"]["database_name"] = GalvanalyserTestCase.DATABASE
 
-    # run webapp tests
-    test_suite = unittest.defaultTestLoader.discover('test/')
+    # create database environment that harvester test case expects
+    database.create_database(
+        test_config,
+        test=True
+    )
+
+    database.create_user(
+        test_config,
+        GalvanalyserTestCase.USER,
+        GalvanalyserTestCase.USER_PWD,
+        test=True
+    )
+    database.create_institution(
+        test_config,
+        HarvesterTestCase.HARVESTER_INSTITUTION
+    )
+
+    database.create_harvester_user(
+        test_config,
+        HarvesterTestCase.HARVESTER,
+        HarvesterTestCase.HARVESTER_PWD,
+        test=True
+    )
+    database.create_machine_id(
+        test_config,
+        HarvesterTestCase.MACHINE_ID,
+    )
+
+    database.add_machine_path(
+        test_config,
+        HarvesterTestCase.MACHINE_ID,
+        HarvesterTestCase.DATA_DIR,
+        [HarvesterTestCase.USER],
+    )
+
+    # run harvester tests
+    test_suite = unittest.defaultTestLoader.discover(path)
     runner = unittest.TextTestRunner()
     runner.run(test_suite)
 
@@ -41,26 +83,36 @@ def test(path):
     test_config["db_conf"]["database_name"] = HarvesterTestCase.DATABASE
 
     # create database environment that harvester test case expects
-    database.create_database(test_config)
+    database.create_database(
+        test_config,
+        test=True
+    )
 
     database.create_user(
         test_config,
         HarvesterTestCase.USER,
-        HarvesterTestCase.USER_PWD
+        HarvesterTestCase.USER_PWD,
+        test=True
     )
     database.create_institution(
         test_config,
         HarvesterTestCase.HARVESTER_INSTITUTION
     )
-    database.create_harvester(
+
+    database.create_harvester_user(
         test_config,
-        HarvesterTestCase.HARVESTER_ID,
-        HarvesterTestCase.HARVESTER_PWD
+        HarvesterTestCase.HARVESTER,
+        HarvesterTestCase.HARVESTER_PWD,
+        test=True
+    )
+    database.create_machine_id(
+        test_config,
+        HarvesterTestCase.MACHINE_ID,
     )
 
-    database.add_harvester_path(
+    database.add_machine_path(
         test_config,
-        HarvesterTestCase.HARVESTER_ID,
+        HarvesterTestCase.MACHINE_ID,
         HarvesterTestCase.DATA_DIR,
         [HarvesterTestCase.USER],
     )

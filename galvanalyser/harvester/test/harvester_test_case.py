@@ -7,18 +7,19 @@ class HarvesterTestCase(unittest.TestCase):
     DATA_DIR = '/usr/data'
     USER = 'test'
     USER_PWD = 'test'
-    HARVESTER_ID = 'test_harvester'
-    HARVESTER_PWD = 'test_harvester'
+    HARVESTER = 'my_test_harvester'
+    MACHINE_ID = 'my_test_harvester'
+    HARVESTER_PWD = 'my_test_harvester'
     DATABASE = "gtest"
     HARVESTER_INSTITUTION = 'Oxford'
 
     @classmethod
     def setUpClass(self):
         self.conn = psycopg2.connect(
-            host="postgres",
-            port=5432,
+            host="galvanalyser_postgres",
+            port=5433,
             database=self.DATABASE,
-            user=self.HARVESTER_ID,
+            user=self.HARVESTER,
             password=self.HARVESTER_PWD,
         )
 

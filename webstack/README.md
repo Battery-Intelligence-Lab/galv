@@ -31,10 +31,16 @@ docker-compose run --rm galvanalyser_app python manage.py create_machine_id
 to add a path to a machine:
 
 ```bash
-docker-compose run --rm galvanalyser_app python manage.py add_harvester_path
+docker-compose run --rm galvanalyser_app python manage.py add_machine_path
 ```
 
-to run:
+to test the harvester code:
+
+```bash
+docker-compose run --rm galvanalyser_app python manage.py test_harvester
+```
+
+to run the stack:
 
 ```bash
 sudo docker-compose up -d
