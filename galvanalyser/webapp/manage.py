@@ -12,11 +12,11 @@ import galvanalyserapp.database as database
 cli = FlaskGroup(app)
 
 @cli.command("test_api")
-@click.option('--path', default='/usr/src/app/galvanalyser/harvester/test')
+@click.option('--path', default='/usr/src/app/galvanalyser/database/test')
 def test_api(path):
     if not os.path.exists(os.path.join(path, 'galvanalyser_test_case.py')):
         raise RuntimeError((
-            'harvester_test_case.py does not exist in {}. '
+            'galvanalyser_test_case.py does not exist in {}. '
             'Is the path correct?').format(path)
         )
 
@@ -26,7 +26,7 @@ def test_api(path):
     test_config = copy.copy(config)
     test_config["db_conf"]["database_name"] = GalvanalyserTestCase.DATABASE
 
-    # create database environment that harvester test case expects
+    # create database environment that test case expects
     database.create_database(
         test_config,
         test=True
@@ -40,25 +40,7 @@ def test_api(path):
     )
     database.create_institution(
         test_config,
-        HarvesterTestCase.HARVESTER_INSTITUTION
-    )
-
-    database.create_harvester_user(
-        test_config,
-        HarvesterTestCase.HARVESTER,
-        HarvesterTestCase.HARVESTER_PWD,
-        test=True
-    )
-    database.create_machine_id(
-        test_config,
-        HarvesterTestCase.MACHINE_ID,
-    )
-
-    database.add_machine_path(
-        test_config,
-        HarvesterTestCase.MACHINE_ID,
-        HarvesterTestCase.DATA_DIR,
-        [HarvesterTestCase.USER],
+        GalvanalyserTestCase.INSTITUTION
     )
 
     # run harvester tests
