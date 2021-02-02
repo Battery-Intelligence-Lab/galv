@@ -7,7 +7,7 @@ CREATE SCHEMA harvesters
 
 GRANT ALL ON SCHEMA harvesters TO postgres;
 
-GRANT USAGE ON SCHEMA harvesters TO harvester;
+GRANT USAGE ON SCHEMA harvesters TO ${harvester_role};
 
 -- Table: harvesters.harvester
 
@@ -29,7 +29,7 @@ TABLESPACE pg_default;
 ALTER TABLE harvesters.harvester
     OWNER to postgres;
 
-GRANT SELECT ON TABLE harvesters.harvester TO harvester;
+GRANT SELECT ON TABLE harvesters.harvester TO ${harvester_role};
 
 GRANT ALL ON TABLE harvesters.harvester TO postgres;
 
@@ -58,7 +58,7 @@ TABLESPACE pg_default;
 ALTER TABLE harvesters.monitored_path
     OWNER to postgres;
 
-GRANT SELECT ON TABLE harvesters.monitored_path TO harvester;
+GRANT SELECT ON TABLE harvesters.monitored_path TO ${harvester_role};
 
 GRANT ALL ON TABLE harvesters.monitored_path TO postgres;
 
@@ -98,7 +98,7 @@ TABLESPACE pg_default;
 ALTER TABLE harvesters.observed_file
     OWNER to postgres;
 
-GRANT INSERT, SELECT, UPDATE, DELETE ON TABLE harvesters.observed_file TO harvester;
+GRANT INSERT, SELECT, UPDATE, DELETE ON TABLE harvesters.observed_file TO ${harvester_role};
 
 GRANT ALL ON TABLE harvesters.observed_file TO postgres;
 
@@ -111,9 +111,9 @@ CREATE SCHEMA experiment
 
 GRANT ALL ON SCHEMA experiment TO postgres;
 
-GRANT USAGE ON SCHEMA experiment TO harvester;
+GRANT USAGE ON SCHEMA experiment TO ${harvester_role};
 
-GRANT USAGE ON SCHEMA experiment TO normal_user;
+GRANT USAGE ON SCHEMA experiment TO ${user_role};
 
 -- Table: experiment.institution
 
@@ -133,9 +133,9 @@ WITH (
 ALTER TABLE experiment.institution
     OWNER to postgres;
 
-GRANT SELECT ON TABLE experiment.institution TO harvester;
+GRANT SELECT ON TABLE experiment.institution TO ${harvester_role};
 
-GRANT SELECT ON TABLE experiment.institution TO normal_user;
+GRANT SELECT ON TABLE experiment.institution TO ${user_role};
 
 -- Table: experiment.dataset
 
@@ -163,15 +163,15 @@ WITH (
 ALTER TABLE experiment.dataset
     OWNER to postgres;
 
-GRANT INSERT, SELECT, TRIGGER ON TABLE experiment.dataset TO harvester;
+GRANT INSERT, SELECT, TRIGGER ON TABLE experiment.dataset TO ${harvester_role};
 
-GRANT SELECT ON TABLE experiment.dataset TO normal_user;
+GRANT SELECT ON TABLE experiment.dataset TO ${user_role};
 
 GRANT ALL ON TABLE experiment.dataset TO postgres;
 
 GRANT ALL ON SEQUENCE experiment.dataset_id_seq TO postgres;
 
-GRANT USAGE ON SEQUENCE experiment.dataset_id_seq TO harvester;
+GRANT USAGE ON SEQUENCE experiment.dataset_id_seq TO ${harvester_role};
 
 -- Table: experiment.misc_file_data
 
@@ -195,7 +195,7 @@ WITH (
 );
 
 ALTER TABLE experiment.misc_file_data
-    OWNER to harvester;
+    OWNER TO ${harvester_role};
 
 -- Table: experiment.access
 
@@ -218,11 +218,11 @@ WITH (
 ALTER TABLE experiment.access
     OWNER to postgres;
 
-GRANT INSERT, SELECT ON TABLE experiment.access TO harvester;
+GRANT INSERT, SELECT ON TABLE experiment.access TO ${harvester_role};
 
 GRANT ALL ON TABLE experiment.access TO postgres;
 
-GRANT SELECT ON TABLE experiment.access TO normal_user;
+GRANT SELECT ON TABLE experiment.access TO ${user_role};
 
 CREATE TABLE experiment.unit
 (
@@ -238,12 +238,12 @@ WITH (
 TABLESPACE pg_default;
 
 ALTER TABLE experiment.unit
-    OWNER to harvester;
+    OWNER TO ${harvester_role};
 
-GRANT SELECT ON TABLE experiment.unit TO normal_user;
+GRANT SELECT ON TABLE experiment.unit TO ${user_role};
 
 ALTER SEQUENCE experiment.unit_id_seq
-    OWNER TO harvester;
+    OWNER TO ${harvester_role};
 
 -- Table: experiment.column_type
 
@@ -266,12 +266,12 @@ WITH (
 TABLESPACE pg_default;
 
 ALTER TABLE experiment.column_type
-    OWNER to harvester;
+    OWNER TO ${harvester_role};
 
-GRANT SELECT ON TABLE experiment.column_type TO normal_user;
+GRANT SELECT ON TABLE experiment.column_type TO ${user_role};
 
 ALTER SEQUENCE experiment.column_type_id_seq
-    OWNER TO harvester;
+    OWNER TO ${harvester_role};
 
 -- Table: experiment."column"
 
@@ -295,12 +295,12 @@ WITH (
 TABLESPACE pg_default;
 
 ALTER TABLE experiment."column"
-    OWNER to harvester;
+    OWNER TO ${harvester_role};
 
-GRANT SELECT ON TABLE experiment."column" TO normal_user;
+GRANT SELECT ON TABLE experiment."column" TO ${user_role};
 
 ALTER SEQUENCE experiment.column_id_seq
-    OWNER TO harvester;
+    OWNER TO ${harvester_role};
 
 -- Add required column
 
@@ -364,9 +364,9 @@ WITH (
 TABLESPACE pg_default;
 
 ALTER TABLE experiment.timeseries_data
-    OWNER to harvester;
+    OWNER TO ${harvester_role};
 
-GRANT SELECT ON TABLE experiment.timeseries_data TO normal_user;
+GRANT SELECT ON TABLE experiment.timeseries_data TO ${user_role};
 
 CREATE INDEX timeseries_data_dataset_id ON experiment.timeseries_data (dataset_id);
 CREATE INDEX timeseries_data_dataset_id_column_id ON experiment.timeseries_data (dataset_id, value) WHERE column_id = 1;
@@ -397,12 +397,12 @@ WITH (
 ALTER TABLE experiment.range_label
     OWNER to postgres;
 
-GRANT INSERT, SELECT, UPDATE ON TABLE experiment.range_label TO harvester;
+GRANT INSERT, SELECT, UPDATE ON TABLE experiment.range_label TO ${harvester_role};
 
-GRANT SELECT ON TABLE experiment.range_label TO normal_user;
+GRANT SELECT ON TABLE experiment.range_label TO ${user_role};
 
-GRANT USAGE ON SEQUENCE experiment.range_label_id_seq TO harvester;
-GRANT USAGE ON SEQUENCE experiment.range_label_id_seq TO normal_user;
+GRANT USAGE ON SEQUENCE experiment.range_label_id_seq TO ${harvester_role};
+GRANT USAGE ON SEQUENCE experiment.range_label_id_seq TO ${user_role};
 
 -- SELECT * FROM experiment.data as d
 -- INNER JOIN experiment.range_label AS m ON
@@ -429,13 +429,13 @@ FOR SELECT USING ( current_user in (SELECT user_name FROM experiment.access
 									WHERE dataset_id = experiment.range_label.dataset_id));
 
 CREATE POLICY dataset_harvester_policy ON experiment.dataset
-FOR ALL TO harvester USING (true);
+FOR ALL TO ${harvester_role} USING (true);
 
 CREATE POLICY access_harvester_policy ON experiment.access
-FOR ALL TO harvester USING (true);
+FOR ALL TO ${harvester_role} USING (true);
 
 CREATE POLICY range_label_harvester_policy ON experiment.range_label
-FOR ALL TO harvester USING (true);
+FOR ALL TO ${harvester_role} USING (true);
 
 -- SCHEMA: user_data
 
@@ -446,7 +446,7 @@ CREATE SCHEMA user_data
 
 GRANT ALL ON SCHEMA user_data TO postgres;
 
-GRANT USAGE ON SCHEMA user_data TO normal_user;
+GRANT USAGE ON SCHEMA user_data TO ${user_role};
 
 CREATE TABLE user_data.range_label
 (
@@ -465,4 +465,4 @@ WITH (
 ALTER TABLE user_data.range_label
     OWNER to postgres;
 
-GRANT INSERT, SELECT, UPDATE ON TABLE user_data.range_label TO normal_user;
+GRANT INSERT, SELECT, UPDATE ON TABLE user_data.range_label TO ${user_role};
