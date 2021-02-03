@@ -1,15 +1,33 @@
 import psycopg2
 from psycopg2 import sql
+import string
 import os
 from pygalvanalyser.harvester.harvester_row import HarvesterRow
 from pygalvanalyser.harvester.monitored_path_row import MonitoredPathRow
 from pygalvanalyser.experiment.institution_row import InstitutionRow
 
-def create_user(config, username, password):
+def create_user(config, username, password, test=False):
     conn = _create_superuser_connection(config)
-    _create_user(conn, username, password, is_harvester=False)
+    if test:
+        role = 'test_user'
+    else:
+        role = 'normal_user'
+
+    _create_user(conn, username, password, role)
     conn.close()
 
+def create_harvester_user(config, harvester, password, test=False):
+    conn = _create_superuser_connection(config)
+
+    if test:
+        role = 'test_harvester'
+    else:
+        role = 'harvester'
+
+    # create harvester user
+    _create_user(conn, harvester, password, role)
+
+    conn.close()
 
 def create_institution(config, name):
     conn = _create_superuser_connection(config)
@@ -18,15 +36,6 @@ def create_institution(config, name):
         InstitutionRow(name=name).insert(conn)
 
     conn.commit()
-    conn.close()
-
-
-def create_harvester_user(config, harvester, password):
-    conn = _create_superuser_connection(config)
-
-    # create harvester user
-    _create_user(conn, harvester, password, is_harvester=True)
-
     conn.close()
 
 
@@ -61,15 +70,15 @@ def add_machine_path(config, machine_id, path, users):
     conn.close()
 
 
-def create_database(config):
+def create_database(config, test=False):
     print('Creating database....')
     _create(config)
     print('Applying initial migrations....')
-    _setup(config)
+    _setup(config, test)
     print('Finished creating database.')
 
 
-def _create_user(conn, username, password, is_harvester=False):
+def _create_user(conn, username, password, role='normal_user'):
     with conn.cursor() as cur:
         # drop user if they exist
         user_ident = sql.Identifier(username)
@@ -77,10 +86,7 @@ def _create_user(conn, username, password, is_harvester=False):
             sql.SQL("DROP USER IF EXISTS {user}").format(user=user_ident)
         )
         # create user
-        user_type = 'normal_user'
-        if is_harvester:
-            user_type = 'harvester'
-        user_type = sql.Identifier(user_type)
+        user_type = sql.Identifier(role)
         cur.execute(sql.SQL(
             """
             CREATE USER {user} WITH
@@ -148,33 +154,31 @@ def _create(config):
     conn.close()
 
 
-def _setup(config):
+def _setup(config, test=False):
     conn = _create_superuser_connection(config)
+    if test:
+        user_role = 'test_user'
+        harvester_role = 'test_harvester'
+    else:
+        user_role = 'normal_user'
+        harvester_role = 'harvester'
+    print('using roles', user_role, harvester_role)
 
     with conn.cursor() as cur:
         # create roles if they dont exist
         cur.execute("SELECT rolname FROM pg_roles;")
         roles = cur.fetchall()
-        if ('normal_user',) not in roles:
-            cur.execute("""
-                CREATE ROLE normal_user WITH
-                  NOLOGIN
-                  NOSUPERUSER
-                  INHERIT
-                  NOCREATEDB
-                  NOCREATEROLE
-                  NOREPLICATION;
-            """)
-        if ('harvester',) not in roles:
-            cur.execute("""
-                CREATE ROLE harvester WITH
-                  NOLOGIN
-                  NOSUPERUSER
-                  INHERIT
-                  NOCREATEDB
-                  NOCREATEROLE
-                  NOREPLICATION;
-            """)
+        for role in [user_role, harvester_role]:
+            if (role,) not in roles:
+                cur.execute(sql.SQL("""
+                    CREATE ROLE {role} WITH
+                      NOLOGIN
+                      NOSUPERUSER
+                      INHERIT
+                      NOCREATEDB
+                      NOCREATEROLE
+                      NOREPLICATION;
+                """).format(role=sql.Identifier(user_role)))
         conn.commit()
 
         # set timezone
@@ -195,7 +199,14 @@ def _setup(config):
             os.path.dirname(__file__),
             "setup.pgsql"
         )
-        cur.execute(open(filename, "r").read())
+        cur.execute(
+            string.Template(
+                open(filename, "r").read()
+            ).substitute(
+                user_role=user_role,
+                harvester_role=harvester_role,
+            )
+        )
 
     conn.commit()
     conn.close()
