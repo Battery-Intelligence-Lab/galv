@@ -24,7 +24,7 @@ from datetime import datetime
 import pygalvanalyser.util.battery_exceptions as battery_exceptions
 from pygalvanalyser.experiment.input_file import InputFile
 
-class IVIUMInputFile(InputFile):
+class IviumInputFile(InputFile):
     """
         A class for handling input files
     """
@@ -106,7 +106,7 @@ class IVIUMInputFile(InputFile):
             return metadata, columns_with_data
 
 
-    def validate_file():
+    def validate_file(self):
         file_path = self.file_path
         if not file_path.endswith(".txt"):
             raise battery_exceptions.UnsupportedFileTypeError

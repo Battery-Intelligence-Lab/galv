@@ -367,10 +367,10 @@ class MaccorInputFile(InputFile):
                 return False
         return True
 
-    def validate_file():
-        if file_path.endswith(".csv") or file_path.endswith(".txt"):
+    def validate_file(self):
+        if self.file_path.endswith(".csv") or self.file_path.endswith(".txt"):
             for sep in [',', '\t']:
-                if self.is_maccor_text_file(file_path, sep):
+                if self.is_maccor_text_file(self.file_path, sep):
                     self.separator = sep
         else:
             raise battery_exceptions.UnsupportedFileTypeError
@@ -542,8 +542,8 @@ class MaccorExcelInputFile(MaccorInputFile):
             print(metadata)
             return metadata, column_info
 
-    def validate_file():
-        if file_path.endswith(".xls") or file_path.endswith(".xls"):
+    def validate_file(self):
+        if self.file_path.endswith(".xls") or self.file_path.endswith(".xls"):
             return
         else:
             raise battery_exceptions.UnsupportedFileTypeError
@@ -634,9 +634,9 @@ class MaccorRawInputFile(MaccorInputFile):
 
         return metadata, column_info
 
-    def validate_file():
+    def validate_file(self):
         print('is_maccor_raw_file')
-        with open(file_path, "r") as f:
+        with open(self.file_path, "r") as f:
             print('got line')
             line = f.readline()
             print('got line', line)

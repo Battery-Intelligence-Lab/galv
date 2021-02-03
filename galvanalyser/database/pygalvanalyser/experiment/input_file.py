@@ -1,7 +1,7 @@
 import pygalvanalyser.util.battery_exceptions as battery_exceptions
 from itertools import accumulate
 import traceback
-from timeseries_data_row import (
+from pygalvanalyser.experiment.timeseries_data_row import (
     RECORD_NO_COLUMN_ID,
     TEST_TIME_COLUMN_ID,
 )
@@ -133,7 +133,7 @@ class InputFile:
         print("Required columns: " + str(required_column_ids))
         # first determine
         file_col_to_std_col = {}
-        print("Full type is " + str(self.type))
+        print("Full type is " + str(type(self)))
         # Get the column mappings the file type knows about
         file_col_to_std_col = self.get_file_column_to_standard_column_mapping()
         print("file_col_to_std_col 1: " + str(file_col_to_std_col))
