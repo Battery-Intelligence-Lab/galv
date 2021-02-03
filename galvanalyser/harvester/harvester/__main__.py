@@ -187,13 +187,12 @@ def import_file(file_path_row, institution_id, harvester_name, conn):
         input_file = None
         for input_file_cls in registered_input_files:
             try:
+                print('Tried input reader {}'.format(input_file_cls))
                 input_file = input_file_cls(fullpath)
-            except battery_exceptions.UnsupportedFileTypeError:
-                print('Tried input reader {}, failed...'
-                      .format(input_file_cls))
+            except Exception as e:
+                print('...failed with: ', type(e), e)
             else:
-                print('Tried input reader {}, succeeded...'
-                      .format(input_file_cls))
+                print('...succeeded...')
                 break
         if input_file is None:
             raise battery_exceptions.UnsupportedFileTypeError

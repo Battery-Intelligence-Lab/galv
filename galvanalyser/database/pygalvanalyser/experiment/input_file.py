@@ -17,8 +17,8 @@ class InputFile:
 
     def __init__(self, file_path):
         self.file_path = file_path
-        self.metadata, self.column_info = self.load_metadata()
         self.validate_file()
+        self.metadata, self.column_info = self.load_metadata()
 
 
     def get_standard_column_to_file_column_mapping(self):

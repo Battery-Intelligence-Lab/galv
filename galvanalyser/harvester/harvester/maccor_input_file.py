@@ -32,7 +32,7 @@ class MaccorInputFile(InputFile):
     def __init__(self, file_path):
         super().__init__(file_path)
 
-    def identify_columns(reader):
+    def identify_columns(self, reader):
         """
             Identifies columns in a maccor csv or tsv file"
         """
@@ -104,16 +104,16 @@ class MaccorInputFile(InputFile):
         return column_info, total_rows, first_rec, last_rec
 
 
-    def load_metadata():
+    def load_metadata(self):
         """
             Load metadata in a maccor csv or tsv file"
         """
         metadata = {}
-        with open(file_path, "r") as csvfile:
+        with open(self.file_path, "r") as csvfile:
             reader = None
-            if "CSV" in file_type:
+            if "CSV" in self.file_type:
                 reader = csv.reader(csvfile, delimiter=",")
-            elif "TSV" in file_type:
+            elif "TSV" in self.file_type:
                 reader = csv.reader(csvfile, delimiter="\t")
             first = next(reader)
             key = clean_key(first[0])
@@ -383,7 +383,7 @@ class MaccorExcelInputFile(MaccorInputFile):
     def __init__(self, file_path):
         super().__init__(file_path)
 
-    def identify_columns(wbook):
+    def identify_columns(self, wbook):
         """
             Identifies columns in a maccor excel file"
         """
@@ -486,14 +486,14 @@ class MaccorExcelInputFile(MaccorInputFile):
                 wbook.unload_sheet(sheet_id)
 
 
-    def load_metadata(file_path):
+    def load_metadata(self):
         """
             Load metadata in a maccor excel file"
         """
-
         metadata = {}
+        metadata['Filename'] = self.file_path
         with xlrd.open_workbook(
-            file_path, on_demand=True, logfile=LogFilter()
+            self.file_path, on_demand=True, logfile=LogFilter()
         ) as wbook:
             sheet = wbook.sheet_by_index(0)
             col = 0
@@ -533,9 +533,8 @@ class MaccorExcelInputFile(MaccorInputFile):
                 "excel format metadata": (dict(metadata), None)
             }
             metadata["Machine Type"] = "Maccor"
-            column_info, total_rows, first_rec, last_rec = identify_columns_maccor_excel(
-                wbook
-            )
+            column_info, total_rows, first_rec, last_rec = \
+                self.identify_columns(wbook)
             metadata["num_rows"] = total_rows
             metadata["first_sample_no"] = first_rec
             metadata["last_sample_no"] = last_rec
@@ -543,7 +542,7 @@ class MaccorExcelInputFile(MaccorInputFile):
             return metadata, column_info
 
     def validate_file(self):
-        if self.file_path.endswith(".xls") or self.file_path.endswith(".xls"):
+        if self.file_path.endswith(".xlsx") or self.file_path.endswith(".xls"):
             return
         else:
             raise battery_exceptions.UnsupportedFileTypeError
@@ -585,9 +584,8 @@ class MaccorRawInputFile(MaccorInputFile):
             ## parse what we have and leave handling anything different to some
             ## future person
             metadata["Machine Type"] = "Maccor"
-            column_info, total_rows, first_rec, last_rec = identify_columns_maccor_text(
-                reader
-            )
+            column_info, total_rows, first_rec, last_rec = \
+                self.identify_columns(reader)
             metadata["num_rows"] = total_rows
             metadata["first_sample_no"] = first_rec
             metadata["last_sample_no"] = last_rec
@@ -596,13 +594,13 @@ class MaccorRawInputFile(MaccorInputFile):
         return metadata, column_info
 
 
-    def load_metadata(file_path):
+    def load_metadata(self):
         """
             Load metadata in a maccor raw file"
         """
         metadata = {}
         column_info = {}
-        with open(file_path, "r") as csvfile:
+        with open(self.file_path, "r") as csvfile:
             reader = csv.reader(csvfile, delimiter="\t")
             first = next(reader)
             metadata["Today's Date"] = maya.parse(
@@ -624,9 +622,8 @@ class MaccorRawInputFile(MaccorInputFile):
             ## parse what we have and leave handling anything different to some
             ## future person
             metadata["Machine Type"] = "Maccor"
-            column_info, total_rows, first_rec, last_rec = self.identify_columns(
-                reader
-            )
+            column_info, total_rows, first_rec, last_rec = \
+                self.identify_columns(reader)
             metadata["num_rows"] = total_rows
             metadata["first_sample_no"] = first_rec
             metadata["last_sample_no"] = last_rec
