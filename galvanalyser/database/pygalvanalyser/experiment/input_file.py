@@ -1,97 +1,13 @@
-#!/usr/bin/env python
-
-# =========================== MRG Copyright Header ===========================
-#
-# Copyright (c) 2003-2019 University of Oxford. All rights reserved.
-# Authors: Mobile Robotics Group, University of Oxford
-#          http://mrg.robots.ox.ac.uk
-#
-# This file is the property of the University of Oxford.
-# Redistribution and use in source and binary forms, with or without
-# modification, is not permitted without an explicit licensing agreement
-# (research or commercial). No warranty, explicit or implicit, provided.
-#
-# =========================== MRG Copyright Header ===========================
-#
-# @author Luke Pitt.
-#
-
 import pygalvanalyser.util.battery_exceptions as battery_exceptions
-import harvester.maccor_functions as maccor_functions
-import harvester.ivium_functions as ivium_functions
 from itertools import accumulate
 import traceback
-from pygalvanalyser.experiment.timeseries_data_row import (
+from timeseries_data_row import (
     RECORD_NO_COLUMN_ID,
     TEST_TIME_COLUMN_ID,
 )
 
 # see https://gist.github.com/jsheedy/ed81cdf18190183b3b7d
 # https://stackoverflow.com/a/30721460
-
-
-def load_metadata(file_type, file_path):
-    """
-        Reads metadata contained in the file and
-        Identifies which columns are present in the file and which have data
-    """
-    if "MACCOR" in file_type:
-        if "EXCEL" in file_type:
-            return maccor_functions.load_metadata_maccor_excel(file_path)
-        elif "RAW" in file_type:
-            return maccor_functions.load_metadata_maccor_raw(file_path)
-        else:
-            return maccor_functions.load_metadata_maccor_text(
-                file_type, file_path
-            )
-    elif "IVIUM" in file_type:
-        if "TXT" in file_type:
-            return ivium_functions.load_metadata_ivium_text(file_path)
-    raise battery_exceptions.UnsupportedFileTypeError
-
-
-def identify_file(file_path):
-    """
-        Returns a string identifying the type of the input file
-    """
-    try:
-        if file_path.endswith(".xls"):
-            return {"EXCEL", "MACCOR"}
-        elif file_path.endswith(".xlsx"):
-            return {"EXCEL", "MACCOR"}
-        elif file_path.endswith(".csv"):
-            if maccor_functions.is_maccor_text_file(file_path, ","):
-                return {"CSV", "MACCOR"}
-            elif maccor_functions.is_maccor_text_file(file_path, "\t"):
-                return {"TSV", "MACCOR"}
-        elif file_path.endswith(".txt"):
-            if file_path.endswith(".mps.txt"):
-                # Bio-Logic settings file, doesn't contain data
-                pass
-            elif file_path.endswith(".mps.txt"):
-                # Bio-Logic text data file
-                pass
-            elif maccor_functions.is_maccor_text_file(file_path, "\t"):
-                return {"TSV", "MACCOR"}
-            elif ivium_functions.is_ivium_text_file(file_path):
-                return {"TXT", "IVIUM"}
-        else:
-            # No extension or unrecognised extension
-            if maccor_functions.is_maccor_raw_file(file_path):
-                return {"RAW", "MACCOR"}
-    except Exception as ex:
-        print("Error identifying file: " + file_path)
-        print(ex)
-    raise battery_exceptions.UnsupportedFileTypeError
-
-
-def get_default_sample_time_setep(file_type):
-    # TODO handle other file types
-    # TODO do something better here
-    if "MACCOR" in file_type:
-        return 1.0 / 60.0
-    else:
-        raise battery_exceptions.UnsupportedFileTypeError
 
 
 class InputFile:
@@ -101,25 +17,9 @@ class InputFile:
 
     def __init__(self, file_path):
         self.file_path = file_path
-        self.type = identify_file(file_path)
-        self.metadata, self.column_info = load_metadata(self.type, file_path)
+        self.metadata, self.column_info = self.load_metadata()
+        self.validate_file()
 
-    def get_file_column_to_standard_column_mapping(self):
-        """
-            returns map of file column name strings to column id numbers
-        """
-        if "MACCOR" in self.type:
-            print("Type is MACCOR")
-            return (
-                maccor_functions.get_maccor_column_to_standard_column_mapping()
-            )
-        elif "IVIUM" in self.type:
-            print("Type is IVIUM")
-            return (
-                ivium_functions.get_ivium_column_to_standard_column_mapping()
-            )
-        else:
-            raise battery_exceptions.UnsupportedFileTypeError
 
     def get_standard_column_to_file_column_mapping(self):
         file_col_to_std_col = self.get_file_column_to_standard_column_mapping()
@@ -287,30 +187,12 @@ class InputFile:
         print("available_desired_columns: " + str(available_desired_columns))
         # now load the available data
         # we need to pass whether the column is numeric to these
-        if "MACCOR" in self.type:
-            if "EXCEL" in self.type:
-                return maccor_functions.load_data_maccor_excel(
-                    self.file_path,
-                    available_desired_columns,
-                    desired_file_cols_to_std_cols,
-                )
-            else:
-                # Handle csv, tsv and raw
-                return maccor_functions.load_data_maccor_text(
-                    self.type,
-                    self.file_path,
-                    available_desired_columns,
-                    desired_file_cols_to_std_cols,
-                )
-        elif "IVIUM" in self.type:
-            if "TXT" in self.type:
-                return ivium_functions.load_data_ivium_text(
-                    self.file_path,
-                    available_desired_columns,
-                    desired_file_cols_to_std_cols,
-                )
+        return self.load_data(
+            self.file_path,
+            available_desired_columns,
+            desired_file_cols_to_std_cols
+        )
 
-        raise battery_exceptions.UnsupportedFileTypeError
 
     def get_data_row_generator(
         self,
@@ -352,13 +234,30 @@ class InputFile:
             traceback.print_exc()
             raise
 
-    def get_data_labels(self):
-        if "MACCOR" in self.type:
-            return maccor_functions.generate_maccor_data_labels(
-                self.type, self.file_path, self.column_info
-            )
-        elif "IVIUM" in self.type:
-            return ivium_functions.generate_ivium_data_labels(
-                self.type, self.file_path, self.column_info
-            )
+    def load_data(self, file_path, available_desired_columns,
+                  desired_file_cols_to_std_cols):
         raise battery_exceptions.UnsupportedFileTypeError
+
+
+    def get_data_labels(self):
+        raise battery_exceptions.UnsupportedFileTypeError
+
+    def get_file_column_to_standard_column_mapping(self):
+        """
+            returns map of file column name strings to column id numbers
+        """
+        raise battery_exceptions.UnsupportedFileTypeError
+
+
+    def load_metadata():
+        raise battery_exceptions.UnsupportedFileTypeError
+
+    def validate_file():
+        raise battery_exceptions.UnsupportedFileTypeError
+
+
+
+
+
+
+
