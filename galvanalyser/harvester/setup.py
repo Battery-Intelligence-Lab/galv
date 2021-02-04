@@ -23,6 +23,7 @@ setuptools.setup(
         'psutil',
         'psycopg2-binary',
         'maya',
-        'xlrd',
+        'xlrd==1.2.0',
+        'openpyxl',
     ]
 )

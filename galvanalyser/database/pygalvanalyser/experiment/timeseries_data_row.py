@@ -17,6 +17,20 @@ class TimeseriesDataRow:
         self.column_id = column_id
         self.value = value
 
+    def __str__(self):
+        return (
+            'TimeseriesDataRow(dataset_id={}, sample_no={} '
+            'column_id={}, value={})'
+        ).format(
+            self.dataset_id,
+            self.sample_no,
+            self.column_id,
+            self.value
+        )
+
+    def __repr__(self):
+        return self.__str__()
+
     def insert(self, conn):
         with conn.cursor() as cursor:
             cursor.execute(

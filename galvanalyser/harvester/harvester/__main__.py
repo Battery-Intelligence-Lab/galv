@@ -16,12 +16,25 @@ from pygalvanalyser.experiment.access_row import AccessRow
 from pygalvanalyser.experiment.timeseries_data_row import (
     TimeseriesDataRow,
 )
-from .input_file import InputFile
 from pygalvanalyser.experiment.range_label_row import RangeLabelRow
 from pygalvanalyser.experiment.misc_file_data_row import MiscFileDataRow
 import pygalvanalyser.util.battery_exceptions as battery_exceptions
 
 import traceback
+
+from .ivium_input_file import IviumInputFile
+from .maccor_input_file import (
+    MaccorInputFile,
+    MaccorExcelInputFile,
+    MaccorRawInputFile,
+)
+
+registered_input_files = [
+    IviumInputFile,
+    MaccorInputFile,
+    MaccorExcelInputFile,
+    MaccorRawInputFile,
+]
 
 
 def has_handle(fpath):
@@ -171,7 +184,19 @@ def import_file(file_path_row, institution_id, harvester_name, conn):
         # TODO handle rows in the dataset and access tables with no
         # corresponding data since the import might fail while reading the data
         # anyway
-        input_file = InputFile(fullpath)
+        input_file = None
+        for input_file_cls in registered_input_files:
+            try:
+                print('Tried input reader {}'.format(input_file_cls))
+                input_file = input_file_cls(fullpath)
+            except Exception as e:
+                print('...failed with: ', type(e), e)
+            else:
+                print('...succeeded...')
+                break
+        if input_file is None:
+            raise battery_exceptions.UnsupportedFileTypeError
+
         # use a transaction to avoid generating dataset rows if import fails
         conn.autocommit = False
         with conn:
