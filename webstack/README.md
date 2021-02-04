@@ -40,6 +40,12 @@ to test the harvester code:
 docker-compose run --rm galvanalyser_app python manage.py test_harvester
 ```
 
+to test the api code:
+
+```bash
+docker-compose run --rm galvanalyser_app python manage.py test_api
+```
+
 to run the stack:
 
 ```bash
