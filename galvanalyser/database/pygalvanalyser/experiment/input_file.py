@@ -17,7 +17,6 @@ class InputFile:
 
     def __init__(self, file_path):
         self.file_path = file_path
-        self.validate_file()
         self.metadata, self.column_info = self.load_metadata()
 
 
@@ -238,7 +237,7 @@ class InputFile:
                   desired_file_cols_to_std_cols):
         raise battery_exceptions.UnsupportedFileTypeError
 
-
+    # TODO: can't see this used anywhere?
     def get_data_labels(self):
         raise battery_exceptions.UnsupportedFileTypeError
 

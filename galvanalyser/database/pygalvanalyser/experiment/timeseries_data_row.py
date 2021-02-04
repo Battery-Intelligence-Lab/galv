@@ -8,7 +8,12 @@ import pygalvanalyser.util.battery_exceptions as battery_exceptions
 
 RECORD_NO_COLUMN_ID = 0
 TEST_TIME_COLUMN_ID = 1
-
+VOLTAGE_COLUMN_ID = 2
+AMPS_COLUMN_ID = 3
+ENERGY_CAPACITY_COLUMN_ID = 4
+CHARGE_CAPACITY_COLUMN_ID = 5
+TEMPERATURE_COLUMN_ID = 6
+STEP_TIME_COLUMN_ID = 7
 
 class TimeseriesDataRow:
     def __init__(self, dataset_id, sample_no, column_id, value):

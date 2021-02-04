@@ -30,6 +30,7 @@ class IviumInputFile(InputFile):
     """
 
     def __init__(self, file_path):
+        self.validate_file(file_path)
         super().__init__(file_path)
 
     def get_file_column_to_standard_column_mapping(self):
@@ -106,8 +107,7 @@ class IviumInputFile(InputFile):
             return metadata, columns_with_data
 
 
-    def validate_file(self):
-        file_path = self.file_path
+    def validate_file(self, file_path):
         if not file_path.endswith(".txt"):
             raise battery_exceptions.UnsupportedFileTypeError
         with open(file_path, "r") as f:

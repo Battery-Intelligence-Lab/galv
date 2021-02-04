@@ -25,5 +25,6 @@ setuptools.setup(
         'maya',
         'xlrd==1.2.0',
         'openpyxl',
+        'galvani',
     ]
 )

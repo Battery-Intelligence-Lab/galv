@@ -30,6 +30,7 @@ class MaccorInputFile(InputFile):
     """
 
     def __init__(self, file_path):
+        self.validate_file(file_path)
         super().__init__(file_path)
 
     def identify_columns(self, reader):
@@ -342,7 +343,7 @@ class MaccorInputFile(InputFile):
                     rec_no + 1,
                 )
 
-    def is_maccor_text_file(file_path, sep):
+    def is_maccor_text_file(self, file_path, sep):
         with open(file_path, "r") as f:
             line = f.readline()
             line_start = "Today''s Date" + delimiter
@@ -367,10 +368,10 @@ class MaccorInputFile(InputFile):
                 return False
         return True
 
-    def validate_file(self):
-        if self.file_path.endswith(".csv") or self.file_path.endswith(".txt"):
+    def validate_file(self, file_path):
+        if file_path.endswith(".csv") or file_path.endswith(".txt"):
             for sep in [',', '\t']:
-                if self.is_maccor_text_file(self.file_path, sep):
+                if self.is_maccor_text_file(file_path, sep):
                     self.separator = sep
         else:
             raise battery_exceptions.UnsupportedFileTypeError
@@ -381,6 +382,7 @@ class MaccorExcelInputFile(MaccorInputFile):
         A class for handling input files
     """
     def __init__(self, file_path):
+        self.validate_file(file_path)
         super().__init__(file_path)
 
     def identify_columns(self, wbook):
@@ -541,8 +543,8 @@ class MaccorExcelInputFile(MaccorInputFile):
             print(metadata)
             return metadata, column_info
 
-    def validate_file(self):
-        if self.file_path.endswith(".xlsx") or self.file_path.endswith(".xls"):
+    def validate_file(self, file_path):
+        if file_path.endswith(".xlsx") or file_path.endswith(".xls"):
             return
         else:
             raise battery_exceptions.UnsupportedFileTypeError
@@ -552,6 +554,7 @@ class MaccorRawInputFile(MaccorInputFile):
         A class for handling input files
     """
     def __init__(self, file_path):
+        self.validate_file(file_path)
         super().__init__(file_path)
 
 
@@ -631,9 +634,9 @@ class MaccorRawInputFile(MaccorInputFile):
 
         return metadata, column_info
 
-    def validate_file(self):
+    def validate_file(self, file_path):
         print('is_maccor_raw_file')
-        with open(self.file_path, "r") as f:
+        with open(file_path, "r") as f:
             print('got line')
             line = f.readline()
             print('got line', line)

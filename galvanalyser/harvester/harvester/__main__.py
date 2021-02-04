@@ -23,6 +23,7 @@ import pygalvanalyser.util.battery_exceptions as battery_exceptions
 import traceback
 
 from .ivium_input_file import IviumInputFile
+from .biologic_input_file import BiologicMprInputFile
 from .maccor_input_file import (
     MaccorInputFile,
     MaccorExcelInputFile,
@@ -30,6 +31,7 @@ from .maccor_input_file import (
 )
 
 registered_input_files = [
+    BiologicMprInputFile,
     IviumInputFile,
     MaccorInputFile,
     MaccorExcelInputFile,
