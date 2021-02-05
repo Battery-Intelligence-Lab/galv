@@ -238,6 +238,7 @@ def import_file(file_path_row, institution_id, harvester_name, conn):
                 TimeseriesDataRow.insert_input_file(
                     input_file, dataset_id, conn
                 )
+                print("Finished inserting Data")
             elif (
                 TimeseriesDataRow.select_one_from_dataset_id_and_sample_no(
                     dataset_id, input_file.metadata["last_sample_no"], conn
@@ -293,10 +294,7 @@ def import_file(file_path_row, institution_id, harvester_name, conn):
         print("Import failed for " + fullpath)
         # perhaps the exception should be saved to the database
         # print it for now during development
-        if isinstance(e, battery_exceptions.UnsupportedFileTypeError):
-            print("File format not supported")
-        else:
-            traceback.print_exc()
+        traceback.print_exc()
     finally:
         conn.autocommit = True
 

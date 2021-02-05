@@ -56,6 +56,10 @@ class BiologicMprInputFile(InputFile):
                 for name, col_idx in new_column_names_to_idx.items()
             }
 
+    def get_data_labels(self):
+        for item in []:
+            yield item
+
     def load_metadata(self):
         file_path = self.file_path
         metadata = {}
