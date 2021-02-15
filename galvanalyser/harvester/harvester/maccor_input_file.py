@@ -394,9 +394,15 @@ class MaccorExcelInputFile(MaccorInputFile):
         headers = []
         numeric_columns = []
         column_is_numeric = []
+        if self._has_metadata_row:
+            headers_row = 1
+        else:
+            headers_row = 0
         for col in range(0, sheet.ncols):
-            headers.append(sheet.cell_value(1, col))
-            is_numeric = isfloat(sheet.cell_value(2, col))
+            headers.append(sheet.cell_value(headers_row, col))
+            is_numeric = isfloat(
+                sheet.cell_value(headers_row+1, col)
+            )
             column_is_numeric.append(is_numeric)
             if is_numeric:
                 numeric_columns.append(col)
@@ -406,7 +412,7 @@ class MaccorExcelInputFile(MaccorInputFile):
         print("numeric_columns: {}".format(numeric_columns))
         try:
             recno_col = headers.index("Rec#")
-            first_rec = sheet.cell_value(2, recno_col)
+            first_rec = sheet.cell_value(headers_row+1, recno_col)
         except ValueError:
             # Don't have record numbers, make them up
             first_rec = 1
@@ -414,8 +420,8 @@ class MaccorExcelInputFile(MaccorInputFile):
         for sheet_id in range(0, wbook.nsheets):
             print("Loading sheet... " + str(sheet_id))
             sheet = wbook.sheet_by_index(sheet_id)
-            total_rows += sheet.nrows - 2
-            for row in range(2, sheet.nrows):
+            total_rows += sheet.nrows - 1 - int(self._has_metadata_row)
+            for row in range(headers_row+1, sheet.nrows):
                 for column in numeric_columns[:]:
                     if float(sheet.cell_value(row, column)) != 0.0:
                         column_has_data[column] = True
@@ -432,7 +438,7 @@ class MaccorExcelInputFile(MaccorInputFile):
                 # for sure if the last sheet actually will have data
                 try:
                     recno_col = headers.index("Rec#")
-                    last_rec = sheet.cell_value(2, row)
+                    last_rec = sheet.cell_value(headers_row+1, row)
                 except ValueError:
                     # Don't have record numbers, make them up
                     last_rec = total_rows
@@ -450,12 +456,16 @@ class MaccorExcelInputFile(MaccorInputFile):
         return column_info, total_rows, first_rec, last_rec
 
 
-
     def load_data(self, file_type, file_path,
                   columns, column_renames=None):
         """
             Load metadata in a maccor excel file"
         """
+        if self._has_metadata_row:
+            headers_row = 1
+        else:
+            headers_row = 0
+
         with xlrd.open_workbook(
             file_path, on_demand=True, logfile=LogFilter()
         ) as wbook:
@@ -464,7 +474,7 @@ class MaccorExcelInputFile(MaccorInputFile):
             column_names = []
             recno_col = -1
             for col in range(0, sheet.ncols):
-                column_name = sheet.cell_value(1, col)
+                column_name = sheet.cell_value(headers_row, col)
                 if column_name in columns:
                     columns_of_interest.append(col)
                 if column_name == "Rec#":
@@ -475,7 +485,7 @@ class MaccorExcelInputFile(MaccorInputFile):
             for sheet_id in range(0, wbook.nsheets):
                 print("Loading sheet..." + str(sheet_id))
                 sheet = wbook.sheet_by_index(sheet_id)
-                for row in range(2, sheet.nrows):
+                for row in range(headers_row+1, sheet.nrows):
                     yield {
                         column_names[col_idx]: (
                             sheet.cell_value(row, col_idx)
@@ -501,39 +511,42 @@ class MaccorExcelInputFile(MaccorInputFile):
             col = 0
             if sheet.ncols == 0:
                 raise battery_exceptions.EmptyFileError()
-            while col < sheet.ncols:
-                key = sheet.cell_value(0, col)
-                if not key:
-                    break
-                key = clean_key(key)
-                if "Date" in key:
-                    metadata[key] = xlrd.xldate.xldate_as_datetime(
-                        sheet.cell_value(0, col + 1), wbook.datemode
-                    )
-                    print(
-                        "key "
-                        + key
-                        + " value: "
-                        + str(sheet.cell_value(0, col + 1))
-                        + " - datemode: "
-                        + str(wbook.datemode)
-                    )
+            elif "Cyc#" in sheet.cell_value(0, 0):
+                self._has_metadata_row = False
+            if self._has_metadata_row:
+                while col < sheet.ncols:
+                    key = sheet.cell_value(0, col)
+                    if not key:
+                        break
+                    key = clean_key(key)
+                    if "Date" in key:
+                        metadata[key] = xlrd.xldate.xldate_as_datetime(
+                            sheet.cell_value(0, col + 1), wbook.datemode
+                        )
+                        print(
+                            "key "
+                            + key
+                            + " value: "
+                            + str(sheet.cell_value(0, col + 1))
+                            + " - datemode: "
+                            + str(wbook.datemode)
+                        )
+                        col = col + 1
+                    elif "Procedure" in key:
+                        metadata[key] = (
+                            clean_value(sheet.cell_value(0, col + 1))
+                            + "\t"
+                            + clean_value(sheet.cell_value(0, col + 2))
+                        )
+                        col = col + 2
+                    else:
+                        metadata[key] = sheet.cell_value(0, col + 1)
+                        col = col + 1
                     col = col + 1
-                elif "Procedure" in key:
-                    metadata[key] = (
-                        clean_value(sheet.cell_value(0, col + 1))
-                        + "\t"
-                        + clean_value(sheet.cell_value(0, col + 2))
-                    )
-                    col = col + 2
-                else:
-                    metadata[key] = sheet.cell_value(0, col + 1)
-                    col = col + 1
-                col = col + 1
+                metadata["misc_file_data"] = {
+                    "excel format metadata": (dict(metadata), None)
+                }
             metadata["Dataset Name"] = ntpath.basename(metadata["Filename"])
-            metadata["misc_file_data"] = {
-                "excel format metadata": (dict(metadata), None)
-            }
             metadata["Machine Type"] = "Maccor"
             column_info, total_rows, first_rec, last_rec = \
                 self.identify_columns(wbook)
@@ -549,6 +562,7 @@ class MaccorExcelInputFile(MaccorInputFile):
         else:
             raise battery_exceptions.UnsupportedFileTypeError
 
+
 class MaccorRawInputFile(MaccorInputFile):
     """
         A class for handling input files
@@ -556,46 +570,6 @@ class MaccorRawInputFile(MaccorInputFile):
     def __init__(self, file_path):
         self.validate_file(file_path)
         super().__init__(file_path)
-
-
-    def load_data(self, file_type, file_path,
-                  columns, column_renames=None):
-        """
-            Load metadata in a maccor raw file"
-        """
-        metadata = {}
-        column_info = {}
-        with open(file_path, "r") as csvfile:
-            reader = csv.reader(csvfile, delimiter="\t")
-            first = next(reader)
-            metadata["Today's Date"] = maya.parse(
-                first[0].split(" ")[2], year_first=False
-            ).datetime()
-            metadata["Date of Test"] = maya.parse(
-                first[1], year_first=False
-            ).datetime()
-            metadata["Filename"] = first[3].split(" Procedure:")[0]
-            metadata["Dataset Name"] = ntpath.basename(metadata["Filename"])
-            # Just shove everything in the misc_file_data for now rather than
-            # trying to parse it
-            metadata["File Header Parts"] = first
-            metadata["misc_file_data"] = {
-                "raw format metadata": (dict(metadata), None)
-            }
-            # Identify columns, what happens with the aux fields?
-            ## This question can't be answered for a few months so just make this
-            ## parse what we have and leave handling anything different to some
-            ## future person
-            metadata["Machine Type"] = "Maccor"
-            column_info, total_rows, first_rec, last_rec = \
-                self.identify_columns(reader)
-            metadata["num_rows"] = total_rows
-            metadata["first_sample_no"] = first_rec
-            metadata["last_sample_no"] = last_rec
-            print(metadata)
-
-        return metadata, column_info
-
 
     def load_metadata(self):
         """
