@@ -61,6 +61,7 @@ class TestHarvester(HarvesterTestCase):
         for root, dirs, files in os.walk(self.DATA_DIR):
             for name in files:
                 # check that filename is in list of files
+                print(name)
                 file = ObservedFileRow.select_from_id_and_path(
                     monitor_path.monitor_path_id,
                     name,
