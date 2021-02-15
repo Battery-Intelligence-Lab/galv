@@ -22,6 +22,7 @@ import ntpath
 import re
 import pygalvanalyser.util.battery_exceptions as battery_exceptions
 import xlrd
+from datetime import datetime
 from pygalvanalyser.experiment.input_file import InputFile
 
 class MaccorInputFile(InputFile):
@@ -171,7 +172,7 @@ class MaccorInputFile(InputFile):
         print("filtered_values: " + str(filtered_values))
         return (filtered_values)
 
-    def load_data(self, file_type, file_path,
+    def load_data(self, file_path,
                   columns, column_renames=None):
         """
             Load data in a maccor csv or tsv file"
@@ -215,7 +216,6 @@ class MaccorInputFile(InputFile):
 
 
     def get_data_labels(self):
-        file_type = self.file_type
         file_path = self.file_path
         column_info = self.column_info
         columns = [
@@ -456,7 +456,7 @@ class MaccorExcelInputFile(MaccorInputFile):
         return column_info, total_rows, first_rec, last_rec
 
 
-    def load_data(self, file_type, file_path,
+    def load_data(self, file_path,
                   columns, column_renames=None):
         """
             Load metadata in a maccor excel file"
@@ -509,6 +509,7 @@ class MaccorExcelInputFile(MaccorInputFile):
         ) as wbook:
             sheet = wbook.sheet_by_index(0)
             col = 0
+            self._has_metadata_row = True
             if sheet.ncols == 0:
                 raise battery_exceptions.EmptyFileError()
             elif "Cyc#" in sheet.cell_value(0, 0):
@@ -546,7 +547,14 @@ class MaccorExcelInputFile(MaccorInputFile):
                 metadata["misc_file_data"] = {
                     "excel format metadata": (dict(metadata), None)
                 }
-            metadata["Dataset Name"] = ntpath.basename(metadata["Filename"])
+            if "Dataset Name" not in metadata:
+                metadata["Dataset Name"] = os.path.splitext(
+                    ntpath.basename(self.file_path)
+                )[0]
+            if "Date of Test" not in metadata:
+                metadata["Date of Test"] = datetime.fromtimestamp(
+                    os.path.getctime(self.file_path)
+                )
             metadata["Machine Type"] = "Maccor"
             column_info, total_rows, first_rec, last_rec = \
                 self.identify_columns(wbook)
