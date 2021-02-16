@@ -112,11 +112,8 @@ class MaccorInputFile(InputFile):
         """
         metadata = {}
         with open(self.file_path, "r") as csvfile:
-            reader = None
-            if "CSV" in self.file_type:
-                reader = csv.reader(csvfile, delimiter=",")
-            elif "TSV" in self.file_type:
-                reader = csv.reader(csvfile, delimiter="\t")
+            reader = csv.reader(csvfile, delimiter=self.delimiter)
+            self.num_header_rows = 2
             first = next(reader)
             key = clean_key(first[0])
             metadata[key] = maya.parse(first[1]).datetime()
@@ -124,7 +121,7 @@ class MaccorInputFile(InputFile):
             key = clean_key(second[0])
             metadata[key] = maya.parse(second[1]).datetime()
             metadata["Dataset Name"] = os.path.splitext(
-                ntpath.basename(file_path)
+                ntpath.basename(self.file_path)
             )[0]
             metadata["Machine Type"] = "Maccor"
             column_info, total_rows, first_rec, last_rec = \
@@ -182,16 +179,13 @@ class MaccorInputFile(InputFile):
             column_renames = {col: col for col in columns}
 
         with open(file_path, "r") as csvfile:
-            first = csvfile.readline()
-            if "RAW" not in file_type:
-                second = csvfile.readline()
-            reader = None
-            if "CSV" in file_type:
-                reader = csv.reader(csvfile, delimiter=",")
-            elif "TSV" in file_type:
-                reader = csv.reader(csvfile, delimiter="\t")
-            elif "RAW" in file_type:
-                reader = csv.reader(csvfile, delimiter="\t")
+            # get rid of metadata rows
+            csvfile.readline()
+            if self.num_header_rows > 1:
+                csvfile.readline()
+
+            # remainder is csv format
+            reader = csv.reader(csvfile, delimiter=self.delimiter)
             columns_of_interest = []
             column_names = [header for header in next(reader) if header != ""]
             correct_number_of_columns = len(column_names)
@@ -343,7 +337,7 @@ class MaccorInputFile(InputFile):
                     rec_no + 1,
                 )
 
-    def is_maccor_text_file(self, file_path, sep):
+    def is_maccor_text_file(self, file_path, delimiter):
         with open(file_path, "r") as f:
             line = f.readline()
             line_start = "Today''s Date" + delimiter
@@ -369,12 +363,19 @@ class MaccorInputFile(InputFile):
         return True
 
     def validate_file(self, file_path):
-        if file_path.endswith(".csv") or file_path.endswith(".txt"):
-            for sep in [',', '\t']:
-                if self.is_maccor_text_file(file_path, sep):
-                    self.separator = sep
-        else:
+        if not (
+                file_path.endswith(".csv") or
+                file_path.endswith(".txt")
+        ):
             raise battery_exceptions.UnsupportedFileTypeError
+
+        self.delimiter = None
+        for delim in [',', '\t']:
+            if self.is_maccor_text_file(file_path, delim):
+                self.delimiter = delim
+        if self.delimiter is None:
+            raise battery_exceptions.UnsupportedFileTypeError
+
 
 
 class MaccorExcelInputFile(MaccorInputFile):
@@ -578,6 +579,7 @@ class MaccorRawInputFile(MaccorInputFile):
     def __init__(self, file_path):
         self.validate_file(file_path)
         super().__init__(file_path)
+        self.delimiter = '\t'
 
     def load_metadata(self):
         """
@@ -587,6 +589,7 @@ class MaccorRawInputFile(MaccorInputFile):
         column_info = {}
         with open(self.file_path, "r") as csvfile:
             reader = csv.reader(csvfile, delimiter="\t")
+            self.num_header_rows = 1
             first = next(reader)
             metadata["Today's Date"] = maya.parse(
                 first[0].split(" ")[2], year_first=False
