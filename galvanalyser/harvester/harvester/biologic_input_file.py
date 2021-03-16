@@ -41,24 +41,46 @@ class BiologicMprInputFile(InputFile):
         }
 
     def load_data(self, file_path, columns, column_renames=None):
-        print('load_data from columns', columns)
-        new_column_names_to_idx = copy.copy(self.column_names_to_idx)
-
-        if column_renames is not None:
-            for name, new_name in column_renames.items():
-                new_column_names_to_idx[new_name] = \
-                    self.column_names_to_idx[name]
-                del new_column_names_to_idx[name]
-
+        columns_of_interest = []
+        column_names = list(self.mpr_file.data.dtype.names)
+        for col_idx, column_name in enumerate(column_names):
+            if column_name in columns:
+                columns_of_interest.append(col_idx)
+            if column_renames is not None and column_name in column_renames:
+                column_names[col_idx] = column_renames[column_name]
         for row in self.mpr_file.data:
             yield {
-                name: row[col_idx]
-                for name, col_idx in new_column_names_to_idx.items()
+                column_names[col_idx]: row[col_idx]
+                for col_idx in columns_of_interest
             }
 
     def get_data_labels(self):
-        for item in []:
-            yield item
+        modes = self.mpr_file.get_flag('mode')
+        Ns_changes = self.mpr_file.get_flag('Ns changes')
+        Ns_index = self.mpr_file.data.dtype.names.index('Ns')
+        mode_labels = {
+            1: 'CC',
+            2: 'CV',
+            3: 'Rest',
+        }
+        last_Ns_change = 1
+        for i in range(len(self.mpr_file.data)):
+            last_mode = modes[i-1]
+            last_Ns = self.mpr_file.data[i-1][Ns_index]
+            Ns_change = Ns_changes[i]
+            if Ns_change:
+                if last_mode in mode_labels:
+                    yield (
+                        'cycle_{}_{}'.format(last_Ns,
+                                             mode_labels[last_mode]),
+                        (last_Ns_change, i-1)
+                    )
+                else:
+                    yield (
+                        'cycle_{}'.format(last_Ns),
+                        (last_Ns_change, i-1)
+                    )
+                last_Ns_change = i
 
     def load_metadata(self):
         file_path = self.file_path
@@ -68,19 +90,9 @@ class BiologicMprInputFile(InputFile):
             os.path.splitext(ntpath.basename(file_path))[0]
         metadata["Date of Test"] = self.mpr_file.startdate
 
-        num_cols = len(self.mpr_file.data[0])
-        VMPdata_colID_map = {}
-        VMPdata_colID_map.update(VMPdata_colID_dtype_map)
-        VMPdata_colID_map.update(VMPdata_colID_flag_map)
-
-        self.column_names_to_idx = {}
-        for k, v in VMPdata_colID_map.items():
-            if k < num_cols:
-                self.column_names_to_idx[v[0]] = k
-
         columns_with_data = {
             name: {"has_data": True, "is_numeric": True}
-            for name in self.column_names_to_idx.keys()
+            for name in self.mpr_file.data.dtype.names
         }
         metadata["num_rows"] = len(self.mpr_file.data)
         metadata["first_sample_no"] = 1
