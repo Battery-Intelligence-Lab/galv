@@ -85,9 +85,70 @@ class IviumInputFile(InputFile):
                     for col_idx in columns_of_interest
                 }
 
+    def _get_end_task_function(self, task):
+        def duration(row):
+            return row['test_time'] > task['Duration']
+        def E_greater_than(row):
+            return row['volts'] > task['E>']
+        def E_less_than(row):
+            return row['volts'] < task['E<']
+        def I_greater_than(row):
+            return row['amps'] > task['I<']
+        def I_less_than(row):
+            return row['amps'] < task['I<']
+
+        end_funcs = []
+        for end_key in ['End1', 'End2', 'End3', 'End4']:
+            end = task[end_key]
+            if end == 'Duration':
+                end_funcs.append(duration)
+            elif end == 'E>':
+                end_funcs.append(E_greater_than)
+            elif end == 'E<':
+                end_funcs.append(E_less_than)
+            elif end == 'I>':
+                end_funcs.append(I_greater_than)
+            elif end == 'I<':
+                end_funcs.append(I_less_than)
+            elif end == 'select':
+                continue
+            else:
+                raise battery_exceptions.UnsupportedFileTypeError(
+                    'task end condition {} unknown'.format(end)
+                )
+
+        def is_end_task(row):
+            is_end = False
+            for f in end_funcs:
+                is_end |= f(row)
+            return is_end
+
+        return is_end_task
+
+
     def get_data_labels(self):
-        for i in []:
-            yield i
+        column_names = ["test_time", "amps", "volts"]
+        task_index = 0
+        current_task = self._file_metadata['Tasks'][task_index]
+        is_end_task = self._get_end_task_function(current_task)
+        start_task_row = 0
+        end_task_row = 0
+        for row in self.load_data(self.file_path, column_names):
+            end_task_row += 1
+            if is_end_task(row):
+                yield (
+                    'task_{}_{}'.format(task_index, current_task['Mode']),
+                    (start_task_row, end_task_row)
+                )
+
+                task_index += 1
+                if task_index < len(self._file_metadata['Tasks']):
+                    current_task = self._file_metadata['Tasks'][task_index]
+                    is_end_task = self._get_end_task_function(current_task)
+                    start_task_row = end_task_row
+                else:
+                    break
+
 
     def _load_ivium_metadata(self):
         file_path = self.file_path

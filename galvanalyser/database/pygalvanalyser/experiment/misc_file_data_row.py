@@ -31,9 +31,10 @@ class MiscFileDataRow:
         self.binary_data = binary_data
 
     def insert(self, conn):
-        # make sure we dont have any null unicode values in there
+        # make sure we dont have any null unicode values in the json
         json_str = json.dumps(self.json_data, default=json_serial)
         json_str = json_str.replace(r'\u0000', '')
+
         with conn.cursor() as cursor:
             cursor.execute(
                 (
