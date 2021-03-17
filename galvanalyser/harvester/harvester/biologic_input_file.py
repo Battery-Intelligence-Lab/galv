@@ -71,13 +71,13 @@ class BiologicMprInputFile(InputFile):
             if Ns_change:
                 if last_mode in mode_labels:
                     yield (
-                        'cycle_{}_{}'.format(last_Ns,
+                        'Ns_{}_{}'.format(last_Ns,
                                              mode_labels[last_mode]),
                         (last_Ns_change, i-1)
                     )
                 else:
                     yield (
-                        'cycle_{}'.format(last_Ns),
+                        'Ns_{}'.format(last_Ns),
                         (last_Ns_change, i-1)
                     )
                 last_Ns_change = i

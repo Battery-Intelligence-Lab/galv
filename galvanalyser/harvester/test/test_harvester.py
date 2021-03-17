@@ -5,11 +5,25 @@ from pygalvanalyser.harvester.harvester_row import HarvesterRow
 from pygalvanalyser.harvester.monitored_path_row import MonitoredPathRow
 from pygalvanalyser.harvester.observed_file_row import ObservedFileRow
 from pygalvanalyser.experiment.dataset_row import DatasetRow
+from harvester.ivium_input_file import IviumInputFile
 
 import os
 import json
 from datetime import datetime, timezone, timedelta
+import glob
 
+
+class TestIviumFileFormat(HarvesterTestCase):
+    def test_read_idf_files(self):
+        for filename in glob.glob(self.DATA_DIR + '/*.idf'):
+            input_file = IviumInputFile(filename)
+            input_file.validate_file(filename)
+            metadata, columns = input_file.load_metadata()
+            data_generator = input_file.load_data(
+                filename, ["amps", "volts", "test_time"]
+            )
+            num_samples = sum(1 for d in data_generator)
+            self.assertEqual(num_samples, metadata['num_rows'])
 
 class TestHarvester(HarvesterTestCase):
     # well capture all the filename that failed here

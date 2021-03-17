@@ -51,7 +51,8 @@ def test_api(path):
 
 @cli.command("test_harvester")
 @click.option('--path', default='/usr/src/app/galvanalyser/harvester/test')
-def test(path):
+@click.option('--test', default='')
+def test(path, test):
     if not os.path.exists(os.path.join(path, 'harvester_test_case.py')):
         raise RuntimeError((
             'harvester_test_case.py does not exist in {}. '
@@ -100,7 +101,11 @@ def test(path):
     )
 
     # run harvester tests
-    test_suite = unittest.defaultTestLoader.discover(path)
+    if test == '':
+        test_suite = unittest.defaultTestLoader.discover(path)
+    else:
+        test_suite = unittest.defaultTestLoader.loadTestsFromName(test)
+
     runner = unittest.TextTestRunner()
     runner.run(test_suite)
 
