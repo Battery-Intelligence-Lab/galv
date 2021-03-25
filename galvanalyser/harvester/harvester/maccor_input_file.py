@@ -85,6 +85,7 @@ class MaccorInputFile(InputFile):
                             row_idx,
                         )
                     )
+
         column_info = {
             headers[i]: {
                 "has_data": column_has_data[i],
@@ -92,6 +93,24 @@ class MaccorInputFile(InputFile):
             }
             for i in range(0, len(headers))
         }
+
+        # add unit info for known columns
+        known_units = {
+            "Amp-hr": 'Amp-hr',
+            "Amps": 'Amps',
+            "Watt-hr": 'Watt-hr',
+            "StepTime": 's',
+            "Step (Sec)": 's',
+            "Volts": 'Volts',
+            "TestTime": 's',
+            "Test (Sec)": 's',
+            "Rec#": '',
+            "Temp 1": 'celsius',
+        }
+        for name, info in column_info.items():
+            if name in known_units:
+                column_info[name]['unit'] = known_units[name]
+
         # account for 0 based indexing
         total_rows = row_idx + 1
         if recno_col == -1:
@@ -445,6 +464,7 @@ class MaccorExcelInputFile(MaccorInputFile):
                     last_rec = total_rows
             print("Unloading sheet " + str(sheet_id))
             wbook.unload_sheet(sheet_id)
+
         column_info = {
             headers[i]: {
                 "has_data": column_has_data[i],

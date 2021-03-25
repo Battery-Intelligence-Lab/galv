@@ -5,116 +5,11 @@ from pygalvanalyser.harvester.harvester_row import HarvesterRow
 from pygalvanalyser.harvester.monitored_path_row import MonitoredPathRow
 from pygalvanalyser.harvester.observed_file_row import ObservedFileRow
 from pygalvanalyser.experiment.dataset_row import DatasetRow
-import pygalvanalyser.util.battery_exceptions as battery_exceptions
-from harvester.ivium_input_file import IviumInputFile
-from harvester.biologic_input_file import BiologicMprInputFile
-from harvester.maccor_input_file import MaccorInputFile
 
 import os
 import json
 from datetime import datetime, timezone, timedelta
-import glob
 
-class TestMaccorFileFormat(HarvesterTestCase):
-    def test_units(self):
-        for filename in glob.glob(self.DATA_DIR + '/*'):
-            try:
-                input_file = MaccorInputFile(filename)
-            except battery_exceptions.UnsupportedFileTypeError:
-                continue
-
-            mapping = \
-                input_file.get_standard_column_to_file_column_mapping()
-            self.assertGreater(len(mapping), 0)
-
-    def test_read_csv_files(self):
-        files_found = 0
-        for filename in glob.glob(self.DATA_DIR + '/*'):
-            try:
-                input_file = MaccorInputFile(filename)
-                files_found += 1
-            except battery_exceptions.UnsupportedFileTypeError:
-                continue
-            metadata, columns = input_file.load_metadata()
-            task_generator = input_file.get_data_labels()
-            num_tasks = sum(1 for t in task_generator)
-            self.assertGreater(num_tasks, 0)
-            data_generator = input_file.load_data(
-                filename, ["Amps", "Volts"]
-            )
-            num_samples = sum(1 for d in data_generator)
-            self.assertEqual(num_samples, metadata['num_rows'])
-        self.assertGreater(files_found, 0)
-
-
-class TestIviumFileFormat(HarvesterTestCase):
-    def test_units(self):
-        for filename in glob.glob(self.DATA_DIR + '/*.idf'):
-            input_file = IviumInputFile(filename)
-            mapping = \
-                input_file.get_standard_column_to_file_column_mapping()
-            self.assertGreater(len(mapping), 0)
-            row_raw = next(input_file.load_data(
-                filename, ["amps"]
-            ))
-            row_converted = next(input_file.convert_units(
-                input_file.load_data(
-                    filename, ["amps"]
-                )
-            ))
-            self.assertEqual(
-                row_raw['amps'],
-                row_converted['amps']
-            )
-
-    def test_read_idf_files(self):
-        for filename in glob.glob(self.DATA_DIR + '/*.idf'):
-            input_file = IviumInputFile(filename)
-            metadata, columns = input_file.load_metadata()
-            task_generator = input_file.get_data_labels()
-            num_tasks = sum(1 for t in task_generator)
-            num_tasks_from_metadata = len(
-                metadata['misc_file_data']['ivium format metadata'][0]['Tasks']
-            )
-            self.assertEqual(num_tasks, num_tasks_from_metadata)
-            data_generator = input_file.load_data(
-                filename, ["amps", "volts", "test_time"]
-            )
-            num_samples = sum(1 for d in data_generator)
-            self.assertEqual(num_samples, metadata['num_rows'])
-
-class TestBiologicFileFormat(HarvesterTestCase):
-    def test_units(self):
-        for filename in glob.glob(self.DATA_DIR + '/*.mpr'):
-            input_file = BiologicMprInputFile(filename)
-            mapping = \
-                input_file.get_standard_column_to_file_column_mapping()
-            self.assertGreater(len(mapping), 0)
-            row_raw = next(input_file.load_data(
-                filename, ["I/mA"]
-            ))
-            row_converted = next(input_file.convert_units(
-                input_file.load_data(
-                    filename, ["I/mA"]
-                )
-            ))
-            self.assertEqual(
-                1e-3 * row_raw['I/mA'],
-                row_converted['I/mA']
-            )
-
-    def test_read_mpr_files(self):
-        for filename in glob.glob(self.DATA_DIR + '/*.mpr'):
-            input_file = BiologicMprInputFile(filename)
-            metadata, columns = input_file.load_metadata()
-            task_generator = input_file.get_data_labels()
-            num_tasks = sum(1 for t in task_generator)
-            self.assertGreater(num_tasks, 0)
-            data_generator = input_file.load_data(
-                filename, ["I/mA"]
-            )
-            num_samples = sum(1 for d in data_generator)
-            self.assertEqual(num_samples, metadata['num_rows'])
 
 
 class TestHarvester(HarvesterTestCase):

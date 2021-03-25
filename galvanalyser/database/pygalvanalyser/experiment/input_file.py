@@ -25,6 +25,8 @@ class InputFile:
         file_col_to_std_col = self.get_file_column_to_standard_column_mapping()
         # verify that every file col has units
         for col, std in file_col_to_std_col.items():
+            if col not in self.column_info:
+                continue
             if 'unit' not in self.column_info[col]:
                 raise RuntimeError((
                     "Unit not provided for standard column mapping.\n"
@@ -33,7 +35,8 @@ class InputFile:
                     ).format(col, std, self.column_info[col]))
             if self.column_info[col]['unit'] not in Unit.get_all_units():
                 raise RuntimeError(
-                    "Unknown unit {} provided for standard column mapping"
+                    "Unknown unit {} provided for standard column mapping"\
+                    .format(self.column_info[col]['unit'])
                 )
 
         return {

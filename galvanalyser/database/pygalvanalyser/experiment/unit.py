@@ -14,11 +14,11 @@ from .timeseries_data_row import (
 
 class Unit:
     conversions = {
-        'A': {
-            'multiplier': 1,
-            'standard_unit': UNIT_AMPS,
-        },
         'V': {
+            'multiplier': 1,
+            'standard_unit': UNIT_VOLTS,
+        },
+        'Volts': {
             'multiplier': 1,
             'standard_unit': UNIT_VOLTS,
         },
@@ -30,9 +30,25 @@ class Unit:
             'multiplier': 1,
             'standard_unit': UNIT_WATT_HOURS,
         },
+        'Watt-hr': {
+            'multiplier': 1,
+            'standard_unit': UNIT_WATT_HOURS,
+        },
         'A.h': {
             'multiplier': 1,
             'standard_unit': UNIT_AMP_HOURS,
+        },
+        'Amp-hr': {
+            'multiplier': 1,
+            'standard_unit': UNIT_AMP_HOURS,
+        },
+        'Amps': {
+            'multiplier': 1,
+            'standard_unit': UNIT_AMPS,
+        },
+        'A': {
+            'multiplier': 1,
+            'standard_unit': UNIT_AMPS,
         },
         'mA': {
             'multiplier': 1e-3,
@@ -42,6 +58,14 @@ class Unit:
             'multiplier': 1e-3,
             'standard_unit': UNIT_AMP_HOURS,
         },
+        '': {
+            'multiplier': 1,
+            'standard_unit': UNIT_UNITLESS,
+        },
+        'celsius': {
+            'multiplier': 1,
+            'standard_unit': UNIT_CENTIGRADE,
+        }
     }
     @classmethod
     def get_all_units(cls):
