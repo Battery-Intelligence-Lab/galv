@@ -13,14 +13,17 @@ class TestIviumFileFormat(HarvesterTestCase):
                 row_raw = next(input_file.load_data(
                     filename, ["amps"]
                 ))
-                row_converted = next(input_file.convert_units(
-                    input_file.load_data(
-                        filename, ["amps"]
-                    )
-                ))
+                row_converted = next(
+                    input_file.convert_file_cols_to_std_cols(
+                        input_file.load_data(
+                            filename, ["amps"]
+                        ),
+                        {'amps': 1}
+                    ),
+                )
                 self.assertEqual(
                     row_raw['amps'],
-                    row_converted['amps']
+                    row_converted[1]
                 )
 
     def test_read_idf_files(self):

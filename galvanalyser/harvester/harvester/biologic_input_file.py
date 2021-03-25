@@ -42,14 +42,12 @@ class BiologicMprInputFile(InputFile):
             "Q charge/discharge/mA.h": CHARGE_CAPACITY_COLUMN_ID,
         }
 
-    def load_data(self, file_path, columns, column_renames=None):
+    def load_data(self, file_path, columns):
         columns_of_interest = []
         column_names = list(self.mpr_file.data.dtype.names)
         for col_idx, column_name in enumerate(column_names):
             if column_name in columns:
                 columns_of_interest.append(col_idx)
-            if column_renames is not None and column_name in column_renames:
-                column_names[col_idx] = column_renames[column_name]
         for row in self.mpr_file.data:
             yield {
                 column_names[col_idx]: row[col_idx]

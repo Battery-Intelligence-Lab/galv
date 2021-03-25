@@ -74,6 +74,7 @@ class TestHarvester(HarvesterTestCase):
                 file.last_observed_time = \
                     datetime.now(timezone.utc) - timedelta(minutes=1),
                 file.insert(self.conn)
+            break
         self.conn.commit()
 
 

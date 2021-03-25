@@ -188,14 +188,10 @@ class MaccorInputFile(InputFile):
         print("filtered_values: " + str(filtered_values))
         return (filtered_values)
 
-    def load_data(self, file_path,
-                  columns, column_renames=None):
+    def load_data(self, file_path, columns):
         """
             Load data in a maccor csv or tsv file"
         """
-
-        if column_renames is None:
-            column_renames = {col: col for col in columns}
 
         with open(file_path, "r") as csvfile:
             # get rid of metadata rows
@@ -215,9 +211,6 @@ class MaccorInputFile(InputFile):
             for col_idx, column_name in enumerate(column_names):
                 if column_name in columns:
                     columns_of_interest.append(col_idx)
-                if column_renames is not None and column_name in column_renames:
-                    column_names[col_idx] = column_renames[column_name]
-            columns_data = [[] for i in columns_of_interest]
             for row_idx, row in enumerate(reader):
                 row = handle_recno(
                     row, correct_number_of_columns, recno_col, row_idx

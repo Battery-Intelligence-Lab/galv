@@ -13,14 +13,17 @@ class TestBiologicFileFormat(HarvesterTestCase):
                 row_raw = next(input_file.load_data(
                     filename, ["I/mA"]
                 ))
-                row_converted = next(input_file.convert_units(
-                    input_file.load_data(
-                        filename, ["I/mA"]
-                    )
-                ))
+                row_converted = next(
+                    input_file.convert_file_cols_to_std_cols(
+                        input_file.load_data(
+                            filename, ["I/mA"]
+                        ),
+                        {'I/mA': 1}
+                    ),
+                )
                 self.assertEqual(
                     1e-3 * row_raw['I/mA'],
-                    row_converted['I/mA']
+                    row_converted[1]
                 )
 
     def test_read_mpr_files(self):

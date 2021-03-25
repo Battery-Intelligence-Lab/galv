@@ -46,13 +46,10 @@ class IviumInputFile(InputFile):
         return {"amps": 3, "volts": 2, "test_time": 1}
 
 
-    def load_data(self, file_path, columns, column_renames=None):
+    def load_data(self, file_path, columns):
         """
             Load data in a ivium text file"
         """
-
-        if column_renames is None:
-            column_renames = {col: col for col in columns}
 
         with open(file_path, "rb") as f:
             for i in range(self._sample_rows[0]):
@@ -62,8 +59,6 @@ class IviumInputFile(InputFile):
             for col_idx, column_name in enumerate(column_names):
                 if column_name in columns:
                     columns_of_interest.append(col_idx)
-                if column_renames is not None and column_name in column_renames:
-                    column_names[col_idx] = column_renames[column_name]
 
             current_line = self._sample_rows[0] - 1
             for sample_row in self._sample_rows:

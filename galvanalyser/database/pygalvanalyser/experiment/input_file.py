@@ -204,21 +204,27 @@ class InputFile:
         # now load the available data
         # we need to pass whether the column is numeric to these
 
-        self.convert_units(
+        return self.convert_file_cols_to_std_cols(
             self.load_data(
                 self.file_path,
-                available_desired_columns,
-                desired_file_cols_to_std_cols
-            )
+                available_desired_columns
+            ),
+            desired_file_cols_to_std_cols
         )
 
-    def convert_units(self, file_data_generator):
-        for row in file_data_generator:
+    def convert_file_cols_to_std_cols(
+            self, file_data_gen, file_cols_to_std_cols
+    ):
+        for row in file_data_gen:
+            std_data_row = {}
             for name, value in row.items():
                 if 'unit' in self.column_info[name]:
                     unit = self.column_info[name]['unit']
-                    row[name] = Unit.convert(unit, value)
-            yield row
+                    value = Unit.convert(unit, value)
+                std_data_row[
+                    file_cols_to_std_cols[name]
+                ] = value
+            yield std_data_row
 
     def get_data_row_generator(
         self,
@@ -260,8 +266,7 @@ class InputFile:
             traceback.print_exc()
             raise
 
-    def load_data(self, file_path, available_desired_columns,
-                  desired_file_cols_to_std_cols):
+    def load_data(self, file_path, available_desired_columns):
         raise battery_exceptions.UnsupportedFileTypeError
 
     def get_data_labels(self):
