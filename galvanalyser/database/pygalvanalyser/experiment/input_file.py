@@ -209,12 +209,13 @@ class InputFile:
             )
         )
 
-    def convert_units(self, file_data_row):
-        for name, value in file_data_row.items():
-            if 'unit' in self.column_info[name]:
-                unit = self.column_info[name]['unit']
-                file_data_row[name] = Unit.convert(unit, value)
-        return file_data_row
+    def convert_units(self, file_data_generator):
+        for row in file_data_generator:
+            for name, value in row.items():
+                if 'unit' in self.column_info[name]:
+                    unit = self.column_info[name]['unit']
+                    row[name] = Unit.convert(unit, value)
+            yield row
 
     def get_data_row_generator(
         self,

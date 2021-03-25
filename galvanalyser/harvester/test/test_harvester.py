@@ -54,6 +54,18 @@ class TestIviumFileFormat(HarvesterTestCase):
             mapping = \
                 input_file.get_standard_column_to_file_column_mapping()
             self.assertGreater(len(mapping), 0)
+            row_raw = next(input_file.load_data(
+                filename, ["amps"]
+            ))
+            row_converted = next(input_file.convert_units(
+                input_file.load_data(
+                    filename, ["amps"]
+                )
+            ))
+            self.assertEqual(
+                row_raw['amps'],
+                row_converted['amps']
+            )
 
     def test_read_idf_files(self):
         for filename in glob.glob(self.DATA_DIR + '/*.idf'):
@@ -78,6 +90,18 @@ class TestBiologicFileFormat(HarvesterTestCase):
             mapping = \
                 input_file.get_standard_column_to_file_column_mapping()
             self.assertGreater(len(mapping), 0)
+            row_raw = next(input_file.load_data(
+                filename, ["I/mA"]
+            ))
+            row_converted = next(input_file.convert_units(
+                input_file.load_data(
+                    filename, ["I/mA"]
+                )
+            ))
+            self.assertEqual(
+                1e-3 * row_raw['I/mA'],
+                row_converted['I/mA']
+            )
 
     def test_read_mpr_files(self):
         for filename in glob.glob(self.DATA_DIR + '/*.mpr'):
