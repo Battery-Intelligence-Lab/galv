@@ -5,6 +5,7 @@ from pygalvanalyser.experiment.timeseries_data_row import (
     RECORD_NO_COLUMN_ID,
     TEST_TIME_COLUMN_ID,
 )
+from .unit import Unit
 
 # see https://gist.github.com/jsheedy/ed81cdf18190183b3b7d
 # https://stackoverflow.com/a/30721460
@@ -22,6 +23,19 @@ class InputFile:
 
     def get_standard_column_to_file_column_mapping(self):
         file_col_to_std_col = self.get_file_column_to_standard_column_mapping()
+        # verify that every file col has units
+        for col, std in file_col_to_std_col.items():
+            if 'unit' not in self.column_info[col]:
+                raise RuntimeError((
+                    "Unit not provided for standard column mapping.\n"
+                    "file_column_to_standard_column is {}: {}\n"
+                    "column_info is {}\n"
+                    ).format(col, std, self.column_info[col]))
+            if self.column_info[col]['unit'] not in Unit.get_all_units():
+                raise RuntimeError(
+                    "Unknown unit {} provided for standard column mapping"
+                )
+
         return {
             value: key
             for key, value in file_col_to_std_col.items()
@@ -186,12 +200,21 @@ class InputFile:
         print("available_desired_columns: " + str(available_desired_columns))
         # now load the available data
         # we need to pass whether the column is numeric to these
-        return self.load_data(
-            self.file_path,
-            available_desired_columns,
-            desired_file_cols_to_std_cols
+
+        self.convert_units(
+            self.load_data(
+                self.file_path,
+                available_desired_columns,
+                desired_file_cols_to_std_cols
+            )
         )
 
+    def convert_units(self, file_data_row):
+        for name, value in file_data_row.items():
+            if 'unit' in self.column_info[name]:
+                unit = self.column_info[name]['unit']
+                file_data_row[name] = Unit.convert(unit, value)
+        return file_data_row
 
     def get_data_row_generator(
         self,
@@ -247,15 +270,6 @@ class InputFile:
         raise battery_exceptions.UnsupportedFileTypeError
 
 
-    def load_metadata():
+    def load_metadata(self):
         raise battery_exceptions.UnsupportedFileTypeError
-
-    def validate_file():
-        raise battery_exceptions.UnsupportedFileTypeError
-
-
-
-
-
-
 

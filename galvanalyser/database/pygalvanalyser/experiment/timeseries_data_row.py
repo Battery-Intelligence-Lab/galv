@@ -15,6 +15,18 @@ CHARGE_CAPACITY_COLUMN_ID = 5
 TEMPERATURE_COLUMN_ID = 6
 STEP_TIME_COLUMN_ID = 7
 
+UNIT_UNITLESS = 0
+UNIT_SECONDS = 1
+UNIT_VOLTS = 2
+UNIT_AMPS = 3
+UNIT_WATT_HOURS = 4
+UNIT_AMP_HOURS = 5
+UNIT_CENTIGRADE = 6
+UNIT_WATTS = 7
+UNIT_OHMS = 8
+UNIT_DEGREES = 9
+UNIT_HERTZ = 10
+
 class TimeseriesDataRow:
     def __init__(self, dataset_id, sample_no, column_id, value):
         self.dataset_id = dataset_id

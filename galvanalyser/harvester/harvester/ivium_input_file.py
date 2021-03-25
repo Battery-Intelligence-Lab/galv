@@ -275,9 +275,21 @@ class IviumInputFile(InputFile):
             r'%d/%m/%Y %H:%M:%S'
         )
         columns_with_data = {
-            name: {"has_data": True, "is_numeric": True}
-            for name in
-            self.get_file_column_to_standard_column_mapping()
+            'amps': {
+                'has_data': True,
+                'is_numeric': True,
+                'unit': 'A',
+            },
+            'volts': {
+                'has_data': True,
+                'is_numeric': True,
+                'unit': 'V',
+            },
+            'test_time': {
+                'has_data': True,
+                'is_numeric': True,
+                'unit': 's',
+            },
         }
 
         # number of samples is total line count minus sample start, minus last line

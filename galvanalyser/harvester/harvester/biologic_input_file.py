@@ -15,6 +15,7 @@ from pygalvanalyser.experiment.timeseries_data_row import (
     TEMPERATURE_COLUMN_ID,
     STEP_TIME_COLUMN_ID,
 )
+from pygalvanalyser.experiment.unit import Unit
 
 class BiologicMprInputFile(InputFile):
     """
@@ -38,6 +39,7 @@ class BiologicMprInputFile(InputFile):
             "Ewe/V": VOLTAGE_COLUMN_ID,
             "time/s": TEST_TIME_COLUMN_ID,
             "Energy/W.h": ENERGY_CAPACITY_COLUMN_ID,
+            "Q charge/discharge/mA.h": CHARGE_CAPACITY_COLUMN_ID,
         }
 
     def load_data(self, file_path, columns, column_renames=None):
@@ -91,9 +93,17 @@ class BiologicMprInputFile(InputFile):
         metadata["Date of Test"] = self.mpr_file.startdate
 
         columns_with_data = {
-            name: {"has_data": True, "is_numeric": True}
+            name: {
+                "has_data": True,
+                "is_numeric": True,
+            }
             for name in self.mpr_file.data.dtype.names
         }
+        for name, data in columns_with_data.items():
+            for unit in Unit.get_all_units():
+                if name[-len(unit):] == unit:
+                    data['unit'] = unit
+
         metadata["num_rows"] = len(self.mpr_file.data)
         metadata["first_sample_no"] = 1
         metadata["last_sample_no"] = metadata["num_rows"]
