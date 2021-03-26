@@ -26,6 +26,7 @@ from pygalvanalyser.experiment.input_file import InputFile
 
 IDF_HEADER = b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xfb\x00\x00\x00\r\x00Version=11'
 
+
 class IviumInputFile(InputFile):
     """
         A class for handling input files
@@ -44,7 +45,6 @@ class IviumInputFile(InputFile):
         """
         print("get_ivium_column_to_standard_column_mapping")
         return {"amps": 3, "volts": 2, "test_time": 1}
-
 
     def load_data(self, file_path, columns):
         """
@@ -83,12 +83,16 @@ class IviumInputFile(InputFile):
     def _get_end_task_function(self, task):
         def duration(row):
             return row['test_time'] > task['Duration']
+
         def E_greater_than(row):
             return row['volts'] > task['E>']
+
         def E_less_than(row):
             return row['volts'] < task['E<']
+
         def I_greater_than(row):
             return row['amps'] > task['I<']
+
         def I_less_than(row):
             return row['amps'] < task['I<']
 
@@ -120,7 +124,6 @@ class IviumInputFile(InputFile):
 
         return is_end_task
 
-
     def get_data_labels(self):
         column_names = ["test_time", "amps", "volts"]
         task_index = 0
@@ -144,11 +147,11 @@ class IviumInputFile(InputFile):
                 else:
                     break
 
-
     def _load_ivium_metadata(self):
         file_path = self.file_path
         regex_key_array = re.compile(r'([^,\[]+)\[([0-9]+)\]$')
-        match_sci_notation = re.compile(r'[+\-]?(?:0|[1-9]\d*)(?:\.\d*)?(?:[eE][+\-]?\d+)?')
+        match_sci_notation = re.compile(
+            r'[+\-]?(?:0|[1-9]\d*)(?:\.\d*)?(?:[eE][+\-]?\d+)?')
         with open(file_path, "rb") as f:
             # header
             line = f.readline()
@@ -191,7 +194,7 @@ class IviumInputFile(InputFile):
                                         index, line
                                     ))
                         elif keys[0] == 'Data Options' \
-                            and keys[1] == 'AnalogInputData':
+                                and keys[1] == 'AnalogInputData':
                             base_metadata[keys[1]] = [
                                 {} for i in range(int(key_value[1]))
                             ]
@@ -253,7 +256,6 @@ class IviumInputFile(InputFile):
 
         return sample_rows, ivium_metadata
 
-
     def load_metadata(self):
         """
             Load metadata in a ivium_text file"
@@ -294,10 +296,9 @@ class IviumInputFile(InputFile):
         print(metadata)
         # put in all the ivium metadata
         metadata["misc_file_data"] = {
-                "ivium format metadata": (dict(self._file_metadata), None)
+            "ivium format metadata": (dict(self._file_metadata), None)
         }
         return metadata, columns_with_data
-
 
     def validate_file(self, file_path):
         if not file_path.endswith(".idf"):
@@ -308,7 +309,3 @@ class IviumInputFile(InputFile):
                 raise battery_exceptions.UnsupportedFileTypeError(
                     'incorrect header - {}'.format(line)
                 )
-
-
-
-

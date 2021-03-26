@@ -10,6 +10,12 @@ to create initial galvanalyser database:
 docker-compose run --rm galvanalyser_app python manage.py create_db
 ```
 
+to create a user:
+
+```bash
+docker-compose run --rm galvanalyser_app python manage.py create_user
+```
+
 to create an institution:
 
 ```bash

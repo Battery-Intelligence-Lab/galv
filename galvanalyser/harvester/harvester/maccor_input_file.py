@@ -25,6 +25,7 @@ import xlrd
 from datetime import datetime
 from pygalvanalyser.experiment.input_file import InputFile
 
+
 class MaccorInputFile(InputFile):
     """
         A class for handling input files
@@ -124,7 +125,6 @@ class MaccorInputFile(InputFile):
         print("Num rows {}".format(total_rows))
         return column_info, total_rows, first_rec, last_rec
 
-
     def load_metadata(self):
         """
             Load metadata in a maccor csv or tsv file"
@@ -219,7 +219,6 @@ class MaccorInputFile(InputFile):
                     column_names[col_idx]: row[col_idx]
                     for col_idx in columns_of_interest
                 }
-
 
     def get_data_labels(self):
         file_path = self.file_path
@@ -353,7 +352,7 @@ class MaccorInputFile(InputFile):
         with open(file_path, "r") as f:
             line = f.readline()
             line_start = "Today''s Date" + delimiter
-            date_regex = "\d\d\/\d\d\/\d\d\d\d \d?\d:\d\d:\d\d [AP]M"
+            date_regex = r"\d\d\/\d\d\/\d\d\d\d \d?\d:\d\d:\d\d [AP]M"
             if not line.startswith(line_start):
                 return False
             if not re.match((line_start + date_regex), line):
@@ -389,11 +388,11 @@ class MaccorInputFile(InputFile):
             raise battery_exceptions.UnsupportedFileTypeError
 
 
-
 class MaccorExcelInputFile(MaccorInputFile):
     """
         A class for handling input files
     """
+
     def __init__(self, file_path):
         self.validate_file(file_path)
         super().__init__(file_path)
@@ -447,8 +446,8 @@ class MaccorExcelInputFile(MaccorInputFile):
                             )
                         )
             if sheet.nrows > 2:
-                # update this each time there is a valid answer since we don't know
-                # for sure if the last sheet actually will have data
+                # update this each time there is a valid answer since we don't know for
+                # sure if the last sheet actually will have data
                 try:
                     recno_col = headers.index("Rec#")
                     last_rec = sheet.cell_value(headers_row+1, row)
@@ -468,7 +467,6 @@ class MaccorExcelInputFile(MaccorInputFile):
         print(column_info)
         print("Num rows {}".format(total_rows))
         return column_info, total_rows, first_rec, last_rec
-
 
     def load_data(self, file_path,
                   columns, column_renames=None):
@@ -510,7 +508,6 @@ class MaccorExcelInputFile(MaccorInputFile):
                     }
                 print("Unloading sheet " + str(sheet_id))
                 wbook.unload_sheet(sheet_id)
-
 
     def load_metadata(self):
         """
@@ -589,6 +586,7 @@ class MaccorRawInputFile(MaccorInputFile):
     """
         A class for handling input files
     """
+
     def __init__(self, file_path):
         self.validate_file(file_path)
         super().__init__(file_path)
@@ -619,9 +617,9 @@ class MaccorRawInputFile(MaccorInputFile):
                 "raw format metadata": (dict(metadata), None)
             }
             # Identify columns, what happens with the aux fields?
-            ## This question can't be answered for a few months so just make this
-            ## parse what we have and leave handling anything different to some
-            ## future person
+            # This question can't be answered for a few months so just make this
+            # parse what we have and leave handling anything different to some
+            # future person
             metadata["Machine Type"] = "Maccor"
             column_info, total_rows, first_rec, last_rec = \
                 self.identify_columns(reader)
@@ -679,7 +677,6 @@ class LogFilter(object):
         pass
 
 
-
 def isfloat(value):
     try:
         float(value)
@@ -688,15 +685,13 @@ def isfloat(value):
         return False
 
 
-
-
 def handle_recno(row, correct_number_of_columns, recno_col, row_idx):
     if len(row) > correct_number_of_columns:
         if recno_col >= 0:
             row = (
                 row[0:recno_col]
                 + [(row[recno_col] + row[recno_col + 1]).replace(",", "")]
-                + row[recno_col + 2 :]
+                + row[recno_col + 2:]
             )
         else:
             raise battery_exceptions.InvalidDataInFileError(
@@ -722,14 +717,3 @@ def clean_value(value):
         Trims values
     """
     return value.replace("''", "'").strip().rstrip("\0").strip()
-
-
-
-
-
-
-
-
-
-
-

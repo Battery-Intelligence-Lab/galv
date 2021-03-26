@@ -102,6 +102,83 @@ GRANT INSERT, SELECT, UPDATE, DELETE ON TABLE harvesters.observed_file TO ${harv
 
 GRANT ALL ON TABLE harvesters.observed_file TO postgres;
 
+-- SCHEMA: cell_data
+
+-- DROP SCHEMA cell_data ;
+
+CREATE SCHEMA cell_data
+    AUTHORIZATION postgres;
+
+GRANT USAGE ON SCHEMA cell_data TO ${harvester_role};
+
+GRANT USAGE ON SCHEMA cell_data TO ${user_role};
+
+-- Table: cell_data.cell_manufacturer
+
+-- DROP TABLE cell_data.cell_manufacturer;
+
+CREATE TABLE cell_data.cell_manufacturer
+(
+    id bigint NOT NULL,
+    cell_manufacturer text,
+    CONSTRAINT cell_manufacturer_pkey PRIMARY KEY (id)
+) WITH (
+    OIDS = FALSE
+);
+
+ALTER TABLE cell_data.cell_manufacturer
+    OWNER to postgres;
+
+GRANT INSERT, SELECT, TRIGGER ON TABLE cell_data.cell_manufacturer TO ${user_role};
+
+GRANT INSERT, SELECT, TRIGGER ON TABLE cell_data.cell_manufacturer TO ${harvester_role};
+
+GRANT ALL ON TABLE cell_data.cell_manufacturer TO postgres;
+
+
+-- Table: cell_data.cell
+
+-- DROP TABLE cell_data.cell;
+
+CREATE TABLE cell_data.cell
+(
+    UID uuid NOT NULL,
+    cell_form_factor varchar(11),
+    link_to_datasheet text,
+    anode_chemistry text,
+    cathode_chemistry text,
+    nominal_capacity double precision,
+    nominal_cell_weight double precision,
+    cell_manufacturer_id bigint,
+    CONSTRAINT cell_pkey PRIMARY KEY (UID),
+    CONSTRAINT cell_manufacturer_id_fkey FOREIGN KEY (cell_manufacturer_id)
+        REFERENCES cell_data.cell_manufacturer (id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+) WITH (
+    OIDS = FALSE
+);
+
+ALTER TABLE cell_data.cell
+    OWNER to postgres;
+
+GRANT INSERT, SELECT, TRIGGER ON TABLE cell_data.cell TO ${user_role};
+
+GRANT INSERT, SELECT, TRIGGER ON TABLE cell_data.cell TO ${harvester_role};
+
+GRANT ALL ON TABLE cell_data.cell TO postgres;
+
+-- Index: fki_cell_manufacturer_id_fkey
+
+-- DROP INDEX cell_data.fki_cell_manufacturer_id_fkey;
+
+CREATE INDEX fki_cell_manufacturer_id_fkey
+    ON cell_data.cell USING btree
+    (cell_manufacturer_id ASC NULLS LAST)
+    TABLESPACE pg_default;
+
+
+
 -- SCHEMA: experiment
 
 -- DROP SCHEMA experiment ;
@@ -147,8 +224,9 @@ CREATE TABLE experiment.dataset
     name text NOT NULL,
     date timestamp with time zone NOT NULL,
     institution_id bigint NOT NULL,
-    type text NOT NULL,
     original_collector text NOT NULL,
+    type text NOT NULL,
+    
     PRIMARY KEY (name, date, institution_id),
     UNIQUE (id),
     FOREIGN KEY (institution_id)
@@ -172,6 +250,41 @@ GRANT ALL ON TABLE experiment.dataset TO postgres;
 GRANT ALL ON SEQUENCE experiment.dataset_id_seq TO postgres;
 
 GRANT USAGE ON SEQUENCE experiment.dataset_id_seq TO ${harvester_role};
+
+-- Table: experiment.metadata
+
+-- DROP TABLE experiment.metadata;
+
+CREATE TABLE experiment.metadata
+(
+    dataset_id bigint NOT NULL,
+    cell_uid uuid,
+    owner text,
+    purpose text,
+    test_equipment text,
+    PRIMARY KEY (dataset_id),
+    FOREIGN KEY (dataset_id)
+        REFERENCES experiment.dataset (id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+    FOREIGN KEY (cell_uid)
+        REFERENCES cell_data.cell (UID) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+)
+WITH (
+    OIDS = FALSE
+);
+
+ALTER TABLE experiment.metadata
+    OWNER TO postgres;
+
+GRANT INSERT, SELECT, TRIGGER ON TABLE experiment.metadata TO ${harvester_role};
+
+GRANT INSERT, SELECT, TRIGGER ON TABLE experiment.metadata TO ${user_role};
+
+GRANT ALL ON TABLE experiment.metadata TO postgres;
+
 
 -- Table: experiment.misc_file_data
 

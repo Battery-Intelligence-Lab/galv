@@ -17,6 +17,7 @@ from pygalvanalyser.experiment.timeseries_data_row import (
 )
 from pygalvanalyser.experiment.unit import Unit
 
+
 class BiologicMprInputFile(InputFile):
     """
         A class for handling input files
@@ -72,7 +73,7 @@ class BiologicMprInputFile(InputFile):
                 if last_mode in mode_labels:
                     yield (
                         'Ns_{}_{}'.format(last_Ns,
-                                             mode_labels[last_mode]),
+                                          mode_labels[last_mode]),
                         (last_Ns_change, i-1)
                     )
                 else:
@@ -107,4 +108,3 @@ class BiologicMprInputFile(InputFile):
         metadata["last_sample_no"] = metadata["num_rows"]
         print(metadata, columns_with_data)
         return metadata, columns_with_data
-
