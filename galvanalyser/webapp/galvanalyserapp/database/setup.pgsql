@@ -262,6 +262,7 @@ CREATE TABLE experiment.metadata
     owner text,
     purpose text,
     test_equipment text,
+    json_data jsonb,
     PRIMARY KEY (dataset_id),
     FOREIGN KEY (dataset_id)
         REFERENCES experiment.dataset (id) MATCH SIMPLE
@@ -285,30 +286,6 @@ GRANT INSERT, SELECT, TRIGGER ON TABLE experiment.metadata TO ${user_role};
 
 GRANT ALL ON TABLE experiment.metadata TO postgres;
 
-
--- Table: experiment.misc_file_data
-
--- DROP TABLE experiment.misc_file_data;
-
-CREATE TABLE experiment.misc_file_data
-(
-    dataset_id bigint NOT NULL,
-    sample_range int8range NOT NULL,
-    key text NOT NULL,
-    json_data jsonb,
-    binary_data bytea,
-    PRIMARY KEY (dataset_id, sample_range, key),
-    FOREIGN KEY (dataset_id)
-        REFERENCES experiment.dataset (id) MATCH SIMPLE
-        ON UPDATE CASCADE
-        ON DELETE CASCADE
-)
-WITH (
-    OIDS = FALSE
-);
-
-ALTER TABLE experiment.misc_file_data
-    OWNER TO ${harvester_role};
 
 -- Table: experiment.access
 

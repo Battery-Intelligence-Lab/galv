@@ -40,6 +40,23 @@ class DatasetRow:
             # psycopg2.errors.UniqueViolation: duplicate key value violates unique constraint "dataset_pkey"
             # DETAIL:  Key (name, date)=(TPG1+-+Cell+15+-+002, 2018-02-23 08:42:16+00) already exists.
 
+    def delete(self, conn):
+        if self.id is None:
+            return None
+
+        with conn.cursor() as cursor:
+            cursor.execute(
+                (
+                    "DELETE FROM experiment.dataset "
+                    "WHERE id = %s "
+                ),
+                [
+                    self.id,
+                ],
+            )
+
+        self.id = None
+
     @staticmethod
     def select_from_name_date_and_institution_id(
         name, date, institution_id, conn

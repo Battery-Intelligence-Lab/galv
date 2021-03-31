@@ -1,5 +1,6 @@
 import unittest
 import psycopg2
+from pygalvanalyser.experiment.institution_row import InstitutionRow
 import os
 
 
@@ -27,6 +28,9 @@ class GalvanalyserTestCase(unittest.TestCase):
             database=self.DATABASE,
             user=self.HARVESTER,
             password=self.HARVESTER_PWD,
+        )
+        self.oxford = InstitutionRow.select_from_name(
+            self.INSTITUTION, self.harvester_conn
         )
 
     @classmethod
