@@ -18,6 +18,23 @@ class DatasetRow:
         self.dataset_type = dataset_type
         self.original_collector = original_collector
 
+    def __repr__(self):
+        return 'DatasetRow({}, {}, {}, {}, {}, {})'.format(
+            self.id, self.name, self.date, self.institution_id,
+            self.dataset_type, self.original_collector
+        )
+
+    def __eq__(self, other):
+        if isinstance(other, DatasetRow):
+            return (
+                self.id == other.id and
+                self.name == other.name and
+                self.institution_id == other.institution_id and
+                self.dataset_type == other.dataset_type and
+                self.original_collector == other.original_collector
+            )
+
+
     def insert(self, conn):
         with conn.cursor() as cursor:
             cursor.execute(

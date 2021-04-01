@@ -47,9 +47,21 @@ class DummyInput(InputFile):
         metadata["Dataset Name"] = "Dummy1"
         metadata["Date of Test"] = datetime.datetime.now()
         columns_with_data = {
-            name: {"has_data": True, "is_numeric": True}
-            for name in
-            self.get_file_column_to_standard_column_mapping()
+            "amps": {
+                "has_data": True, "is_numeric": True,
+                "unit": "Amps",
+
+            },
+            "volts": {
+                "has_data": True, "is_numeric": True,
+                "unit": "V",
+
+            },
+            "test_time": {
+                "has_data": True, "is_numeric": True,
+                "unit": "s",
+
+            },
         }
         metadata["num_rows"] = len(self.data)
         metadata["first_sample_no"] = 1
