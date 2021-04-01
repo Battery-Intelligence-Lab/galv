@@ -12,18 +12,18 @@ class TestMetadataRow(GalvanalyserTestCase):
             dataset_type='test',
             original_collector='test',
         )
-        self.dataset.insert(self.harvester_conn)
-        self.harvester_conn.commit()
+        self.dataset.insert(self.postgres_conn)
+        self.postgres_conn.commit()
 
     def test_insert_and_select(self):
         metadata = MetadataRow(
             dataset_id=self.dataset.id,
         )
-        metadata.insert(self.user_conn)
+        metadata.insert(self.postgres_conn)
+        self.postgres_conn.commit()
 
         metadata2 = MetadataRow.select_from_dataset_id(
             self.dataset.id,
             self.user_conn
         )
-        self.assertEqual(len(metadata2), 1)
-        self.assertEqual(metadata, metadata2[0])
+        self.assertEqual(metadata, metadata2)

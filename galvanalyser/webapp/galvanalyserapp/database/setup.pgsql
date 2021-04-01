@@ -113,27 +113,28 @@ GRANT USAGE ON SCHEMA cell_data TO ${harvester_role};
 
 GRANT USAGE ON SCHEMA cell_data TO ${user_role};
 
--- Table: cell_data.cell_manufacturer
+-- Table: cell_data.manufacturer
 
--- DROP TABLE cell_data.cell_manufacturer;
+-- DROP TABLE cell_data.manufacturer;
 
-CREATE TABLE cell_data.cell_manufacturer
+CREATE TABLE cell_data.manufacturer
 (
-    id bigint NOT NULL,
-    cell_manufacturer text,
-    CONSTRAINT cell_manufacturer_pkey PRIMARY KEY (id)
+    id bigserial NOT NULL,
+    name text,
+    CONSTRAINT manufacturer_pkey PRIMARY KEY (id),
+    UNIQUE (name)
 ) WITH (
     OIDS = FALSE
 );
 
-ALTER TABLE cell_data.cell_manufacturer
+ALTER TABLE cell_data.manufacturer
     OWNER to postgres;
 
-GRANT INSERT, SELECT, TRIGGER ON TABLE cell_data.cell_manufacturer TO ${user_role};
+GRANT SELECT ON TABLE cell_data.manufacturer TO ${user_role};
 
-GRANT INSERT, SELECT, TRIGGER ON TABLE cell_data.cell_manufacturer TO ${harvester_role};
+GRANT SELECT ON TABLE cell_data.manufacturer TO ${harvester_role};
 
-GRANT ALL ON TABLE cell_data.cell_manufacturer TO postgres;
+GRANT ALL ON TABLE cell_data.manufacturer TO postgres;
 
 
 -- Table: cell_data.cell
@@ -149,10 +150,10 @@ CREATE TABLE cell_data.cell
     cathode_chemistry text,
     nominal_capacity double precision,
     nominal_cell_weight double precision,
-    cell_manufacturer_id bigint,
+    manufacturer_id bigint NOT NULL,
     CONSTRAINT cell_pkey PRIMARY KEY (UID),
-    CONSTRAINT cell_manufacturer_id_fkey FOREIGN KEY (cell_manufacturer_id)
-        REFERENCES cell_data.cell_manufacturer (id) MATCH SIMPLE
+    CONSTRAINT manufacturer_id_fkey FOREIGN KEY (manufacturer_id)
+        REFERENCES cell_data.manufacturer (id) MATCH SIMPLE
         ON UPDATE CASCADE
         ON DELETE CASCADE
 ) WITH (
@@ -162,21 +163,20 @@ CREATE TABLE cell_data.cell
 ALTER TABLE cell_data.cell
     OWNER to postgres;
 
-GRANT INSERT, SELECT, TRIGGER ON TABLE cell_data.cell TO ${user_role};
+GRANT SELECT ON TABLE cell_data.cell TO ${user_role};
 
-GRANT INSERT, SELECT, TRIGGER ON TABLE cell_data.cell TO ${harvester_role};
+GRANT SELECT ON TABLE cell_data.cell TO ${harvester_role};
 
 GRANT ALL ON TABLE cell_data.cell TO postgres;
 
--- Index: fki_cell_manufacturer_id_fkey
+-- Index: fki_manufacturer_id_fkey
 
--- DROP INDEX cell_data.fki_cell_manufacturer_id_fkey;
+-- DROP INDEX cell_data.fki_manufacturer_id_fkey;
 
-CREATE INDEX fki_cell_manufacturer_id_fkey
+CREATE INDEX fki_manufacturer_id_fkey
     ON cell_data.cell USING btree
-    (cell_manufacturer_id ASC NULLS LAST)
+    (manufacturer_id ASC NULLS LAST)
     TABLESPACE pg_default;
-
 
 
 -- SCHEMA: experiment
@@ -280,9 +280,9 @@ WITH (
 ALTER TABLE experiment.metadata
     OWNER TO postgres;
 
-GRANT INSERT, SELECT, TRIGGER ON TABLE experiment.metadata TO ${harvester_role};
+GRANT SELECT ON TABLE experiment.metadata TO ${harvester_role};
 
-GRANT INSERT, SELECT, TRIGGER ON TABLE experiment.metadata TO ${user_role};
+GRANT SELECT ON TABLE experiment.metadata TO ${user_role};
 
 GRANT ALL ON TABLE experiment.metadata TO postgres;
 

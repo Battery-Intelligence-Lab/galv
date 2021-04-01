@@ -92,15 +92,13 @@ class MetadataRow:
             result = cursor.fetchone()
             if result is None:
                 return None
-            return [
-                MetadataRow(
-                    dataset_id=dataset_id,
-                    cell_uid=result[0],
-                    owner=result[1],
-                    purpose=result[2],
-                    test_equipment=result[3],
-                    json_data=json.loads(result[4])
-                    if result[4] is not None
-                    else None,
-                )
-            ]
+            return MetadataRow(
+                dataset_id=dataset_id,
+                cell_uid=result[0],
+                owner=result[1],
+                purpose=result[2],
+                test_equipment=result[3],
+                json_data=json.loads(result[4])
+                if result[4] is not None
+                else None,
+            )
