@@ -280,7 +280,7 @@ WITH (
 ALTER TABLE experiment.metadata
     OWNER TO postgres;
 
-GRANT SELECT ON TABLE experiment.metadata TO ${harvester_role};
+GRANT INSERT, SELECT, TRIGGER ON TABLE experiment.metadata TO ${harvester_role};
 
 GRANT SELECT ON TABLE experiment.metadata TO ${user_role};
 

@@ -34,7 +34,7 @@ class TestIviumFileFormat(HarvesterTestCase):
             task_generator = input_file.get_data_labels()
             num_tasks = sum(1 for t in task_generator)
             num_tasks_from_metadata = len(
-                metadata['misc_file_data']['ivium format metadata'][0]['Tasks']
+                metadata['misc_file_data']['Tasks']
             )
             self.assertEqual(num_tasks, num_tasks_from_metadata)
             data_generator = input_file.load_data(

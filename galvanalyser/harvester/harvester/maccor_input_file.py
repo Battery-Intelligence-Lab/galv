@@ -555,9 +555,7 @@ class MaccorExcelInputFile(MaccorInputFile):
                         metadata[key] = sheet.cell_value(0, col + 1)
                         col = col + 1
                     col = col + 1
-                metadata["misc_file_data"] = {
-                    "excel format metadata": (dict(metadata), None)
-                }
+                metadata["misc_file_data"] = dict(metadata)
             if "Dataset Name" not in metadata:
                 metadata["Dataset Name"] = os.path.splitext(
                     ntpath.basename(self.file_path)
@@ -613,9 +611,7 @@ class MaccorRawInputFile(MaccorInputFile):
             # Just shove everything in the misc_file_data for now rather than
             # trying to parse it
             metadata["File Header Parts"] = first
-            metadata["misc_file_data"] = {
-                "raw format metadata": (dict(metadata), None)
-            }
+            metadata["misc_file_data"] = dict(metadata)
             # Identify columns, what happens with the aux fields?
             # This question can't be answered for a few months so just make this
             # parse what we have and leave handling anything different to some

@@ -295,9 +295,7 @@ class IviumInputFile(InputFile):
         metadata["last_sample_no"] = len(self._sample_rows)
         print(metadata)
         # put in all the ivium metadata
-        metadata["misc_file_data"] = {
-            "ivium format metadata": (dict(self._file_metadata), None)
-        }
+        metadata["misc_file_data"] = dict(self._file_metadata)
         return metadata, columns_with_data
 
     def validate_file(self, file_path):
