@@ -6,8 +6,9 @@ import copy
 import unittest
 import os
 import sys
-import galvanalyserapp.redash as redash
+from galvanalyserapp.redash import CustomRedash
 import galvanalyserapp.database as database
+import json
 
 cli = FlaskGroup(app)
 
@@ -149,6 +150,33 @@ def create_machine_id(machine_id):
 def add_machine_path(machine_id, path, user):
     database.add_machine_path(config, machine_id, path, user)
 
+
+@cli.command("print_queries")
+@click.option('--api_key', prompt=True)
+def print_queries(api_key):
+    redash = CustomRedash('http://server:5000', api_key)
+    saved_queries = []
+    for query in redash.paginate(redash.queries):
+        q = redash.query(query['id'])
+        for v in q['visualizations']:
+            v.pop('created_at')
+            v.pop('updated_at')
+        saved_query = {
+            k: q[k] for k in ['id', 'name', 'options', 'query', 'visualizations']
+        }
+        saved_queries.append(saved_query)
+    print(json.dumps(saved_queries, indent=2))
+
+
+@cli.command("print_dashboards")
+@click.option('--api_key', prompt=True)
+def print_dashboards(api_key):
+    redash = CustomRedash('http://server:5000', api_key)
+    saved_dashboards = []
+    for dashboard in redash.paginate(redash.dashboards):
+        d = redash.dashboard(dashboard['slug'])
+        saved_dashboards.append(d)
+    print(json.dumps(saved_dashboards, indent=2))
 
 if __name__ == "__main__":
     cli()

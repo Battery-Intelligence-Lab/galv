@@ -69,6 +69,8 @@ services:
       context: ../
     depends_on:
       - galvanalyser_postgres
+    ports:
+      - "5001:5000"
     volumes:
      - ../galvanalyser/harvester:/usr/src/app/galvanalyser/harvester
      - ../galvanalyser/database:/usr/src/app/galvanalyser/database

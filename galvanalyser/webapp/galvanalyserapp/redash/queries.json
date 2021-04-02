@@ -1,0 +1,700 @@
+[
+  {
+    "id": 9,
+    "name": "Dataset range metadata",
+    "options": {
+      "parameters": [
+        {
+          "name": "dataset",
+          "title": "Dataset",
+          "global": false,
+          "value": "1",
+          "queryId": 3,
+          "parentQueryId": 9,
+          "type": "query",
+          "locals": []
+        },
+        {
+          "name": "range_id",
+          "title": "range_id",
+          "global": false,
+          "value": 1,
+          "locals": [],
+          "type": "number",
+          "parentQueryId": 9
+        }
+      ]
+    },
+    "query": "select experiment.dataset.name as dataset_name, experiment.range_label.label_name as range_name, experiment.range_label.info as range_info, \n       experiment.dataset.date, experiment.institution.name as institution, \n       experiment.dataset.original_collector, experiment.dataset.type\nfrom experiment.dataset\n    inner join experiment.institution on institution_id=experiment.institution.id\n    inner join experiment.range_label on experiment.dataset.id=experiment.range_label.dataset_id\nwhere experiment.dataset.id={{dataset}} and experiment.range_label.id={{range_id}}",
+    "visualizations": [
+      {
+        "description": "",
+        "id": 14,
+        "type": "TABLE",
+        "options": {},
+        "name": "Table"
+      },
+      {
+        "description": "",
+        "id": 15,
+        "type": "DETAILS",
+        "options": {},
+        "name": "Details"
+      }
+    ]
+  },
+  {
+    "id": 8,
+    "name": "Dataset metadata",
+    "options": {
+      "parameters": [
+        {
+          "name": "dataset",
+          "title": "Dataset",
+          "global": false,
+          "value": "1",
+          "queryId": 3,
+          "parentQueryId": 8,
+          "type": "query",
+          "locals": []
+        }
+      ]
+    },
+    "query": "select experiment.dataset.name, experiment.dataset.date, experiment.institution.name as institution, experiment.dataset.original_collector, experiment.dataset.type\nfrom experiment.dataset\n    inner join experiment.institution on institution_id=experiment.institution.id\nwhere experiment.dataset.id={{dataset}}",
+    "visualizations": [
+      {
+        "description": "",
+        "id": 13,
+        "type": "DETAILS",
+        "options": {},
+        "name": "Detail"
+      },
+      {
+        "description": "",
+        "id": 12,
+        "type": "TABLE",
+        "options": {},
+        "name": "Table"
+      }
+    ]
+  },
+  {
+    "id": 7,
+    "name": "Columns in the dataset",
+    "options": {
+      "parameters": [
+        {
+          "name": "dataset",
+          "title": "Dataset",
+          "global": false,
+          "value": "1",
+          "queryId": 3,
+          "parentQueryId": 7,
+          "type": "query",
+          "locals": []
+        }
+      ]
+    },
+    "query": "select experiment.column.name, experiment.column.description\nfrom experiment.column\nwhere experiment.column.id in\n    (select distinct experiment.timeseries_data.column_id from experiment.timeseries_data where experiment.timeseries_data.dataset_id={{dataset}})",
+    "visualizations": [
+      {
+        "description": "",
+        "id": 11,
+        "type": "TABLE",
+        "options": {},
+        "name": "Table"
+      }
+    ]
+  },
+  {
+    "id": 6,
+    "name": "Ranges",
+    "options": {
+      "parameters": [
+        {
+          "name": "dataset",
+          "title": "Dataset",
+          "global": false,
+          "value": "1",
+          "queryId": 3,
+          "parentQueryId": 6,
+          "type": "query",
+          "locals": []
+        }
+      ]
+    },
+    "query": "select id, label_name as name, sample_range, dataset_id from experiment.range_label where dataset_id={{ dataset }} order by id",
+    "visualizations": [
+      {
+        "description": "",
+        "id": 8,
+        "type": "TABLE",
+        "options": {},
+        "name": "Table"
+      },
+      {
+        "description": "",
+        "id": 9,
+        "type": "TABLE",
+        "options": {
+          "itemsPerPage": 25,
+          "columns": [
+            {
+              "linkUrlTemplate": "http://localhost:5000/dashboard/dataset_range?p_dataset={{ dataset_id }}&p_range_id={{ @ }}",
+              "name": "id",
+              "numberFormat": "0,0",
+              "title": "Range",
+              "imageUrlTemplate": "{{ @ }}",
+              "linkOpenInNewTab": false,
+              "linkTextTemplate": "{{ name }}",
+              "allowSearch": false,
+              "allowHTML": true,
+              "imageTitleTemplate": "{{ @ }}",
+              "imageWidth": "",
+              "visible": true,
+              "alignContent": "right",
+              "imageHeight": "",
+              "order": 100000,
+              "displayAs": "link",
+              "linkTitleTemplate": "{{ @ }}",
+              "booleanValues": [
+                "false",
+                "true"
+              ],
+              "type": "integer",
+              "highlightLinks": false
+            },
+            {
+              "linkUrlTemplate": "{{ @ }}",
+              "name": "name",
+              "title": "name",
+              "imageUrlTemplate": "{{ @ }}",
+              "linkOpenInNewTab": true,
+              "linkTextTemplate": "{{ @ }}",
+              "allowSearch": false,
+              "allowHTML": true,
+              "imageTitleTemplate": "{{ @ }}",
+              "imageWidth": "",
+              "visible": false,
+              "alignContent": "left",
+              "imageHeight": "",
+              "order": 100001,
+              "displayAs": "string",
+              "linkTitleTemplate": "{{ @ }}",
+              "booleanValues": [
+                "false",
+                "true"
+              ],
+              "type": "string",
+              "highlightLinks": false
+            },
+            {
+              "linkUrlTemplate": "{{ @ }}",
+              "name": "sample_range",
+              "title": "Sample Indices",
+              "imageUrlTemplate": "{{ @ }}",
+              "linkOpenInNewTab": true,
+              "linkTextTemplate": "{{ @ }}",
+              "allowSearch": false,
+              "allowHTML": true,
+              "imageTitleTemplate": "{{ @ }}",
+              "imageWidth": "",
+              "visible": true,
+              "alignContent": "left",
+              "imageHeight": "",
+              "order": 100002,
+              "displayAs": "string",
+              "linkTitleTemplate": "{{ @ }}",
+              "booleanValues": [
+                "false",
+                "true"
+              ],
+              "type": "string",
+              "highlightLinks": false
+            },
+            {
+              "linkUrlTemplate": "{{ @ }}",
+              "name": "dataset_id",
+              "numberFormat": "0,0",
+              "title": "dataset_id",
+              "imageUrlTemplate": "{{ @ }}",
+              "linkOpenInNewTab": true,
+              "linkTextTemplate": "{{ @ }}",
+              "allowSearch": false,
+              "allowHTML": true,
+              "imageTitleTemplate": "{{ @ }}",
+              "imageWidth": "",
+              "visible": false,
+              "alignContent": "right",
+              "imageHeight": "",
+              "order": 100003,
+              "displayAs": "number",
+              "linkTitleTemplate": "{{ @ }}",
+              "booleanValues": [
+                "false",
+                "true"
+              ],
+              "type": "integer",
+              "highlightLinks": false
+            }
+          ]
+        },
+        "name": "Table"
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "name": "New Query",
+    "options": {
+      "parameters": []
+    },
+    "query": "select * from experiment.range_label",
+    "visualizations": [
+      {
+        "description": "",
+        "id": 7,
+        "type": "TABLE",
+        "options": {},
+        "name": "Table"
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "name": "dataset_range",
+    "options": {
+      "parameters": [
+        {
+          "name": "range_id",
+          "title": "range_id",
+          "global": false,
+          "value": "1",
+          "queryId": 6,
+          "parentQueryId": 4,
+          "type": "number",
+          "locals": []
+        },
+        {
+          "name": "dataset",
+          "title": "Dataset",
+          "global": false,
+          "value": "1",
+          "queryId": 3,
+          "type": "query",
+          "locals": []
+        }
+      ]
+    },
+    "query": "create function pg_temp.valid_sample(bigint, int8range) returns boolean as \n$$ \nbegin \n    if upper($2) - lower($2) > 1000 then\n        return $1 <@ $2 and $1 % ((upper($2) - lower($2)) / 1000)=0;\n    else\n        return $1 <@ $2;\n    END if;\n     \nend;\n$$ LANGUAGE plpgsql;\n\nSELECT sample_no,\n       MAX( case when column_id=1 then value else NULL end) AS time,\n       MAX( case when column_id=2 then value else NULL end) AS voltage,\n       MAX( case when column_id=3 then value else NULL end) AS current,\n       MAX( case when column_id=4 then value else NULL end) AS energy_capacity,\n       MAX( case when column_id=5 then value else NULL end) AS charge_capacity,\n       MAX( case when column_id=6 then value else NULL end) AS temperature,\n       MAX( case when column_id=7 then value else NULL end) AS step_time\nFROM experiment.timeseries_data \nwhere dataset_id={{ dataset }} \n    and pg_temp.valid_sample(sample_no, (select sample_range from experiment.range_label where id={{range_id}}))\nGROUP BY sample_no\norder by sample_no;\n",
+    "visualizations": [
+      {
+        "description": "",
+        "id": 6,
+        "type": "TABLE",
+        "options": {},
+        "name": "Table"
+      },
+      {
+        "description": "",
+        "id": 10,
+        "type": "CHART",
+        "options": {
+          "showDataLabels": false,
+          "direction": {
+            "type": "counterclockwise"
+          },
+          "missingValuesAsZero": false,
+          "error_y": {
+            "visible": true,
+            "type": "data"
+          },
+          "numberFormat": "0,0[.]00000",
+          "yAxis": [
+            {
+              "type": "linear"
+            },
+            {
+              "type": "linear",
+              "opposite": true
+            }
+          ],
+          "series": {
+            "stacking": null,
+            "error_y": {
+              "visible": true,
+              "type": "data"
+            }
+          },
+          "globalSeriesType": "line",
+          "percentFormat": "0[.]00%",
+          "sortX": true,
+          "seriesOptions": {
+            "current": {
+              "zIndex": 1,
+              "index": 0,
+              "type": "line",
+              "yAxis": 0
+            },
+            "energy_capacity": {
+              "zIndex": 2,
+              "index": 0,
+              "type": "line",
+              "yAxis": 0
+            },
+            "charge_capacity": {
+              "zIndex": 3,
+              "index": 0,
+              "type": "line",
+              "yAxis": 0
+            },
+            "voltage": {
+              "zIndex": 0,
+              "index": 0,
+              "type": "line",
+              "yAxis": 0
+            },
+            "temperature": {
+              "zIndex": 4,
+              "index": 0,
+              "type": "line",
+              "yAxis": 0
+            }
+          },
+          "valuesOptions": {},
+          "xAxis": {
+            "labels": {
+              "enabled": true
+            },
+            "type": "-"
+          },
+          "dateTimeFormat": "DD/MM/YY HH:mm",
+          "columnMapping": {
+            "energy_capacity": "y",
+            "temperature": "y",
+            "step_time": "unused",
+            "current": "y",
+            "voltage": "y",
+            "time": "x",
+            "charge_capacity": "y"
+          },
+          "textFormat": "",
+          "customCode": "// Available variables are x, ys, element, and Plotly\n// Type console.log(x, ys); for more info about x and ys\n// To plot your graph call Plotly.plot(element, ...)\n// Plotly examples and docs: https://plot.ly/javascript/",
+          "legend": {
+            "enabled": true
+          }
+        },
+        "name": "Chart"
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "name": "datasets",
+    "options": {
+      "parameters": []
+    },
+    "query": "select experiment.dataset.id, experiment.dataset.name, experiment.dataset.date, experiment.institution.name as institution, experiment.dataset.type, experiment.dataset.original_collector\nfrom experiment.dataset\ninner join experiment.institution on experiment.dataset.institution_id=experiment.institution.id",
+    "visualizations": [
+      {
+        "description": "",
+        "id": 5,
+        "type": "TABLE",
+        "options": {
+          "itemsPerPage": 25,
+          "columns": [
+            {
+              "linkUrlTemplate": "dashboard/dataset?p_dataset={{ @ }}",
+              "name": "id",
+              "numberFormat": "0,0",
+              "title": "Name",
+              "imageUrlTemplate": "{{ @ }}",
+              "linkOpenInNewTab": false,
+              "linkTextTemplate": "{{ name }}",
+              "allowSearch": false,
+              "allowHTML": true,
+              "imageTitleTemplate": "{{ @ }}",
+              "imageWidth": "",
+              "visible": true,
+              "alignContent": "right",
+              "imageHeight": "",
+              "order": 100000,
+              "displayAs": "link",
+              "linkTitleTemplate": "{{ @ }}",
+              "booleanValues": [
+                "false",
+                "true"
+              ],
+              "type": "integer",
+              "highlightLinks": false
+            },
+            {
+              "linkUrlTemplate": "{{ @ }}",
+              "name": "name",
+              "title": "name",
+              "imageUrlTemplate": "{{ @ }}",
+              "linkOpenInNewTab": true,
+              "linkTextTemplate": "{{ @ }}",
+              "allowSearch": false,
+              "allowHTML": true,
+              "imageTitleTemplate": "{{ @ }}",
+              "imageWidth": "",
+              "visible": false,
+              "alignContent": "left",
+              "imageHeight": "",
+              "order": 100001,
+              "displayAs": "string",
+              "linkTitleTemplate": "{{ @ }}",
+              "booleanValues": [
+                "false",
+                "true"
+              ],
+              "type": "string",
+              "highlightLinks": false
+            },
+            {
+              "linkUrlTemplate": "{{ @ }}",
+              "name": "date",
+              "title": "Date",
+              "imageUrlTemplate": "{{ @ }}",
+              "linkOpenInNewTab": true,
+              "linkTextTemplate": "{{ @ }}",
+              "allowSearch": false,
+              "allowHTML": true,
+              "imageTitleTemplate": "{{ @ }}",
+              "imageWidth": "",
+              "visible": true,
+              "alignContent": "right",
+              "imageHeight": "",
+              "order": 100002,
+              "displayAs": "datetime",
+              "dateTimeFormat": "DD/MM/YY HH:mm",
+              "linkTitleTemplate": "{{ @ }}",
+              "booleanValues": [
+                "false",
+                "true"
+              ],
+              "type": "datetime",
+              "highlightLinks": false
+            },
+            {
+              "linkUrlTemplate": "{{ @ }}",
+              "name": "institution",
+              "title": "Institution",
+              "imageUrlTemplate": "{{ @ }}",
+              "linkOpenInNewTab": true,
+              "linkTextTemplate": "{{ @ }}",
+              "allowSearch": false,
+              "allowHTML": true,
+              "imageTitleTemplate": "{{ @ }}",
+              "imageWidth": "",
+              "visible": true,
+              "alignContent": "left",
+              "imageHeight": "",
+              "order": 100003,
+              "displayAs": "string",
+              "linkTitleTemplate": "{{ @ }}",
+              "booleanValues": [
+                "false",
+                "true"
+              ],
+              "type": "string",
+              "highlightLinks": false
+            },
+            {
+              "linkUrlTemplate": "{{ @ }}",
+              "name": "type",
+              "title": "Tester",
+              "imageUrlTemplate": "{{ @ }}",
+              "linkOpenInNewTab": true,
+              "linkTextTemplate": "{{ @ }}",
+              "allowSearch": false,
+              "allowHTML": true,
+              "imageTitleTemplate": "{{ @ }}",
+              "imageWidth": "",
+              "visible": true,
+              "alignContent": "left",
+              "imageHeight": "",
+              "order": 100004,
+              "displayAs": "string",
+              "linkTitleTemplate": "{{ @ }}",
+              "booleanValues": [
+                "false",
+                "true"
+              ],
+              "type": "string",
+              "highlightLinks": false
+            },
+            {
+              "linkUrlTemplate": "{{ @ }}",
+              "name": "original_collector",
+              "title": "Harvester",
+              "imageUrlTemplate": "{{ @ }}",
+              "linkOpenInNewTab": true,
+              "linkTextTemplate": "{{ @ }}",
+              "allowSearch": false,
+              "allowHTML": true,
+              "imageTitleTemplate": "{{ @ }}",
+              "imageWidth": "",
+              "visible": true,
+              "alignContent": "left",
+              "imageHeight": "",
+              "order": 100005,
+              "displayAs": "string",
+              "linkTitleTemplate": "{{ @ }}",
+              "booleanValues": [
+                "false",
+                "true"
+              ],
+              "type": "string",
+              "highlightLinks": false
+            }
+          ]
+        },
+        "name": "Datasets"
+      },
+      {
+        "description": "",
+        "id": 4,
+        "type": "TABLE",
+        "options": {},
+        "name": "Table"
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "name": "crosstab dataset",
+    "options": {
+      "parameters": []
+    },
+    "query": "CREATE EXTENSION IF NOT EXISTS tablefunc;\n\nSELECT *\nFROM crosstab(\n  'select sample_no, column_id, value\n   from experiment.timeseries_data\n   where dataset_id = 1\n   order by sample_no, column_id')\nAS ct(sample_no bigint, time float, voltage float, current float, energy_capacity float, charge_capacity float, temperature float, step_time float);",
+    "visualizations": [
+      {
+        "description": "",
+        "id": 2,
+        "type": "TABLE",
+        "options": {},
+        "name": "Table"
+      }
+    ]
+  },
+  {
+    "id": 1,
+    "name": "Dataset",
+    "options": {
+      "parameters": [
+        {
+          "name": "dataset",
+          "title": "Dataset",
+          "value": "1",
+          "queryId": 3,
+          "locals": [],
+          "type": "query",
+          "parentQueryId": 1
+        }
+      ]
+    },
+    "query": "SELECT sample_no,\n       MAX( case when column_id=1 then value else NULL end) AS time,\n       MAX( case when column_id=2 then value else NULL end) AS voltage,\n       MAX( case when column_id=3 then value else NULL end) AS current,\n       MAX( case when column_id=4 then value else NULL end) AS energy_capacity,\n       MAX( case when column_id=5 then value else NULL end) AS charge_capacity,\n       MAX( case when column_id=6 then value else NULL end) AS temperature,\n       MAX( case when column_id=7 then value else NULL end) AS step_time\nFROM experiment.timeseries_data where dataset_id={{ dataset }} and sample_no%((SELECT MAX(sample_no) FROM experiment.timeseries_data where dataset_id={{ dataset }})/2000)=0\nGROUP BY sample_no\norder by sample_no ",
+    "visualizations": [
+      {
+        "description": "",
+        "id": 1,
+        "type": "TABLE",
+        "options": {},
+        "name": "Table"
+      },
+      {
+        "description": "",
+        "id": 3,
+        "type": "CHART",
+        "options": {
+          "showDataLabels": false,
+          "direction": {
+            "type": "counterclockwise"
+          },
+          "missingValuesAsZero": false,
+          "error_y": {
+            "visible": true,
+            "type": "data"
+          },
+          "numberFormat": "0,0[.]00000",
+          "yAxis": [
+            {
+              "type": "linear"
+            },
+            {
+              "type": "linear",
+              "opposite": true
+            }
+          ],
+          "series": {
+            "stacking": null,
+            "error_y": {
+              "visible": true,
+              "type": "data"
+            }
+          },
+          "globalSeriesType": "line",
+          "percentFormat": "0[.]00%",
+          "sortX": true,
+          "seriesOptions": {
+            "current": {
+              "zIndex": 1,
+              "index": 0,
+              "type": "line",
+              "yAxis": 0
+            },
+            "energy_capacity": {
+              "zIndex": 2,
+              "index": 0,
+              "type": "line",
+              "yAxis": 0
+            },
+            "charge_capacity": {
+              "zIndex": 3,
+              "index": 0,
+              "type": "line",
+              "yAxis": 0
+            },
+            "voltage": {
+              "zIndex": 0,
+              "index": 0,
+              "type": "line",
+              "yAxis": 0
+            },
+            "temperature": {
+              "zIndex": 4,
+              "index": 0,
+              "type": "line",
+              "yAxis": 0
+            }
+          },
+          "valuesOptions": {},
+          "xAxis": {
+            "labels": {
+              "enabled": true
+            },
+            "type": "-"
+          },
+          "dateTimeFormat": "DD/MM/YY HH:mm",
+          "columnMapping": {
+            "energy_capacity": "y",
+            "temperature": "y",
+            "step_time": "unused",
+            "current": "y",
+            "voltage": "y",
+            "time": "x",
+            "charge_capacity": "y"
+          },
+          "textFormat": "",
+          "customCode": "// Available variables are x, ys, element, and Plotly\n// Type console.log(x, ys); for more info about x and ys\n// To plot your graph call Plotly.plot(element, ...)\n// Plotly examples and docs: https://plot.ly/javascript/",
+          "legend": {
+            "enabled": true
+          }
+        },
+        "name": "Line Plot"
+      }
+    ]
+  }
+]

@@ -1,0 +1,1425 @@
+[
+  {
+    "tags": [],
+    "is_archived": false,
+    "updated_at": "2021-02-24T16:17:15.661Z",
+    "is_favorite": true,
+    "user": {
+      "auth_type": "password",
+      "is_disabled": false,
+      "updated_at": "2021-04-02T06:30:38.001Z",
+      "profile_image_url": "https://www.gravatar.com/avatar/bec99ed1ef8431de7ffddc9c2d90cc80?s=40&d=identicon",
+      "is_invitation_pending": false,
+      "groups": [
+        1,
+        2,
+        3
+      ],
+      "id": 1,
+      "name": "Martin",
+      "created_at": "2021-01-29T08:22:22.270Z",
+      "disabled_at": null,
+      "is_email_verified": true,
+      "active_at": "2021-04-02T06:30:28Z",
+      "email": "martin.robinson@cs.ox.ac.uk"
+    },
+    "layout": [],
+    "is_draft": false,
+    "id": 3,
+    "can_edit": true,
+    "user_id": 1,
+    "name": "dataset_range",
+    "created_at": "2021-02-24T14:26:28.190Z",
+    "slug": "dataset_range",
+    "version": 2,
+    "widgets": [
+      {
+        "visualization": {
+          "description": "",
+          "created_at": "2021-02-24T17:26:59.875Z",
+          "updated_at": "2021-02-25T10:06:43.788Z",
+          "id": 11,
+          "query": {
+            "user": {
+              "auth_type": "password",
+              "is_disabled": false,
+              "updated_at": "2021-04-02T06:30:38.001Z",
+              "profile_image_url": "https://www.gravatar.com/avatar/bec99ed1ef8431de7ffddc9c2d90cc80?s=40&d=identicon",
+              "is_invitation_pending": false,
+              "groups": [
+                1,
+                2,
+                3
+              ],
+              "id": 1,
+              "name": "Martin",
+              "created_at": "2021-01-29T08:22:22.270Z",
+              "disabled_at": null,
+              "is_email_verified": true,
+              "active_at": "2021-04-02T06:30:28Z",
+              "email": "martin.robinson@cs.ox.ac.uk"
+            },
+            "created_at": "2021-02-24T17:26:59.875Z",
+            "latest_query_data_id": null,
+            "schedule": null,
+            "description": null,
+            "tags": [],
+            "updated_at": "2021-02-25T10:01:39.262Z",
+            "last_modified_by": {
+              "auth_type": "password",
+              "is_disabled": false,
+              "updated_at": "2021-04-02T06:30:38.001Z",
+              "profile_image_url": "https://www.gravatar.com/avatar/bec99ed1ef8431de7ffddc9c2d90cc80?s=40&d=identicon",
+              "is_invitation_pending": false,
+              "groups": [
+                1,
+                2,
+                3
+              ],
+              "id": 1,
+              "name": "Martin",
+              "created_at": "2021-01-29T08:22:22.270Z",
+              "disabled_at": null,
+              "is_email_verified": true,
+              "active_at": "2021-04-02T06:30:28Z",
+              "email": "martin.robinson@cs.ox.ac.uk"
+            },
+            "options": {
+              "parameters": [
+                {
+                  "name": "dataset",
+                  "title": "Dataset",
+                  "global": false,
+                  "value": "1",
+                  "queryId": 3,
+                  "parentQueryId": 7,
+                  "type": "query",
+                  "locals": []
+                }
+              ]
+            },
+            "is_safe": true,
+            "version": 1,
+            "query_hash": "7bd5d44238c1574ed0b378452c3b5666",
+            "is_archived": false,
+            "query": "select experiment.column.name, experiment.column.description\nfrom experiment.column\nwhere experiment.column.id in\n    (select distinct experiment.timeseries_data.column_id from experiment.timeseries_data where experiment.timeseries_data.dataset_id={{dataset}})",
+            "api_key": "4WfKgohs3E4Fq92jxLQiUE2la3g7ljglkSinyROo",
+            "is_draft": false,
+            "id": 7,
+            "data_source_id": 2,
+            "name": "Columns in the dataset"
+          },
+          "type": "TABLE",
+          "options": {},
+          "name": "Table"
+        },
+        "text": "",
+        "created_at": "2021-02-25T07:31:46.912Z",
+        "updated_at": "2021-03-24T16:52:45.132Z",
+        "options": {
+          "parameterMappings": {
+            "dataset": {
+              "type": "dashboard-level",
+              "mapTo": "dataset",
+              "name": "dataset",
+              "value": null,
+              "title": ""
+            }
+          },
+          "isHidden": false,
+          "position": {
+            "autoHeight": true,
+            "sizeX": 2,
+            "sizeY": 18,
+            "maxSizeY": 1000,
+            "maxSizeX": 6,
+            "minSizeY": 1,
+            "minSizeX": 2,
+            "col": 1,
+            "row": 9
+          }
+        },
+        "dashboard_id": 3,
+        "width": 1,
+        "id": 11
+      },
+      {
+        "visualization": {
+          "description": "",
+          "created_at": "2021-02-25T07:28:47.621Z",
+          "updated_at": "2021-02-25T07:30:36.225Z",
+          "id": 15,
+          "query": {
+            "user": {
+              "auth_type": "password",
+              "is_disabled": false,
+              "updated_at": "2021-04-02T06:30:38.001Z",
+              "profile_image_url": "https://www.gravatar.com/avatar/bec99ed1ef8431de7ffddc9c2d90cc80?s=40&d=identicon",
+              "is_invitation_pending": false,
+              "groups": [
+                1,
+                2,
+                3
+              ],
+              "id": 1,
+              "name": "Martin",
+              "created_at": "2021-01-29T08:22:22.270Z",
+              "disabled_at": null,
+              "is_email_verified": true,
+              "active_at": "2021-04-02T06:30:28Z",
+              "email": "martin.robinson@cs.ox.ac.uk"
+            },
+            "created_at": "2021-02-25T07:26:39.724Z",
+            "latest_query_data_id": null,
+            "schedule": null,
+            "description": null,
+            "tags": [],
+            "updated_at": "2021-02-25T12:41:18.400Z",
+            "last_modified_by": {
+              "auth_type": "password",
+              "is_disabled": false,
+              "updated_at": "2021-04-02T06:30:38.001Z",
+              "profile_image_url": "https://www.gravatar.com/avatar/bec99ed1ef8431de7ffddc9c2d90cc80?s=40&d=identicon",
+              "is_invitation_pending": false,
+              "groups": [
+                1,
+                2,
+                3
+              ],
+              "id": 1,
+              "name": "Martin",
+              "created_at": "2021-01-29T08:22:22.270Z",
+              "disabled_at": null,
+              "is_email_verified": true,
+              "active_at": "2021-04-02T06:30:28Z",
+              "email": "martin.robinson@cs.ox.ac.uk"
+            },
+            "options": {
+              "parameters": [
+                {
+                  "name": "dataset",
+                  "title": "Dataset",
+                  "global": false,
+                  "value": "1",
+                  "queryId": 3,
+                  "parentQueryId": 9,
+                  "type": "query",
+                  "locals": []
+                },
+                {
+                  "name": "range_id",
+                  "title": "range_id",
+                  "global": false,
+                  "value": 1,
+                  "locals": [],
+                  "type": "number",
+                  "parentQueryId": 9
+                }
+              ]
+            },
+            "is_safe": true,
+            "version": 1,
+            "query_hash": "b057adfbfe4b75f812070abe6df22baa",
+            "is_archived": false,
+            "query": "select experiment.dataset.name as dataset_name, experiment.range_label.label_name as range_name, experiment.range_label.info as range_info, \n       experiment.dataset.date, experiment.institution.name as institution, \n       experiment.dataset.original_collector, experiment.dataset.type\nfrom experiment.dataset\n    inner join experiment.institution on institution_id=experiment.institution.id\n    inner join experiment.range_label on experiment.dataset.id=experiment.range_label.dataset_id\nwhere experiment.dataset.id={{dataset}} and experiment.range_label.id={{range_id}}",
+            "api_key": "SDQbk3pWtsIJRgAQoDNSAbGVwUSlTCWTZI9hPyzF",
+            "is_draft": false,
+            "id": 9,
+            "data_source_id": 2,
+            "name": "Dataset range metadata"
+          },
+          "type": "DETAILS",
+          "options": {},
+          "name": "Details"
+        },
+        "text": "",
+        "created_at": "2021-02-25T07:30:36.225Z",
+        "updated_at": "2021-02-25T12:41:46.857Z",
+        "options": {
+          "parameterMappings": {
+            "range_id": {
+              "type": "dashboard-level",
+              "mapTo": "range_id",
+              "name": "range_id",
+              "value": null,
+              "title": ""
+            },
+            "dataset": {
+              "type": "dashboard-level",
+              "mapTo": "dataset",
+              "name": "dataset",
+              "value": null,
+              "title": ""
+            }
+          },
+          "isHidden": false,
+          "position": {
+            "autoHeight": false,
+            "sizeX": 1,
+            "sizeY": 9,
+            "maxSizeY": 1000,
+            "maxSizeX": 6,
+            "minSizeY": 1,
+            "minSizeX": 1,
+            "col": 1,
+            "row": 0
+          }
+        },
+        "dashboard_id": 3,
+        "width": 1,
+        "id": 10
+      },
+      {
+        "visualization": {
+          "description": "",
+          "created_at": "2021-02-24T16:16:25.371Z",
+          "updated_at": "2021-02-25T07:34:14.736Z",
+          "id": 10,
+          "query": {
+            "user": {
+              "auth_type": "password",
+              "is_disabled": false,
+              "updated_at": "2021-04-02T06:30:38.001Z",
+              "profile_image_url": "https://www.gravatar.com/avatar/bec99ed1ef8431de7ffddc9c2d90cc80?s=40&d=identicon",
+              "is_invitation_pending": false,
+              "groups": [
+                1,
+                2,
+                3
+              ],
+              "id": 1,
+              "name": "Martin",
+              "created_at": "2021-01-29T08:22:22.270Z",
+              "disabled_at": null,
+              "is_email_verified": true,
+              "active_at": "2021-04-02T06:30:28Z",
+              "email": "martin.robinson@cs.ox.ac.uk"
+            },
+            "created_at": "2021-02-24T14:08:02.745Z",
+            "latest_query_data_id": null,
+            "schedule": null,
+            "description": null,
+            "tags": [],
+            "updated_at": "2021-02-25T12:39:27.361Z",
+            "last_modified_by": {
+              "auth_type": "password",
+              "is_disabled": false,
+              "updated_at": "2021-04-02T06:30:38.001Z",
+              "profile_image_url": "https://www.gravatar.com/avatar/bec99ed1ef8431de7ffddc9c2d90cc80?s=40&d=identicon",
+              "is_invitation_pending": false,
+              "groups": [
+                1,
+                2,
+                3
+              ],
+              "id": 1,
+              "name": "Martin",
+              "created_at": "2021-01-29T08:22:22.270Z",
+              "disabled_at": null,
+              "is_email_verified": true,
+              "active_at": "2021-04-02T06:30:28Z",
+              "email": "martin.robinson@cs.ox.ac.uk"
+            },
+            "options": {
+              "parameters": [
+                {
+                  "name": "range_id",
+                  "title": "range_id",
+                  "global": false,
+                  "value": "1",
+                  "queryId": 6,
+                  "parentQueryId": 4,
+                  "type": "number",
+                  "locals": []
+                },
+                {
+                  "name": "dataset",
+                  "title": "Dataset",
+                  "global": false,
+                  "value": "1",
+                  "queryId": 3,
+                  "type": "query",
+                  "locals": []
+                }
+              ]
+            },
+            "is_safe": true,
+            "version": 1,
+            "query_hash": "3082bff90ff3fb456509474cad08c8f5",
+            "is_archived": false,
+            "query": "create function pg_temp.valid_sample(bigint, int8range) returns boolean as \n$$ \nbegin \n    if upper($2) - lower($2) > 1000 then\n        return $1 <@ $2 and $1 % ((upper($2) - lower($2)) / 1000)=0;\n    else\n        return $1 <@ $2;\n    END if;\n     \nend;\n$$ LANGUAGE plpgsql;\n\nSELECT sample_no,\n       MAX( case when column_id=1 then value else NULL end) AS time,\n       MAX( case when column_id=2 then value else NULL end) AS voltage,\n       MAX( case when column_id=3 then value else NULL end) AS current,\n       MAX( case when column_id=4 then value else NULL end) AS energy_capacity,\n       MAX( case when column_id=5 then value else NULL end) AS charge_capacity,\n       MAX( case when column_id=6 then value else NULL end) AS temperature,\n       MAX( case when column_id=7 then value else NULL end) AS step_time\nFROM experiment.timeseries_data \nwhere dataset_id={{ dataset }} \n    and pg_temp.valid_sample(sample_no, (select sample_range from experiment.range_label where id={{range_id}}))\nGROUP BY sample_no\norder by sample_no;\n",
+            "api_key": "5jO5L34Z1IoJA7v6babDxpJWpzu81gnClkuZCJnJ",
+            "is_draft": false,
+            "id": 4,
+            "data_source_id": 2,
+            "name": "dataset_range"
+          },
+          "type": "CHART",
+          "options": {
+            "showDataLabels": false,
+            "direction": {
+              "type": "counterclockwise"
+            },
+            "missingValuesAsZero": false,
+            "error_y": {
+              "visible": true,
+              "type": "data"
+            },
+            "numberFormat": "0,0[.]00000",
+            "yAxis": [
+              {
+                "type": "linear"
+              },
+              {
+                "type": "linear",
+                "opposite": true
+              }
+            ],
+            "series": {
+              "stacking": null,
+              "error_y": {
+                "visible": true,
+                "type": "data"
+              }
+            },
+            "globalSeriesType": "line",
+            "percentFormat": "0[.]00%",
+            "sortX": true,
+            "seriesOptions": {
+              "current": {
+                "zIndex": 1,
+                "index": 0,
+                "type": "line",
+                "yAxis": 0
+              },
+              "energy_capacity": {
+                "zIndex": 2,
+                "index": 0,
+                "type": "line",
+                "yAxis": 0
+              },
+              "charge_capacity": {
+                "zIndex": 3,
+                "index": 0,
+                "type": "line",
+                "yAxis": 0
+              },
+              "voltage": {
+                "zIndex": 0,
+                "index": 0,
+                "type": "line",
+                "yAxis": 0
+              },
+              "temperature": {
+                "zIndex": 4,
+                "index": 0,
+                "type": "line",
+                "yAxis": 0
+              }
+            },
+            "valuesOptions": {},
+            "xAxis": {
+              "labels": {
+                "enabled": true
+              },
+              "type": "-"
+            },
+            "dateTimeFormat": "DD/MM/YY HH:mm",
+            "columnMapping": {
+              "energy_capacity": "y",
+              "temperature": "y",
+              "step_time": "unused",
+              "current": "y",
+              "voltage": "y",
+              "time": "x",
+              "charge_capacity": "y"
+            },
+            "textFormat": "",
+            "customCode": "// Available variables are x, ys, element, and Plotly\n// Type console.log(x, ys); for more info about x and ys\n// To plot your graph call Plotly.plot(element, ...)\n// Plotly examples and docs: https://plot.ly/javascript/",
+            "legend": {
+              "enabled": true
+            }
+          },
+          "name": "Chart"
+        },
+        "text": "",
+        "created_at": "2021-02-25T07:34:14.736Z",
+        "updated_at": "2021-02-25T12:41:58.996Z",
+        "options": {
+          "parameterMappings": {
+            "range_id": {
+              "type": "dashboard-level",
+              "mapTo": "range_id",
+              "name": "range_id",
+              "value": null,
+              "title": ""
+            },
+            "dataset": {
+              "type": "dashboard-level",
+              "mapTo": "dataset",
+              "name": "dataset",
+              "value": null,
+              "title": ""
+            }
+          },
+          "isHidden": false,
+          "position": {
+            "autoHeight": false,
+            "sizeX": 3,
+            "sizeY": 9,
+            "maxSizeY": 1000,
+            "maxSizeX": 6,
+            "minSizeY": 5,
+            "minSizeX": 1,
+            "col": 2,
+            "row": 0
+          }
+        },
+        "dashboard_id": 3,
+        "width": 1,
+        "id": 12
+      }
+    ],
+    "dashboard_filters_enabled": false
+  },
+  {
+    "tags": [],
+    "is_archived": false,
+    "updated_at": "2021-02-08T16:53:26.063Z",
+    "is_favorite": true,
+    "user": {
+      "auth_type": "password",
+      "is_disabled": false,
+      "updated_at": "2021-04-02T06:30:38.001Z",
+      "profile_image_url": "https://www.gravatar.com/avatar/bec99ed1ef8431de7ffddc9c2d90cc80?s=40&d=identicon",
+      "is_invitation_pending": false,
+      "groups": [
+        1,
+        2,
+        3
+      ],
+      "id": 1,
+      "name": "Martin",
+      "created_at": "2021-01-29T08:22:22.270Z",
+      "disabled_at": null,
+      "is_email_verified": true,
+      "active_at": "2021-04-02T06:30:28Z",
+      "email": "martin.robinson@cs.ox.ac.uk"
+    },
+    "layout": [],
+    "is_draft": false,
+    "id": 2,
+    "can_edit": true,
+    "user_id": 1,
+    "name": "datasets",
+    "created_at": "2021-02-08T16:45:21.144Z",
+    "slug": "datasets",
+    "version": 4,
+    "widgets": [
+      {
+        "visualization": {
+          "description": "",
+          "created_at": "2021-02-08T16:45:10.965Z",
+          "updated_at": "2021-03-24T17:01:27.539Z",
+          "id": 5,
+          "query": {
+            "user": {
+              "auth_type": "password",
+              "is_disabled": false,
+              "updated_at": "2021-04-02T06:30:38.001Z",
+              "profile_image_url": "https://www.gravatar.com/avatar/bec99ed1ef8431de7ffddc9c2d90cc80?s=40&d=identicon",
+              "is_invitation_pending": false,
+              "groups": [
+                1,
+                2,
+                3
+              ],
+              "id": 1,
+              "name": "Martin",
+              "created_at": "2021-01-29T08:22:22.270Z",
+              "disabled_at": null,
+              "is_email_verified": true,
+              "active_at": "2021-04-02T06:30:28Z",
+              "email": "martin.robinson@cs.ox.ac.uk"
+            },
+            "created_at": "2021-02-08T16:43:59.599Z",
+            "latest_query_data_id": 370,
+            "schedule": null,
+            "description": null,
+            "tags": [],
+            "updated_at": "2021-02-24T13:34:09.438Z",
+            "last_modified_by": {
+              "auth_type": "password",
+              "is_disabled": false,
+              "updated_at": "2021-04-02T06:30:38.001Z",
+              "profile_image_url": "https://www.gravatar.com/avatar/bec99ed1ef8431de7ffddc9c2d90cc80?s=40&d=identicon",
+              "is_invitation_pending": false,
+              "groups": [
+                1,
+                2,
+                3
+              ],
+              "id": 1,
+              "name": "Martin",
+              "created_at": "2021-01-29T08:22:22.270Z",
+              "disabled_at": null,
+              "is_email_verified": true,
+              "active_at": "2021-04-02T06:30:28Z",
+              "email": "martin.robinson@cs.ox.ac.uk"
+            },
+            "options": {
+              "parameters": []
+            },
+            "is_safe": true,
+            "version": 1,
+            "query_hash": "7d990f10b9b7befb56287ccbd14cac00",
+            "is_archived": false,
+            "query": "select experiment.dataset.id, experiment.dataset.name, experiment.dataset.date, experiment.institution.name as institution, experiment.dataset.type, experiment.dataset.original_collector\nfrom experiment.dataset\ninner join experiment.institution on experiment.dataset.institution_id=experiment.institution.id",
+            "api_key": "UThupOzUlNJjaqCtcQpr1MH2pJoxBogG6grV5PRb",
+            "is_draft": false,
+            "id": 3,
+            "data_source_id": 2,
+            "name": "datasets"
+          },
+          "type": "TABLE",
+          "options": {
+            "itemsPerPage": 25,
+            "columns": [
+              {
+                "linkUrlTemplate": "dashboard/dataset?p_dataset={{ @ }}",
+                "name": "id",
+                "numberFormat": "0,0",
+                "title": "Name",
+                "imageUrlTemplate": "{{ @ }}",
+                "linkOpenInNewTab": false,
+                "linkTextTemplate": "{{ name }}",
+                "allowSearch": false,
+                "allowHTML": true,
+                "imageTitleTemplate": "{{ @ }}",
+                "imageWidth": "",
+                "visible": true,
+                "alignContent": "right",
+                "imageHeight": "",
+                "order": 100000,
+                "displayAs": "link",
+                "linkTitleTemplate": "{{ @ }}",
+                "booleanValues": [
+                  "false",
+                  "true"
+                ],
+                "type": "integer",
+                "highlightLinks": false
+              },
+              {
+                "linkUrlTemplate": "{{ @ }}",
+                "name": "name",
+                "title": "name",
+                "imageUrlTemplate": "{{ @ }}",
+                "linkOpenInNewTab": true,
+                "linkTextTemplate": "{{ @ }}",
+                "allowSearch": false,
+                "allowHTML": true,
+                "imageTitleTemplate": "{{ @ }}",
+                "imageWidth": "",
+                "visible": false,
+                "alignContent": "left",
+                "imageHeight": "",
+                "order": 100001,
+                "displayAs": "string",
+                "linkTitleTemplate": "{{ @ }}",
+                "booleanValues": [
+                  "false",
+                  "true"
+                ],
+                "type": "string",
+                "highlightLinks": false
+              },
+              {
+                "linkUrlTemplate": "{{ @ }}",
+                "name": "date",
+                "title": "Date",
+                "imageUrlTemplate": "{{ @ }}",
+                "linkOpenInNewTab": true,
+                "linkTextTemplate": "{{ @ }}",
+                "allowSearch": false,
+                "allowHTML": true,
+                "imageTitleTemplate": "{{ @ }}",
+                "imageWidth": "",
+                "visible": true,
+                "alignContent": "right",
+                "imageHeight": "",
+                "order": 100002,
+                "displayAs": "datetime",
+                "dateTimeFormat": "DD/MM/YY HH:mm",
+                "linkTitleTemplate": "{{ @ }}",
+                "booleanValues": [
+                  "false",
+                  "true"
+                ],
+                "type": "datetime",
+                "highlightLinks": false
+              },
+              {
+                "linkUrlTemplate": "{{ @ }}",
+                "name": "institution",
+                "title": "Institution",
+                "imageUrlTemplate": "{{ @ }}",
+                "linkOpenInNewTab": true,
+                "linkTextTemplate": "{{ @ }}",
+                "allowSearch": false,
+                "allowHTML": true,
+                "imageTitleTemplate": "{{ @ }}",
+                "imageWidth": "",
+                "visible": true,
+                "alignContent": "left",
+                "imageHeight": "",
+                "order": 100003,
+                "displayAs": "string",
+                "linkTitleTemplate": "{{ @ }}",
+                "booleanValues": [
+                  "false",
+                  "true"
+                ],
+                "type": "string",
+                "highlightLinks": false
+              },
+              {
+                "linkUrlTemplate": "{{ @ }}",
+                "name": "type",
+                "title": "Tester",
+                "imageUrlTemplate": "{{ @ }}",
+                "linkOpenInNewTab": true,
+                "linkTextTemplate": "{{ @ }}",
+                "allowSearch": false,
+                "allowHTML": true,
+                "imageTitleTemplate": "{{ @ }}",
+                "imageWidth": "",
+                "visible": true,
+                "alignContent": "left",
+                "imageHeight": "",
+                "order": 100004,
+                "displayAs": "string",
+                "linkTitleTemplate": "{{ @ }}",
+                "booleanValues": [
+                  "false",
+                  "true"
+                ],
+                "type": "string",
+                "highlightLinks": false
+              },
+              {
+                "linkUrlTemplate": "{{ @ }}",
+                "name": "original_collector",
+                "title": "Harvester",
+                "imageUrlTemplate": "{{ @ }}",
+                "linkOpenInNewTab": true,
+                "linkTextTemplate": "{{ @ }}",
+                "allowSearch": false,
+                "allowHTML": true,
+                "imageTitleTemplate": "{{ @ }}",
+                "imageWidth": "",
+                "visible": true,
+                "alignContent": "left",
+                "imageHeight": "",
+                "order": 100005,
+                "displayAs": "string",
+                "linkTitleTemplate": "{{ @ }}",
+                "booleanValues": [
+                  "false",
+                  "true"
+                ],
+                "type": "string",
+                "highlightLinks": false
+              }
+            ]
+          },
+          "name": "Datasets"
+        },
+        "text": "",
+        "created_at": "2021-02-08T16:46:34.628Z",
+        "updated_at": "2021-02-25T07:22:07.174Z",
+        "options": {
+          "parameterMappings": {},
+          "isHidden": false,
+          "position": {
+            "autoHeight": false,
+            "sizeX": 4,
+            "sizeY": 14,
+            "maxSizeY": 1000,
+            "maxSizeX": 6,
+            "minSizeY": 1,
+            "minSizeX": 2,
+            "col": 1,
+            "row": 0
+          }
+        },
+        "dashboard_id": 2,
+        "width": 1,
+        "id": 3
+      }
+    ],
+    "dashboard_filters_enabled": false
+  },
+  {
+    "tags": [],
+    "is_archived": false,
+    "updated_at": "2021-02-25T10:03:33.857Z",
+    "is_favorite": true,
+    "user": {
+      "auth_type": "password",
+      "is_disabled": false,
+      "updated_at": "2021-04-02T06:30:38.001Z",
+      "profile_image_url": "https://www.gravatar.com/avatar/bec99ed1ef8431de7ffddc9c2d90cc80?s=40&d=identicon",
+      "is_invitation_pending": false,
+      "groups": [
+        1,
+        2,
+        3
+      ],
+      "id": 1,
+      "name": "Martin",
+      "created_at": "2021-01-29T08:22:22.270Z",
+      "disabled_at": null,
+      "is_email_verified": true,
+      "active_at": "2021-04-02T06:30:28Z",
+      "email": "martin.robinson@cs.ox.ac.uk"
+    },
+    "layout": [],
+    "is_draft": false,
+    "id": 1,
+    "can_edit": true,
+    "user_id": 1,
+    "name": "Dataset",
+    "created_at": "2021-02-08T15:54:24.895Z",
+    "slug": "dataset",
+    "version": 5,
+    "widgets": [
+      {
+        "visualization": {
+          "description": "",
+          "created_at": "2021-02-24T17:51:36.532Z",
+          "updated_at": "2021-02-25T10:06:16.342Z",
+          "id": 13,
+          "query": {
+            "user": {
+              "auth_type": "password",
+              "is_disabled": false,
+              "updated_at": "2021-04-02T06:30:38.001Z",
+              "profile_image_url": "https://www.gravatar.com/avatar/bec99ed1ef8431de7ffddc9c2d90cc80?s=40&d=identicon",
+              "is_invitation_pending": false,
+              "groups": [
+                1,
+                2,
+                3
+              ],
+              "id": 1,
+              "name": "Martin",
+              "created_at": "2021-01-29T08:22:22.270Z",
+              "disabled_at": null,
+              "is_email_verified": true,
+              "active_at": "2021-04-02T06:30:28Z",
+              "email": "martin.robinson@cs.ox.ac.uk"
+            },
+            "created_at": "2021-02-24T17:51:12.489Z",
+            "latest_query_data_id": null,
+            "schedule": null,
+            "description": null,
+            "tags": [],
+            "updated_at": "2021-02-25T10:02:05.301Z",
+            "last_modified_by": {
+              "auth_type": "password",
+              "is_disabled": false,
+              "updated_at": "2021-04-02T06:30:38.001Z",
+              "profile_image_url": "https://www.gravatar.com/avatar/bec99ed1ef8431de7ffddc9c2d90cc80?s=40&d=identicon",
+              "is_invitation_pending": false,
+              "groups": [
+                1,
+                2,
+                3
+              ],
+              "id": 1,
+              "name": "Martin",
+              "created_at": "2021-01-29T08:22:22.270Z",
+              "disabled_at": null,
+              "is_email_verified": true,
+              "active_at": "2021-04-02T06:30:28Z",
+              "email": "martin.robinson@cs.ox.ac.uk"
+            },
+            "options": {
+              "parameters": [
+                {
+                  "name": "dataset",
+                  "title": "Dataset",
+                  "global": false,
+                  "value": "1",
+                  "queryId": 3,
+                  "parentQueryId": 8,
+                  "type": "query",
+                  "locals": []
+                }
+              ]
+            },
+            "is_safe": true,
+            "version": 1,
+            "query_hash": "cf1465a25ea2df0ea20269630c05b140",
+            "is_archived": false,
+            "query": "select experiment.dataset.name, experiment.dataset.date, experiment.institution.name as institution, experiment.dataset.original_collector, experiment.dataset.type\nfrom experiment.dataset\n    inner join experiment.institution on institution_id=experiment.institution.id\nwhere experiment.dataset.id={{dataset}}",
+            "api_key": "HymoQ4Kie5VcIkqImGLt7Qs4z8iKChHloIFeWKa8",
+            "is_draft": false,
+            "id": 8,
+            "data_source_id": 2,
+            "name": "Dataset metadata"
+          },
+          "type": "DETAILS",
+          "options": {},
+          "name": "Detail"
+        },
+        "text": "",
+        "created_at": "2021-02-25T10:06:16.342Z",
+        "updated_at": "2021-02-25T10:06:25.800Z",
+        "options": {
+          "parameterMappings": {
+            "dataset": {
+              "type": "dashboard-level",
+              "mapTo": "dataset",
+              "name": "dataset",
+              "value": null,
+              "title": ""
+            }
+          },
+          "isHidden": false,
+          "position": {
+            "autoHeight": false,
+            "sizeX": 1,
+            "sizeY": 8,
+            "maxSizeY": 1000,
+            "maxSizeX": 6,
+            "minSizeY": 1,
+            "minSizeX": 1,
+            "col": 1,
+            "row": 0
+          }
+        },
+        "dashboard_id": 1,
+        "width": 1,
+        "id": 15
+      },
+      {
+        "visualization": {
+          "description": "",
+          "created_at": "2021-02-08T15:41:36.746Z",
+          "updated_at": "2021-02-24T17:47:47.636Z",
+          "id": 3,
+          "query": {
+            "user": {
+              "auth_type": "password",
+              "is_disabled": false,
+              "updated_at": "2021-04-02T06:30:38.001Z",
+              "profile_image_url": "https://www.gravatar.com/avatar/bec99ed1ef8431de7ffddc9c2d90cc80?s=40&d=identicon",
+              "is_invitation_pending": false,
+              "groups": [
+                1,
+                2,
+                3
+              ],
+              "id": 1,
+              "name": "Martin",
+              "created_at": "2021-01-29T08:22:22.270Z",
+              "disabled_at": null,
+              "is_email_verified": true,
+              "active_at": "2021-04-02T06:30:28Z",
+              "email": "martin.robinson@cs.ox.ac.uk"
+            },
+            "created_at": "2021-02-01T12:56:53.436Z",
+            "latest_query_data_id": null,
+            "schedule": null,
+            "description": null,
+            "tags": [],
+            "updated_at": "2021-02-25T09:54:20.796Z",
+            "last_modified_by": {
+              "auth_type": "password",
+              "is_disabled": false,
+              "updated_at": "2021-04-02T06:30:38.001Z",
+              "profile_image_url": "https://www.gravatar.com/avatar/bec99ed1ef8431de7ffddc9c2d90cc80?s=40&d=identicon",
+              "is_invitation_pending": false,
+              "groups": [
+                1,
+                2,
+                3
+              ],
+              "id": 1,
+              "name": "Martin",
+              "created_at": "2021-01-29T08:22:22.270Z",
+              "disabled_at": null,
+              "is_email_verified": true,
+              "active_at": "2021-04-02T06:30:28Z",
+              "email": "martin.robinson@cs.ox.ac.uk"
+            },
+            "options": {
+              "parameters": [
+                {
+                  "name": "dataset",
+                  "title": "Dataset",
+                  "value": "1",
+                  "queryId": 3,
+                  "locals": [],
+                  "type": "query",
+                  "parentQueryId": 1
+                }
+              ]
+            },
+            "is_safe": true,
+            "version": 1,
+            "query_hash": "767603d9e2af5efde81ea5ae13b538a6",
+            "is_archived": false,
+            "query": "SELECT sample_no,\n       MAX( case when column_id=1 then value else NULL end) AS time,\n       MAX( case when column_id=2 then value else NULL end) AS voltage,\n       MAX( case when column_id=3 then value else NULL end) AS current,\n       MAX( case when column_id=4 then value else NULL end) AS energy_capacity,\n       MAX( case when column_id=5 then value else NULL end) AS charge_capacity,\n       MAX( case when column_id=6 then value else NULL end) AS temperature,\n       MAX( case when column_id=7 then value else NULL end) AS step_time\nFROM experiment.timeseries_data where dataset_id={{ dataset }} and sample_no%((SELECT MAX(sample_no) FROM experiment.timeseries_data where dataset_id={{ dataset }})/2000)=0\nGROUP BY sample_no\norder by sample_no ",
+            "api_key": "qmIy5cDuJ07VrLRS0Bef5Efxl9PWhvB2oiYXQhHl",
+            "is_draft": false,
+            "id": 1,
+            "data_source_id": 2,
+            "name": "Dataset"
+          },
+          "type": "CHART",
+          "options": {
+            "showDataLabels": false,
+            "direction": {
+              "type": "counterclockwise"
+            },
+            "missingValuesAsZero": false,
+            "error_y": {
+              "visible": true,
+              "type": "data"
+            },
+            "numberFormat": "0,0[.]00000",
+            "yAxis": [
+              {
+                "type": "linear"
+              },
+              {
+                "type": "linear",
+                "opposite": true
+              }
+            ],
+            "series": {
+              "stacking": null,
+              "error_y": {
+                "visible": true,
+                "type": "data"
+              }
+            },
+            "globalSeriesType": "line",
+            "percentFormat": "0[.]00%",
+            "sortX": true,
+            "seriesOptions": {
+              "current": {
+                "zIndex": 1,
+                "index": 0,
+                "type": "line",
+                "yAxis": 0
+              },
+              "energy_capacity": {
+                "zIndex": 2,
+                "index": 0,
+                "type": "line",
+                "yAxis": 0
+              },
+              "charge_capacity": {
+                "zIndex": 3,
+                "index": 0,
+                "type": "line",
+                "yAxis": 0
+              },
+              "voltage": {
+                "zIndex": 0,
+                "index": 0,
+                "type": "line",
+                "yAxis": 0
+              },
+              "temperature": {
+                "zIndex": 4,
+                "index": 0,
+                "type": "line",
+                "yAxis": 0
+              }
+            },
+            "valuesOptions": {},
+            "xAxis": {
+              "labels": {
+                "enabled": true
+              },
+              "type": "-"
+            },
+            "dateTimeFormat": "DD/MM/YY HH:mm",
+            "columnMapping": {
+              "energy_capacity": "y",
+              "temperature": "y",
+              "step_time": "unused",
+              "current": "y",
+              "voltage": "y",
+              "time": "x",
+              "charge_capacity": "y"
+            },
+            "textFormat": "",
+            "customCode": "// Available variables are x, ys, element, and Plotly\n// Type console.log(x, ys); for more info about x and ys\n// To plot your graph call Plotly.plot(element, ...)\n// Plotly examples and docs: https://plot.ly/javascript/",
+            "legend": {
+              "enabled": true
+            }
+          },
+          "name": "Line Plot"
+        },
+        "text": "",
+        "created_at": "2021-02-08T15:54:45.215Z",
+        "updated_at": "2021-02-25T07:19:46.704Z",
+        "options": {
+          "parameterMappings": {
+            "dataset": {
+              "type": "dashboard-level",
+              "mapTo": "dataset",
+              "name": "dataset",
+              "value": null,
+              "title": ""
+            }
+          },
+          "isHidden": false,
+          "position": {
+            "autoHeight": false,
+            "sizeX": 3,
+            "sizeY": 8,
+            "maxSizeY": 1000,
+            "maxSizeX": 6,
+            "minSizeY": 5,
+            "minSizeX": 1,
+            "col": 2,
+            "row": 0
+          }
+        },
+        "dashboard_id": 1,
+        "width": 1,
+        "id": 1
+      },
+      {
+        "visualization": {
+          "description": "",
+          "created_at": "2021-02-24T17:26:59.875Z",
+          "updated_at": "2021-02-25T10:06:43.788Z",
+          "id": 11,
+          "query": {
+            "user": {
+              "auth_type": "password",
+              "is_disabled": false,
+              "updated_at": "2021-04-02T06:30:38.001Z",
+              "profile_image_url": "https://www.gravatar.com/avatar/bec99ed1ef8431de7ffddc9c2d90cc80?s=40&d=identicon",
+              "is_invitation_pending": false,
+              "groups": [
+                1,
+                2,
+                3
+              ],
+              "id": 1,
+              "name": "Martin",
+              "created_at": "2021-01-29T08:22:22.270Z",
+              "disabled_at": null,
+              "is_email_verified": true,
+              "active_at": "2021-04-02T06:30:28Z",
+              "email": "martin.robinson@cs.ox.ac.uk"
+            },
+            "created_at": "2021-02-24T17:26:59.875Z",
+            "latest_query_data_id": null,
+            "schedule": null,
+            "description": null,
+            "tags": [],
+            "updated_at": "2021-02-25T10:01:39.262Z",
+            "last_modified_by": {
+              "auth_type": "password",
+              "is_disabled": false,
+              "updated_at": "2021-04-02T06:30:38.001Z",
+              "profile_image_url": "https://www.gravatar.com/avatar/bec99ed1ef8431de7ffddc9c2d90cc80?s=40&d=identicon",
+              "is_invitation_pending": false,
+              "groups": [
+                1,
+                2,
+                3
+              ],
+              "id": 1,
+              "name": "Martin",
+              "created_at": "2021-01-29T08:22:22.270Z",
+              "disabled_at": null,
+              "is_email_verified": true,
+              "active_at": "2021-04-02T06:30:28Z",
+              "email": "martin.robinson@cs.ox.ac.uk"
+            },
+            "options": {
+              "parameters": [
+                {
+                  "name": "dataset",
+                  "title": "Dataset",
+                  "global": false,
+                  "value": "1",
+                  "queryId": 3,
+                  "parentQueryId": 7,
+                  "type": "query",
+                  "locals": []
+                }
+              ]
+            },
+            "is_safe": true,
+            "version": 1,
+            "query_hash": "7bd5d44238c1574ed0b378452c3b5666",
+            "is_archived": false,
+            "query": "select experiment.column.name, experiment.column.description\nfrom experiment.column\nwhere experiment.column.id in\n    (select distinct experiment.timeseries_data.column_id from experiment.timeseries_data where experiment.timeseries_data.dataset_id={{dataset}})",
+            "api_key": "4WfKgohs3E4Fq92jxLQiUE2la3g7ljglkSinyROo",
+            "is_draft": false,
+            "id": 7,
+            "data_source_id": 2,
+            "name": "Columns in the dataset"
+          },
+          "type": "TABLE",
+          "options": {},
+          "name": "Table"
+        },
+        "text": "",
+        "created_at": "2021-02-25T10:06:43.788Z",
+        "updated_at": "2021-02-25T10:06:55.030Z",
+        "options": {
+          "parameterMappings": {
+            "dataset": {
+              "type": "dashboard-level",
+              "mapTo": "dataset",
+              "name": "dataset",
+              "value": null,
+              "title": ""
+            }
+          },
+          "isHidden": false,
+          "position": {
+            "autoHeight": false,
+            "sizeX": 2,
+            "sizeY": 14,
+            "maxSizeY": 1000,
+            "maxSizeX": 6,
+            "minSizeY": 1,
+            "minSizeX": 2,
+            "col": 1,
+            "row": 8
+          }
+        },
+        "dashboard_id": 1,
+        "width": 1,
+        "id": 16
+      },
+      {
+        "visualization": {
+          "description": "",
+          "created_at": "2021-02-24T14:23:53.190Z",
+          "updated_at": "2021-03-24T17:07:05.161Z",
+          "id": 9,
+          "query": {
+            "user": {
+              "auth_type": "password",
+              "is_disabled": false,
+              "updated_at": "2021-04-02T06:30:38.001Z",
+              "profile_image_url": "https://www.gravatar.com/avatar/bec99ed1ef8431de7ffddc9c2d90cc80?s=40&d=identicon",
+              "is_invitation_pending": false,
+              "groups": [
+                1,
+                2,
+                3
+              ],
+              "id": 1,
+              "name": "Martin",
+              "created_at": "2021-01-29T08:22:22.270Z",
+              "disabled_at": null,
+              "is_email_verified": true,
+              "active_at": "2021-04-02T06:30:28Z",
+              "email": "martin.robinson@cs.ox.ac.uk"
+            },
+            "created_at": "2021-02-24T14:17:51.662Z",
+            "latest_query_data_id": null,
+            "schedule": null,
+            "description": null,
+            "tags": [],
+            "updated_at": "2021-03-24T17:06:51.666Z",
+            "last_modified_by": {
+              "auth_type": "password",
+              "is_disabled": false,
+              "updated_at": "2021-04-02T06:30:38.001Z",
+              "profile_image_url": "https://www.gravatar.com/avatar/bec99ed1ef8431de7ffddc9c2d90cc80?s=40&d=identicon",
+              "is_invitation_pending": false,
+              "groups": [
+                1,
+                2,
+                3
+              ],
+              "id": 1,
+              "name": "Martin",
+              "created_at": "2021-01-29T08:22:22.270Z",
+              "disabled_at": null,
+              "is_email_verified": true,
+              "active_at": "2021-04-02T06:30:28Z",
+              "email": "martin.robinson@cs.ox.ac.uk"
+            },
+            "options": {
+              "parameters": [
+                {
+                  "name": "dataset",
+                  "title": "Dataset",
+                  "global": false,
+                  "value": "1",
+                  "queryId": 3,
+                  "parentQueryId": 6,
+                  "type": "query",
+                  "locals": []
+                }
+              ]
+            },
+            "is_safe": true,
+            "version": 1,
+            "query_hash": "4384a0092f1c83b8a865033bb4af861c",
+            "is_archived": false,
+            "query": "select id, label_name as name, sample_range, dataset_id from experiment.range_label where dataset_id={{ dataset }} order by id",
+            "api_key": "ldmrFnFpVWq39dDc9jJq4pbJXbGRdfC6DCYgivDV",
+            "is_draft": false,
+            "id": 6,
+            "data_source_id": 2,
+            "name": "Ranges"
+          },
+          "type": "TABLE",
+          "options": {
+            "itemsPerPage": 25,
+            "columns": [
+              {
+                "linkUrlTemplate": "http://localhost:5000/dashboard/dataset_range?p_dataset={{ dataset_id }}&p_range_id={{ @ }}",
+                "name": "id",
+                "numberFormat": "0,0",
+                "title": "Range",
+                "imageUrlTemplate": "{{ @ }}",
+                "linkOpenInNewTab": false,
+                "linkTextTemplate": "{{ name }}",
+                "allowSearch": false,
+                "allowHTML": true,
+                "imageTitleTemplate": "{{ @ }}",
+                "imageWidth": "",
+                "visible": true,
+                "alignContent": "right",
+                "imageHeight": "",
+                "order": 100000,
+                "displayAs": "link",
+                "linkTitleTemplate": "{{ @ }}",
+                "booleanValues": [
+                  "false",
+                  "true"
+                ],
+                "type": "integer",
+                "highlightLinks": false
+              },
+              {
+                "linkUrlTemplate": "{{ @ }}",
+                "name": "name",
+                "title": "name",
+                "imageUrlTemplate": "{{ @ }}",
+                "linkOpenInNewTab": true,
+                "linkTextTemplate": "{{ @ }}",
+                "allowSearch": false,
+                "allowHTML": true,
+                "imageTitleTemplate": "{{ @ }}",
+                "imageWidth": "",
+                "visible": false,
+                "alignContent": "left",
+                "imageHeight": "",
+                "order": 100001,
+                "displayAs": "string",
+                "linkTitleTemplate": "{{ @ }}",
+                "booleanValues": [
+                  "false",
+                  "true"
+                ],
+                "type": "string",
+                "highlightLinks": false
+              },
+              {
+                "linkUrlTemplate": "{{ @ }}",
+                "name": "sample_range",
+                "title": "Sample Indices",
+                "imageUrlTemplate": "{{ @ }}",
+                "linkOpenInNewTab": true,
+                "linkTextTemplate": "{{ @ }}",
+                "allowSearch": false,
+                "allowHTML": true,
+                "imageTitleTemplate": "{{ @ }}",
+                "imageWidth": "",
+                "visible": true,
+                "alignContent": "left",
+                "imageHeight": "",
+                "order": 100002,
+                "displayAs": "string",
+                "linkTitleTemplate": "{{ @ }}",
+                "booleanValues": [
+                  "false",
+                  "true"
+                ],
+                "type": "string",
+                "highlightLinks": false
+              },
+              {
+                "linkUrlTemplate": "{{ @ }}",
+                "name": "dataset_id",
+                "numberFormat": "0,0",
+                "title": "dataset_id",
+                "imageUrlTemplate": "{{ @ }}",
+                "linkOpenInNewTab": true,
+                "linkTextTemplate": "{{ @ }}",
+                "allowSearch": false,
+                "allowHTML": true,
+                "imageTitleTemplate": "{{ @ }}",
+                "imageWidth": "",
+                "visible": false,
+                "alignContent": "right",
+                "imageHeight": "",
+                "order": 100003,
+                "displayAs": "number",
+                "linkTitleTemplate": "{{ @ }}",
+                "booleanValues": [
+                  "false",
+                  "true"
+                ],
+                "type": "integer",
+                "highlightLinks": false
+              }
+            ]
+          },
+          "name": "Table"
+        },
+        "text": "",
+        "created_at": "2021-02-25T10:05:25.554Z",
+        "updated_at": "2021-02-25T10:05:39.506Z",
+        "options": {
+          "parameterMappings": {
+            "dataset": {
+              "type": "dashboard-level",
+              "mapTo": "dataset",
+              "name": "dataset",
+              "value": null,
+              "title": ""
+            }
+          },
+          "isHidden": false,
+          "position": {
+            "autoHeight": false,
+            "sizeX": 2,
+            "sizeY": 21,
+            "maxSizeY": 1000,
+            "maxSizeX": 6,
+            "minSizeY": 1,
+            "minSizeX": 2,
+            "col": 3,
+            "row": 8
+          }
+        },
+        "dashboard_id": 1,
+        "width": 1,
+        "id": 14
+      }
+    ],
+    "dashboard_filters_enabled": true
+  }
+]
