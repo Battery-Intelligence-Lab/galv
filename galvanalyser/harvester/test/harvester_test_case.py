@@ -4,7 +4,7 @@ import os
 
 
 class HarvesterTestCase(unittest.TestCase):
-    DATA_DIR = '/usr/data'
+    DATA_DIR = '/usr/test_data'
     USER = 'test'
     USER_PWD = 'test'
     HARVESTER = 'my_test_harvester'

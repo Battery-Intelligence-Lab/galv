@@ -22,12 +22,14 @@ class MonitoredPathRow:
         )
 
     def insert(self, conn):
-        # TODO change this to an upsert
         with conn.cursor() as cursor:
             cursor.execute(
                 (
                     "INSERT INTO harvesters.monitored_path "
-                    "(harvester_id, monitored_for, path) VALUES (%s, %s, %s)"
+                    "(harvester_id, monitored_for, path) VALUES (%s, %s, %s) "
+                    "ON CONFLICT (harvester_id, path)"
+                    "DO UPDATE "
+                    " SET monitored_for = EXCLUDED.monitored_for"
                 ),
                 [self.harvester_id, self.monitored_for, self.path],
             )

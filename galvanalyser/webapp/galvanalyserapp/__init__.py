@@ -20,6 +20,17 @@ def init_db():
             "redash_user": redash.username,
             "redash_pwd": redash.password,
             "redash_url": os.getenv('REDASH_DATABASE_URL'),
+        },
+        "default_harvester": {
+            "name": os.getenv("GALVANALYSER_HARVESTER_NAME"),
+            "pwd": os.getenv("GALVANALYSER_HARVESTER_PWD"),
+            "machine_id": "server",
+            "base_path": "/usr/data",
+            "institution": os.getenv("GALVANALYSER_HARVESTER_INSTITUTION"),
+        },
+        "default_user": {
+            "name": os.getenv("GALVANALYSER_USER_NAME"),
+            "pwd": os.getenv("GALVANALYSER_USER_PWD"),
         }
     }
 

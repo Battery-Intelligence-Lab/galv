@@ -3,6 +3,7 @@ import sys
 import json
 import psutil
 import psycopg2
+import click
 from datetime import datetime, timezone
 from pygalvanalyser.harvester.harvester_row import HarvesterRow
 from pygalvanalyser.harvester.monitored_path_row import MonitoredPathRow
@@ -292,9 +293,21 @@ def import_file(file_path_row, institution_id, harvester_name, conn):
         conn.autocommit = True
 
 
-def main(argv):
-    config = load_config("./config/harvester-config.json")
-    print(config)
+def main(database_user=None, database_password=None, machine_id=None,
+         institution=None, database_host=None, database_port=None,
+         database_name=None):
+    try:
+        config = load_config("./config/harvester-config.json")
+    except FileNotFoundError:
+        config = {}
+        config["database_username"] = database_user
+        config["database_password"] = database_password
+        config["machine_id"] = machine_id
+        config["institution"] = institution
+        config["database_host"] = database_host
+        config["database_port"] = database_port
+        config["database_name"] = database_name
+
     conn = None
     try:
         conn = psycopg2.connect(
@@ -363,4 +376,4 @@ def main(argv):
 
 
 if __name__ == "__main__":
-    main(sys.argv)
+    main()

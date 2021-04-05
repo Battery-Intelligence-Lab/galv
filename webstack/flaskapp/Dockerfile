@@ -1,5 +1,7 @@
 FROM python
 
+RUN apt-get update && apt-get install -y postgresql-client
+
 COPY ./galvanalyser/webapp/requirements.txt /usr/requirements.txt
 RUN pip install -r /usr/requirements.txt
 

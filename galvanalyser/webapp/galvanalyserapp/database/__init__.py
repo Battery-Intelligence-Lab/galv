@@ -60,9 +60,11 @@ def add_machine_path(config, machine_id, path, users):
             'machine_id "{}" does not exist'.format(machine_id)
         )
 
+    format_users = '{' + ','.join(users) + '}'
+
     MonitoredPathRow(
         harvester.id,
-        '{' + ','.join(users) + '}',
+        format_users,
         path
     ).insert(conn)
 
@@ -178,7 +180,7 @@ def _setup(config, test=False):
                       NOCREATEDB
                       NOCREATEROLE
                       NOREPLICATION;
-                """).format(role=sql.Identifier(user_role)))
+                """).format(role=sql.Identifier(role)))
         conn.commit()
 
         # set timezone
