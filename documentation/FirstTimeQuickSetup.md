@@ -155,7 +155,7 @@ where `old_secret` is the value of `REDASH_SECRET_KEY` in the example `.env` fil
 `REDASH_SECRET_KEY` that you have used.
 
 Once you have done this, make sure the galvanalyser stack is up and running using 
-`docker-compose up`, then navigate your browser to [localhost:5000](localhost:500), 
+`docker-compose up`, then navigate your browser to [localhost:5000](localhost:5000), 
 where you should see the redash login page. You can login using the default admin 
 account, which has email `admin@not.a.real.domain.org`, username `admin` and password 
 `admin99`. **Note**: *once you have logged in you should change at least the username 

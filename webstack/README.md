@@ -39,7 +39,7 @@ Creates a read-only database user, for connecting a redash data_source
 docker-compose run --rm galvanalyser_app python manage.py create_user
 ```
 
-Options:
+Options (use like `--option=value`):
 - `--username`
 - `--password`
 
