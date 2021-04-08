@@ -4,7 +4,6 @@
 sudo docker-compose run --rm server create_db
 ```
 
-
 ### Create initial galvanalyser database:
 
 ```bash
@@ -51,7 +50,7 @@ docker-compose run --rm galvanalyser_app python manage.py create_institution
 ```
 
 Options:
--- `--name`
+- `--name`
 
 ### Create a harvester user (can be shared amongst particular machines)
 
@@ -60,8 +59,8 @@ docker-compose run --rm galvanalyser_app python manage.py create_harvester
 ```
 
 Options:
--- `--harvester`
--- `--password`
+- `--harvester`
+- `--password`
 
 
 ### Create a machine
@@ -71,7 +70,7 @@ docker-compose run --rm galvanalyser_app python manage.py create_machine_id
 ```
 
 Options:
--- `--machine_id`
+- `--machine_id`
 
 ### Add a path to a machine
 
@@ -90,9 +89,9 @@ docker-compose run --rm galvanalyser_app python manage.py add_machine_path
 ```
 
 Options:
--- `--machine_id`
--- `--path`
--- `--user`
+- `--machine_id`
+- `--path`
+- `--user`
 
 ### Test the harvester code
 
