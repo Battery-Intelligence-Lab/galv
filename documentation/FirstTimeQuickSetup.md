@@ -163,13 +163,12 @@ and password to custom values*.
 
 As an admin account, you can then create normal user accounts for other redash users. 
 The initial redash database has a user group called `oxford` that contains a 
-*data_source* that connects to the galvanalyser database. You should edit the options 
-for this data source (go to profile->Groups->oxford->Data_Sources), and change the 
-password for the database connection to the galvanalyser user password that you created 
-with the `docker-compose` `create_user` command when setting up the galvanalyser 
-database. When you add new users to redash, make sure to add them to the `oxford` group 
-(or other groups that you create) that contains the relevent connection to the 
-galvanalyser database.
+*data source* that connects to the galvanalyser database. You should edit the options 
+for this data source (go to profile->Data_Sources->galvanalyser), and change the 
+username and password for the database connection to the galvanalyser user username and 
+password that you created with the `docker-compose` `create_user` command. When you add 
+new users to redash, make sure to add them to the `oxford` group (or other groups that 
+you create) that contains the relevant connection to the galvanalyser database.
 
 Once you have set the correct password to connect to the galvanalyser database, you 
 should be able to navigate to the redash dashboards (start with the `datasets` 

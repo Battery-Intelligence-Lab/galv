@@ -9,3 +9,5 @@ libs/galvanalyser-js-protobufs
 galvanalyser-protobuf.js
 webstack/.env
 .pnpm-store
+*.egg-info
+env

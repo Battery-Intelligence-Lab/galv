@@ -117,9 +117,8 @@ sudo docker-compose up -d
 ### Backup the redash database
 
 ```bash
-pg_dump -Fc -p 5432 -h localhost -U postgres -f redash_backup.sql postgres 
+docker-compose run --rm galvanalyser_app python manage.py backup_redash_db
 ```
-
 
 ### Run a harvester
 

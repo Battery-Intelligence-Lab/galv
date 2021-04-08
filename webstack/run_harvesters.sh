@@ -1,9 +1,9 @@
 #!/bin/bash
 
-harvester_username=harvester
-harvester_password=harvester
+harvester_username=harv
+harvester_password=harv
 institution=oxford
-machine_ids=(machine1, machine2, machine3)
+machine_ids=(machine)
 
 for machine_id in $machine_ids
 do
