@@ -4,13 +4,21 @@
 This section describes the command line commands you will need to run to set up the 
 system for the first time. It is assumed you are logged into the server machine that you 
 wish to use, using the user account that you want to run the server with, and have 
-`docker` and `docker-compose` installed and available on your command-line. 
+`docker`, `docker-compose` and `git` installed and available on your command-line. 
 
 The steps below have been tested in a bash shell on a server running Ubuntu. The entire 
 application has been dockerised, so can in theory be used on other operating systems 
 with minimal modification. However, the `crontab` and `systemd` instructions below are 
 specific to the Linux operating system.
 
+## Get the galvanalyser source code
+
+First you will need to clone the galvanalyser repository using `git`:
+
+```bash
+git clone https://gitlab.com/battery-intelligence-lab/galvanalyser-project/galvanalyser.git
+cd galvanalyser
+```
 
 ## Setup global environment variables
 
