@@ -3,7 +3,7 @@
 harvester_username=harv
 harvester_password=harv
 institution=oxford
-machine_ids=(machine)
+machine_ids=(machine1, machine2)
 
 for machine_id in $machine_ids
 do
