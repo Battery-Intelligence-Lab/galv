@@ -2,9 +2,14 @@
 # First Time Quick Setup
 
 This section describes the command line commands you will need to run to set up the 
-system for the first time. It is assumed you have `docker` and `docker-compose` 
-installed, if you don't you will need to install them and have them available in you 
-command line. 
+system for the first time. It is assumed you are logged into the server machine that you 
+wish to use, using the user account that you want to run the server with, and have 
+`docker` and `docker-compose` installed and available on your command-line. 
+
+The steps below have been tested in a bash shell on a server running Ubuntu. The entire 
+application has been dockerised, so can in theory be used on other operating systems 
+with minimal modification. However, the `crontab` and `systemd` instructions below are 
+specific to the Linux operating system.
 
 
 ## Setup global environment variables
