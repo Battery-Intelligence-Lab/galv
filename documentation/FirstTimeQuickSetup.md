@@ -151,8 +151,7 @@ is probably different to the one you have used, so you also need to reencrypt th
 in the initial redash database. You can do this using the following command:
 
 ```bash
-docker-compose run --rm server ./manage.py database reencrypt <old_secret> 
-<new_secret>
+docker-compose run --rm server ./manage.py database reencrypt <old_secret> <new_secret>
 ```
 
 where `old_secret` is the value of `REDASH_SECRET_KEY` in the example `.env` file 
