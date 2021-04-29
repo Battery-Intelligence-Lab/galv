@@ -3,13 +3,28 @@
 
 This section describes the command line commands you will need to run to set up the 
 system for the first time. It is assumed you are logged into the server machine that you 
-wish to use, using the user account that you want to run the server with, and have 
-`docker`, `docker-compose` and `git` installed and available on your command-line. 
+wish to use, using the user account that you want to run the server with 
 
 The steps below have been tested in a bash shell on a server running Ubuntu. The entire 
 application has been dockerised, so can in theory be used on other operating systems 
 with minimal modification. However, the `crontab` and `systemd` instructions below are 
 specific to the Linux operating system.
+
+## Installing required tools
+
+You need to have `docker`, `docker-compose` and `git` installed and available on your 
+command-line. 
+
+You can find installation instructions for `docker` on all major operating systems 
+[here](https://docs.docker.com/engine/install/), and for `docker-compose` 
+[here](https://docs.docker.com/compose/install/). For linux hosts, it is useful to be 
+able to use `docker` as a non-root user, and you can find instructions on how to set 
+this up [here](https://docs.docker.com/engine/install/linux-postinstall/). If you don't, 
+note that you will need to add `sudo ...` in front of every `docker` and 
+`docker-compose` command listed below.
+
+Installation instructions for `git` for all major OSs can be found 
+[here](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git).
 
 ## Get the galvanalyser source code
 
@@ -66,9 +81,18 @@ docker-compose run --rm galvanalyser_app python manage.py create_machine_id
 Each machine can scan multiple directories for new battery tester files. To add a new 
 directory, you can use the `add_machine_path` command. This will prompt for a directory 
 name to be scanned. Please enter in a relative directory name that is relative to the
-`GALVANALYSER_HARVESTER_BASE_PATH` option in the `.env` file. If you wish to move this 
-base path once galvanalyser is installed, just edit the 
-`GALVANALYSER_HARVESTER_BASE_PATH` option and move your files to the new location.
+`GALVANALYSER_HARVESTER_BASE_PATH` option in the `.env` file, without the leading slash. 
+For example, if your `GALVANALYSER_HARVESTER_BASE_PATH` is set to `/home/galv/datafiles` 
+and you want to add the directory `/home/galv/datafiles/harvester1/machine2`, then you 
+would enter `harvester1/machine2` here. Note that you cannot use wildcard characters to 
+scan multiple directories, for example `harvester1/*` will not work.
+
+If you wish to move this base path once galvanalyser is installed, just edit the 
+`GALVANALYSER_HARVESTER_BASE_PATH` option and move your files to the new location. For 
+example, if you later change `GALVANALYSER_HARVESTER_BASE_PATH` to 
+`/home/galv/new_datafiles`, then using the example in the preceeding paragraph, the 
+directory that will be scanned by this machine will now be 
+`/home/galv/new_datafiles/harvester1/machine2`.
 
 ```bash
 docker-compose run --rm galvanalyser_app python manage.py add_machine_path
