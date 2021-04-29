@@ -172,7 +172,8 @@ to use redash in anyway you wish, although we have an initial redash setup for y
 use and customise. You can find more information about redash in general at their 
 [website](https://redash.io/).
 
-To setup the initial redash database, you can run the following command:
+To setup the initial redash database, you can run the following command from the 
+`webstack` directory:
 
 ```bash
 docker-compose run --rm galvanalyser_app python manage.py create_redash_db
