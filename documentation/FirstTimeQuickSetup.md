@@ -194,10 +194,12 @@ Once you have done this, make sure the galvanalyser stack is up and running usin
 `docker-compose up`, then navigate your browser to [localhost:5000](localhost:5000), 
 where you should see the redash login page. You can login using the default admin 
 account, which has email `admin@not.a.real.domain.org`, username `admin` and password 
-`admin99`. 
+`admin99`. Note that admin and user accounts for redash are *only* for redash and are 
+*different* from the user and harvester accounts you have already created for the 
+galvanalyser database.
 
-**Note**: *once you have logged in you should change at least the username and password 
-to custom values*.
+**Note**: *once you have logged into redash you should change at least the username and 
+password for the admin user to custom values*.
 
 As an admin account, you can then create normal user accounts for other redash users. 
 The initial redash database has a user group called `oxford` that contains a 
