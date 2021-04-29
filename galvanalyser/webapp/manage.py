@@ -8,6 +8,7 @@ import os
 import sys
 from galvanalyserapp.redash import CustomRedash
 import galvanalyserapp.database as database
+from pygalvanalyser.harvester.monitored_path_row import MonitoredPathRow
 from harvester.__main__ import main as harvester_main
 import json
 import subprocess
@@ -204,10 +205,21 @@ def create_machine_id(machine_id):
 @click.option('--path', prompt=True)
 @click.option('--user', prompt=True)
 def add_machine_path(machine_id, path, user):
-    if not os.path.isabs(path):
+    if os.path.isabs(path):
+        print(
+            'Please enter a relative path to GALVANALYSER_HARVESTER_BASE_PATH'
+        )
+        return
+    else:
         path = '/usr/data/' + path
 
     database.add_machine_path(config, machine_id, path, [user])
+
+
+@cli.command("edit_machine_path")
+@click.option('--machine_id', prompt=True)
+def edit_machine_path(machine_id):
+    database.edit_machine_path(config, machine_id)
 
 
 @cli.command("run_harvester")

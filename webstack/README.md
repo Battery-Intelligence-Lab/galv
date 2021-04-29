@@ -79,7 +79,11 @@ files.
 
 For harvesters that are run in a docker containers (either as part of the server 
 docker-compose, or independently in their own docker container), this path should be 
-relative to the `GALVANALYSER_HARVESTER_BASE_PATH` directory.
+relative to the `GALVANALYSER_HARVESTER_BASE_PATH` directory, without the leading slash. 
+For example, if your `GALVANALYSER_HARVESTER_BASE_PATH` is set to `/home/galv/datafiles` 
+and you want to add the directory `/home/galv/datafiles/harvester1/machine2`, then you 
+would enter `harvester1/machine2` here. Note that you cannot use wildcard characters to 
+scan multiple directories, for example `harvester1/*` will not work.
 
 Each path is associated with a given `user`, and all files uploaded from the path are 
 able to be read by that `user`.
@@ -92,6 +96,19 @@ Options:
 - `--machine_id`
 - `--path`
 - `--user`
+
+### Edit a path for a machine
+
+This allows the user to edit or delete a monitored path. See "add a path" above for how 
+to enter the new path.
+
+```bash
+docker-compose run --rm galvanalyser_app python manage.py edit_machine_path
+```
+
+Options:
+- `--machine_id`
+
 
 ### Test the harvester code
 

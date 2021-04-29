@@ -71,6 +71,57 @@ def add_machine_path(config, machine_id, path, users):
     conn.commit()
     conn.close()
 
+def edit_machine_path(config, machine_id):
+    conn = _create_superuser_connection(config)
+
+    harvester = HarvesterRow.select_from_machine_id(machine_id, conn)
+    if harvester is None:
+        raise RuntimeError(
+            'machine_id "{}" does not exist'.format(machine_id)
+        )
+
+    paths = MonitoredPathRow.select_from_harvester_id(harvester.id, conn)
+    print('Monitored paths for machine "{}" are:'.format(machine_id))
+    for i, path in enumerate(paths):
+        print('  {}. {}'.format(i, path.path.replace('/usr/data/', '')))
+    while True:
+        index = input('Type the path number you wish to edit: ')
+        try:
+            index = int(index)
+            break
+        except ValueError:
+            print(
+                'Error: {} could not be converted to an integer'.format(index)
+            )
+
+    monitored_for = paths[index].monitored_for
+    paths[index].delete(conn)
+    conn.commit()
+
+    while True:
+        path = input(
+            'Type the new path (an empty path removes this monitored path): '
+        )
+        if os.path.isabs(path):
+            print(
+                'Please enter a relative path '
+                'to GALVANALYSER_HARVESTER_BASE_PATH'
+            )
+        elif path == '':
+            return
+        else:
+            path = '/usr/data/' + path
+            break
+
+    MonitoredPathRow(
+        harvester.id,
+        monitored_for,
+        path
+    ).insert(conn)
+
+    conn.commit()
+    conn.close()
+
 
 def create_database(config, test=False):
     print('Creating database....')

@@ -9,9 +9,11 @@ class HarvesterRow:
     def insert(self, conn):
         with conn.cursor() as cursor:
             cursor.execute(
-                "INSERT INTO harvesters.harvester (machine_id) VALUES (%s)",
+                "INSERT INTO harvesters.harvester (machine_id) "
+                "VALUES (%s) RETURNING id",
                 [self.machine_id],
             )
+            self.id = cursor.fetchone()[0]
 
     @staticmethod
     def select_from_machine_id(machine_id, conn):

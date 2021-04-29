@@ -29,9 +29,21 @@ class MonitoredPathRow:
                     "(harvester_id, monitored_for, path) VALUES (%s, %s, %s) "
                     "ON CONFLICT (harvester_id, path)"
                     "DO UPDATE "
-                    " SET monitored_for = EXCLUDED.monitored_for"
+                    " SET monitored_for = EXCLUDED.monitored_for "
+                    "RETURNING monitor_path_id"
                 ),
                 [self.harvester_id, self.monitored_for, self.path],
+            )
+            self.monitor_path_id = cursor.fetchone()[0]
+
+    def delete(self, conn):
+        with conn.cursor() as cursor:
+            cursor.execute(
+                (
+                    "DELETE FROM harvesters.monitored_path "
+                    "WHERE monitor_path_id=(%s)"
+                ),
+                [self.monitor_path_id],
             )
 
     @staticmethod
