@@ -1,43 +1,59 @@
-import flask_login
+import enum
+import psycopg2
 
+from flask import current_app as app
 
-class User(flask_login.UserMixin):
-    def __init__(self, name, email, groups, details, conn):
-        self.name = name
-        self.email = email
-        self.groups = groups
-        self.details = details
-        self.conn = conn
+class UserRoles(str, enum.Enum):
+   ReadOnly = 'RO'
+   Harvester = 'H'
+
+class User():
+    def __init__(self, username, role):
+        self.username = username
+        if role is None:
+            self.role = None
+        else:
+            self.role = UserRoles(role)
 
     def __repr__(self):
-        return 'User({}, {}, {}, {})'.format(
-            self.name, self.email, self.groups,
-            self.details
+        return 'User({}, {})'.format(
+            self.username, self.role
         )
 
+    def validate_password(self, password):
+        try:
+            app.config['GET_DATABASE_CONN_FOR_USER'](
+                self.username, password
+            )
+            return True
+        except psycopg2.OperationalError:
+            return False
+
     @classmethod
-    def get(cls, _id, conn):
+    def get(cls, username):
+        conn = app.config['GET_DATABASE_CONN_FOR_SUPERUSER']()
         with conn.cursor() as cur:
             cur.execute(
-                (
-                    "SELECT name, email, groups, details "
-                    "FROM public.users ",
-                    "WHERE id=(%s) "
-                ),
-                [_id],
+                "SELECT b.rolname "
+                "FROM pg_roles a "
+                "INNER JOIN ( "
+                "   SELECT c.member, d.rolname "
+                "   FROM pg_auth_members c "
+                "   INNER JOIN pg_roles d "
+                "   ON c.roleid = d.oid "
+                ") b ON a.oid = b.member "
+                "WHERE a.rolname = (%s); ",
+                [username]
             )
             result = cur.fetchone()
-
             if result is None:
-                return None
-
-            return User(
-                name=result[0],
-                email=result[1],
-                groups=result[2],
-                details=result[4],
-                conn=conn,
-            )
-
-
-
+                member_of = None
+            else:
+                member_of = result[0]
+            if member_of == 'normal_user':
+                role = UserRoles.ReadOnly
+            elif member_of == 'harvester':
+                role = UserRoles.Harvester
+            else:
+                role = None
+            return cls(username, role)

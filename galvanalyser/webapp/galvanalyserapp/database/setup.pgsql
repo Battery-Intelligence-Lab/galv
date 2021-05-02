@@ -536,8 +536,6 @@ CREATE SCHEMA user_data
 
 GRANT ALL ON SCHEMA user_data TO postgres;
 
-GRANT USAGE ON SCHEMA user_data TO ${user_role};
-
 CREATE TABLE user_data.range_label
 (
     access text[],

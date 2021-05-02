@@ -1,4 +1,6 @@
 psycopg2-binary==2.8.6
 flask-login==0.5.0
 redash-toolbelt==0.1.4
-flask-talisman==0.7.0
+pyjwt==2.1.0
+flask-cors==3.0.10
+

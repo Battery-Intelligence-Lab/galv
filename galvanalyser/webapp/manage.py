@@ -1,7 +1,7 @@
 from flask.cli import FlaskGroup
 import click
 import psycopg2
-from app import app, config
+from app import app
 import copy
 import unittest
 import os
@@ -28,7 +28,7 @@ def test_api(path):
     sys.path.append(path)
     from galvanalyser_test_case import GalvanalyserTestCase
 
-    test_config = copy.copy(config)
+    test_config = copy.copy(app.config)
     test_config["db_conf"]["database_name"] = GalvanalyserTestCase.DATABASE
 
     # create database environment that test case expects
@@ -67,7 +67,7 @@ def test(path, test):
     sys.path.append(path)
     from harvester_test_case import HarvesterTestCase
 
-    test_config = copy.copy(config)
+    test_config = copy.copy(app.config)
     test_config["db_conf"]["database_name"] = HarvesterTestCase.DATABASE
 
     # create database environment that harvester test case expects
@@ -120,7 +120,7 @@ def test(path, test):
     prompt='This will delete the current database, are you sure?'
 )
 def create_galvanalyser_db():
-    database.create_database(config)
+    database.create_database(app.config)
 
 
 @cli.command("create_redash_db")
@@ -135,7 +135,7 @@ def create_redash_db():
              '--clean',
              '--if-exists',
              '--dbname={}'
-             .format(config['db_conf']['redash_url']),
+             .format(app.config['db_conf']['redash_url']),
              backup_file],
             stdout=subprocess.PIPE
         )
@@ -155,7 +155,7 @@ def backup_redash_db():
         process = subprocess.Popen(
             ['pg_dump',
              '--dbname={}'
-             .format(config['db_conf']['redash_url']),
+             .format(app.config['db_conf']['redash_url']),
              '-Fc',
              '-f', backup_file],
             stdout=subprocess.PIPE
@@ -175,13 +175,13 @@ def backup_redash_db():
 @click.option('--username', prompt=True)
 @click.option('--password', prompt=True, hide_input=True, confirmation_prompt=True)
 def create_user(username, password):
-    database.create_user(config, username, password)
+    database.create_user(app.config, username, password)
 
 
 @cli.command("create_institution")
 @click.option('--name', prompt=True)
 def create_institution(name):
-    database.create_institution(config, name)
+    database.create_institution(app.config, name)
 
 
 @cli.command("create_harvester")
@@ -191,13 +191,13 @@ def create_harvester(harvester, password):
     if harvester == 'harvester':
         print('ERROR: "{}" is not a valid harvester name'.format(harvester))
         return
-    database.create_harvester_user(config, harvester, password)
+    database.create_harvester_user(app.config, harvester, password)
 
 
 @cli.command("create_machine_id")
 @click.option('--machine_id', prompt=True)
 def create_machine_id(machine_id):
-    database.create_machine_id(config, machine_id)
+    database.create_machine_id(app.config, machine_id)
 
 
 @cli.command("add_machine_path")
@@ -213,13 +213,13 @@ def add_machine_path(machine_id, path, user):
     else:
         path = '/usr/data/' + path
 
-    database.add_machine_path(config, machine_id, path, [user])
+    database.add_machine_path(app.config, machine_id, path, [user])
 
 
 @cli.command("edit_machine_path")
 @click.option('--machine_id', prompt=True)
 def edit_machine_path(machine_id):
-    database.edit_machine_path(config, machine_id)
+    database.edit_machine_path(app.config, machine_id)
 
 
 @cli.command("run_harvester")
