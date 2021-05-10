@@ -38,13 +38,19 @@ def token_required(f):
                 algorithms=['HS256']
             )
             current_user = User(data['username'], data['role'])
-        except Exception as e:
-            return jsonify({'message': 'token is invalid' + str(e)})
+        except jwt.ExpiredSignatureError:
+            return jsonify({
+                'message': 'Token has expired, please login again'
+            })
+        except jwt.InvalidTokenError:
+            return jsonify({
+                'message': 'Invalid token, please login again'
+            })
 
         return f(current_user, *args, **kwargs)
     return decorator
 
-@app.route('/login', methods=['GET', 'POST'])
+@app.route('/api/login', methods=['GET', 'POST'])
 def login_user():
 
     auth = request.authorization
@@ -67,7 +73,7 @@ def login_user():
             app.config['SECRET_KEY'],
             algorithm='HS256',
         )
-        return jsonify({'token': token})
+        return jsonify({'access_token': token})
 
     return make_response(
         'could not verify',  401,
@@ -78,9 +84,14 @@ def log(text):
     with open("/tmp/log.txt", "a") as myfile:
         myfile.write(text + "\n")
 
-@app.route('/hello', methods=['GET'])
+@app.route('/api/hello', methods=['GET'])
+def hello():
+    return 'Hello'
+
+@app.route('/api/hello_user', methods=['GET'])
 @token_required
-def hello(user):
+def hello_user(user):
     return 'Hello {}'.format(user)
+
 
 

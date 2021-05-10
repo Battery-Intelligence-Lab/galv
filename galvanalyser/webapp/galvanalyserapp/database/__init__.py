@@ -164,25 +164,25 @@ def _database_exists(cur, name):
 
 def _create_superuser_connection(config):
     return psycopg2.connect(
-        host=config["db_conf"]["database_host"],
-        port=config["db_conf"]["database_port"],
-        database=config["db_conf"]["database_name"],
-        user=config["db_conf"]["database_user"],
-        password=config["db_conf"]["database_pwd"],
+        host=config["GALVANISER_DATABASE"]["HOST"],
+        port=config["GALVANISER_DATABASE"]["PORT"],
+        database=config["GALVANISER_DATABASE"]["NAME"],
+        user=config["GALVANISER_DATABASE"]["USER"],
+        password=config["GALVANISER_DATABASE"]["PASSWORD"],
     )
 
 
 def _create(config):
     conn = psycopg2.connect(
-            host=config["db_conf"]["database_host"],
-            port=config["db_conf"]["database_port"],
+            host=config["GALVANISER_DATABASE"]["HOST"],
+            port=config["GALVANISER_DATABASE"]["PORT"],
             database="postgres",
-            user=config["db_conf"]["database_user"],
-            password=config["db_conf"]["database_pwd"],
+            user=config["GALVANISER_DATABASE"]["USER"],
+            password=config["GALVANISER_DATABASE"]["PASSWORD"],
         )
 
     conn.autocommit = True
-    db_name = config["db_conf"]["database_name"]
+    db_name = config["GALVANISER_DATABASE"]["NAME"]
     with conn.cursor() as cur:
         if _database_exists(cur, db_name):
             print(
@@ -240,7 +240,7 @@ def _setup(config, test=False):
                 "ALTER DATABASE {db_name} SET timezone TO 'UTC';"
             ).format(
                 db_name=sql.Identifier(
-                    config["db_conf"]["database_name"]
+                    config["GALVANISER_DATABASE"]["NAME"]
                 )
             )
         )

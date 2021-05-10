@@ -90,3 +90,20 @@ services:
     restart: unless-stopped
     env_file:
      - ./.env
+  galvanalyser_frontend:
+    build:
+      dockerfile: ./webstack/frontend/Dockerfile
+      context: ../
+    depends_on:
+      - galvanalyser_postgres
+      - galvanalyser_app
+    ports:
+      - "3000:3000"
+    volumes:
+     - ../galvanalyser/frontend:/usr/src/app/galvanalyser/frontend
+    restart: unless-stopped
+    working_dir: /usr/src/app/galvanalyser/frontend
+    command: yarn start 
+    restart: unless-stopped
+    env_file:
+     - ./.env
