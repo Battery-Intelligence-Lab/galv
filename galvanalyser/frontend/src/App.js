@@ -6,6 +6,8 @@ import {
   Redirect,
   Link
 } from "react-router-dom";
+import {Login} from "./Login"
+import {Home} from "./Home"
 import {login, authFetch, useAuth, logout} from "./auth"
 
 
@@ -24,103 +26,17 @@ export default function App() {
   return (
     <Router>
       <div>
-        <nav>
-          <ul>
-            <li>
-              <Link to="/">Home</Link>
-            </li>
-            <li>
-              <Link to="/login">Login</Link>
-            </li>
-            <li>
-              <Link to="/secret">Secret</Link>
-            </li>
-          </ul>
-        </nav>
-
         {/* A <Switch> looks through its children <Route>s and
             renders the first one that matches the current URL. */}
         <Switch>
           <Route path="/login">
             <Login />
           </Route>
-          <PrivateRoute path="/secret" component={Secret} />
-          <Route path="/">
-            <Home />
-          </Route>
+          <PrivateRoute path="/" component={Home} />
         </Switch>
       </div>
     </Router>
   );
-}
-
-function Home() {
-  return <h2>Home</h2>;
-}
-
-function Login() {
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
-
-  const [logged] = useAuth();
-
-  const onSubmitClick = (e)=>{
-    e.preventDefault()
-    console.log("You pressed login")
-
-
-    let headers = new Headers();
-    headers.set('Authorization', 'Basic ' + btoa(username + ":" + password));
-    console.log(headers)
-    fetch('http://localhost:5001/api/login', {
-      method: 'post',
-      headers: headers,
-    }).then(r => r.json())
-      .then(token => {
-        if (token.access_token){
-          login(token)
-          console.log(token)          
-        }
-        else {
-          console.log("Please type in correct username/password")
-        }
-      })
-  }
-
-  const handleUsernameChange = (e) => {
-    setUsername(e.target.value)
-  }
-
-  const handlePasswordChange = (e) => {
-    setPassword(e.target.value)
-  }
-
-  return (
-    <div>
-      <h2>Login</h2>
-      {!logged? <form action="#">
-        <div>
-          <input type="text" 
-            placeholder="Username" 
-            onChange={handleUsernameChange}
-            value={username} 
-          />
-        </div>
-        <div>
-          <input
-            type="password"
-            placeholder="Password"
-            onChange={handlePasswordChange}
-            value={password}
-          />
-        </div>
-        <button onClick={onSubmitClick} type="submit">
-          Login Now
-        </button>
-      </form>
-      : <button onClick={() => logout()}>Logout</button>}
-    </div>
-  )
 }
 
 function Secret() {
