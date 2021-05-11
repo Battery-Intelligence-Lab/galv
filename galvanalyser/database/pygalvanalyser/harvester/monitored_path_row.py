@@ -1,4 +1,5 @@
 import psycopg2
+import json
 
 
 class MonitoredPathRow:
@@ -20,6 +21,24 @@ class MonitoredPathRow:
             self.path,
             self.monitor_path_id
         )
+
+    def to_dict(self):
+        obj = {
+            'harvester_id': self.harvester_id,
+            'monitored_for': self.monitored_for,
+            'path': self.path,
+            'monitor_path_id': self.monitor_path_id,
+        }
+        return obj
+
+    @classmethod
+    def to_json(cls, arg):
+        if isinstance(arg, list):
+            list_obj = [x.to_dict() for x in arg]
+            return json.dumps(list_obj)
+        elif isinstance(arg, cls):
+            return json.dumps(arg.to_dict())
+
 
     def insert(self, conn):
         with conn.cursor() as cursor:

@@ -10,6 +10,8 @@ from pygalvanalyser.experiment.timeseries_data_row import (
 )
 from pygalvanalyser.experiment.access_row import AccessRow
 import pygalvanalyser.experiment.timeseries_data_column as TimeseriesDataColumn
+from pygalvanalyser.harvester.monitored_path_row import MonitoredPathRow
+from pygalvanalyser.harvester.harvester_row import HarvesterRow
 import math
 import psycopg2
 
@@ -117,5 +119,19 @@ def hello():
 def hello_user(user):
     return 'Hello {}'.format(user)
 
+@app.route('/api/harvester', methods=['GET'])
+@token_required
+def machine(user):
+    conn = app.config["GET_DATABASE_CONN_FOR_SUPERUSER"]()
+    harvesters = HarvesterRow.all(conn)
+    return HarvesterRow.json(harvesters)
 
-
+@app.route('/api/monitored_path', methods=['GET'])
+@token_required
+def monitored_path(user):
+    harvester_id = request.args['harvester_id']
+    conn = app.config["GET_DATABASE_CONN_FOR_SUPERUSER"]()
+    paths = MonitoredPathRow.select_from_harvester_id(
+        harvester_id, conn
+    )
+    return MonitoredPathRow.json(paths)
