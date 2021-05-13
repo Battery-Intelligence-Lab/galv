@@ -30,7 +30,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-export function Login() {
+export default function Login() {
   const classes = useStyles();
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -45,7 +45,7 @@ export function Login() {
     let headers = new Headers();
     headers.set('Authorization', 'Basic ' + btoa(username + ":" + password));
     console.log(headers)
-    fetch('http://localhost:5001/api/login', {
+    fetch('/api/login', {
       method: 'post',
       headers: headers,
     }).then(r => r.json())

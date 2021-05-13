@@ -1,11 +1,6 @@
 
-import {Nav} from "./Nav"
+import React from "react";
 
-export function Home() {
-  return (
-    <div>
-    <Nav />
-    Home
-    </div>
-  );
+export default function Home() {
+  return ('Home');
 }

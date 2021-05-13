@@ -32,6 +32,21 @@ class HarvesterRow:
             return json.dumps(arg.to_dict())
 
     @staticmethod
+    def select_from_id(id_, conn):
+        with conn.cursor() as cursor:
+            cursor.execute(
+                (
+                    "SELECT machine_id FROM harvesters.harvester WHERE "
+                    "id=(%s)"
+                ),
+                [id_],
+            )
+            result = cursor.fetchone()
+            if result is None:
+                return None
+            return HarvesterRow(id_=id_, machine_id=result[0])
+
+    @staticmethod
     def select_from_machine_id(machine_id, conn):
         with conn.cursor() as cursor:
             cursor.execute(
