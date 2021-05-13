@@ -68,7 +68,7 @@ def test(path, test):
     from harvester_test_case import HarvesterTestCase
 
     test_config = copy.copy(app.config)
-    test_config["db_conf"]["database_name"] = HarvesterTestCase.DATABASE
+    test_config["GALVANISER_DATABASE"]["NAME"] = HarvesterTestCase.DATABASE
 
     # create database environment that harvester test case expects
     database.create_database(

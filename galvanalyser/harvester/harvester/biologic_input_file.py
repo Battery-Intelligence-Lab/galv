@@ -14,6 +14,9 @@ from pygalvanalyser.experiment.timeseries_data_row import (
     CHARGE_CAPACITY_COLUMN_ID,
     TEMPERATURE_COLUMN_ID,
     STEP_TIME_COLUMN_ID,
+    IMPEDENCE_MAG_COLUMN_ID,
+    IMPEDENCE_PHASE_COLUMN_ID,
+    FREQUENCY_COLUMN_ID,
 )
 from pygalvanalyser.experiment.unit import Unit
 
@@ -41,6 +44,10 @@ class BiologicMprInputFile(InputFile):
             "time/s": TEST_TIME_COLUMN_ID,
             "Energy/W.h": ENERGY_CAPACITY_COLUMN_ID,
             "Q charge/discharge/mA.h": CHARGE_CAPACITY_COLUMN_ID,
+            "Aux": TEMPERATURE_COLUMN_ID,
+            "|Z|/Ohm": IMPEDENCE_MAG_COLUMN_ID,
+            "Phase(Z)/deg": IMPEDENCE_PHASE_COLUMN_ID,
+            "freq/Hz": FREQUENCY_COLUMN_ID,
         }
 
     def load_data(self, file_path, columns):

@@ -1,5 +1,6 @@
 import sys
 import flask
+from flask_cors import cross_origin
 from flask import request, abort, session, jsonify, make_response
 import jwt
 import datetime
@@ -38,12 +39,16 @@ def token_required(f):
 
         token = None
 
-        if 'x-access-tokens' in request.headers:
-            token = request.headers['x-access-tokens']
+        if 'Authorization' in request.headers:
+            if request.headers['Authorization'].startswith(
+                    'Bearer '
+            ):
+                token = request.headers['Authorization'][7:]
 
         if not token:
-            return jsonify({'message': 'a valid token is missing'})
-
+            return jsonify({
+                    'message': 'a valid token is missing'
+            }), 401
         try:
             data = jwt.decode(
                 token, app.config['SECRET_KEY'],
@@ -52,12 +57,12 @@ def token_required(f):
             current_user = User(data['username'], data['role'])
         except jwt.ExpiredSignatureError:
             return jsonify({
-                'message': 'Token has expired, please login again'
-            })
+                    'message': 'Token has expired, please login again'
+            }), 401
         except jwt.InvalidTokenError:
             return jsonify({
-                'message': 'Invalid token, please login again'
-            })
+                    'message': 'Invalid token, please login again'
+            }), 401
 
         return f(current_user, *args, **kwargs)
     return decorator
@@ -111,27 +116,36 @@ def log(text):
         myfile.write(text + "\n")
 
 @app.route('/api/hello', methods=['GET'])
+@cross_origin()
 def hello():
     return 'Hello'
 
 @app.route('/api/hello_user', methods=['GET'])
 @token_required
+@cross_origin()
 def hello_user(user):
     return 'Hello {}'.format(user)
 
 @app.route('/api/harvester', methods=['GET'])
 @token_required
-def machine(user):
+@cross_origin()
+def harvester(user):
     conn = app.config["GET_DATABASE_CONN_FOR_SUPERUSER"]()
-    harvesters = HarvesterRow.all(conn)
-    return HarvesterRow.json(harvesters)
+    id_ = request.args.get('id')
+    if id_ is not None:
+        harvesters = HarvesterRow.select_from_id(id_, conn)
+    else:
+        harvesters = HarvesterRow.all(conn)
+    print('called harvesters', harvesters)
+    return HarvesterRow.to_json(harvesters)
 
 @app.route('/api/monitored_path', methods=['GET'])
 @token_required
+@cross_origin()
 def monitored_path(user):
     harvester_id = request.args['harvester_id']
     conn = app.config["GET_DATABASE_CONN_FOR_SUPERUSER"]()
     paths = MonitoredPathRow.select_from_harvester_id(
         harvester_id, conn
     )
-    return MonitoredPathRow.json(paths)
+    return MonitoredPathRow.to_json(paths)
