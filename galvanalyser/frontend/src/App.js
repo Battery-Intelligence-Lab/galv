@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import {
   BrowserRouter as Router,
   Switch,
@@ -12,7 +12,7 @@ import Harvesters from "./Harvesters"
 import HarvesterDetail from "./HarvesterDetail"
 import DatasetDetail from "./DatasetDetail"
 import Datasets from "./Datasets"
-import {login, authFetch, useAuth, logout} from "./auth"
+import {useAuth, logout} from "./auth"
 import { makeStyles } from '@material-ui/core/styles';
 import CssBaseline from '@material-ui/core/CssBaseline';
 
@@ -31,13 +31,8 @@ import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
-import ListSubheader from '@material-ui/core/ListSubheader';
 import DashboardIcon from '@material-ui/icons/Dashboard';
 import ShoppingCartIcon from '@material-ui/icons/ShoppingCart';
-import PeopleIcon from '@material-ui/icons/People';
-import BarChartIcon from '@material-ui/icons/BarChart';
-import LayersIcon from '@material-ui/icons/Layers';
-import AssignmentIcon from '@material-ui/icons/Assignment';
 
 
 
@@ -147,30 +142,24 @@ export default function App() {
 
   const mainListItems = (
     <div>
-      <Link to="/">
-      <ListItem button>
+      <ListItem button component={Link} to="/">
         <ListItemIcon>
           <DashboardIcon />
         </ListItemIcon>
         <ListItemText primary="Dashboard" />
       </ListItem>
-      </Link>
-      <Link to="/harvesters">
-      <ListItem button>
+      <ListItem button component={Link} to="/harvesters">
         <ListItemIcon>
           <ShoppingCartIcon />
         </ListItemIcon>
         <ListItemText primary="Harvesters" />
       </ListItem>
-      </Link>
-      <Link to="/datasets">
-      <ListItem button>
+      <ListItem button component={Link} to="/datasets">
         <ListItemIcon>
           <ShoppingCartIcon />
         </ListItemIcon>
         <ListItemText primary="Datasets" />
       </ListItem>
-      </Link>
     </div>
   );
 
@@ -242,24 +231,3 @@ export default function App() {
 }
  
 
-
-function Secret() {
-  const [message, setMessage] = useState('')
-
-  useEffect(() => {
-    authFetch("/api/hello_user").then(response => {
-      if (response.status === 401){
-        setMessage("Sorry you aren't authorized!")
-        return null
-      }
-      return response.json()
-    }).then(response => {
-      if (response && response.message){
-        setMessage(response.message)
-      }
-    })
-  }, [])
-  return (
-    <h2>Secret: {message}</h2>
-  )
-}

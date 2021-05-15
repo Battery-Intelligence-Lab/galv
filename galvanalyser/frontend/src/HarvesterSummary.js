@@ -1,4 +1,5 @@
 import { makeStyles } from '@material-ui/core/styles';
+import Container from '@material-ui/core/Container';
 import Card from '@material-ui/core/Card';
 import CardActions from '@material-ui/core/CardActions';
 import CardContent from '@material-ui/core/CardContent';
@@ -7,9 +8,10 @@ import Typography from '@material-ui/core/Typography';
 import { Link } from "react-router-dom";
 
 
-const useStyles = makeStyles({
-  root: {
-    minWidth: 275,
+const useStyles = makeStyles((theme) => ({
+  container: {
+    paddingTop: theme.spacing(4),
+    paddingBottom: theme.spacing(4),
   },
   bullet: {
     display: 'inline-block',
@@ -22,7 +24,7 @@ const useStyles = makeStyles({
   pos: {
     marginBottom: 12,
   },
-});
+}));
 
 export default function HarvesterSummary(props) {
   const classes = useStyles();
@@ -31,28 +33,22 @@ export default function HarvesterSummary(props) {
   const harvester_url = `/harvester/${id}`;
 
   return (
+    <Container maxWidth="lg" className={classes.container}>
     <Card className={classes.root} variant="outlined">
       <CardContent>
         <Typography className={classes.title} color="textSecondary" gutterBottom>
           {name} 
         </Typography>
-        <Typography variant="h5" component="h2">
-          something here
-        </Typography>
-        <Typography className={classes.pos} color="textSecondary">
-          adjective
-        </Typography>
         <Typography variant="body2" component="p">
-          well meaning and kindly.
-          <br />
-          {'"a benevolent smile"'}
+          last run:
         </Typography>
       </CardContent>
       <CardActions>
       <Link to={harvester_url}>
-        <Button size="small">Learn More</Button>
+        <Button size="small">Configure</Button>
       </Link>
       </CardActions>
     </Card>
+    </Container>
   );
 }

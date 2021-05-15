@@ -3,16 +3,19 @@ import flask
 from flask_cors import cross_origin
 from flask import request, abort, session, jsonify, make_response
 import jwt
+import json
 import datetime
 
 from pygalvanalyser.experiment.timeseries_data_row import (
     TimeseriesDataRow,
     RECORD_NO_COLUMN_ID,
 )
-from pygalvanalyser.experiment.access_row import AccessRow
-import pygalvanalyser.experiment.timeseries_data_column as TimeseriesDataColumn
-from pygalvanalyser.harvester.monitored_path_row import MonitoredPathRow
-from pygalvanalyser.harvester.harvester_row import HarvesterRow
+from pygalvanalyser.experiment import (
+    AccessRow, DatasetRow
+)
+from pygalvanalyser.harvester import (
+    MonitoredPathRow, HarvesterRow
+)
 import math
 import psycopg2
 
@@ -126,6 +129,19 @@ def hello():
 def hello_user(user):
     return 'Hello {}'.format(user)
 
+@app.route('/api/dataset', methods=['GET'])
+@token_required
+@cross_origin()
+def dataset(user):
+    conn = app.config["GET_DATABASE_CONN_FOR_SUPERUSER"]()
+    id_ = request.args.get('id')
+    if id_ is not None:
+        datasets = DatasetRow.select_from_id(id_, conn)
+    else:
+        datasets = DatasetRow.all(conn)
+    print('called dataset', datasets)
+    return DatasetRow.to_json(datasets)
+
 @app.route('/api/harvester', methods=['GET'])
 @token_required
 @cross_origin()
@@ -139,13 +155,79 @@ def harvester(user):
     print('called harvesters', harvesters)
     return HarvesterRow.to_json(harvesters)
 
-@app.route('/api/monitored_path', methods=['GET'])
+@app.route('/api/monitored_path',
+           methods=['GET', 'PUT', 'POST', 'DELETE'])
 @token_required
 @cross_origin()
 def monitored_path(user):
-    harvester_id = request.args['harvester_id']
     conn = app.config["GET_DATABASE_CONN_FOR_SUPERUSER"]()
-    paths = MonitoredPathRow.select_from_harvester_id(
-        harvester_id, conn
-    )
-    return MonitoredPathRow.to_json(paths)
+    print(request.method)
+    if request.method == 'GET':
+        id_ = request.args.get('id')
+        if id_ is not None:
+            paths = MonitoredPathRow.select_from_id(
+                id_, conn
+            )
+        else:
+            harvester_id = request.args['harvester_id']
+            paths = MonitoredPathRow.select_from_harvester_id(
+                harvester_id, conn
+            )
+        return MonitoredPathRow.to_json(paths)
+    elif request.method == 'PUT':
+        id_ = request.args['id']
+        path = MonitoredPathRow.select_from_id(
+            id_, conn
+        )
+        request_data = request.get_json()
+        if 'path' in request_data:
+            path.path = request_data['path']
+        if 'monitored_for' in request_data:
+            monitored_for = request_data['monitored_for']
+            try:
+                monitored_for = json.loads(monitored_for)
+            except json.decoder.JSONDecodeError:
+                return jsonify({
+                    'message': 'monitored_for not json'
+                }), 400
+
+            if not isinstance(monitored_for, list):
+                return jsonify({
+                    'message': 'monitored_for not an array'
+                }), 400
+
+            all_strings = all(
+                [isinstance(x, str) for x in monitored_for]
+            )
+            if all_strings:
+                path.monitored_for = monitored_for
+            else:
+                return jsonify({
+                    'message': 'monitored_for not an array of strings'
+                }), 400
+        if 'harvester_id' in request_data:
+            path.harvester_id = request_data['harvester_id']
+        path.update(conn)
+        conn.commit()
+        return MonitoredPathRow.to_json(path)
+    elif request.method == 'POST':
+        request_data = request.get_json()
+        new_path = MonitoredPathRow(
+            request_data['harvester_id'],
+            request_data['monitored_for'],
+            request_data['path'],
+        )
+        new_path.insert(conn)
+        conn.commit()
+        return MonitoredPathRow.to_json(new_path)
+    elif request.method == 'DELETE':
+        id_ = request.args['id']
+        print('deleting', id_)
+        path = MonitoredPathRow.select_from_id(
+            id_, conn
+        )
+        path.delete(conn)
+        conn.commit()
+        return jsonify({'success': True}), 200
+
+

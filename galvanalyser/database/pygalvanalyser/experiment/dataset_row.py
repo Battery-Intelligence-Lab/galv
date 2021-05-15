@@ -1,7 +1,8 @@
 import psycopg2
+import pygalvanalyser
 
 
-class DatasetRow:
+class DatasetRow(pygalvanalyser.Row):
     def __init__(
         self,
         name,
@@ -17,6 +18,17 @@ class DatasetRow:
         self.institution_id = institution_id
         self.dataset_type = dataset_type
         self.original_collector = original_collector
+
+    def to_dict(self):
+        obj = {
+            'id': self.id,
+            'name': self.name,
+            'date': self.date.isoformat(),
+            'institution_id': self.institution_id,
+            'dataset_type': self.dataset_type,
+            'original_collector': self.original_collector,
+        }
+        return obj
 
     def __repr__(self):
         return 'DatasetRow({}, {}, {}, {}, {}, {})'.format(
@@ -121,7 +133,7 @@ class DatasetRow:
             )
 
     @staticmethod
-    def select_all_dataset(conn):
+    def all(conn):
         with conn.cursor() as cursor:
             cursor.execute(
                 (

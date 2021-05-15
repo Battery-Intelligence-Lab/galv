@@ -55,6 +55,21 @@ class MonitoredPathRow:
             )
             self.monitor_path_id = cursor.fetchone()[0]
 
+    def update(self, conn):
+        with conn.cursor() as cursor:
+            cursor.execute(
+                (
+                    "UPDATE harvesters.monitored_path SET "
+                    "harvester_id = (%s), monitored_for = (%s), "
+                    "path = (%s) "
+                    "WHERE monitor_path_id=(%s)"
+                ),
+                [
+                    self.harvester_id, self.monitored_for,
+                    self.path, self.monitor_path_id
+                ],
+            )
+
     def delete(self, conn):
         with conn.cursor() as cursor:
             cursor.execute(
@@ -64,6 +79,27 @@ class MonitoredPathRow:
                 ),
                 [self.monitor_path_id],
             )
+
+    @staticmethod
+    def select_from_id(id_, conn):
+        with conn.cursor() as cursor:
+            cursor.execute(
+                (
+                    "SELECT harvester_id, monitored_for, path FROM "
+                    "harvesters.monitored_path "
+                    "WHERE monitor_path_id=(%s)"
+                ),
+                [id_],
+            )
+            result = cursor.fetchone()
+            if result is None:
+                return None
+            return MonitoredPathRow(
+                    harvester_id=result[0],
+                    monitored_for=result[1],
+                    path=result[2],
+                    monitor_path_id=id_,
+                )
 
     @staticmethod
     def select_from_harvester_id(harvester_id, conn):

@@ -1,8 +1,7 @@
 import psycopg2
-import json
+import pygalvanalyser
 
-
-class HarvesterRow:
+class HarvesterRow(pygalvanalyser.Row):
     def __init__(self, machine_id, id_=None):
         self.machine_id = machine_id
         self.id = id_
@@ -22,14 +21,6 @@ class HarvesterRow:
             'machine_id': self.machine_id,
         }
         return obj
-
-    @classmethod
-    def to_json(cls, arg):
-        if isinstance(arg, list):
-            list_obj = [x.to_dict() for x in arg]
-            return json.dumps(list_obj)
-        elif isinstance(arg, cls):
-            return json.dumps(arg.to_dict())
 
     @staticmethod
     def select_from_id(id_, conn):

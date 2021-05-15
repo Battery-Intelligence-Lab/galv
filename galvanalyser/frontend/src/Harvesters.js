@@ -1,12 +1,7 @@
 import React, { useEffect, useState } from "react";
-import clsx from 'clsx';
 import { makeStyles } from '@material-ui/core/styles';
 import Container from '@material-ui/core/Container';
 import Grid from '@material-ui/core/Grid';
-import Paper from '@material-ui/core/Paper';
-import Card from '@material-ui/core/Card';
-import CardActions from '@material-ui/core/CardActions';
-import CardContent from '@material-ui/core/CardContent';
 import { harvester } from './Api';
 import HarvesterSummary from './HarvesterSummary';
 
@@ -32,7 +27,7 @@ export default function Harvesters() {
 
   const harvester_render = harv.map((h) => {
     return (
-      <Grid item xs={12} md={8} lg={9}>
+      <Grid item xs={12} md={8} lg={9} key={h.machine_id}>
         <HarvesterSummary id={h.id} name={h.machine_id}/>
       </Grid>
     );
