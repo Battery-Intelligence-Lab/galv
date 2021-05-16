@@ -63,6 +63,20 @@ class TimeseriesDataRow:
             )
 
     @staticmethod
+    def select_column_ids_in_dataset(dataset_id, conn):
+        with conn.cursor() as cursor:
+            cursor.execute(
+                (
+                    "SELECT DISTINCT column_id "
+                    "FROM experiment.timeseries_data "
+                    "WHERE dataset_id=(%s) "
+                ),
+                [dataset_id],
+            )
+            records = cursor.fetchall()
+            return [record[0] for record in records]
+
+    @staticmethod
     def insert_input_file(
         input_file,
         dataset_id,

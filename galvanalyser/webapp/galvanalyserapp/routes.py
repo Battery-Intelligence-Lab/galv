@@ -1,5 +1,6 @@
 import sys
 import flask
+import numpy as np
 from flask_cors import cross_origin
 from flask import request, abort, session, jsonify, make_response
 import jwt
@@ -11,11 +12,12 @@ from pygalvanalyser.experiment.timeseries_data_row import (
     RECORD_NO_COLUMN_ID,
 )
 from pygalvanalyser.experiment import (
-    AccessRow, DatasetRow
+    AccessRow, DatasetRow, ColumnRow
 )
 from pygalvanalyser.harvester import (
     MonitoredPathRow, HarvesterRow
 )
+from pygalvanalyser.experiment import select_timeseries_column
 import math
 import psycopg2
 
@@ -134,13 +136,56 @@ def hello_user(user):
 @cross_origin()
 def dataset(user):
     conn = app.config["GET_DATABASE_CONN_FOR_SUPERUSER"]()
-    id_ = request.args.get('id')
-    if id_ is not None:
-        datasets = DatasetRow.select_from_id(id_, conn)
-    else:
-        datasets = DatasetRow.all(conn)
+    datasets = DatasetRow.all(conn)
     print('called dataset', datasets)
     return DatasetRow.to_json(datasets)
+
+@app.route('/api/dataset/<int:dataset_id>', methods=['GET'])
+@token_required
+@cross_origin()
+def dataset_by_id(user, dataset_id):
+    conn = app.config["GET_DATABASE_CONN_FOR_SUPERUSER"]()
+    datasets = DatasetRow.select_from_id(dataset_id, conn)
+    return DatasetRow.to_json(datasets)
+
+@app.route('/api/column', methods=['GET'])
+@token_required
+@cross_origin()
+def column(user):
+    conn = app.config["GET_DATABASE_CONN_FOR_SUPERUSER"]()
+    dataset_id = request.args['dataset_id']
+
+    column_ids = \
+        TimeseriesDataRow.select_column_ids_in_dataset(
+            dataset_id, conn
+        )
+
+    columns = [ColumnRow.select_from_id(cid, conn)
+               for cid in column_ids]
+
+    return ColumnRow.to_json(columns)
+
+def serialise_numpy_array(np_array):
+    response = flask.make_response(np_array.tobytes())
+    response.headers.set('Content-Type', 'application/octet-stream')
+    return response
+
+@app.route('/api/dataset/<int:dataset_id>/<int:col_id>', methods=['GET'])
+@token_required
+@cross_origin()
+def timeseries_column(user, dataset_id, col_id):
+    conn = app.config["GET_DATABASE_CONN_FOR_SUPERUSER"]()
+
+    array = select_timeseries_column(dataset_id, col_id, conn)
+
+    single_precision = request.args.get('single_precision', True)
+    if single_precision:
+        array = array.astype(np.float32)
+    print('sending array of dtype', array.dtype)
+    print('sending array of length', len(array))
+    print(array)
+
+    return serialise_numpy_array(array)
 
 @app.route('/api/harvester', methods=['GET'])
 @token_required

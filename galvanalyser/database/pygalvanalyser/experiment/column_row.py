@@ -1,11 +1,20 @@
 import psycopg2
+import pygalvanalyser
 
 
-class ColumnRow:
+class ColumnRow(pygalvanalyser.Row):
     def __init__(self, type_id, name, id_=None):
         self.id = id_
         self.type_id = type_id
         self.name = name
+
+    def to_dict(self):
+        obj = {
+            'id': self.id,
+            'name': self.name,
+            'type_id': self.type_id,
+        }
+        return obj
 
     def insert(self, conn):
         with conn.cursor() as cursor:

@@ -4,6 +4,64 @@ from pygalvanalyser.experiment.timeseries_data_row import (
     TEST_TIME_COLUMN_ID,
 )
 
+import numpy as np
+from pygalvanalyser.experiment import (
+    TimeseriesDataRow, ColumnRow
+)
+
+def select_timeseries_column(
+        dataset_id, column_id, conn, max_samples=None):
+    """
+    Arguments
+    ---------
+
+    dataset_id: int
+        id of dataset
+    columns: int
+        id of column to get
+    sample_range: (int, int)
+        length two tuple with beginnging and end sample numbers
+    max_samples: int
+        subsample to give an array of only max_samples
+    """
+    print('select_from_timeseries', dataset_id, column_id)
+
+    column = ColumnRow.select_from_id(column_id, conn)
+
+    pivot_for_column = (
+        'MAX(case when column_id={} then value else NULL end) '
+        'AS {}'
+    ).format(column.id, column.name.replace(' ', '_'))
+
+    max_sample_number = (
+        'SELECT MAX(sample_no) '
+        'FROM experiment.timeseries_data '
+        'WHERE dataset_id={},'
+    ).format(dataset_id)
+
+    if max_samples is None:
+        filter_by_max_samples = ''
+    else:
+        filter_by_max_samples = \
+            'and sample_no%(({})/2000)=0'.format(max_sample_number)
+
+    sql = (
+        'SELECT {} '
+        'FROM experiment.timeseries_data '
+        'WHERE dataset_id={} {}'
+        'GROUP BY sample_no '
+        'ORDER by sample_no '
+    ).format(pivot_for_column, dataset_id,
+             filter_by_max_samples)
+
+    print('final sql is')
+    print(sql)
+    with conn.cursor() as cursor:
+        cursor.execute(sql)
+        records = cursor.fetchall()
+        return np.array([r[0] for r in records])
+
+
 
 def select_experiment_columns(dataset_id, conn):
     with conn.cursor() as cursor:

@@ -1,10 +1,10 @@
 
-import React, {useEffect, useState} from "react";
+import React, {useEffect, useState, useRef} from "react";
 import { DataGrid, GridRowsProp, GridColDef } from '@material-ui/data-grid';
 import Container from '@material-ui/core/Container';
 import { datasets} from './Api';
 import { makeStyles } from '@material-ui/core/styles';
-import DatasetDetail from './Datasets'
+import DatasetDetail from './DatasetDetail'
 
 const useStyles = makeStyles((theme) => ({
   container: {
@@ -27,7 +27,7 @@ export default function Datasets() {
     });
   }, [])
   const columns: GridColDef[] = [
-    { field: 'id', headerName: 'ID' },
+    { field: 'dataset_id', headerName: 'ID' },
     { field: 'name', headerName: 'Name', flex: true},
     { 
       field: 'date', headerName: 'Date', width: 120,
@@ -39,9 +39,10 @@ export default function Datasets() {
     { field: 'original_collector', headerName: 'User', width: 100 },
   ];
 
-  const rows: GridRowsProp = data.map((d) => {
+  const rows: GridRowsProp = data.map((d, i) => {
     return {
-      id: d.id,
+      id: i,
+      dataset_id: d.id,
       name: d.name,
       dataset_type: d.dataset_type,
       original_collector: d.original_collector,
@@ -49,6 +50,10 @@ export default function Datasets() {
     };
   });
 
+  const [select, setSelect] = useState([])
+  const handleSelectionChange = (e) => {
+    setSelect(e.selectionModel[0]);
+  };
 
   return (
     <Container maxWidth="lg" className={classes.container}>
@@ -57,9 +62,12 @@ export default function Datasets() {
         rows={rows} columns={columns} 
         density='compact'
         autoPageSize
+        onSelectionModelChange={handleSelectionChange}
       />
     </div>
-    <DatasetDetail data=data[selected]/>
+    {data[select] &&
+      <DatasetDetail dataset={data[select]}/>
+    }
     </Container>
   );
 }
