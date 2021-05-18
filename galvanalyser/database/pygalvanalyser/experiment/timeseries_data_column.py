@@ -29,9 +29,8 @@ def select_timeseries_column(
     column = ColumnRow.select_from_id(column_id, conn)
 
     pivot_for_column = (
-        'MAX(case when column_id={} then value else NULL end) '
-        'AS {}'
-    ).format(column.id, column.name.replace(' ', '_'))
+        'MAX(case when column_id={} then value else NULL end)'
+    ).format(column.id)
 
     max_sample_number = (
         'SELECT MAX(sample_no) '

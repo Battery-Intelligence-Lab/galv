@@ -11,6 +11,8 @@ import Home from "./Home"
 import Harvesters from "./Harvesters"
 import HarvesterDetail from "./HarvesterDetail"
 import DatasetDetail from "./DatasetDetail"
+import Manufacturers from "./Manufacturers"
+import Cells from "./Cells"
 import Datasets from "./Datasets"
 import {useAuth, logout} from "./auth"
 import { makeStyles } from '@material-ui/core/styles';
@@ -160,6 +162,19 @@ export default function App() {
         </ListItemIcon>
         <ListItemText primary="Datasets" />
       </ListItem>
+      <ListItem button component={Link} to="/manufacturers">
+        <ListItemIcon>
+          <ShoppingCartIcon />
+        </ListItemIcon>
+        <ListItemText primary="Manufacturers" />
+      </ListItem>
+      <ListItem button component={Link} to="/cells">
+        <ListItemIcon>
+          <ShoppingCartIcon />
+        </ListItemIcon>
+        <ListItemText primary="Cells" />
+      </ListItem>
+
     </div>
   );
 
@@ -205,6 +220,8 @@ export default function App() {
         {/* A <Switch> looks through its children <Route>s and
               renders the first one that matches the current URL. */}
         <Switch>
+          <PrivateRoute path="/manufacturers" component={Manufacturers} />
+          <PrivateRoute path="/cells" component={Cells} />
           <PrivateRoute path="/harvesters" component={Harvesters} />
           <PrivateRoute path="/harvester/:id" component={HarvesterDetail} />
           <PrivateRoute path="/datasets" component={Datasets} />

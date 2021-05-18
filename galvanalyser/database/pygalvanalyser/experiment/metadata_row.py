@@ -1,6 +1,7 @@
 import psycopg2
 import json
 from datetime import date, datetime
+import pygalvanalyser
 
 
 def json_serial(obj):
@@ -13,7 +14,7 @@ def json_serial(obj):
     return str(obj)
 
 
-class MetadataRow:
+class MetadataRow(pygalvanalyser.Row):
     def __init__(
         self,
         dataset_id,
@@ -29,6 +30,18 @@ class MetadataRow:
         self.purpose = purpose
         self.test_equipment = test_equipment
         self.json_data = json_data
+
+    def to_dict(self):
+        json_str = json.dumps(self.json_data, default=json_serial)
+        obj = {
+            'dataset_id': self.dataset_id,
+            'cell_uid': self.cell_uid,
+            'owner': self.owner,
+            'purpose': self.purpose,
+            'test_equipment': self.test_equipment,
+            'json_data': json_str,
+        }
+        return obj
 
     def __eq__(self, other):
         if isinstance(other, MetadataRow):
@@ -74,6 +87,27 @@ class MetadataRow:
                     self.purpose,
                     self.test_equipment,
                     json_str,
+                ],
+            )
+
+    def update(self, conn):
+        # make sure we dont have any null unicode values in the json
+        json_str = json.dumps(self.json_data, default=json_serial)
+        json_str = json_str.replace(r'\u0000', '')
+
+        with conn.cursor() as cursor:
+            cursor.execute(
+                (
+                    "UPDATE experiment.metadata SET "
+                    "cell_uid = (%s), owner = (%s), "
+                    "purpose = (%s), test_equipment = (%s), "
+                    "json_data = (%s) "
+                    "WHERE dataset_id=(%s)"
+                ),
+                [
+                    self.cell_uid, self.owner,
+                    self.purpose, self.test_equipment,
+                    json_str, self.dataset_id
                 ],
             )
 

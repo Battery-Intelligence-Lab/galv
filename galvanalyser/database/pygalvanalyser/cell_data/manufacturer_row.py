@@ -1,6 +1,7 @@
 import psycopg2
+import pygalvanalyser
 
-class ManufacturerRow:
+class ManufacturerRow(pygalvanalyser.Row):
     def __init__(
         self,
         name,
@@ -8,6 +9,14 @@ class ManufacturerRow:
     ):
         self.id = id
         self.name = name
+
+
+    def to_dict(self):
+        obj = {
+            'id': self.id,
+            'name': self.name,
+        }
+        return obj
 
     def __eq__(self, other):
         if isinstance(other, ManufacturerRow):
@@ -38,6 +47,47 @@ class ManufacturerRow:
                 ],
             )
             self.id = cursor.fetchone()[0]
+
+    def update(self, conn):
+        with conn.cursor() as cursor:
+            cursor.execute(
+                (
+                    "UPDATE cell_data.manufacturer SET "
+                    "name = (%s) "
+                    "WHERE id=(%s)"
+                ),
+                [
+                    self.name, self.id
+                ],
+            )
+
+    def delete(self, conn):
+        with conn.cursor() as cursor:
+            cursor.execute(
+                (
+                    "DELETE FROM cell_data.manufacturer"
+                    "WHERE id=(%s)"
+                ),
+                [self.id],
+            )
+
+    @staticmethod
+    def all(conn):
+        with conn.cursor() as cursor:
+            cursor.execute(
+                (
+                    "SELECT id, name FROM "
+                    "cell_data.manufacturer"
+                ),
+            )
+            records = cursor.fetchall()
+            return [
+                ManufacturerRow(
+                    id=result[0],
+                    name=result[1],
+                )
+                for result in records
+            ]
 
     @staticmethod
     def select_from_id(_id, conn):

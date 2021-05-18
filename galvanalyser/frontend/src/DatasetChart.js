@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { ResponsiveLine } from '@nivo/line'
+import { ResponsiveLine, ResponsiveLineCanvas } from '@nivo/line'
 import { timeseries_column, columns } from './Api'
 
 const TEST_TIME_COLUMN_ID = 1
@@ -7,7 +7,7 @@ const VOLTAGE_COLUMN_ID = 2
 const AMPS_COLUMN_ID = 3
 
 
-export default function DatasetChart(props) {
+export default function DatasetDetail(props) {
   const { dataset } = props;
 
   const [timeseries, setTimeseries] = useState({})

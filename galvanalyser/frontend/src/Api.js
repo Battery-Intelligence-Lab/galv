@@ -64,6 +64,98 @@ export async function datasets(id) {
 
 }
 
+export async function metadata(dataset_id) { 
+  return authFetch(url + `metadata/${dataset_id}`);
+}
+
+export async function cells(id) { 
+  if (id) {
+    return authFetch(url + `cell/${id}`);
+  }
+  return authFetch(url + `cell`);
+}
+
+// cell is object with fields:
+//
+// { path: ?, monitored_for: ?, harvester_id: ? }
+export async function add_cell(cell) { 
+  return authFetch(
+    url + `cell`, 
+    {
+      method: 'POST',
+      headers: headers,
+      body: JSON.stringify(cell),
+    }
+  );
+}
+
+export async function manufacturers(id) { 
+  if (id) {
+    return authFetch(url + `manufacturer/${id}`);
+  }
+  return authFetch(url + `manufacturer`);
+}
+
+export async function delete_manufacturer(id) { 
+  return authFetch(
+    url + `manufacturer/${id}`, 
+    {
+      method: 'DELETE',
+    }
+  );
+}
+
+// manufacturer is object with fields:
+//
+// { name: ? }
+export async function add_manufacturer(manufacturer) { 
+  console.log('add_manufacturer', manufacturer);
+  return authFetch(
+    url + `manufacturer`, 
+    {
+      method: 'POST',
+      headers: headers,
+      body: JSON.stringify(manufacturer),
+    }
+  );
+}
+
+// cell is object with fields:
+//
+// { path: ?, monitored_for: ?, harvester_id: ? }
+export async function update_manufacturer(id, manufacturer) { 
+  return authFetch(
+    url + `manufacturer/${id}`, 
+    {
+      method: 'PUT',
+      headers: headers,
+      body: JSON.stringify(manufacturer),
+    }
+  );
+}
+
+export async function add_metadata(dataset_id) { 
+  return authFetch(
+    url + `metadata/${dataset_id}`, 
+    {
+      method: 'POST',
+    }
+  );
+}
+
+// metadata is object with fields:
+//
+// { cell_uid: ?, json_data: ?, owner: ?, purpose: ?, test_equipment: ? }
+export async function update_metadata(dataset_id, metadata) { 
+  return authFetch(
+    url + `metadata/${dataset_id}`, 
+    {
+      method: 'PUT',
+      body: JSON.stringify(metadata),
+    }
+  );
+}
+
 export async function columns(dataset_id) { 
   return authFetch(url + `column?dataset_id=${dataset_id}`);
 }

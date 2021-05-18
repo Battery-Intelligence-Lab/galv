@@ -4,7 +4,8 @@ import { DataGrid, GridRowsProp, GridColDef } from '@material-ui/data-grid';
 import Container from '@material-ui/core/Container';
 import { datasets} from './Api';
 import { makeStyles } from '@material-ui/core/styles';
-import DatasetDetail from './DatasetDetail'
+import DatasetChart from './DatasetChart'
+import DatasetMetadata from './DatasetMetadata'
 
 const useStyles = makeStyles((theme) => ({
   container: {
@@ -57,16 +58,21 @@ export default function Datasets() {
 
   return (
     <Container maxWidth="lg" className={classes.container}>
-    <div style={{ height: 400, width: '100%' }}>
+    <div style={{ height: 300, width: '100%' }}>
       <DataGrid 
         rows={rows} columns={columns} 
         density='compact'
         autoPageSize
+        loading={rows.length === 0}
+        rowHeight={38}
         onSelectionModelChange={handleSelectionChange}
       />
     </div>
     {data[select] &&
-      <DatasetDetail dataset={data[select]}/>
+      <React.Fragment>
+        <DatasetChart dataset={data[select]}/>
+        <DatasetMetadata dataset={data[select]}/>
+      </React.Fragment>
     }
     </Container>
   );

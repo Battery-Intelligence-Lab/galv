@@ -12,7 +12,10 @@ from pygalvanalyser.experiment.timeseries_data_row import (
     RECORD_NO_COLUMN_ID,
 )
 from pygalvanalyser.experiment import (
-    AccessRow, DatasetRow, ColumnRow
+    AccessRow, DatasetRow, ColumnRow, MetadataRow
+)
+from pygalvanalyser.cell_data import (
+    CellRow, ManufacturerRow
 )
 from pygalvanalyser.harvester import (
     MonitoredPathRow, HarvesterRow
@@ -139,6 +142,176 @@ def dataset(user):
     datasets = DatasetRow.all(conn)
     print('called dataset', datasets)
     return DatasetRow.to_json(datasets)
+
+@app.route('/api/cell/<int:uid>', methods=['GET', 'PUT', 'POST'])
+@token_required
+@cross_origin()
+def cell(user, uid):
+    conn = app.config["GET_DATABASE_CONN_FOR_SUPERUSER"]()
+    if request.method == 'GET':
+        if uid is None:
+            cell = CellRow.all(conn)
+        else:
+            cell = CellRow.select_from_uid(uid, conn)
+            if cell is None:
+                return jsonify({
+                    'message': 'cell not found'
+                }), 404
+        return CellRow.to_json(cell)
+    elif request.method == 'POST':
+        request_data = request.get_json()
+        cell = CellRow(
+            manufacturer_id=request_data['manufacturer_id'],
+            cell_uid=request_data['cell_uid'],
+            owner=request_data['owner'],
+            purpose=request_data['purpose'],
+            test_equipment=request_data['test_equipment'],
+            json_data=request_data['json_data'],
+        )
+        cell.insert(conn)
+        conn.commit()
+        return CellRow.to_json(cell)
+    elif request.method == 'PUT':
+        cell = CellRow.select_from_uid(uid, conn)
+        if cell is None:
+            return jsonify({
+                'message': 'cell not found'
+            }), 404
+
+        request_data = request.get_json()
+
+        if 'manufacturer_id' in request_data:
+            metadata.manufacturer_id = \
+                request_data['manufacturer_id']
+        if 'cell_uid' in request_data:
+            metadata.cell_uid = request_data['cell_uid']
+        if 'owner' in request_data:
+            metadata.owner = request_data['owner']
+        if 'purpose' in request_data:
+            metadata.purpose = request_data['purpose']
+        if 'test_equipment' in request_data:
+            metadata.test_equipment = request_data['test_equipment']
+        if 'json_data' in request_data:
+            json_data = request_data['json_data']
+            try:
+                metadata.json_data = json.loads(json_data)
+            except json.decoder.JSONDecodeError:
+                return jsonify({
+                    'message': 'json_data not json'
+                }), 400
+        metadata.update(conn)
+        conn.commit()
+        return MetadataRow.to_json(metadata)
+
+@app.route('/api/manufacturer', methods=['GET', 'POST'])
+@app.route('/api/manufacturer/<int:id_>', methods=['GET', 'PUT', 'DELETE'])
+@token_required
+@cross_origin()
+def manufacturer(user, id_=None):
+    conn = app.config["GET_DATABASE_CONN_FOR_SUPERUSER"]()
+    print('manufacturer')
+    if request.method == 'GET':
+        if id_ is None:
+            manufacturer = ManufacturerRow.all(conn)
+        else:
+            manufacturer = ManufacturerRow.select_from_id(id_, conn)
+            if manufacturer is None:
+                return jsonify({
+                    'message': 'manufacturer not found'
+                }), 404
+        return ManufacturerRow.to_json(manufacturer)
+    elif request.method == 'POST':
+        request_data = request.get_json()
+        print('manufacturer post', request_data)
+        manufacturer = ManufacturerRow(
+            name=request_data.get('name', ''),
+        )
+        manufacturer.insert(conn)
+        conn.commit()
+        return ManufacturerRow.to_json(manufacturer)
+    elif request.method == 'PUT':
+        print('PUT with id', id_)
+        manufacturer = ManufacturerRow.select_from_id(id_, conn)
+        if manufacturer is None:
+            return jsonify({
+                'message': 'manufacturer not found'
+            }), 404
+
+        request_data = request.get_json()
+
+        if 'name' in request_data:
+            manufacturer.name = request_data['name']
+
+        manufacturer.update(conn)
+        conn.commit()
+        return ManufacturerRow.to_json(manufacturer)
+    elif request.method == 'DELETE':
+        id_ = request.args['id']
+        print('deleting', id_)
+        manufacturer = ManufacturerRow.select_from_id(
+            id_, conn
+        )
+        if manufacturer is None:
+            return jsonify({
+                'message': 'manufacturer not found'
+            }), 404
+
+        manufacturer.delete(conn)
+        conn.commit()
+        return jsonify({'success': True}), 200
+
+
+
+@app.route('/api/metadata/<int:dataset_id>', methods=['GET', 'PUT', 'POST'])
+@token_required
+@cross_origin()
+def metadata(user, dataset_id):
+    conn = app.config["GET_DATABASE_CONN_FOR_SUPERUSER"]()
+    if request.method == 'GET':
+        metadata = MetadataRow.select_from_dataset_id(dataset_id, conn)
+        if metadata is None:
+            return jsonify({
+                'message': 'metadata not found'
+            }), 404
+
+        return MetadataRow.to_json(metadata)
+    elif request.method == 'POST':
+        metadata = MetadataRow(
+            dataset_id=dataset_id,
+        )
+        metadata.insert(conn)
+        conn.commit()
+
+        return MetadataRow.to_json(metadata)
+    elif request.method == 'PUT':
+        metadata = MetadataRow.select_from_dataset_id(dataset_id, conn)
+        if metadata is None:
+            return jsonify({
+                'message': 'metadata not found'
+            }), 404
+
+        request_data = request.get_json()
+
+        if 'cell_uid' in request_data:
+            metadata.path = request_data['cell_uid']
+        if 'owner' in request_data:
+            metadata.owner = request_data['owner']
+        if 'purpose' in request_data:
+            metadata.purpose = request_data['purpose']
+        if 'test_equipment' in request_data:
+            metadata.test_equipment = request_data['test_equipment']
+        if 'json_data' in request_data:
+            json_data = request_data['json_data']
+            try:
+                json_data = json.loads(json_data)
+            except json.decoder.JSONDecodeError:
+                return jsonify({
+                    'message': 'json_data not json'
+                }), 400
+        metadata.update(conn)
+        conn.commit()
+        return MetadataRow.to_json(metadata)
+
 
 @app.route('/api/dataset/<int:dataset_id>', methods=['GET'])
 @token_required

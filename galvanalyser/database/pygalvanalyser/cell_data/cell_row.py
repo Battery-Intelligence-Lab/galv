@@ -1,11 +1,12 @@
 import psycopg2
+import pygalvanalyser
 
 
-class CellRow:
+class CellRow(pygalvanalyser.Row):
     def __init__(
         self,
-        uid,
         manufacturer_id,
+        uid=None,
         cell_form_factor=None,
         link_to_datasheet=None,
         anode_chemistry=None,
@@ -21,6 +22,19 @@ class CellRow:
         self.cathode_chemistry = cathode_chemistry
         self.nominal_capacity = nominal_capacity
         self.nominal_cell_weight = nominal_cell_weight
+
+    def to_dict(self):
+        obj = {
+            'uid': self.uid,
+            'manufacturer_id': self.manufacturer_id,
+            'cell_form_factor': self.cell_form_factor,
+            'link_to_datasheet': self.link_to_datasheet,
+            'anode_chemistry': self.anode_chemistry,
+            'cathode_chemistry': self.cathode_chemistry,
+            'nominal_capacity': self.nominal_capacity,
+            'nominal_cell_weight': self.nominal_cell_weight,
+        }
+        return obj
 
     def __eq__(self, other):
         if isinstance(other, CellRow):
@@ -54,7 +68,7 @@ class CellRow:
         with conn.cursor() as cursor:
             cursor.execute(
                 (
-                    "INSERT INTO cell_data.cell (uid, "
+                    "INSERT INTO cell_data.cell ("
                     "manufacturer_id, cell_form_factor, "
                     "link_to_datasheet, anode_chemistry, "
                     "cathode_chemistry, nominal_capacity, "
@@ -63,7 +77,6 @@ class CellRow:
                     "RETURNING uid"
                 ),
                 [
-                    self.uid,
                     self.manufacturer_id,
                     self.cell_form_factor,
                     self.link_to_datasheet,
@@ -73,6 +86,54 @@ class CellRow:
                     self.nominal_cell_weight,
                 ],
             )
+            result = cursor.fetchone()
+            self.uid = result[0]
+
+    def update(self, conn):
+        with conn.cursor() as cursor:
+            cursor.execute(
+                (
+                    "UPDATE cell_data.cell SET "
+                    "manufacturer_id = (%s), cell_form_factor = (%s), "
+                    "link_to_datasheet = (%s), anode_chemistry = (%s), "
+                    "cathode_chemistry = (%s), nominal_capacity = (%s), "
+                    "nominal_cell_weight = (%s) "
+                    "WHERE uid=(%s)"
+                ),
+                [
+                    self.manufacturer_id, self.cell_form_factor,
+                    self.link_to_datasheet, self.anode_chemistry,
+                    self.cathode_chemistry, self.nominal_capacity,
+                    self.nominal_cell_weight, self.uid
+                ],
+            )
+
+    @staticmethod
+    def all(conn):
+        with conn.cursor() as cursor:
+            cursor.execute(
+                (
+                    "SELECT uid, manufacturer_id, cell_form_factor, "
+                    "link_to_datasheet, anode_chemistry, "
+                    "cathode_chemistry, nominal_capacity, "
+                    "nominal_cell_weight FROM "
+                    "cell_data.cell"
+                ),
+            )
+            records = cursor.fetchall()
+            return [
+                CellRow(
+                    uid=result[0],
+                    manufacturer_id=result[1],
+                    cell_form_factor=result[2],
+                    link_to_datasheet=result[3],
+                    anode_chemistry=result[4],
+                    cathode_chemistry=result[5],
+                    nominal_capacity=result[6],
+                    nominal_cell_weight=result[7],
+                )
+                for result in records
+            ]
 
     @staticmethod
     def select_from_uid(uid, conn):
