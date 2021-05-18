@@ -104,19 +104,19 @@ def refresh():
     try:
         data = jwt.decode(
             old_token, app.config['SECRET_KEY'],
-            algorithms=['HS256']
+            algorithms=['HS256'],
+            options={"verify_exp": False}
         )
-        current_user = User(data['username'], data['role'])
     except jwt.ExpiredSignatureError:
         return jsonify({
             'message': 'Token has expired, please login again'
-        })
+        }), 401
     except jwt.InvalidTokenError:
         return jsonify({
             'message': 'Invalid token, please login again'
-        })
+        }), 401
 
-    new_token = create_token(data.username, data.role)
+    new_token = create_token(data['username'], data['role'])
     return jsonify({'access_token': new_token})
 
 def log(text):
