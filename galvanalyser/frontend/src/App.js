@@ -239,8 +239,8 @@ export default function App() {
         <Route path="/login">
           <Login />
         </Route>
-          {logged_in}
         <Route>
+          {logged_in}
         </Route>
     </Switch>
     </Router>

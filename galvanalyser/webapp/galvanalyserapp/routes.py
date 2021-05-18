@@ -143,16 +143,17 @@ def dataset(user):
     print('called dataset', datasets)
     return DatasetRow.to_json(datasets)
 
-@app.route('/api/cell/<int:uid>', methods=['GET', 'PUT', 'POST'])
+@app.route('/api/cell', methods=['GET', 'POST'])
+@app.route('/api/cell/<int:id_>', methods=['GET', 'PUT', 'DELETE'])
 @token_required
 @cross_origin()
-def cell(user, uid):
+def cell(user, id_=None):
     conn = app.config["GET_DATABASE_CONN_FOR_SUPERUSER"]()
     if request.method == 'GET':
-        if uid is None:
+        if id_ is None:
             cell = CellRow.all(conn)
         else:
-            cell = CellRow.select_from_uid(uid, conn)
+            cell = CellRow.select_from_id(id_, conn)
             if cell is None:
                 return jsonify({
                     'message': 'cell not found'
@@ -161,18 +162,20 @@ def cell(user, uid):
     elif request.method == 'POST':
         request_data = request.get_json()
         cell = CellRow(
-            manufacturer_id=request_data['manufacturer_id'],
-            cell_uid=request_data['cell_uid'],
-            owner=request_data['owner'],
-            purpose=request_data['purpose'],
-            test_equipment=request_data['test_equipment'],
-            json_data=request_data['json_data'],
+            uid=request_data.get('uid', None),
+            manufacturer_id=request_data.get('manufacturer_id', None),
+            form_factor=request_data.get('form_factor', None),
+            link_to_datasheet=request_data.get('link_to_datasheet', None),
+            anode_chemistry=request_data.get('anode_chemistry', None),
+            cathode_chemistry=request_data.get('cathode_chemistry', None),
+            nominal_capacity=request_data.get('nominal_capacity', None),
+            nominal_cell_weight=request_data.get('nominal_cell_weight', None),
         )
         cell.insert(conn)
         conn.commit()
         return CellRow.to_json(cell)
     elif request.method == 'PUT':
-        cell = CellRow.select_from_uid(uid, conn)
+        cell = CellRow.select_from_id(id_, conn)
         if cell is None:
             return jsonify({
                 'message': 'cell not found'
@@ -181,27 +184,44 @@ def cell(user, uid):
         request_data = request.get_json()
 
         if 'manufacturer_id' in request_data:
-            metadata.manufacturer_id = \
+            cell.manufacturer_id = \
                 request_data['manufacturer_id']
-        if 'cell_uid' in request_data:
-            metadata.cell_uid = request_data['cell_uid']
-        if 'owner' in request_data:
-            metadata.owner = request_data['owner']
-        if 'purpose' in request_data:
-            metadata.purpose = request_data['purpose']
-        if 'test_equipment' in request_data:
-            metadata.test_equipment = request_data['test_equipment']
-        if 'json_data' in request_data:
-            json_data = request_data['json_data']
-            try:
-                metadata.json_data = json.loads(json_data)
-            except json.decoder.JSONDecodeError:
-                return jsonify({
-                    'message': 'json_data not json'
-                }), 400
-        metadata.update(conn)
+        if 'uid' in request_data:
+            cell.uid = request_data['uid']
+        if 'manufacturer_id' in request_data:
+            cell.manufacturer_id = request_data['manufacturer_id']
+        if 'form_factor' in request_data:
+            cell.form_factor = request_data['form_factor']
+        if 'link_to_datasheet' in request_data:
+            cell.link_to_datasheet = \
+                request_data['link_to_datasheet']
+        if 'anode_chemistry' in request_data:
+            cell.anode_chemistry = request_data['anode_chemistry']
+        if 'cathode_chemistry' in request_data:
+            cell.cathode_chemistry = request_data['cathode_chemistry']
+        if 'nominal_capacity' in request_data:
+            cell.nominal_capacity = request_data['nominal_capacity']
+        if 'nominal_cell_weight' in request_data:
+            cell.nominal_cell_weight = \
+                request_data['nominal_cell_weight']
+
+        cell.update(conn)
         conn.commit()
-        return MetadataRow.to_json(metadata)
+        return CellRow.to_json(cell)
+    elif request.method == 'DELETE':
+        print('deleting', id_)
+        cell = CellRow.select_from_id(
+            id_, conn
+        )
+        if cell is None:
+            return jsonify({
+                'message': 'cell not found'
+            }), 404
+
+        cell.delete(conn)
+        conn.commit()
+        return jsonify({'success': True}), 200
+
 
 @app.route('/api/manufacturer', methods=['GET', 'POST'])
 @app.route('/api/manufacturer/<int:id_>', methods=['GET', 'PUT', 'DELETE'])
@@ -246,7 +266,6 @@ def manufacturer(user, id_=None):
         conn.commit()
         return ManufacturerRow.to_json(manufacturer)
     elif request.method == 'DELETE':
-        id_ = request.args['id']
         print('deleting', id_)
         manufacturer = ManufacturerRow.select_from_id(
             id_, conn

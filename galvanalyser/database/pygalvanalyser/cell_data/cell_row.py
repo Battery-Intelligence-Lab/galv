@@ -5,18 +5,20 @@ import pygalvanalyser
 class CellRow(pygalvanalyser.Row):
     def __init__(
         self,
-        manufacturer_id,
+        id=None,
+        manufacturer_id=None,
         uid=None,
-        cell_form_factor=None,
+        form_factor=None,
         link_to_datasheet=None,
         anode_chemistry=None,
         cathode_chemistry=None,
         nominal_capacity=None,
         nominal_cell_weight=None,
     ):
+        self.id = id
         self.uid = uid
         self.manufacturer_id = manufacturer_id
-        self.cell_form_factor = cell_form_factor
+        self.form_factor = form_factor
         self.link_to_datasheet = link_to_datasheet
         self.anode_chemistry = anode_chemistry
         self.cathode_chemistry = cathode_chemistry
@@ -25,9 +27,10 @@ class CellRow(pygalvanalyser.Row):
 
     def to_dict(self):
         obj = {
+            'id': self.id,
             'uid': self.uid,
             'manufacturer_id': self.manufacturer_id,
-            'cell_form_factor': self.cell_form_factor,
+            'form_factor': self.form_factor,
             'link_to_datasheet': self.link_to_datasheet,
             'anode_chemistry': self.anode_chemistry,
             'cathode_chemistry': self.cathode_chemistry,
@@ -39,9 +42,10 @@ class CellRow(pygalvanalyser.Row):
     def __eq__(self, other):
         if isinstance(other, CellRow):
             return (
+                self.id == other.id and
                 self.uid == other.uid and
                 self.manufacturer_id == other.manufacturer_id and
-                self.cell_form_factor == other.cell_form_factor and
+                self.form_factor == other.form_factor and
                 self.link_to_datasheet == other.link_to_datasheet and
                 self.anode_chemistry == other.anode_chemistry and
                 self.cathode_chemistry == other.cathode_chemistry and
@@ -54,9 +58,10 @@ class CellRow(pygalvanalyser.Row):
     def __repr__(self):
         return ('CellRow({}, {}, {}, {}, {}, {}, {}, {})'
                 .format(
+                    self.id,
                     self.uid,
                     self.manufacturer_id,
-                    self.cell_form_factor,
+                    self.form_factor,
                     self.link_to_datasheet,
                     self.anode_chemistry,
                     self.cathode_chemistry,
@@ -69,16 +74,17 @@ class CellRow(pygalvanalyser.Row):
             cursor.execute(
                 (
                     "INSERT INTO cell_data.cell ("
-                    "manufacturer_id, cell_form_factor, "
+                    "uid, manufacturer_id, cell_form_factor, "
                     "link_to_datasheet, anode_chemistry, "
                     "cathode_chemistry, nominal_capacity, "
                     "nominal_cell_weight) "
                     "VALUES (%s, %s, %s, %s, %s, %s, %s, %s) "
-                    "RETURNING uid"
+                    "RETURNING id"
                 ),
                 [
+                    self.uid,
                     self.manufacturer_id,
-                    self.cell_form_factor,
+                    self.form_factor,
                     self.link_to_datasheet,
                     self.anode_chemistry,
                     self.cathode_chemistry,
@@ -87,25 +93,37 @@ class CellRow(pygalvanalyser.Row):
                 ],
             )
             result = cursor.fetchone()
-            self.uid = result[0]
+            self.id = result[0]
 
     def update(self, conn):
         with conn.cursor() as cursor:
             cursor.execute(
                 (
                     "UPDATE cell_data.cell SET "
+                    "uid = (%s), "
                     "manufacturer_id = (%s), cell_form_factor = (%s), "
                     "link_to_datasheet = (%s), anode_chemistry = (%s), "
                     "cathode_chemistry = (%s), nominal_capacity = (%s), "
                     "nominal_cell_weight = (%s) "
-                    "WHERE uid=(%s)"
+                    "WHERE id=(%s)"
                 ),
                 [
-                    self.manufacturer_id, self.cell_form_factor,
+                    self.uid,
+                    self.manufacturer_id, self.form_factor,
                     self.link_to_datasheet, self.anode_chemistry,
                     self.cathode_chemistry, self.nominal_capacity,
-                    self.nominal_cell_weight, self.uid
+                    self.nominal_cell_weight, self.id
                 ],
+            )
+
+    def delete(self, conn):
+        with conn.cursor() as cursor:
+            cursor.execute(
+                (
+                    "DELETE FROM cell_data.cell "
+                    "WHERE id=(%s)"
+                ),
+                [self.id],
             )
 
     @staticmethod
@@ -113,7 +131,7 @@ class CellRow(pygalvanalyser.Row):
         with conn.cursor() as cursor:
             cursor.execute(
                 (
-                    "SELECT uid, manufacturer_id, cell_form_factor, "
+                    "SELECT id, uid, manufacturer_id, cell_form_factor, "
                     "link_to_datasheet, anode_chemistry, "
                     "cathode_chemistry, nominal_capacity, "
                     "nominal_cell_weight FROM "
@@ -123,24 +141,54 @@ class CellRow(pygalvanalyser.Row):
             records = cursor.fetchall()
             return [
                 CellRow(
-                    uid=result[0],
-                    manufacturer_id=result[1],
-                    cell_form_factor=result[2],
-                    link_to_datasheet=result[3],
-                    anode_chemistry=result[4],
-                    cathode_chemistry=result[5],
-                    nominal_capacity=result[6],
-                    nominal_cell_weight=result[7],
+                    id=result[0],
+                    uid=result[1],
+                    manufacturer_id=result[2],
+                    form_factor=result[3],
+                    link_to_datasheet=result[4],
+                    anode_chemistry=result[5],
+                    cathode_chemistry=result[6],
+                    nominal_capacity=result[7],
+                    nominal_cell_weight=result[8],
                 )
                 for result in records
             ]
+
+    @staticmethod
+    def select_from_id(id_, conn):
+        with conn.cursor() as cursor:
+            cursor.execute(
+                (
+                    "SELECT uid, manufacturer_id, cell_form_factor, "
+                    "link_to_datasheet, anode_chemistry, "
+                    "cathode_chemistry, nominal_capacity, "
+                    "nominal_cell_weight FROM "
+                    "cell_data.cell "
+                    "WHERE id=(%s)"
+                ),
+                [id_],
+            )
+            result = cursor.fetchone()
+            if result is None:
+                return None
+            return CellRow(
+                id=id_,
+                uid=result[0],
+                manufacturer_id=result[1],
+                form_factor=result[2],
+                link_to_datasheet=result[3],
+                anode_chemistry=result[4],
+                cathode_chemistry=result[5],
+                nominal_capacity=result[6],
+                nominal_cell_weight=result[7],
+            )
 
     @staticmethod
     def select_from_uid(uid, conn):
         with conn.cursor() as cursor:
             cursor.execute(
                 (
-                    "SELECT manufacturer_id, cell_form_factor, "
+                    "SELECT id, manufacturer_id, cell_form_factor, "
                     "link_to_datasheet, anode_chemistry, "
                     "cathode_chemistry, nominal_capacity, "
                     "nominal_cell_weight FROM "
@@ -153,12 +201,13 @@ class CellRow(pygalvanalyser.Row):
             if result is None:
                 return None
             return CellRow(
+                id=result[0],
                 uid=uid,
-                manufacturer_id=result[0],
-                cell_form_factor=result[1],
-                link_to_datasheet=result[2],
-                anode_chemistry=result[3],
-                cathode_chemistry=result[4],
-                nominal_capacity=result[5],
-                nominal_cell_weight=result[6],
+                manufacturer_id=result[1],
+                form_factor=result[2],
+                link_to_datasheet=result[3],
+                anode_chemistry=result[4],
+                cathode_chemistry=result[5],
+                nominal_capacity=result[6],
+                nominal_cell_weight=result[7],
             )

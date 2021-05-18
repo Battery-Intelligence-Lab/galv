@@ -75,9 +75,11 @@ export async function cells(id) {
   return authFetch(url + `cell`);
 }
 
-// cell is object with fields:
+//// cell is object with fields:
 //
-// { path: ?, monitored_for: ?, harvester_id: ? }
+// { cell_form_factor: ?, link_to_datasheet: ?, 
+//   anode_chemistry: ?, cathode_chemistry: ?, 
+//   nominal_capacity: ?, nominal_cell_weight: ? }
 export async function add_cell(cell) { 
   return authFetch(
     url + `cell`, 
@@ -85,6 +87,31 @@ export async function add_cell(cell) {
       method: 'POST',
       headers: headers,
       body: JSON.stringify(cell),
+    }
+  );
+}
+
+// cell is object with fields:
+//
+// { cell_form_factor: ?, link_to_datasheet: ?, 
+//   anode_chemistry: ?, cathode_chemistry: ?, 
+//   nominal_capacity: ?, nominal_cell_weight: ? }
+export async function update_cell(id, cell) { 
+  return authFetch(
+    url + `cell/${id}`, 
+    {
+      method: 'PUT',
+      headers: headers,
+      body: JSON.stringify(cell),
+    }
+  );
+}
+
+export async function delete_cell(id) { 
+  return authFetch(
+    url + `cell/${id}`, 
+    {
+      method: 'DELETE',
     }
   );
 }

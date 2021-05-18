@@ -37,7 +37,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-function MyTableRow({savedRow, onRowSave}) {
+function MyTableRow({savedRow, onRowSave, selected, onSelectRow}) {
   const classes = useStyles();
   const [row, setRow] = useState([])
 
@@ -46,26 +46,45 @@ function MyTableRow({savedRow, onRowSave}) {
   }, [savedRow]);
 
   const rowUnchanged = row.name === savedRow.name;
+  let useRow = row;
+  if (useRow.id === undefined) {
+    useRow = savedRow;
+  }
 
   return (
-    <TableRow key={row.id}>
+    <React.Fragment>
+    <TableRow 
+      onClick={() => {onSelectRow(savedRow);}}
+      hover
+      selected={selected}
+    >
       <TableCell component="th" scope="row">
-        {row.id}
+        {useRow.id}
       </TableCell>
-      <TableCell align="right" component={TextField}
-        value={row.name}
-        onChange={(e) => {setRow({...row, name: e.target.value});}} 
-      />
-      <TableCell align="right" 
-      >
-      <IconButton
-        disabled={rowUnchanged} 
-        onClick={() => {onRowSave(row);}}
-      >
-        <SaveIcon />
-      </IconButton>
+      <TableCell align="right">
+        <TextField
+          value={useRow.name}
+          onChange={(e) => {
+            setRow({...row, name: e.target.value});
+          }} 
+        >
+        </TextField>
+      </TableCell>
+
+      <TableCell align="right">
+        <Tooltip title="Save changes to manufacturer">
+        <span>
+        <IconButton
+          disabled={rowUnchanged} 
+          onClick={() => {onRowSave(row);}}
+        >
+          <SaveIcon />
+        </IconButton>
+        </span>
+        </Tooltip>
       </TableCell>
     </TableRow>
+    </React.Fragment>
   )
 }
 
@@ -73,6 +92,7 @@ export default function Manufacturers() {
   const classes = useStyles();
 
   const [manufacturerData, setManufacturerData] = useState([])
+  const [selected, setSelected] = useState({id: null})
 
   useEffect(() => {
     refreshManufacturers(); 
@@ -81,21 +101,20 @@ export default function Manufacturers() {
   const refreshManufacturers = () => {
       manufacturers().then((response) => {
       if (response.ok) {
-        return response.json().then(setManufacturerData);
+        return response.json().then((result) => {
+          setManufacturerData(result.sort((arg1, arg2) => arg1.id - arg2.id));
+        });
       }
       });
   };
 
   const addNewManufacturer = () => {
-    console.log('addNewManufacturer');
     add_manufacturer({name: 'Edit Me'}).then(refreshManufacturers);
   };
   const deleteManufacturer = () => {
-    console.log('deleteManufacturer');
-    delete_manufacturer().then(refreshManufacturers);
+    delete_manufacturer(selected.id).then(refreshManufacturers);
   };
   const updateManufacturer = (value) => {
-    console.log('updateManufacturer', value);
     update_manufacturer(value.id, value).then(refreshManufacturers);
   };
 
@@ -108,13 +127,17 @@ export default function Manufacturers() {
           <TableRow>
             <TableCell>ID</TableCell>
             <TableCell align="right">Name</TableCell>
-            <TableCell align="right"></TableCell>
+            <TableCell align="right">Save</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
           {manufacturerData.map((row) => (
-            <MyTableRow savedRow={row} 
+            <MyTableRow 
+                key={row.id} 
+                savedRow={row} 
                 onRowSave={updateManufacturer} 
+                selected={selected.id === row.id}
+                onSelectRow={setSelected}
             />
           ))}
         </TableBody>
@@ -126,9 +149,11 @@ export default function Manufacturers() {
     </IconButton>
     </Tooltip>
     <Tooltip title="Delete selected manufacturer">
-    <IconButton aria-label="delete" onClick={deleteManufacturer}>
+      <span>
+    <IconButton disabled={selected.id === null} aria-label="delete" onClick={deleteManufacturer}>
       <DeleteIcon />
     </IconButton>
+      </span>
     </Tooltip>
     </Paper>
     </Container>

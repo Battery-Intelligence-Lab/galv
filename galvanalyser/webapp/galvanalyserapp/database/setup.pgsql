@@ -143,15 +143,17 @@ GRANT ALL ON TABLE cell_data.manufacturer TO postgres;
 
 CREATE TABLE cell_data.cell
 (
-    UID uuid NOT NULL,
+    id bigserial NOT NULL,
+    uid uuid,
     cell_form_factor varchar(11),
     link_to_datasheet text,
     anode_chemistry text,
     cathode_chemistry text,
     nominal_capacity double precision,
     nominal_cell_weight double precision,
-    manufacturer_id bigint NOT NULL,
-    CONSTRAINT cell_pkey PRIMARY KEY (UID),
+    manufacturer_id bigint,
+    CONSTRAINT cell_unique_uid UNIQUE (uid),
+    CONSTRAINT cell_pkey PRIMARY KEY (id),
     CONSTRAINT manufacturer_id_fkey FOREIGN KEY (manufacturer_id)
         REFERENCES cell_data.manufacturer (id) MATCH SIMPLE
         ON UPDATE CASCADE

@@ -65,7 +65,7 @@ class ManufacturerRow(pygalvanalyser.Row):
         with conn.cursor() as cursor:
             cursor.execute(
                 (
-                    "DELETE FROM cell_data.manufacturer"
+                    "DELETE FROM cell_data.manufacturer "
                     "WHERE id=(%s)"
                 ),
                 [self.id],
