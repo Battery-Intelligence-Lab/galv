@@ -11,7 +11,6 @@ from pygalvanalyser.harvester.observed_file_row import (
     ObservedFileRow,
     ObservedFilePathRow,
 )
-from pygalvanalyser.experiment.institution_row import InstitutionRow
 from pygalvanalyser.experiment.dataset_row import DatasetRow
 from pygalvanalyser.experiment.access_row import AccessRow
 from pygalvanalyser.experiment.timeseries_data_row import (
@@ -68,7 +67,6 @@ def write_config_template(config_template_path):
         "database_port": 5432,
         "database_name": "galvanalyser",
         "machine_id": "my_machine_01",
-        "institution": "Oxford",
     }
     with open(config_template_path, "w") as json_file:
         json.dump(template, json_file, indent=4)
@@ -163,7 +161,7 @@ def monitor_path(monitor_path_id, path, monitored_for, conn):
     print("Done monitoring paths\n")
 
 
-def import_file(file_path_row, institution_id, harvester_name, conn):
+def import_file(file_path_row, harvester_name, conn):
     """
         Attempts to import a given file
     """
@@ -204,10 +202,9 @@ def import_file(file_path_row, institution_id, harvester_name, conn):
         conn.autocommit = False
         with conn:
             # Check if this dataset is already in the db
-            dataset_row = DatasetRow.select_from_name_date_and_institution_id(
+            dataset_row = DatasetRow.select_from_name_date(
                 name=input_file.metadata["Dataset Name"],
                 date=input_file.metadata["Date of Test"],
-                institution_id=institution_id,
                 conn=conn,
             )
             is_new_dataset = dataset_row is None
@@ -216,7 +213,6 @@ def import_file(file_path_row, institution_id, harvester_name, conn):
                 dataset_row = DatasetRow(
                     name=input_file.metadata["Dataset Name"],
                     date=input_file.metadata["Date of Test"],
-                    institution_id=institution_id,
                     dataset_type=input_file.metadata["Machine Type"],
                     original_collector="; ".join(file_path_row.monitored_for),
                 )
@@ -294,7 +290,7 @@ def import_file(file_path_row, institution_id, harvester_name, conn):
 
 
 def main(database_user=None, database_password=None, machine_id=None,
-         institution=None, database_host=None, database_port=None,
+         database_host=None, database_port=None,
          database_name=None):
     try:
         config = load_config("./config/harvester-config.json")
@@ -303,7 +299,6 @@ def main(database_user=None, database_password=None, machine_id=None,
         config["database_username"] = database_user
         config["database_password"] = database_password
         config["machine_id"] = machine_id
-        config["institution"] = institution
         config["database_host"] = database_host
         config["database_port"] = database_port
         config["database_name"] = database_name
@@ -330,18 +325,6 @@ def main(database_user=None, database_password=None, machine_id=None,
                 + " in the harvester database"
             )
             sys.exit(1)
-        try:
-            institution_id = InstitutionRow.select_from_name(
-                config["institution"], conn
-            ).id
-        except AttributeError:
-            print(
-                "Error: Could not find a institution id for an institution "
-                "called "
-                + config["institution"]
-                + " in the experiment database"
-            )
-            sys.exit(1)
         monitored_paths_rows = MonitoredPathRow.select_from_harvester_id(
             my_harvester_id, conn
         )
@@ -366,7 +349,6 @@ def main(database_user=None, database_password=None, machine_id=None,
             # import the file
             import_file(
                 stable_observed_file_path_row,
-                institution_id,
                 config["machine_id"],
                 conn,
             )

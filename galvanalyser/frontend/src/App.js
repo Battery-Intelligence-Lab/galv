@@ -13,8 +13,6 @@ import Home from "./Home"
 import Harvesters from "./Harvesters"
 import HarvesterDetail from "./HarvesterDetail"
 import DatasetDetail from "./DatasetDetail"
-import Manufacturers from "./Manufacturers"
-import Institutions from "./Institutions"
 import Cells from "./Cells"
 import Datasets from "./Datasets"
 import TableChartIcon from '@material-ui/icons/TableChart';
@@ -142,7 +140,7 @@ const useStyles = makeStyles((theme) => ({
 
 export default function App() {
   const classes = useStyles();
-  const [open, setOpen] = React.useState(true);
+  const [open, setOpen] = React.useState(false);
   const handleDrawerOpen = () => {
     setOpen(true);
   };
@@ -163,18 +161,6 @@ export default function App() {
           <BackupIcon />
         </ListItemIcon>
         <ListItemText primary="Harvesters" />
-      </ListItem>
-      <ListItem button component={Link} to="/institutions">
-        <ListItemIcon>
-          <BusinessIcon />
-        </ListItemIcon>
-        <ListItemText primary="Institutions" />
-      </ListItem>
-      <ListItem button component={Link} to="/manufacturers">
-        <ListItemIcon>
-          <BusinessIcon />
-        </ListItemIcon>
-        <ListItemText primary="Manufacturers" />
       </ListItem>
       <ListItem button component={Link} to="/cells">
         <ListItemIcon>
@@ -235,10 +221,10 @@ export default function App() {
         {/* A <Switch> looks through its children <Route>s and
               renders the first one that matches the current URL. */}
         <Switch>
-          <PrivateRoute path="/manufacturers" component={Manufacturers} />
-          <PrivateRoute path="/institutions" component={Institutions} />
           <PrivateRoute path="/cells" component={Cells} />
           <PrivateRoute path="/harvesters" component={Harvesters} />
+          <PrivateRoute path="/harvester/:id" component={HarvesterDetail} />
+          <PrivateRoute path="/dataset/:id" component={DatasetDetail} />
           <PrivateRoute path="/" component={Datasets} />
         </Switch>
     </main>

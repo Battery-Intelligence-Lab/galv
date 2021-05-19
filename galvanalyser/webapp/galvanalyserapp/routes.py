@@ -20,13 +20,13 @@ from pygalvanalyser.experiment.timeseries_data_row import (
     RECORD_NO_COLUMN_ID,
 )
 from pygalvanalyser.experiment import (
-    AccessRow, DatasetRow, ColumnRow, MetadataRow, InstitutionRow
+    AccessRow, DatasetRow, ColumnRow, MetadataRow
 )
 from pygalvanalyser.cell_data import (
     CellRow, ManufacturerRow
 )
 from pygalvanalyser.harvester import (
-    MonitoredPathRow, HarvesterRow
+    MonitoredPathRow, HarvesterRow, ObservedFileRow
 )
 from pygalvanalyser.experiment import select_timeseries_column
 import math
@@ -69,7 +69,7 @@ def login():
     if user.validate_password(auth.password):
         response = jsonify({"message": "login successful"})
         access_token = create_access_token(
-            identity=user.to_json()
+            identity=User.to_json(user)
         )
         set_access_cookies(response, access_token)
         return response
@@ -112,12 +112,26 @@ def refresh():
 def hello():
     return 'Hello'
 
-@app.route('/api/dataset', methods=['GET'])
+@app.route('/api/user', methods=['GET'])
 @cross_origin()
 @jwt_required()
-def dataset():
+def user():
+    users = User.all()
+    print('called user', users)
+    return User.to_json(users)
+
+@app.route('/api/dataset', methods=['GET'])
+@app.route('/api/dataset/<int:id_>', methods=['GET'])
+@cross_origin()
+@jwt_required()
+def dataset(id_=None):
     conn = app.config["GET_DATABASE_CONN_FOR_SUPERUSER"]()
-    datasets = DatasetRow.all(conn, with_metadata=True)
+    if id_ is None:
+        datasets = DatasetRow.all(conn, with_metadata=True)
+    else:
+        datasets = DatasetRow.select_from_id(
+            id_, conn, with_metadata=True
+        )
     print('called dataset', datasets)
     return DatasetRow.to_json(datasets)
 
@@ -258,64 +272,6 @@ def manufacturer(id_=None):
         return jsonify({'success': True}), 200
 
 
-@app.route('/api/institution', methods=['GET', 'POST'])
-@app.route('/api/institution/<int:id_>', methods=['GET', 'PUT', 'DELETE'])
-@jwt_required()
-@cross_origin()
-def institution(id_=None):
-    conn = app.config["GET_DATABASE_CONN_FOR_SUPERUSER"]()
-    print('institution')
-    if request.method == 'GET':
-        if id_ is None:
-            institution = InstitutionRow.all(conn)
-        else:
-            institution = InstitutionRow.select_from_id(id_, conn)
-            if institution is None:
-                return jsonify({
-                    'message': 'institution not found'
-                }), 404
-        return InstitutionRow.to_json(institution)
-    elif request.method == 'POST':
-        request_data = request.get_json()
-        print('institution post', request_data)
-        institution = InstitutionRow(
-            name=request_data.get('name', ''),
-        )
-        institution.insert(conn)
-        conn.commit()
-        return InstitutionRow.to_json(institution)
-    elif request.method == 'PUT':
-        print('PUT with id', id_)
-        institution = InstitutionRow.select_from_id(id_, conn)
-        if institution is None:
-            return jsonify({
-                'message': 'institution not found'
-            }), 404
-
-        request_data = request.get_json()
-
-        if 'name' in request_data:
-            institution.name = request_data['name']
-
-        institution.update(conn)
-        conn.commit()
-        return InstitutionRow.to_json(institution)
-    elif request.method == 'DELETE':
-        print('deleting', id_)
-        institution = InstitutionRow.select_from_id(
-            id_, conn
-        )
-        if institution is None:
-            return jsonify({
-                'message': 'institution not found'
-            }), 404
-
-        institution.delete(conn)
-        conn.commit()
-        return jsonify({'success': True}), 200
-
-
-
 @app.route('/api/metadata/<int:dataset_id>', methods=['GET', 'PUT', 'POST'])
 @jwt_required()
 @cross_origin()
@@ -374,6 +330,15 @@ def dataset_by_id(dataset_id):
     conn = app.config["GET_DATABASE_CONN_FOR_SUPERUSER"]()
     datasets = DatasetRow.select_from_id(dataset_id, conn)
     return DatasetRow.to_json(datasets)
+
+@app.route('/api/file', methods=['GET'])
+@jwt_required()
+@cross_origin()
+def file():
+    conn = app.config["GET_DATABASE_CONN_FOR_SUPERUSER"]()
+    path_id = request.args['path_id']
+    files = ObservedFileRow.select_from_id_(path_id, conn)
+    return ObservedFileRow.to_json(files)
 
 @app.route('/api/column', methods=['GET'])
 @jwt_required()
@@ -457,15 +422,15 @@ def harvester(id_=None):
         conn.commit()
         return jsonify({'success': True}), 200
 
-@app.route('/api/monitored_path',
-           methods=['GET', 'PUT', 'POST', 'DELETE'])
+
+@app.route('/api/monitored_path', methods=['GET', 'POST'])
+@app.route('/api/monitored_path/<int:id_>', methods=['GET', 'PUT', 'DELETE'])
 @jwt_required()
 @cross_origin()
-def monitored_path():
+def monitored_path(id_=None):
     conn = app.config["GET_DATABASE_CONN_FOR_SUPERUSER"]()
     print(request.method)
     if request.method == 'GET':
-        id_ = request.args.get('id')
         if id_ is not None:
             paths = MonitoredPathRow.select_from_id(
                 id_, conn
@@ -477,7 +442,6 @@ def monitored_path():
             )
         return MonitoredPathRow.to_json(paths)
     elif request.method == 'PUT':
-        id_ = request.args['id']
         path = MonitoredPathRow.select_from_id(
             id_, conn
         )
@@ -485,28 +449,7 @@ def monitored_path():
         if 'path' in request_data:
             path.path = request_data['path']
         if 'monitored_for' in request_data:
-            monitored_for = request_data['monitored_for']
-            try:
-                monitored_for = json.loads(monitored_for)
-            except json.decoder.JSONDecodeError:
-                return jsonify({
-                    'message': 'monitored_for not json'
-                }), 400
-
-            if not isinstance(monitored_for, list):
-                return jsonify({
-                    'message': 'monitored_for not an array'
-                }), 400
-
-            all_strings = all(
-                [isinstance(x, str) for x in monitored_for]
-            )
-            if all_strings:
-                path.monitored_for = monitored_for
-            else:
-                return jsonify({
-                    'message': 'monitored_for not an array of strings'
-                }), 400
+            path.monitored_for = request_data['monitored_for']
         if 'harvester_id' in request_data:
             path.harvester_id = request_data['harvester_id']
         path.update(conn)
@@ -516,14 +459,13 @@ def monitored_path():
         request_data = request.get_json()
         new_path = MonitoredPathRow(
             request_data['harvester_id'],
-            request_data['monitored_for'],
-            request_data['path'],
+            request_data.get('monitored_for', []),
+            request_data.get('path', ''),
         )
         new_path.insert(conn)
         conn.commit()
         return MonitoredPathRow.to_json(new_path)
     elif request.method == 'DELETE':
-        id_ = request.args['id']
         print('deleting', id_)
         path = MonitoredPathRow.select_from_id(
             id_, conn

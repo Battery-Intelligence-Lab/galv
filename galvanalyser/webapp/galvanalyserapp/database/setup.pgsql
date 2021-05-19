@@ -112,29 +112,6 @@ GRANT USAGE ON SCHEMA cell_data TO ${harvester_role};
 
 GRANT USAGE ON SCHEMA cell_data TO ${user_role};
 
--- Table: cell_data.manufacturer
-
--- DROP TABLE cell_data.manufacturer;
-
-CREATE TABLE cell_data.manufacturer
-(
-    id bigserial NOT NULL,
-    name text,
-    CONSTRAINT manufacturer_pkey PRIMARY KEY (id),
-    UNIQUE (name)
-) WITH (
-    OIDS = FALSE
-);
-
-ALTER TABLE cell_data.manufacturer
-    OWNER to postgres;
-
-GRANT SELECT ON TABLE cell_data.manufacturer TO ${user_role};
-
-GRANT SELECT ON TABLE cell_data.manufacturer TO ${harvester_role};
-
-GRANT ALL ON TABLE cell_data.manufacturer TO postgres;
-
 
 -- Table: cell_data.cell
 
@@ -150,7 +127,7 @@ CREATE TABLE cell_data.cell
     cathode_chemistry text,
     nominal_capacity double precision,
     nominal_cell_weight double precision,
-    manufacturer_id bigint,
+    manufacturer text,
     CONSTRAINT cell_unique_uid UNIQUE (uid),
     CONSTRAINT cell_pkey PRIMARY KEY (id),
     CONSTRAINT manufacturer_id_fkey FOREIGN KEY (manufacturer_id)
@@ -193,28 +170,6 @@ GRANT USAGE ON SCHEMA experiment TO ${harvester_role};
 
 GRANT USAGE ON SCHEMA experiment TO ${user_role};
 
--- Table: experiment.institution
-
--- DROP TABLE experiment.institution;
-
-CREATE TABLE experiment.institution
-(
-    id bigserial NOT NULL,
-    name text NOT NULL,
-    PRIMARY KEY (id),
-    UNIQUE (name)
-)
-WITH (
-    OIDS = FALSE
-);
-
-ALTER TABLE experiment.institution
-    OWNER to postgres;
-
-GRANT SELECT ON TABLE experiment.institution TO ${harvester_role};
-
-GRANT SELECT ON TABLE experiment.institution TO ${user_role};
-
 -- Table: experiment.dataset
 
 -- DROP TABLE experiment.dataset;
@@ -224,16 +179,16 @@ CREATE TABLE experiment.dataset
     id bigserial NOT NULL,
     name text NOT NULL,
     date timestamp with time zone NOT NULL,
-    institution_id bigint NOT NULL,
     original_collector text NOT NULL,
     type text NOT NULL,
+    cell_id bigint,
+    owner text,
+    purpose text,
+    test_equipment text,
+    json_data jsonb,
     
-    PRIMARY KEY (name, date, institution_id),
-    UNIQUE (id),
-    FOREIGN KEY (institution_id)
-        REFERENCES experiment.institution (id) MATCH SIMPLE
-        ON UPDATE CASCADE
-        ON DELETE RESTRICT
+    PRIMARY KEY (name, date),
+    UNIQUE (id)
 )
 WITH (
     OIDS = FALSE
@@ -251,42 +206,6 @@ GRANT ALL ON TABLE experiment.dataset TO postgres;
 GRANT ALL ON SEQUENCE experiment.dataset_id_seq TO postgres;
 
 GRANT USAGE ON SEQUENCE experiment.dataset_id_seq TO ${harvester_role};
-
--- Table: experiment.metadata
-
--- DROP TABLE experiment.metadata;
-
-CREATE TABLE experiment.metadata
-(
-    dataset_id bigint NOT NULL,
-    cell_id bigint,
-    owner text,
-    purpose text,
-    test_equipment text,
-    json_data jsonb,
-    PRIMARY KEY (dataset_id),
-    FOREIGN KEY (dataset_id)
-        REFERENCES experiment.dataset (id) MATCH SIMPLE
-        ON UPDATE CASCADE
-        ON DELETE CASCADE,
-    FOREIGN KEY (cell_id)
-        REFERENCES cell_data.cell (id) MATCH SIMPLE
-        ON UPDATE CASCADE
-        ON DELETE CASCADE
-)
-WITH (
-    OIDS = FALSE
-);
-
-ALTER TABLE experiment.metadata
-    OWNER TO postgres;
-
-GRANT INSERT, SELECT, TRIGGER ON TABLE experiment.metadata TO ${harvester_role};
-
-GRANT SELECT ON TABLE experiment.metadata TO ${user_role};
-
-GRANT ALL ON TABLE experiment.metadata TO postgres;
-
 
 -- Table: experiment.access
 

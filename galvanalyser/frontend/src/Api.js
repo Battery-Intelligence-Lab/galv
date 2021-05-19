@@ -42,9 +42,13 @@ async function authFetch(url, options) {
   });;
 }
 
+export async function run_harvester(id) { 
+  return authFetch(url + `harvester/${id}/run`);
+}
+
 export async function harvesters(id) { 
   if (id) {
-    return authFetch(url + `harvester?id=${id}`);
+    return authFetch(url + `harvester/${id}`);
   }
   return authFetch(url + 'harvester');
 }
@@ -92,7 +96,7 @@ export async function update_harvester(id, harvester) {
 // { path: ?, monitored_for: ?, harvester_id: ? }
 export async function update_monitored_path(id, path) { 
   return authFetch(
-    url + `monitored_path?id=${id}`, 
+    url + `monitored_path/${id}`, 
     {
       method: 'PUT',
       headers: headers,
@@ -115,24 +119,32 @@ export async function add_monitored_path(path) {
   );
 }
 
-export async function del_monitored_path(id) { 
+export async function delete_monitored_path(id) { 
   return authFetch(
-    url + `monitored_path?id=${id}`, 
+    url + `monitored_path/${id}`, 
     {
       method: 'DELETE',
     }
   );
 }
 
-export async function monitored_path(harvester_id) { 
+export async function monitored_paths(harvester_id) { 
   return authFetch(
     url + `monitored_path?harvester_id=${harvester_id}`
   );
 }
 
+export async function users() { 
+  return authFetch(url + 'user');
+}
+
+export async function files(path_id) { 
+  return authFetch(url + `file?path_id=${path_id}`);
+}
+
 export async function datasets(id) { 
   if (id) {
-    return authFetch(url + `dataset?id=${id}`);
+    return authFetch(url + `dataset/${id}`);
   }
   return authFetch(url + 'dataset');
 

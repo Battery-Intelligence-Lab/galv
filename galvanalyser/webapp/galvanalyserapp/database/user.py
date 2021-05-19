@@ -21,11 +21,19 @@ class User():
             self.username, self.role
         )
 
-    def to_json(self):
-        return json.dumps({
+    def to_dict(self):
+        return {
             'username': self.username,
             'role': self.role,
-        })
+        }
+
+    @classmethod
+    def to_json(cls, arg):
+        if isinstance(arg, list):
+            list_obj = [x.to_dict() for x in arg]
+            return json.dumps(list_obj)
+        elif isinstance(arg, cls):
+            return json.dumps(arg.to_dict())
 
     @classmethod
     def from_json(cls, json_str):
@@ -40,6 +48,40 @@ class User():
             return True
         except psycopg2.OperationalError:
             return False
+
+    @classmethod
+    def all(cls):
+        conn = app.config['GET_DATABASE_CONN_FOR_SUPERUSER']()
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT a.rolname, b.rolname "
+                "FROM pg_roles a "
+                "INNER JOIN ( "
+                "   SELECT c.member, d.rolname "
+                "   FROM pg_auth_members c "
+                "   INNER JOIN pg_roles d "
+                "   ON c.roleid = d.oid "
+                ") b ON a.oid = b.member "
+                "WHERE b.rolname in ('normal_user', 'harvester'); "
+            )
+            records = cur.fetchall()
+            return [
+                cls(
+                    username=result[0],
+                    role=cls.get_role_from_member_of(result[1]),
+                )
+                for result in records
+            ]
+
+    @classmethod
+    def get_role_from_member_of(cls, member_of):
+        if member_of == 'normal_user':
+            role = UserRoles.ReadOnly
+        elif member_of == 'harvester':
+            role = UserRoles.Harvester
+        else:
+            role = None
+        return role
 
     @classmethod
     def get(cls, username):
@@ -62,10 +104,5 @@ class User():
                 member_of = None
             else:
                 member_of = result[0]
-            if member_of == 'normal_user':
-                role = UserRoles.ReadOnly
-            elif member_of == 'harvester':
-                role = UserRoles.Harvester
-            else:
-                role = None
+            role = cls.get_role_from_member_of(member_of)
             return cls(username, role)

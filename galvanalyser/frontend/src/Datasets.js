@@ -6,6 +6,8 @@ import { datasets} from './Api';
 import { makeStyles } from '@material-ui/core/styles';
 import DatasetChart from './DatasetChart'
 import DatasetMetadata from './DatasetMetadata'
+import Button from '@material-ui/core/Button';
+import { useHistory } from "react-router-dom";
 
 const useStyles = makeStyles((theme) => ({
   container: {
@@ -60,11 +62,11 @@ export default function Datasets() {
   let autoHeight = true;
   let divStyle = { width: '100%' };
   if (select !== null) {
-    console.log('selected', select);
     autoHeight = false;
     divStyle = { height: 300, width: '100%' };
   }
 
+  const history = useHistory();
   return (
     <Container maxWidth="lg" className={classes.container}>
       <div style={divStyle}>
@@ -81,7 +83,12 @@ export default function Datasets() {
     {data[select] &&
       <React.Fragment>
         <DatasetChart dataset={data[select]}/>
-        <DatasetMetadata dataset={data[select]}/>
+        <Button variant="contained" 
+          onClick={()=>{history.push(`/dataset/${data[select].id}`);}}
+        >
+          Edit Metadata
+        </Button>
+
       </React.Fragment>
     }
     </Container>

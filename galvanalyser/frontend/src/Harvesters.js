@@ -5,9 +5,12 @@ import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
 import Paper from '@material-ui/core/Paper';
 import InputBase from '@material-ui/core/InputBase';
+import PlayArrowIcon from '@material-ui/icons/PlayArrow';
 import Tooltip from '@material-ui/core/Tooltip';
+import ListIcon from '@material-ui/icons/List';
 import AddIcon from '@material-ui/icons/Add';
 import IconButton from '@material-ui/core/IconButton';
+import SettingsIcon from '@material-ui/icons/Settings';
 import TableCell from '@material-ui/core/TableCell';
 import Container from '@material-ui/core/Container';
 import SaveIcon from '@material-ui/icons/Save';
@@ -15,9 +18,11 @@ import TableContainer from '@material-ui/core/TableContainer';
 import TableHead from '@material-ui/core/TableHead';
 import DeleteIcon from '@material-ui/icons/Delete';
 import TableRow from '@material-ui/core/TableRow';
+import { Link, useHistory } from "react-router-dom";
+
 import HarvesterDetail from './HarvesterDetail';
 import { 
-  harvesters, add_harvester, 
+  run_harvester, harvesters, add_harvester, 
   update_harvester, delete_harvester
 } from './Api'
 
@@ -120,6 +125,7 @@ export default function Harvesters() {
   };
   
   const isSelected = selected.id !== null;
+  let history = useHistory();
 
   return (
     <Container maxWidth="lg" className={classes.container}>
@@ -158,10 +164,23 @@ export default function Harvesters() {
     </IconButton>
       </span>
     </Tooltip>
+    <Tooltip title="Paths and files for selected harvester">
+      <span>
+      <IconButton disabled={!isSelected} onClick={()=>{history.push(`/harvester/${selected.id}`);}}>
+      <ListIcon/>
+    </IconButton>
+    </span>
+    </Tooltip>
+    <Tooltip title="Run the selected harvester">
+      <span>
+      <IconButton disabled={!isSelected} onClick={()=>{run_harvester(selected.id)}}>
+      <PlayArrowIcon/>
+    </IconButton>
+    </span>
+    </Tooltip>
+
+
     </Paper>
-    {isSelected &&
-      <HarvesterDetail data={selected}/>
-    }
     </Container>
   );
 }

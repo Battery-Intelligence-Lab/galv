@@ -7,8 +7,7 @@ const VOLTAGE_COLUMN_ID = 2
 const AMPS_COLUMN_ID = 3
 
 
-export default function DatasetDetail(props) {
-  const { dataset } = props;
+export default function DatasetChart({ dataset }) {
 
   const [timeseries, setTimeseries] = useState({})
   const [cols, setCols] = useState([])

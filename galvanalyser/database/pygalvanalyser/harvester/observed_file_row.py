@@ -1,7 +1,8 @@
 import psycopg2
+import pygalvanalyser
 
 
-class ObservedFileRow:
+class ObservedFileRow(pygalvanalyser.Row):
     def __init__(
         self,
         monitor_path_id,
@@ -15,6 +16,16 @@ class ObservedFileRow:
         self.last_observed_size = last_observed_size
         self.last_observed_time = last_observed_time
         self.file_state = file_state
+
+    def to_dict(self):
+        obj = {
+            'monitor_path_id': self.monitor_path_id,
+            'path': self.path,
+            'last_observed_size': self.last_observed_size,
+            'last_observed_time': self.last_observed_time.isoformat(),
+            'file_state': self.file_state,
+        }
+        return obj
 
     def __str__(self):
         return (
