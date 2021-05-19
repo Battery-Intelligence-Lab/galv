@@ -9,7 +9,7 @@ import DeleteIcon from '@material-ui/icons/Delete';
 import { makeStyles } from '@material-ui/core/styles';
 import Tooltip from '@material-ui/core/Tooltip';
 import {
-  harvester, monitored_path, 
+  harvesters, monitored_path, 
   update_monitored_path, add_monitored_path,
   del_monitored_path
 } from './Api';
@@ -22,26 +22,14 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 
-
-
-export default function HarvesterDetail(props) {
+export default function HarvesterDetail({data}) {
   const classes = useStyles();
-  let { id } = useParams();
 
-  const [data, setData] = useState([])
-
-  useEffect(() => {
-    harvester(id).then((response) => {
-      if (response.ok) {
-        return response.json().then(setData);
-      }
-    });
-  }, [id]);
-
+  console.log('got data=', data);
   const [paths, setPaths] = useState([]);
 
   const refreshPaths = () => {
-    monitored_path(id).then((response) => {
+    monitored_path(data.id).then((response) => {
       if (response.ok) {
         return response.json().then(setPaths);
       }
@@ -64,7 +52,7 @@ export default function HarvesterDetail(props) {
 
   const addNewPath = () => {
     return add_monitored_path(
-      {monitored_for: [], path: '', harvester_id: id}
+      {monitored_for: [], path: '', harvester_id: data.id}
     ).then(refreshPaths);
   };
 

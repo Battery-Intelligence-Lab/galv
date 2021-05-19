@@ -19,7 +19,6 @@ CREATE TABLE harvesters.harvester
     machine_id text NOT NULL,
     PRIMARY KEY (id),
     UNIQUE (machine_id)
-
 )
 WITH (
     OIDS = FALSE
@@ -260,7 +259,7 @@ GRANT USAGE ON SEQUENCE experiment.dataset_id_seq TO ${harvester_role};
 CREATE TABLE experiment.metadata
 (
     dataset_id bigint NOT NULL,
-    cell_uid uuid,
+    cell_id bigint,
     owner text,
     purpose text,
     test_equipment text,
@@ -270,8 +269,8 @@ CREATE TABLE experiment.metadata
         REFERENCES experiment.dataset (id) MATCH SIMPLE
         ON UPDATE CASCADE
         ON DELETE CASCADE,
-    FOREIGN KEY (cell_uid)
-        REFERENCES cell_data.cell (UID) MATCH SIMPLE
+    FOREIGN KEY (cell_id)
+        REFERENCES cell_data.cell (id) MATCH SIMPLE
         ON UPDATE CASCADE
         ON DELETE CASCADE
 )

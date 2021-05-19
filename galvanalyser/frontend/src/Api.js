@@ -1,16 +1,90 @@
-import {authFetch} from "./auth"
-
 const url = '/api/';
 const headers = {
       'Accept': 'application/json',
       'Content-Type': 'application/json'
     };
 
-export async function harvester(id) { 
+export async function login(username, password) {
+  let headers = new Headers();
+  headers.set('Authorization', 'Basic ' + btoa(username + ":" + password));
+  return fetch(url + '/login', {method: 'POST', headers: headers});
+}
+
+export async function logout() {
+  return fetch(url + '/logout', {method: 'POST'});
+}
+
+function getCookie(name) {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
+}
+
+export function loggedIn() {
+  const cookie = getCookie('csrf_access_token');
+  console.log('cookie is', cookie);
+  return  cookie !== undefined;
+}
+
+async function authFetch(url, options) {
+  let newOptions = {...options};
+  newOptions.credentials = 'same-origin';
+  newOptions.headers = {...newOptions.headers};
+  newOptions.headers['X-CSRF-TOKEN'] = getCookie('csrf_access_token');
+  console.log('options are', newOptions);
+  return fetch(url, newOptions).then((response) => {
+    if (response.status === 401) {
+      return logout().then(() => {
+      return response;
+      });
+    }
+    return response;
+  });;
+}
+
+export async function harvesters(id) { 
   if (id) {
     return authFetch(url + `harvester?id=${id}`);
   }
   return authFetch(url + 'harvester');
+}
+
+export async function delete_harvester(id) { 
+  return authFetch(
+    url + `harvester/${id}`, 
+    {
+      method: 'DELETE',
+    }
+  );
+}
+
+// harvester is object with fields:
+//
+// { machine_id: ? }
+export async function add_harvester(harvester) { 
+  console.log('add_harvester', harvester);
+  return authFetch(
+    url + `harvester`, 
+    {
+      method: 'POST',
+      headers: headers,
+      body: JSON.stringify(harvester),
+    }
+  );
+}
+
+// harvester is object with fields:
+//
+// { machine_id: ? }
+export async function update_harvester(id, harvester) { 
+  return authFetch(
+    url + `harvester/${id}`, 
+    {
+      method: 'PUT',
+      headers: headers,
+      body: JSON.stringify(harvester),
+    }
+  );
 }
 
 // path is object with (all optional) fields:
@@ -157,6 +231,51 @@ export async function update_manufacturer(id, manufacturer) {
       method: 'PUT',
       headers: headers,
       body: JSON.stringify(manufacturer),
+    }
+  );
+}
+
+export async function institutions(id) { 
+  if (id) {
+    return authFetch(url + `institution/${id}`);
+  }
+  return authFetch(url + `institution`);
+}
+
+export async function delete_institution(id) { 
+  return authFetch(
+    url + `institution/${id}`, 
+    {
+      method: 'DELETE',
+    }
+  );
+}
+
+// institution is object with fields:
+//
+// { name: ? }
+export async function add_institution(institution) { 
+  console.log('add_institution', institution);
+  return authFetch(
+    url + `institution`, 
+    {
+      method: 'POST',
+      headers: headers,
+      body: JSON.stringify(institution),
+    }
+  );
+}
+
+// manufactureris object with fields:
+//
+// { path: ?, monitored_for: ?, harvester_id: ? }
+export async function update_institution(id, institution) { 
+  return authFetch(
+    url + `institution/${id}`, 
+    {
+      method: 'PUT',
+      headers: headers,
+      body: JSON.stringify(institution),
     }
   );
 }

@@ -4,7 +4,9 @@ import {
   Switch,
   Route,
   Redirect,
-  Link
+  Link,
+  useHistory,
+  useLocation,
 } from "react-router-dom";
 import Login from "./Login"
 import Home from "./Home"
@@ -12,9 +14,14 @@ import Harvesters from "./Harvesters"
 import HarvesterDetail from "./HarvesterDetail"
 import DatasetDetail from "./DatasetDetail"
 import Manufacturers from "./Manufacturers"
+import Institutions from "./Institutions"
 import Cells from "./Cells"
 import Datasets from "./Datasets"
-import {useAuth, logout} from "./auth"
+import TableChartIcon from '@material-ui/icons/TableChart';
+import BusinessIcon from '@material-ui/icons/Business';
+import BatteryUnknownIcon from '@material-ui/icons/BatteryUnknown';
+import BackupIcon from '@material-ui/icons/Backup';
+import {loggedIn, logout} from "./Api"
 import { makeStyles } from '@material-ui/core/styles';
 import CssBaseline from '@material-ui/core/CssBaseline';
 
@@ -40,7 +47,8 @@ import ShoppingCartIcon from '@material-ui/icons/ShoppingCart';
 
 
 const PrivateRoute = ({ component: Component, ...rest }) => {
-  const [logged] = useAuth();
+  const logged = loggedIn();
+  console.log('logged', logged);
 
   return <Route {...rest} render={(props) => (
     logged
@@ -146,37 +154,42 @@ export default function App() {
     <div>
       <ListItem button component={Link} to="/">
         <ListItemIcon>
-          <DashboardIcon />
-        </ListItemIcon>
-        <ListItemText primary="Dashboard" />
-      </ListItem>
-      <ListItem button component={Link} to="/harvesters">
-        <ListItemIcon>
-          <ShoppingCartIcon />
-        </ListItemIcon>
-        <ListItemText primary="Harvesters" />
-      </ListItem>
-      <ListItem button component={Link} to="/datasets">
-        <ListItemIcon>
-          <ShoppingCartIcon />
+          <TableChartIcon />
         </ListItemIcon>
         <ListItemText primary="Datasets" />
       </ListItem>
+      <ListItem button component={Link} to="/harvesters">
+        <ListItemIcon>
+          <BackupIcon />
+        </ListItemIcon>
+        <ListItemText primary="Harvesters" />
+      </ListItem>
+      <ListItem button component={Link} to="/institutions">
+        <ListItemIcon>
+          <BusinessIcon />
+        </ListItemIcon>
+        <ListItemText primary="Institutions" />
+      </ListItem>
       <ListItem button component={Link} to="/manufacturers">
         <ListItemIcon>
-          <ShoppingCartIcon />
+          <BusinessIcon />
         </ListItemIcon>
         <ListItemText primary="Manufacturers" />
       </ListItem>
       <ListItem button component={Link} to="/cells">
         <ListItemIcon>
-          <ShoppingCartIcon />
+          <BatteryUnknownIcon />
         </ListItemIcon>
         <ListItemText primary="Cells" />
       </ListItem>
 
     </div>
   );
+
+  let history = useHistory();
+  console.log('history is', history);
+
+  const location = useLocation();
 
   const logged_in = (
     <div className={classes.root}>
@@ -193,9 +206,11 @@ export default function App() {
           <MenuIcon />
         </IconButton>
         <Typography component="h1" variant="h6" color="inherit" noWrap className={classes.title}>
-          Galvanalyser 
+          Galvanalyser - {location.pathname}
         </Typography>
-        <Button color="inherit" onClick={logout}>
+        <Button color="inherit" onClick={() => {
+          logout().then(()=> {history.push('/login');});
+        }}>
           Logout
         </Button>
       </Toolbar>
@@ -221,12 +236,10 @@ export default function App() {
               renders the first one that matches the current URL. */}
         <Switch>
           <PrivateRoute path="/manufacturers" component={Manufacturers} />
+          <PrivateRoute path="/institutions" component={Institutions} />
           <PrivateRoute path="/cells" component={Cells} />
           <PrivateRoute path="/harvesters" component={Harvesters} />
-          <PrivateRoute path="/harvester/:id" component={HarvesterDetail} />
-          <PrivateRoute path="/datasets" component={Datasets} />
-          <PrivateRoute path="/dataset/:id" component={DatasetDetail} />
-          <PrivateRoute path="/" component={Home} />
+          <PrivateRoute path="/" component={Datasets} />
         </Switch>
     </main>
     </div>
@@ -234,7 +247,6 @@ export default function App() {
 
 
   return (
-    <Router>
       <Switch>
         <Route path="/login">
           <Login />
@@ -243,7 +255,6 @@ export default function App() {
           {logged_in}
         </Route>
     </Switch>
-    </Router>
   );
 }
  

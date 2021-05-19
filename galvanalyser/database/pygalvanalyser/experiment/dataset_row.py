@@ -1,5 +1,7 @@
 import psycopg2
 import pygalvanalyser
+from .metadata_row import MetadataRow
+import json
 
 
 class DatasetRow(pygalvanalyser.Row):
@@ -11,6 +13,7 @@ class DatasetRow(pygalvanalyser.Row):
         dataset_type,
         original_collector,
         id_=None,
+        metadata=None,
     ):
         self.id = id_
         self.name = name
@@ -18,6 +21,8 @@ class DatasetRow(pygalvanalyser.Row):
         self.institution_id = institution_id
         self.dataset_type = dataset_type
         self.original_collector = original_collector
+
+        self.metadata = metadata
 
     def to_dict(self):
         obj = {
@@ -27,6 +32,7 @@ class DatasetRow(pygalvanalyser.Row):
             'institution_id': self.institution_id,
             'dataset_type': self.dataset_type,
             'original_collector': self.original_collector,
+            'metadata': self.metadata.to_dict(),
         }
         return obj
 
@@ -45,7 +51,6 @@ class DatasetRow(pygalvanalyser.Row):
                 self.dataset_type == other.dataset_type and
                 self.original_collector == other.original_collector
             )
-
 
     def insert(self, conn):
         with conn.cursor() as cursor:
@@ -133,27 +138,69 @@ class DatasetRow(pygalvanalyser.Row):
             )
 
     @staticmethod
-    def all(conn):
-        with conn.cursor() as cursor:
-            cursor.execute(
-                (
-                    "SELECT id, name, date, institution_id, type, "
-                    "original_collector "
-                    "FROM experiment.dataset"
+    def all(conn, with_metadata=False):
+        if with_metadata:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    (
+                        "SELECT experiment.dataset.id, "
+                        "experiment.dataset.name, "
+                        "experiment.dataset.date, "
+                        "experiment.dataset.institution_id, "
+                        "experiment.dataset.type, "
+                        "experiment.dataset.original_collector, "
+                        "experiment.metadata.cell_id, "
+                        "experiment.metadata.owner, "
+                        "experiment.metadata.test_equipment, "
+                        "experiment.metadata.json_data, "
+                        "FROM experiment.dataset "
+                        "LEFT JOIN experiment.metadata "
+                        "ON experiment.dataset.id = "
+                        "experiment.metadata.dataset_id"
+                    )
                 )
-            )
-            records = cursor.fetchall()
-            return [
-                DatasetRow(
-                    id_=result[0],
-                    name=result[1],
-                    date=result[2],
-                    institution_id=result[3],
-                    dataset_type=result[4],
-                    original_collector=result[5],
+                records = cursor.fetchall()
+                return [
+                    DatasetRow(
+                        id_=result[0],
+                        name=result[1],
+                        date=result[2],
+                        institution_id=result[3],
+                        dataset_type=result[4],
+                        original_collector=result[5],
+                        metadata=MetadataRow(
+                            dataset_id=result[0],
+                            cell_id=result[6],
+                            owner=result[7],
+                            purpose=result[8],
+                            test_equipment=result[9],
+                            json_data=json.loads(result[10])
+                        )
+
+                    )
+                    for result in records
+                ]
+        else:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    (
+                        "SELECT id, name, date, institution_id, type, "
+                        "original_collector "
+                        "FROM experiment.dataset"
+                    )
                 )
-                for result in records
-            ]
+                records = cursor.fetchall()
+                return [
+                    DatasetRow(
+                        id_=result[0],
+                        name=result[1],
+                        date=result[2],
+                        institution_id=result[3],
+                        dataset_type=result[4],
+                        original_collector=result[5],
+                    )
+                    for result in records
+                ]
 
     @staticmethod
     def select_filtered_dataset(

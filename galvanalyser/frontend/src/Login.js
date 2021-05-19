@@ -1,4 +1,4 @@
-import {login} from "./auth"
+import {login} from "./Api"
 import { makeStyles } from '@material-ui/core/styles';
 import React, { useState } from "react";
 import Avatar from '@material-ui/core/Avatar';
@@ -40,25 +40,16 @@ export default function Login() {
   const onSubmitClick = (e)=>{
     e.preventDefault()
     console.log("You pressed login")
-
-
-    let headers = new Headers();
-    headers.set('Authorization', 'Basic ' + btoa(username + ":" + password));
-    console.log(headers)
-    fetch('/api/login', {
-      method: 'post',
-      headers: headers,
-    }).then(r => r.json())
-      .then(token => {
-        if (token.access_token){
-          login(token)
-          console.log(token)          
-          history.push('/');
-        }
-        else {
-          console.log("Please type in correct username/password")
-        }
-      })
+    login(username, password).then(r => {
+      if (r.ok) {
+        return r.json();
+      }
+      console.log('login failed');
+      console.log("Please type in correct username/password")
+    }).then(response => {
+        console.log('login success', response);          
+        history.push('/');
+    });
   }
 
   const handleUsernameChange = (e) => {

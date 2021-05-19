@@ -2,6 +2,8 @@ import os
 import flask
 import psycopg2
 from urllib.parse import urlparse
+from flask_jwt_extended import JWTManager
+from datetime import timedelta
 
 def get_db_connection(host, port, name, user, password):
     return psycopg2.connect(
@@ -66,6 +68,26 @@ def create_config():
     config["GET_DATABASE_CONN_FOR_SUPERUSER"] = get_db_connection_for_superuser
     config["GET_DATABASE_CONN_FOR_USER"] = get_db_connection_for_user
 
+    # flask-jwt-extended
+    config["JWT_TOKEN_LOCATION"] = ["headers", "cookies", "json", "query_string"]
+
+    # change to true in production
+    config["JWT_COOKIE_SECURE"] = False
+
+    config["JWT_SECRET_KEY"] = config['SECRET_KEY']
+    config["JWT_ACCESS_COOKIE_NAME"] = 'access_token_cookie'
+    config["JWT_REFRESH_COOKIE_NAME"] = 'refresh_token_cookie'
+    config["JWT_COOKIE_DOMAIN"] = None
+    config["JWT_COOKIE_SAMESITE"] = None
+    config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=1)
+    config["JWT_ACCESS_COOKIE_PATH"] = '/'
+    config["JWT_REFRESH_COOKIE_PATH"] = '/'
+    config["JWT_SESSION_COOKIE"] = True
+    config["JWT_COOKIE_CSRF_PROTECT"] = True
+
+    config["JWT_CSRF_IN_COOKIES"] = True
+
+
     return config
 
 
@@ -75,6 +97,10 @@ def init_app():
     app.config.from_mapping(
         create_config(),
     )
+
+    JWTManager(app)
+
+
 
     # ensure the instance folder exists
     try:

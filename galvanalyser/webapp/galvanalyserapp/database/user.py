@@ -1,5 +1,6 @@
 import enum
 import psycopg2
+import json
 
 from flask import current_app as app
 
@@ -19,6 +20,17 @@ class User():
         return 'User({}, {})'.format(
             self.username, self.role
         )
+
+    def to_json(self):
+        return json.dumps({
+            'username': self.username,
+            'role': self.role,
+        })
+
+    @classmethod
+    def from_json(cls, json_str):
+        user_dict = json.loads(json_str)
+        return cls(user_dict['username'], user_dict['role'])
 
     def validate_password(self, password):
         try:

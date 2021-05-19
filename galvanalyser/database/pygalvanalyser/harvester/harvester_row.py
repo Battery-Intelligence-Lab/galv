@@ -6,6 +6,13 @@ class HarvesterRow(pygalvanalyser.Row):
         self.machine_id = machine_id
         self.id = id_
 
+    def to_dict(self):
+        obj = {
+            'id': self.id,
+            'machine_id': self.machine_id,
+        }
+        return obj
+
     def insert(self, conn):
         with conn.cursor() as cursor:
             cursor.execute(
@@ -15,12 +22,27 @@ class HarvesterRow(pygalvanalyser.Row):
             )
             self.id = cursor.fetchone()[0]
 
-    def to_dict(self):
-        obj = {
-            'id': self.id,
-            'machine_id': self.machine_id,
-        }
-        return obj
+    def update(self, conn):
+        with conn.cursor() as cursor:
+            cursor.execute(
+                (
+                    "UPDATE harvesters.harvester SET "
+                    "machine_id = (%s) "
+                    "WHERE id=(%s)"
+                ),
+                [self.machine_id, self.id],
+            )
+
+
+    def delete(self, conn):
+        with conn.cursor() as cursor:
+            cursor.execute(
+                (
+                    "DELETE FROM harvesters.harvester "
+                    "WHERE id=(%s)"
+                ),
+                [self.id],
+            )
 
     @staticmethod
     def select_from_id(id_, conn):

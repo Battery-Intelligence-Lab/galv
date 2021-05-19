@@ -15,10 +15,9 @@ import TableContainer from '@material-ui/core/TableContainer';
 import TableHead from '@material-ui/core/TableHead';
 import DeleteIcon from '@material-ui/icons/Delete';
 import TableRow from '@material-ui/core/TableRow';
-import HarvesterDetail from './HarvesterDetail';
 import { 
-  harvesters, add_harvester, 
-  update_harvester, delete_harvester
+  institutions, add_institution, 
+  update_institution, delete_institution
 } from './Api'
 
 const useStyles = makeStyles((theme) => ({
@@ -46,7 +45,7 @@ function MyTableRow({savedRow, onRowSave, selected, onSelectRow}) {
     setRow(savedRow);
   }, [savedRow]);
 
-  const rowUnchanged = row.machine_id === savedRow.machine_id;
+  const rowUnchanged = row.name === savedRow.name;
   let useRow = row;
   if (useRow.id === undefined) {
     useRow = savedRow;
@@ -64,16 +63,16 @@ function MyTableRow({savedRow, onRowSave, selected, onSelectRow}) {
       </TableCell>
       <TableCell align="right">
         <TextField
-          value={useRow.machine_id}
+          value={useRow.name}
           onChange={(e) => {
-            setRow({...row, machine_id: e.target.value});
+            setRow({...row, name: e.target.value});
           }} 
         >
         </TextField>
       </TableCell>
 
       <TableCell align="right">
-        <Tooltip title="Save changes to harvester">
+        <Tooltip title="Save changes to institution">
         <span>
         <IconButton
           disabled={rowUnchanged} 
@@ -89,37 +88,35 @@ function MyTableRow({savedRow, onRowSave, selected, onSelectRow}) {
   )
 }
 
-export default function Harvesters() {
+export default function Institution() {
   const classes = useStyles();
 
-  const [harvesterData, setHarvesterData] = useState([])
+  const [institutionData, setInstitutionData] = useState([])
   const [selected, setSelected] = useState({id: null})
 
   useEffect(() => {
-    refreshHarvesters(); 
+    refreshInstitutions(); 
   }, []);
 
-  const refreshHarvesters= () => {
-      harvesters().then((response) => {
+  const refreshInstitutions = () => {
+      institutions().then((response) => {
       if (response.ok) {
         return response.json().then((result) => {
-          setHarvesterData(result.sort((arg1, arg2) => arg1.id - arg2.id));
+          setInstitutionData(result.sort((arg1, arg2) => arg1.id - arg2.id));
         });
       }
       });
   };
 
-  const addNewHarvester = () => {
-    add_harvester({machine_id: 'Edit me'}).then(refreshHarvesters);
+  const addNewInstitution= () => {
+    add_institution({name: 'Edit Me'}).then(refreshInstitutions);
   };
-  const deleteHarvester= () => {
-    delete_harvester(selected.id).then(refreshHarvesters);
+  const deleteInstition= () => {
+    delete_institution(selected.id).then(refreshInstitutions);
   };
-  const updateHarvester= (value) => {
-    update_harvester(value.id, value).then(refreshHarvesters);
+  const updateInstitution = (value) => {
+    update_institution(value.id, value).then(refreshInstitutions);
   };
-  
-  const isSelected = selected.id !== null;
 
   return (
     <Container maxWidth="lg" className={classes.container}>
@@ -134,11 +131,11 @@ export default function Harvesters() {
           </TableRow>
         </TableHead>
         <TableBody>
-          {harvesterData.map((row) => (
+          {institutionData.map((row) => (
             <MyTableRow 
                 key={row.id} 
                 savedRow={row} 
-                onRowSave={updateHarvester} 
+                onRowSave={updateInstitution} 
                 selected={selected.id === row.id}
                 onSelectRow={setSelected}
             />
@@ -146,22 +143,19 @@ export default function Harvesters() {
         </TableBody>
       </Table>
     </TableContainer>
-    <Tooltip title="Add new harvester">
-      <IconButton aria-label="add" onClick={addNewHarvester}>
+    <Tooltip title="Add new institution">
+      <IconButton aria-label="add" onClick={addNewInstitution}>
       <AddIcon/>
     </IconButton>
     </Tooltip>
-    <Tooltip title="Delete selected harvester">
+    <Tooltip title="Delete selected institution">
       <span>
-    <IconButton disabled={!isSelected} aria-label="delete" onClick={deleteHarvester}>
+    <IconButton disabled={selected.id === null} aria-label="delete" onClick={deleteInstition}>
       <DeleteIcon />
     </IconButton>
       </span>
     </Tooltip>
     </Paper>
-    {isSelected &&
-      <HarvesterDetail data={selected}/>
-    }
     </Container>
   );
 }

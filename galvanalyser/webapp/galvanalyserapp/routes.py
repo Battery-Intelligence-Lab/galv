@@ -3,16 +3,24 @@ import flask
 import numpy as np
 from flask_cors import cross_origin
 from flask import request, abort, session, jsonify, make_response
-import jwt
+from datetime import timezone
+from datetime import datetime
+from datetime import timedelta
 import json
-import datetime
+
+from flask_jwt_extended import create_access_token
+from flask_jwt_extended import jwt_required
+from flask_jwt_extended import get_jwt
+from flask_jwt_extended import set_access_cookies
+from flask_jwt_extended import unset_jwt_cookies
+from flask_jwt_extended import get_jwt_identity
 
 from pygalvanalyser.experiment.timeseries_data_row import (
     TimeseriesDataRow,
     RECORD_NO_COLUMN_ID,
 )
 from pygalvanalyser.experiment import (
-    AccessRow, DatasetRow, ColumnRow, MetadataRow
+    AccessRow, DatasetRow, ColumnRow, MetadataRow, InstitutionRow
 )
 from pygalvanalyser.cell_data import (
     CellRow, ManufacturerRow
@@ -30,53 +38,23 @@ from functools import wraps
 
 from .database.user import User
 
-def create_token(username, role):
-    return jwt.encode(
-        {
-            'username': username,
-            'role': role,
-            'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=30)
-        },
-        app.config['SECRET_KEY'],
-        algorithm='HS256',
-    )
 
-def token_required(f):
-    @wraps(f)
-    def decorator(*args, **kwargs):
+@app.after_request
+def refresh_expiring_jwts(response):
+    try:
+        exp_timestamp = get_jwt()["exp"]
+        now = datetime.now(timezone.utc)
+        target_timestamp = datetime.timestamp(now + timedelta(minutes=30))
+        if target_timestamp > exp_timestamp:
+            access_token = create_access_token(identity=get_jwt_identity())
+            set_access_cookies(response, access_token)
+        return response
+    except (RuntimeError, KeyError):
+        # Case where there is not a valid JWT. Just return the original respone
+        return response
 
-        token = None
-
-        if 'Authorization' in request.headers:
-            if request.headers['Authorization'].startswith(
-                    'Bearer '
-            ):
-                token = request.headers['Authorization'][7:]
-
-        if not token:
-            return jsonify({
-                    'message': 'a valid token is missing'
-            }), 401
-        try:
-            data = jwt.decode(
-                token, app.config['SECRET_KEY'],
-                algorithms=['HS256']
-            )
-            current_user = User(data['username'], data['role'])
-        except jwt.ExpiredSignatureError:
-            return jsonify({
-                    'message': 'Token has expired, please login again'
-            }), 401
-        except jwt.InvalidTokenError:
-            return jsonify({
-                    'message': 'Invalid token, please login again'
-            }), 401
-
-        return f(current_user, *args, **kwargs)
-    return decorator
-
-@app.route('/api/login', methods=['GET', 'POST'])
-def login_user():
+@app.route('/api/login', methods=['POST'])
+def login():
 
     auth = request.authorization
 
@@ -89,13 +67,23 @@ def login_user():
     user = User.get(auth.username)
 
     if user.validate_password(auth.password):
-        token = create_token(user.username, user.role)
-        return jsonify({'access_token': token})
+        response = jsonify({"message": "login successful"})
+        access_token = create_access_token(
+            identity=user.to_json()
+        )
+        set_access_cookies(response, access_token)
+        return response
 
     return make_response(
         'could not verify',  401,
         {'WWW.Authentication': 'Basic realm: "login required"'}
     )
+
+@app.route("/api/logout", methods=["POST"])
+def logout():
+    response = jsonify({"message": "logout successful"})
+    unset_jwt_cookies(response)
+    return response
 
 @app.route('/api/refresh', methods=['POST'])
 def refresh():
@@ -119,35 +107,25 @@ def refresh():
     new_token = create_token(data['username'], data['role'])
     return jsonify({'access_token': new_token})
 
-def log(text):
-    with open("/tmp/log.txt", "a") as myfile:
-        myfile.write(text + "\n")
-
 @app.route('/api/hello', methods=['GET'])
 @cross_origin()
 def hello():
     return 'Hello'
 
-@app.route('/api/hello_user', methods=['GET'])
-@token_required
-@cross_origin()
-def hello_user(user):
-    return 'Hello {}'.format(user)
-
 @app.route('/api/dataset', methods=['GET'])
-@token_required
 @cross_origin()
-def dataset(user):
+@jwt_required()
+def dataset():
     conn = app.config["GET_DATABASE_CONN_FOR_SUPERUSER"]()
-    datasets = DatasetRow.all(conn)
+    datasets = DatasetRow.all(conn, with_metadata=True)
     print('called dataset', datasets)
     return DatasetRow.to_json(datasets)
 
 @app.route('/api/cell', methods=['GET', 'POST'])
 @app.route('/api/cell/<int:id_>', methods=['GET', 'PUT', 'DELETE'])
-@token_required
 @cross_origin()
-def cell(user, id_=None):
+@jwt_required()
+def cell(id_=None):
     conn = app.config["GET_DATABASE_CONN_FOR_SUPERUSER"]()
     if request.method == 'GET':
         if id_ is None:
@@ -225,9 +203,9 @@ def cell(user, id_=None):
 
 @app.route('/api/manufacturer', methods=['GET', 'POST'])
 @app.route('/api/manufacturer/<int:id_>', methods=['GET', 'PUT', 'DELETE'])
-@token_required
+@jwt_required()
 @cross_origin()
-def manufacturer(user, id_=None):
+def manufacturer(id_=None):
     conn = app.config["GET_DATABASE_CONN_FOR_SUPERUSER"]()
     print('manufacturer')
     if request.method == 'GET':
@@ -280,11 +258,68 @@ def manufacturer(user, id_=None):
         return jsonify({'success': True}), 200
 
 
+@app.route('/api/institution', methods=['GET', 'POST'])
+@app.route('/api/institution/<int:id_>', methods=['GET', 'PUT', 'DELETE'])
+@jwt_required()
+@cross_origin()
+def institution(id_=None):
+    conn = app.config["GET_DATABASE_CONN_FOR_SUPERUSER"]()
+    print('institution')
+    if request.method == 'GET':
+        if id_ is None:
+            institution = InstitutionRow.all(conn)
+        else:
+            institution = InstitutionRow.select_from_id(id_, conn)
+            if institution is None:
+                return jsonify({
+                    'message': 'institution not found'
+                }), 404
+        return InstitutionRow.to_json(institution)
+    elif request.method == 'POST':
+        request_data = request.get_json()
+        print('institution post', request_data)
+        institution = InstitutionRow(
+            name=request_data.get('name', ''),
+        )
+        institution.insert(conn)
+        conn.commit()
+        return InstitutionRow.to_json(institution)
+    elif request.method == 'PUT':
+        print('PUT with id', id_)
+        institution = InstitutionRow.select_from_id(id_, conn)
+        if institution is None:
+            return jsonify({
+                'message': 'institution not found'
+            }), 404
+
+        request_data = request.get_json()
+
+        if 'name' in request_data:
+            institution.name = request_data['name']
+
+        institution.update(conn)
+        conn.commit()
+        return InstitutionRow.to_json(institution)
+    elif request.method == 'DELETE':
+        print('deleting', id_)
+        institution = InstitutionRow.select_from_id(
+            id_, conn
+        )
+        if institution is None:
+            return jsonify({
+                'message': 'institution not found'
+            }), 404
+
+        institution.delete(conn)
+        conn.commit()
+        return jsonify({'success': True}), 200
+
+
 
 @app.route('/api/metadata/<int:dataset_id>', methods=['GET', 'PUT', 'POST'])
-@token_required
+@jwt_required()
 @cross_origin()
-def metadata(user, dataset_id):
+def metadata(dataset_id):
     conn = app.config["GET_DATABASE_CONN_FOR_SUPERUSER"]()
     if request.method == 'GET':
         metadata = MetadataRow.select_from_dataset_id(dataset_id, conn)
@@ -333,17 +368,17 @@ def metadata(user, dataset_id):
 
 
 @app.route('/api/dataset/<int:dataset_id>', methods=['GET'])
-@token_required
+@jwt_required()
 @cross_origin()
-def dataset_by_id(user, dataset_id):
+def dataset_by_id(dataset_id):
     conn = app.config["GET_DATABASE_CONN_FOR_SUPERUSER"]()
     datasets = DatasetRow.select_from_id(dataset_id, conn)
     return DatasetRow.to_json(datasets)
 
 @app.route('/api/column', methods=['GET'])
-@token_required
+@jwt_required()
 @cross_origin()
-def column(user):
+def column():
     conn = app.config["GET_DATABASE_CONN_FOR_SUPERUSER"]()
     dataset_id = request.args['dataset_id']
 
@@ -363,9 +398,9 @@ def serialise_numpy_array(np_array):
     return response
 
 @app.route('/api/dataset/<int:dataset_id>/<int:col_id>', methods=['GET'])
-@token_required
+@jwt_required()
 @cross_origin()
-def timeseries_column(user, dataset_id, col_id):
+def timeseries_column(dataset_id, col_id):
     conn = app.config["GET_DATABASE_CONN_FOR_SUPERUSER"]()
 
     array = select_timeseries_column(dataset_id, col_id, conn)
@@ -379,24 +414,54 @@ def timeseries_column(user, dataset_id, col_id):
 
     return serialise_numpy_array(array)
 
-@app.route('/api/harvester', methods=['GET'])
-@token_required
+
+@app.route('/api/harvester', methods=['GET', 'POST'])
+@app.route('/api/harvester/<int:id_>', methods=['GET', 'PUT', 'DELETE'])
+@jwt_required()
 @cross_origin()
-def harvester(user):
+def harvester(id_=None):
+    user = User.from_json(get_jwt_identity())
+    print('USER', user)
     conn = app.config["GET_DATABASE_CONN_FOR_SUPERUSER"]()
-    id_ = request.args.get('id')
-    if id_ is not None:
-        harvesters = HarvesterRow.select_from_id(id_, conn)
-    else:
-        harvesters = HarvesterRow.all(conn)
-    print('called harvesters', harvesters)
-    return HarvesterRow.to_json(harvesters)
+    if request.method == 'GET':
+        if id_ is not None:
+            harvesters = HarvesterRow.select_from_id(id_, conn)
+        else:
+            harvesters = HarvesterRow.all(conn)
+        print('called harvesters', harvesters)
+        return HarvesterRow.to_json(harvesters)
+    elif request.method == 'PUT':
+        harvester = HarvesterRow.select_from_id(
+            id_, conn
+        )
+        request_data = request.get_json()
+        if 'machine_id' in request_data:
+            harvester.machine_id = request_data['machine_id']
+        harvester.update(conn)
+        conn.commit()
+        return MonitoredPathRow.to_json(harvester)
+    elif request.method == 'POST':
+        request_data = request.get_json()
+        new_harvester = HarvesterRow(
+            request_data.get('machine_id', None),
+        )
+        new_harvester.insert(conn)
+        conn.commit()
+        return HarvesterRow.to_json(new_harvester)
+    elif request.method == 'DELETE':
+        print('deleting', id_)
+        harvester = HarvesterRow.select_from_id(
+            id_, conn
+        )
+        harvester.delete(conn)
+        conn.commit()
+        return jsonify({'success': True}), 200
 
 @app.route('/api/monitored_path',
            methods=['GET', 'PUT', 'POST', 'DELETE'])
-@token_required
+@jwt_required()
 @cross_origin()
-def monitored_path(user):
+def monitored_path():
     conn = app.config["GET_DATABASE_CONN_FOR_SUPERUSER"]()
     print(request.method)
     if request.method == 'GET':

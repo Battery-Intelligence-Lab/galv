@@ -18,14 +18,14 @@ class MetadataRow(pygalvanalyser.Row):
     def __init__(
         self,
         dataset_id,
-        cell_uid=None,
+        cell_id=None,
         owner=None,
         purpose=None,
         test_equipment=None,
         json_data=None,
     ):
         self.dataset_id = dataset_id
-        self.cell_uid = cell_uid
+        self.cell_id = cell_id
         self.owner = owner
         self.purpose = purpose
         self.test_equipment = test_equipment
@@ -35,7 +35,7 @@ class MetadataRow(pygalvanalyser.Row):
         json_str = json.dumps(self.json_data, default=json_serial)
         obj = {
             'dataset_id': self.dataset_id,
-            'cell_uid': self.cell_uid,
+            'cell_id': self.cell_id,
             'owner': self.owner,
             'purpose': self.purpose,
             'test_equipment': self.test_equipment,
@@ -47,7 +47,7 @@ class MetadataRow(pygalvanalyser.Row):
         if isinstance(other, MetadataRow):
             return (
                 self.dataset_id == other.dataset_id and
-                self.cell_uid == other.cell_uid and
+                self.cell_id == other.cell_id and
                 self.owner == other.owner and
                 self.purpose == other.purpose and
                 self.test_equipment == other.test_equipment and
@@ -60,7 +60,7 @@ class MetadataRow(pygalvanalyser.Row):
         return ('MetadataRow({}, {}, {}, {}, {}, {})'
                 .format(
                     self.dataset_id,
-                    self.cell_uid,
+                    self.cell_id,
                     self.owner,
                     self.purpose,
                     self.test_equipment,
@@ -76,13 +76,13 @@ class MetadataRow(pygalvanalyser.Row):
             cursor.execute(
                 (
                     "INSERT INTO experiment.metadata (dataset_id, "
-                    "cell_uid, owner, purpose, test_equipment, "
+                    "cell_id, owner, purpose, test_equipment, "
                     "json_data) "
                     "VALUES (%s, %s, %s, %s, %s, %s)"
                 ),
                 [
                     self.dataset_id,
-                    self.cell_uid,
+                    self.cell_id,
                     self.owner,
                     self.purpose,
                     self.test_equipment,
@@ -99,13 +99,13 @@ class MetadataRow(pygalvanalyser.Row):
             cursor.execute(
                 (
                     "UPDATE experiment.metadata SET "
-                    "cell_uid = (%s), owner = (%s), "
+                    "cell_id = (%s), owner = (%s), "
                     "purpose = (%s), test_equipment = (%s), "
                     "json_data = (%s) "
                     "WHERE dataset_id=(%s)"
                 ),
                 [
-                    self.cell_uid, self.owner,
+                    self.cell_id, self.owner,
                     self.purpose, self.test_equipment,
                     json_str, self.dataset_id
                 ],
@@ -116,7 +116,7 @@ class MetadataRow(pygalvanalyser.Row):
         with conn.cursor() as cursor:
             cursor.execute(
                 (
-                    "SELECT cell_uid, owner, purpose, "
+                    "SELECT cell_id, owner, purpose, "
                     "test_equipment, json_data FROM "
                     "experiment.metadata "
                     "WHERE dataset_id=(%s)"
@@ -128,7 +128,7 @@ class MetadataRow(pygalvanalyser.Row):
                 return None
             return MetadataRow(
                 dataset_id=dataset_id,
-                cell_uid=result[0],
+                cell_id=result[0],
                 owner=result[1],
                 purpose=result[2],
                 test_equipment=result[3],

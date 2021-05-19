@@ -11,6 +11,7 @@ const useStyles = makeStyles((theme) => ({
   container: {
     paddingTop: theme.spacing(4),
     paddingBottom: theme.spacing(4),
+    height: '100%',
   },
 }));
 
@@ -51,20 +52,29 @@ export default function Datasets() {
     };
   });
 
-  const [select, setSelect] = useState([])
+  const [select, setSelect] = useState(null)
   const handleSelectionChange = (e) => {
     setSelect(e.selectionModel[0]);
   };
 
+  let autoHeight = true;
+  let divStyle = { width: '100%' };
+  if (select !== null) {
+    console.log('selected', select);
+    autoHeight = false;
+    divStyle = { height: 300, width: '100%' };
+  }
+
   return (
     <Container maxWidth="lg" className={classes.container}>
-    <div style={{ height: 300, width: '100%' }}>
+      <div style={divStyle}>
       <DataGrid 
         rows={rows} columns={columns} 
         density='compact'
         autoPageSize
         loading={rows.length === 0}
         rowHeight={38}
+        autoHeight={autoHeight}
         onSelectionModelChange={handleSelectionChange}
       />
     </div>
