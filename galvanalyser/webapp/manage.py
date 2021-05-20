@@ -210,8 +210,6 @@ def add_machine_path(machine_id, path, user):
             'Please enter a relative path to GALVANALYSER_HARVESTER_BASE_PATH'
         )
         return
-    else:
-        path = '/usr/data/' + path
 
     database.add_machine_path(app.config, machine_id, path, [user])
 
@@ -226,12 +224,11 @@ def edit_machine_path(machine_id):
 @click.option('--harvester', prompt=True)
 @click.option('--password', prompt=True, hide_input=True, confirmation_prompt=True)
 @click.option('--machine_id', prompt=True)
-@click.option('--institution', prompt=True)
-def run_harvester(harvester, password, machine_id, institution):
+def run_harvester(harvester, password, machine_id):
     harvester_main(
         harvester, password, machine_id,
-        institution, 'galvanalyser_postgres', '5433',
-        'galvanalyser'
+        'galvanalyser_postgres', '5433',
+        'galvanalyser', base_path='/usr/data'
     )
 
 

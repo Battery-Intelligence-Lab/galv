@@ -41,6 +41,10 @@ export default function Datasets() {
     },
     { field: 'dataset_type', headerName: 'Type', width: 100 },
     { field: 'original_collector', headerName: 'User', width: 100 },
+    { field: 'test_equipment', headerName: 'Test Equipment', width: 160 },
+    { field: 'cell_id', headerName: 'Cell ID', width: 100 },
+    { field: 'owner', headerName: 'Owner', width: 150 },
+    { field: 'purpose', headerName: 'Purpose', width: 150 },
   ];
 
   const rows: GridRowsProp = data.map((d, i) => {
@@ -51,6 +55,10 @@ export default function Datasets() {
       dataset_type: d.dataset_type,
       original_collector: d.original_collector,
       date: Date.parse(d.date),
+      cell_id: d.cell_id,
+      owner: d.owner,
+      purpose: d.purpose,
+      test_equipment: d.test_equipment,
     };
   });
 

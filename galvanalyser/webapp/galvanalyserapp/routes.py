@@ -3,6 +3,7 @@ import flask
 import numpy as np
 from flask_cors import cross_origin
 from flask import request, abort, session, jsonify, make_response
+import os
 from datetime import timezone
 from datetime import datetime
 from datetime import timedelta
@@ -14,6 +15,9 @@ from flask_jwt_extended import get_jwt
 from flask_jwt_extended import set_access_cookies
 from flask_jwt_extended import unset_jwt_cookies
 from flask_jwt_extended import get_jwt_identity
+
+
+from harvester.__main__ import main as harvester_main
 
 from pygalvanalyser.experiment.timeseries_data_row import (
     TimeseriesDataRow,
@@ -112,6 +116,17 @@ def refresh():
 def hello():
     return 'Hello'
 
+@app.route('/api/env', methods=['GET'])
+@cross_origin()
+@jwt_required()
+def env():
+    env_var = 'GALVANALYSER_HARVESTER_BASE_PATH'
+    return jsonify(
+        {env_var: os.getenv(env_var)}
+    )
+
+
+
 @app.route('/api/user', methods=['GET'])
 @cross_origin()
 @jwt_required()
@@ -121,19 +136,41 @@ def user():
     return User.to_json(users)
 
 @app.route('/api/dataset', methods=['GET'])
-@app.route('/api/dataset/<int:id_>', methods=['GET'])
+@app.route('/api/dataset/<int:id_>', methods=['GET', 'PUT'])
 @cross_origin()
 @jwt_required()
 def dataset(id_=None):
     conn = app.config["GET_DATABASE_CONN_FOR_SUPERUSER"]()
-    if id_ is None:
-        datasets = DatasetRow.all(conn, with_metadata=True)
-    else:
-        datasets = DatasetRow.select_from_id(
-            id_, conn, with_metadata=True
-        )
-    print('called dataset', datasets)
-    return DatasetRow.to_json(datasets)
+    if request.method == 'GET':
+        if id_ is None:
+            datasets = DatasetRow.all(conn)
+        else:
+            datasets = DatasetRow.select_from_id(id_, conn)
+        print('called dataset', datasets)
+        return DatasetRow.to_json(datasets)
+    elif request.method == 'PUT':
+        dataset = DatasetRow.select_from_id(id_, conn)
+        if dataset is None:
+            return jsonify({
+                'message': 'cell not found'
+            }), 404
+
+        request_data = request.get_json()
+
+        if 'name' in request_data:
+            dataset.name = request_data['name']
+        if 'cell_id' in request_data:
+            dataset.cell_id = request_data['cell_id']
+        if 'owner' in request_data:
+            dataset.owner = request_data['owner']
+        if 'test_equipment' in request_data:
+            dataset.test_equipment = request_data['test_equipment']
+        if 'purpose' in request_data:
+            dataset.purpose = request_data['purpose']
+
+        dataset.update(conn)
+        conn.commit()
+        return DatasetRow.to_json(dataset)
 
 @app.route('/api/cell', methods=['GET', 'POST'])
 @app.route('/api/cell/<int:id_>', methods=['GET', 'PUT', 'DELETE'])
@@ -155,7 +192,7 @@ def cell(id_=None):
         request_data = request.get_json()
         cell = CellRow(
             uid=request_data.get('uid', None),
-            manufacturer_id=request_data.get('manufacturer_id', None),
+            manufacturer=request_data.get('manufacturer', None),
             form_factor=request_data.get('form_factor', None),
             link_to_datasheet=request_data.get('link_to_datasheet', None),
             anode_chemistry=request_data.get('anode_chemistry', None),
@@ -175,13 +212,13 @@ def cell(id_=None):
 
         request_data = request.get_json()
 
-        if 'manufacturer_id' in request_data:
-            cell.manufacturer_id = \
-                request_data['manufacturer_id']
+        if 'manufacturer' in request_data:
+            cell.manufacturer = \
+                request_data['manufacturer']
         if 'uid' in request_data:
             cell.uid = request_data['uid']
-        if 'manufacturer_id' in request_data:
-            cell.manufacturer_id = request_data['manufacturer_id']
+        if 'manufacturer' in request_data:
+            cell.manufacturer = request_data['manufacturer']
         if 'form_factor' in request_data:
             cell.form_factor = request_data['form_factor']
         if 'link_to_datasheet' in request_data:
@@ -404,7 +441,7 @@ def harvester(id_=None):
             harvester.machine_id = request_data['machine_id']
         harvester.update(conn)
         conn.commit()
-        return MonitoredPathRow.to_json(harvester)
+        return HarvesterRow.to_json(harvester)
     elif request.method == 'POST':
         request_data = request.get_json()
         new_harvester = HarvesterRow(

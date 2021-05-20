@@ -34,6 +34,9 @@ const useStyles = makeStyles((theme) => ({
   table: {
     minWidth: 650,
   },
+  resize: {
+    fontSize: '11pt',
+  },
   input: {
     marginLeft: theme.spacing(1),
     flex: 1,
@@ -69,6 +72,11 @@ function MyTableRow({savedRow, onRowSave, selected, onSelectRow}) {
       </TableCell>
       <TableCell align="right">
         <TextField
+          InputProps={{
+            classes: {
+              input: classes.resize,
+            },
+          }}
           value={useRow.machine_id}
           onChange={(e) => {
             setRow({...row, machine_id: e.target.value});

@@ -129,11 +129,7 @@ CREATE TABLE cell_data.cell
     nominal_cell_weight double precision,
     manufacturer text,
     CONSTRAINT cell_unique_uid UNIQUE (uid),
-    CONSTRAINT cell_pkey PRIMARY KEY (id),
-    CONSTRAINT manufacturer_id_fkey FOREIGN KEY (manufacturer_id)
-        REFERENCES cell_data.manufacturer (id) MATCH SIMPLE
-        ON UPDATE CASCADE
-        ON DELETE CASCADE
+    CONSTRAINT cell_pkey PRIMARY KEY (id)
 ) WITH (
     OIDS = FALSE
 );
@@ -146,15 +142,6 @@ GRANT SELECT ON TABLE cell_data.cell TO ${user_role};
 GRANT SELECT ON TABLE cell_data.cell TO ${harvester_role};
 
 GRANT ALL ON TABLE cell_data.cell TO postgres;
-
--- Index: fki_manufacturer_id_fkey
-
--- DROP INDEX cell_data.fki_manufacturer_id_fkey;
-
-CREATE INDEX fki_manufacturer_id_fkey
-    ON cell_data.cell USING btree
-    (manufacturer_id ASC NULLS LAST)
-    TABLESPACE pg_default;
 
 
 -- SCHEMA: experiment

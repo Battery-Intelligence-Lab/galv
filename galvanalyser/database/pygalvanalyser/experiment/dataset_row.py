@@ -60,13 +60,22 @@ class DatasetRow(pygalvanalyser.Row):
             self.dataset_type, self.original_collector
         )
 
-    def __eq__(self, other):
-        if isinstance(other, DatasetRow):
-            return (
-                self.id == other.id and
-                self.name == other.name and
-                self.dataset_type == other.dataset_type and
-                self.original_collector == other.original_collector
+    def update(self, conn):
+        with conn.cursor() as cursor:
+            cursor.execute(
+                (
+                    "UPDATE experiment.dataset SET "
+                    "name = (%s), "
+                    "cell_id = (%s), owner = (%s), "
+                    "purpose = (%s), test_equipment = (%s) "
+                    "WHERE id=(%s)"
+                ),
+                [
+                    self.name,
+                    self.cell_id, self.owner,
+                    self.purpose, self.test_equipment,
+                    self.id
+                ],
             )
 
     def insert(self, conn):
@@ -123,7 +132,10 @@ class DatasetRow(pygalvanalyser.Row):
             cursor.execute(
                 (
                     "SELECT "
-                    "id, type, original_collector FROM experiment.dataset "
+                    "id, type, original_collector, "
+                    "cell_id, owner, purpose, test_equipment, "
+                    "json_data "
+                    "FROM experiment.dataset "
                     "WHERE name=(%s) AND date=(%s)"
                 ),
                 [name, date],
@@ -137,124 +149,76 @@ class DatasetRow(pygalvanalyser.Row):
                 date=date,
                 dataset_type=result[1],
                 original_collector=result[2],
+                cell_id=result[3],
+                owner=result[4],
+                purpose=result[5],
+                test_equipment=result[6],
+                json_data=json.loads(result[7])
+                if result[7] is not None
+                else None,
             )
 
     @staticmethod
-    def select_from_id(id_, conn, with_metadata=False):
-        if with_metadata:
-            with conn.cursor() as cursor:
-                cursor.execute(
-                    (
-                        "SELECT "
-                        "experiment.dataset.name, "
-                        "experiment.dataset.date, "
-                        "experiment.dataset.type, "
-                        "experiment.dataset.original_collector, "
-                        "experiment.metadata.cell_id, "
-                        "experiment.metadata.owner, "
-                        "experiment.metadata.purpose, "
-                        "experiment.metadata.test_equipment, "
-                        "experiment.metadata.json_data "
-                        "FROM experiment.dataset "
-                        "LEFT JOIN experiment.metadata "
-                        "ON experiment.dataset.id = "
-                        "experiment.metadata.dataset_id "
-                        "WHERE experiment.dataset.id=(%s)"
-                    ),
-                    [id_]
-                )
-                result = cursor.fetchone()
-                if result is None:
-                    return None
-                return DatasetRow(
-                    id_=id_,
-                    name=result[0],
-                    date=result[1],
-                    dataset_type=result[2],
-                    original_collector=result[3],
-                )
-        else:
-            with conn.cursor() as cursor:
-                cursor.execute(
-                    (
-                        "SELECT name, date, type, original_collector "
-                        "FROM experiment.dataset WHERE id=(%s)"
-                    ),
-                    [id_],
-                )
-                result = cursor.fetchone()
-                if result is None:
-                    return None
-                return DatasetRow(
-                    id_=id_,
-                    name=result[0],
-                    date=result[1],
-                    dataset_type=result[2],
-                    original_collector=result[3],
-                )
+    def select_from_id(id_, conn):
+        with conn.cursor() as cursor:
+            cursor.execute(
+                (
+                    "SELECT name, date, type, original_collector, "
+                    "cell_id, owner, purpose, test_equipment, "
+                    "json_data "
+                    "FROM experiment.dataset WHERE id=(%s)"
+                ),
+                [id_],
+            )
+            result = cursor.fetchone()
+            if result is None:
+                return None
+            return DatasetRow(
+                id_=id_,
+                name=result[0],
+                date=result[1],
+                dataset_type=result[2],
+                original_collector=result[3],
+                cell_id=result[4],
+                owner=result[5],
+                purpose=result[6],
+                test_equipment=result[7],
+                json_data=json.loads(result[8])
+                if result[8] is not None
+                else None,
+
+            )
 
     @staticmethod
-    def all(conn, with_metadata=False):
-        if with_metadata:
-            with conn.cursor() as cursor:
-                cursor.execute(
-                    (
-                        "SELECT experiment.dataset.id, "
-                        "experiment.dataset.name, "
-                        "experiment.dataset.date, "
-                        "experiment.dataset.type, "
-                        "experiment.dataset.original_collector, "
-                        "experiment.metadata.cell_id, "
-                        "experiment.metadata.owner, "
-                        "experiment.metadata.purpose, "
-                        "experiment.metadata.test_equipment, "
-                        "experiment.metadata.json_data "
-                        "FROM experiment.dataset "
-                        "LEFT JOIN experiment.metadata "
-                        "ON experiment.dataset.id = "
-                        "experiment.metadata.dataset_id"
-                    )
+    def all(conn):
+        with conn.cursor() as cursor:
+            cursor.execute(
+                (
+                    "SELECT id, name, date, type, "
+                    "original_collector, "
+                    "cell_id, owner, purpose, test_equipment, "
+                    "json_data "
+                    "FROM experiment.dataset"
                 )
-                records = cursor.fetchall()
-                return [
-                    DatasetRow(
-                        id_=result[0],
-                        name=result[1],
-                        date=result[2],
-                        dataset_type=result[3],
-                        original_collector=result[4],
-                        metadata=MetadataRow(
-                            dataset_id=result[0],
-                            cell_id=result[5],
-                            owner=result[6],
-                            purpose=result[7],
-                            test_equipment=result[8],
-                            json_data=result[9]
-                        )
-
-                    )
-                    for result in records
-                ]
-        else:
-            with conn.cursor() as cursor:
-                cursor.execute(
-                    (
-                        "SELECT id, name, date, type, "
-                        "original_collector "
-                        "FROM experiment.dataset"
-                    )
+            )
+            records = cursor.fetchall()
+            return [
+                DatasetRow(
+                    id_=result[0],
+                    name=result[1],
+                    date=result[2],
+                    dataset_type=result[3],
+                    original_collector=result[4],
+                    cell_id=result[5],
+                    owner=result[6],
+                    purpose=result[7],
+                    test_equipment=result[8],
+                    json_data=json.loads(result[9])
+                    if result[9] is not None
+                    else None,
                 )
-                records = cursor.fetchall()
-                return [
-                    DatasetRow(
-                        id_=result[0],
-                        name=result[1],
-                        date=result[2],
-                        dataset_type=result[3],
-                        original_collector=result[4],
-                    )
-                    for result in records
-                ]
+                for result in records
+            ]
 
     @staticmethod
     def select_filtered_dataset(
@@ -281,12 +245,14 @@ class DatasetRow(pygalvanalyser.Row):
             filter_query = filter_query + "type IN %s"
             filter_values.append(tuple(dataset_type))
         if filter_query == "":
-            return DatasetRow.select_all_dataset(conn)
+            return DatasetRow.all(conn)
         with conn.cursor() as cursor:
             cursor.execute(
                 (
                     "SELECT id, name, date, type, "
-                    "original_collector "
+                    "original_collector, "
+                    "cell_id, owner, purpose, test_equipment, "
+                    "json_data "
                     "FROM experiment.dataset "
                     "WHERE " + filter_query
                 ),
@@ -300,6 +266,13 @@ class DatasetRow(pygalvanalyser.Row):
                     date=result[2],
                     dataset_type=result[3],
                     original_collector=result[4],
+                    cell_id=result[5],
+                    owner=result[6],
+                    purpose=result[7],
+                    test_equipment=result[8],
+                    json_data=json.loads(result[9])
+                    if result[9] is not None
+                    else None,
                 )
                 for result in records
             ]

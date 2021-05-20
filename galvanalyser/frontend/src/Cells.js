@@ -27,6 +27,9 @@ const useStyles = makeStyles((theme) => ({
   table: {
     minWidth: 650,
   },
+  resize: {
+    fontSize: '10pt',
+  },
   input: {
     marginLeft: theme.spacing(1),
     flex: 1,
@@ -39,7 +42,7 @@ const useStyles = makeStyles((theme) => ({
 function MyTableRow({savedRow, onRowSave, selected, onSelectRow}) {
   const classes = useStyles();
   const [row, setRow] = useState([])
-
+  
   useEffect(() => {
     setRow(savedRow);
   }, [savedRow]);
@@ -68,39 +71,74 @@ function MyTableRow({savedRow, onRowSave, selected, onSelectRow}) {
       hover
       selected={selected}
     >
-      <TableCell>
-        <TextField 
+      <TableCell >
+        <TextField
           value={useRow.uid} 
+          InputProps={{
+            classes: {
+              input: classes.resize,
+            },
+          }}
           onChange={setValue('uid')} />
       </TableCell>
       <TableCell align="right">
         <TextField 
           value={useRow.form_factor} 
+          InputProps={{
+            classes: {
+              input: classes.resize,
+            },
+          }}
           onChange={setValue('form_factor')} />
       </TableCell>
       <TableCell align="right">
         <TextField 
           value={useRow.link_to_datasheet} 
+          InputProps={{
+            classes: {
+              input: classes.resize,
+            },
+          }}
           onChange={setValue('link_to_datasheet')} />
       </TableCell>
       <TableCell align="right">
         <TextField 
+          InputProps={{
+            classes: {
+              input: classes.resize,
+            },
+          }}
           value={useRow.anode_chemistry} 
           onChange={setValue('anode_chemistry')} />
       </TableCell>
       <TableCell align="right">
         <TextField 
           value={useRow.cathode_chemistry} 
+          InputProps={{
+            classes: {
+              input: classes.resize,
+            },
+          }}
           onChange={setValue('cathode_chemistry')} />
       </TableCell>
       <TableCell align="right">
         <TextField 
           value={useRow.nominal_capacity} 
+          InputProps={{
+            classes: {
+              input: classes.resize,
+            },
+          }}
           onChange={setValue('nominal_capacity')} />
       </TableCell>
     <TableCell align="right">
         <TextField 
           value={useRow.nominal_cell_weight} 
+          InputProps={{
+            classes: {
+              input: classes.resize,
+            },
+          }}
           onChange={setValue('nominal_cell_weight')} />
       </TableCell>
       <TableCell align="right">
@@ -125,6 +163,7 @@ export default function Cells() {
 
   const [cellData, setCellData] = useState([])
   const [selected, setSelected] = useState({id: null})
+  
 
   useEffect(() => {
     refreshCells(); 
@@ -165,7 +204,7 @@ export default function Cells() {
     <Container maxWidth="lg" className={classes.container}>
     <Paper className={classes.paper}>
     <TableContainer>
-      <Table className={classes.table} size="small">
+      <Table className={classes.table} size="small" >
         <TableHead>
           <TableRow>
             <TableCell>UID</TableCell>

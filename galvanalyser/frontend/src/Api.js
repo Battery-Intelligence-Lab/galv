@@ -11,6 +11,7 @@ export async function login(username, password) {
 }
 
 export async function logout() {
+  console.log('logging out')
   return fetch(url + '/logout', {method: 'POST'});
 }
 
@@ -35,7 +36,7 @@ async function authFetch(url, options) {
   return fetch(url, newOptions).then((response) => {
     if (response.status === 401) {
       return logout().then(() => {
-      return response;
+        return response;
       });
     }
     return response;
@@ -44,6 +45,10 @@ async function authFetch(url, options) {
 
 export async function run_harvester(id) { 
   return authFetch(url + `harvester/${id}/run`);
+}
+
+export async function env() { 
+  return authFetch(url + `env`);
 }
 
 export async function harvesters(id) { 
@@ -148,6 +153,22 @@ export async function datasets(id) {
   }
   return authFetch(url + 'dataset');
 
+}
+
+// dataset is object with fields:
+//
+// { name: ?, cell_id: ?, 
+//   owner: ?, test_equipment: ?, 
+//   purpose: ? }
+export async function update_dataset(id, dataset) { 
+  return authFetch(
+    url + `dataset/${id}`, 
+    {
+      method: 'PUT',
+      headers: headers,
+      body: JSON.stringify(dataset),
+    }
+  );
 }
 
 export async function metadata(dataset_id) { 

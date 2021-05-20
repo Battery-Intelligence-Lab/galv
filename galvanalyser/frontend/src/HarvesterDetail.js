@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import TextField from '@material-ui/core/TextField';
+import Typography from '@material-ui/core/Typography';
 import Input from '@material-ui/core/Input';
+import InputAdornment from '@material-ui/core/InputAdornment';
 import { makeStyles } from '@material-ui/core/styles';
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
@@ -24,7 +26,7 @@ import Files from './Files'
 import { Link, useHistory } from "react-router-dom";
 
 import { 
-  monitored_paths, add_monitored_path, users,
+  monitored_paths, add_monitored_path, users, env,
   update_monitored_path, delete_monitored_path
 } from './Api'
 
@@ -36,9 +38,15 @@ const useStyles = makeStyles((theme) => ({
   table: {
     minWidth: 650,
   },
+  resize: {
+    fontSize: '11pt',
+  },
   input: {
     marginLeft: theme.spacing(1),
     flex: 1,
+  },
+  inputAdornment: {
+    color: theme.palette.text.disabled,
   },
   iconButton: {
     padding: 10,
@@ -52,7 +60,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-function MyTableRow({userData, savedRow, onRowSave, selected, onSelectRow}) {
+function MyTableRow({env, userData, savedRow, onRowSave, selected, onSelectRow}) {
   const classes = useStyles();
   const [row, setRow] = useState([])
 
@@ -96,6 +104,16 @@ function MyTableRow({userData, savedRow, onRowSave, selected, onSelectRow}) {
       </TableCell>
       <TableCell align="right">
         <TextField
+          InputProps={{
+            classes: {
+              input: classes.resize,
+            },
+            startAdornment: <InputAdornment 
+                              className={classes.inputAdornment} 
+                              position="start">
+                              {env.GALVANALYSER_HARVESTER_BASE_PATH}/
+                            </InputAdornment>,
+          }}
           value={useRow.path}
           onChange={setValue('path')} />
       </TableCell>
@@ -145,6 +163,15 @@ export default function HarvesterDetail() {
   const [userData, setUserData] = useState([])
   const [paths, setPaths] = useState([])
   const [selected, setSelected] = useState({monitor_path_id: null})
+  const [envData, setEnvData] = useState([])
+
+  useEffect(() => {
+    env().then((response) => {
+      if (response.ok) {
+        return response.json().then(setEnvData);
+      }
+      });
+  }, []);
 
   useEffect(() => {
     users().then((response) => {
@@ -196,6 +223,7 @@ export default function HarvesterDetail() {
           {paths.map((row) => (
             <MyTableRow 
                 key={row.monitor_path_id} 
+                env={envData}
                 savedRow={row} 
                 userData={userData}
                 onRowSave={updatePath} 

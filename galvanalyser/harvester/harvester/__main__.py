@@ -72,16 +72,21 @@ def write_config_template(config_template_path):
         json.dump(template, json_file, indent=4)
 
 
-def monitor_path(monitor_path_id, path, monitored_for, conn):
-    print("Examining " + path + " for users " + str(monitored_for))
+def monitor_path(monitor_path_id, base_path, path, monitored_for, conn):
+
+    absolute_path = path
+    if not os.path.isabs(path) and base_path is not None:
+        absolute_path = os.path.join(base_path, path)
+
+    print("Examining " + absolute_path + " for users " + str(monitored_for))
     try:
-        current_files = os.listdir(path)
+        current_files = os.listdir(absolute_path)
     except FileNotFoundError:
-        print("ERROR: Requested path not found on this machine: " + path)
+        print("ERROR: Requested path not found on this machine: " + absolute_path)
         return
     for file_path in current_files:
         print("")
-        full_file_path = os.path.join(path, file_path)
+        full_file_path = os.path.join(absolute_path, file_path)
         print("Found " + full_file_path)
         current_observation = ObservedFileRow(
             monitor_path_id,
@@ -161,12 +166,16 @@ def monitor_path(monitor_path_id, path, monitored_for, conn):
     print("Done monitoring paths\n")
 
 
-def import_file(file_path_row, harvester_name, conn):
+def import_file(base_path, file_path_row, harvester_name, conn):
     """
         Attempts to import a given file
     """
+    absolute_path = file_path_row.monitored_path
+    if not os.path.isabs(absolute_path) and base_path is not None:
+        absolute_path = os.path.join(base_path, absolute_path)
+
     fullpath = os.path.join(
-        file_path_row.monitored_path, file_path_row.observed_path
+        absolute_path, file_path_row.observed_path
     )
     print("")
     if not os.path.isfile(fullpath):
@@ -291,7 +300,7 @@ def import_file(file_path_row, harvester_name, conn):
 
 def main(database_user=None, database_password=None, machine_id=None,
          database_host=None, database_port=None,
-         database_name=None):
+         database_name=None, base_path=None):
     try:
         config = load_config("./config/harvester-config.json")
     except FileNotFoundError:
@@ -337,6 +346,7 @@ def main(database_user=None, database_password=None, machine_id=None,
         for monitored_paths_row in monitored_paths_rows:
             monitor_path(
                 monitored_paths_row.monitor_path_id,
+                base_path,
                 monitored_paths_row.path,
                 monitored_paths_row.monitored_for,
                 conn,
@@ -348,6 +358,7 @@ def main(database_user=None, database_password=None, machine_id=None,
         for stable_observed_file_path_row in stable_observed_file_path_rows:
             # import the file
             import_file(
+                base_path,
                 stable_observed_file_path_row,
                 config["machine_id"],
                 conn,
