@@ -40,6 +40,7 @@ import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
 import DashboardIcon from '@material-ui/icons/Dashboard';
 import ShoppingCartIcon from '@material-ui/icons/ShoppingCart';
+import { ReactComponent as GalvanalyserLogo } from './Galvanalyser-logo.svg';
 
 
 
@@ -86,6 +87,9 @@ const useStyles = makeStyles((theme) => ({
       duration: theme.transitions.duration.enteringScreen,
     }),
   },
+  galvanalyserLogo: {
+    height: '40px' 
+  },
   menuButton: {
     marginRight: 36,
   },
@@ -93,6 +97,7 @@ const useStyles = makeStyles((theme) => ({
     display: 'none',
   },
   title: {
+    marginLeft: 16,
     flexGrow: 1,
   },
   drawerPaper: {
@@ -191,8 +196,9 @@ export default function App() {
         >
           <MenuIcon />
         </IconButton>
+        <GalvanalyserLogo className={classes.galvanalyserLogo}/>
         <Typography component="h1" variant="h6" color="inherit" noWrap className={classes.title}>
-          Galvanalyser - {location.pathname}
+          - {location.pathname}
         </Typography>
         <Button color="inherit" onClick={() => {
           logout().then(()=> {history.push('/login');});

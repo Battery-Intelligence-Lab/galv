@@ -19,7 +19,32 @@ export default function DatasetChart({ dataset }) {
   useEffect(() => {
     columns(dataset.id).then((response) => {
       if (response.ok) {
-        return response.json().then(setCols);
+        return response.json().then((result) => {
+          setCols(result.sort((arg1, arg2) => {
+            let nameA = arg1.name.toUpperCase(); // ignore upper and lowercase
+            let nameB = arg2.name.toUpperCase(); // ignore upper and lowercase
+            if (nameA === 'VOLTS') {
+              nameA = 'ZZZVOLTS';
+            }
+            if (nameA === 'AMPS') {
+              nameA = 'ZZZAMPS';
+            }
+            if (nameB === 'VOLTS') {
+              nameB = 'ZZZVOLTS';
+            }
+            if (nameB === 'AMPS') {
+              nameB = 'ZZZAMPS';
+            }
+            if (nameA > nameB) {
+              return -1;
+            }
+            if (nameA < nameB ) {
+              return 1;
+            }
+            // names must be equal
+            return 0;
+          }));
+        });
       }
     });
   }, [dataset.id])
@@ -138,8 +163,8 @@ export default function DatasetChart({ dataset }) {
             legendOffset: 36,
             legendPosition: 'middle'
         }}
-        colors={{ scheme: 'spectral' }}
-        lineWidth={1}
+        colors={{ scheme: 'category10' }}
+        lineWidth={2}
         legends={[
             {
                 anchor: 'bottom-right',

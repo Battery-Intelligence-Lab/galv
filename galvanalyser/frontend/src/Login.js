@@ -3,12 +3,13 @@ import { makeStyles } from '@material-ui/core/styles';
 import React, { useState } from "react";
 import Avatar from '@material-ui/core/Avatar';
 import Button from '@material-ui/core/Button';
+import SvgIcon from '@material-ui/core/SvgIcon';
 import CssBaseline from '@material-ui/core/CssBaseline';
 import TextField from '@material-ui/core/TextField';
-import LockOutlinedIcon from '@material-ui/icons/LockOutlined';
 import Typography from '@material-ui/core/Typography';
 import Container from '@material-ui/core/Container';
 import { useHistory } from "react-router-dom";
+import { ReactComponent as GalvanalyserIcon} from './Galvanalyser-icon.svg';
 
 const useStyles = makeStyles((theme) => ({
   paper: {
@@ -17,9 +18,10 @@ const useStyles = makeStyles((theme) => ({
     flexDirection: 'column',
     alignItems: 'center',
   },
-  avatar: {
+  icon: {
     margin: theme.spacing(1),
-    backgroundColor: theme.palette.secondary.main,
+    width: theme.spacing(7),
+    height: theme.spacing(10),
   },
   form: {
     width: '100%', // Fix IE 11 issue.
@@ -29,6 +31,7 @@ const useStyles = makeStyles((theme) => ({
     margin: theme.spacing(3, 0, 2),
   },
 }));
+
 
 export default function Login() {
   const classes = useStyles();
@@ -64,9 +67,7 @@ export default function Login() {
     <Container component="main" maxWidth="xs">
       <CssBaseline />
       <div className={classes.paper}>
-        <Avatar className={classes.avatar}>
-          <LockOutlinedIcon />
-        </Avatar>
+        <GalvanalyserIcon className={classes.icon}/>
         <Typography component="h1" variant="h5">
           Sign in
         </Typography>

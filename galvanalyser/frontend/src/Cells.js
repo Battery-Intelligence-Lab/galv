@@ -74,6 +74,7 @@ function MyTableRow({savedRow, onRowSave, selected, onSelectRow}) {
       <TableCell >
         <TextField
           value={useRow.uid} 
+          style={{width: 260}}
           InputProps={{
             classes: {
               input: classes.resize,
@@ -124,6 +125,7 @@ function MyTableRow({savedRow, onRowSave, selected, onSelectRow}) {
       <TableCell align="right">
         <TextField 
           value={useRow.nominal_capacity} 
+          style={{width: 60}}
           InputProps={{
             classes: {
               input: classes.resize,
@@ -134,6 +136,7 @@ function MyTableRow({savedRow, onRowSave, selected, onSelectRow}) {
     <TableCell align="right">
         <TextField 
           value={useRow.nominal_cell_weight} 
+          style={{width: 60}}
           InputProps={{
             classes: {
               input: classes.resize,

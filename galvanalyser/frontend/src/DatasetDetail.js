@@ -65,44 +65,65 @@ export default function DatasetDetail() {
         response.json().then(setUserData);
       }
     });
-  }, []);
-
-  useEffect(() => {
     cells().then((response) => {
       if (response.ok) {
         return response.json().then(setCellData);
+      }
+    });
+    datasets(id).then((response) => {
+      if (response.ok) {
+        response.json().then((d) => {
+          setDataset(d);
+        });
       }
     });
   }, []);
 
   const onSubmit = (values) => {
     console.log(JSON.stringify(values));
-    update_dataset(dataset.id, values)
+    update_dataset(dataset.id, 
+      {...values, 
+        cell_id: values.cell_id.id,
+        owner: values.owner.username}
+  )
   };
 
-  console.log('rendering with id', id);
-  console.log('rendering with dataset', dataset);
 
-  useEffect(() => {
-    datasets(id).then((response) => {
-      if (response.ok) {
-        response.json().then((d) => {
-          setDataset(d);
-          reset(d);
-        });
-      }
-    });
-  }, []);
-
-
-  if (dataset === null) {
+  if (dataset === null || cellData == null || userData == null) {
     return (null);
   }
 
+
+  const cell = cellData.filter((v)=>v.id===dataset.cell_id)[0];
+  const user = userData.filter((v)=>v.username===dataset.owner)[0];
+
+
+  console.log('rendering with id', id);
+  console.log('rendering with dataset', dataset);
+  console.log('rendering with userdata', userData);
+  console.log('rendering with celldata', cellData);
+
   const purposeOptions = [
-      'purpose1',
-      'purpose2',
-      'purpose3',
+    'Ageing',
+    'Real world/drive cycling',
+    'Characterisation/check-up',
+    'Thermal performance',
+    'Pulse',
+    'Charge',
+    'Discharge',
+    'EIS',
+    'GITT',
+    'Pseudo-OCV',
+  ]
+
+  const equipmentOptions = [
+    'Maccor 4200',
+    'Biologic MPG205z',
+    'Biologic SP-150',
+    'Biologic HCP1005',
+    'Ivium Compactstat',
+    'Ivium Octoboost',
+    'Battery Dynamics',
   ]
 
   return (
@@ -116,7 +137,7 @@ export default function DatasetDetail() {
       <CardContent>
       <Controller
         control={control}
-        defaultValue=""
+        defaultValue={dataset.name}
         name="name"
         render={({ field }) => (
           <TextField className={classes.formInput} 
@@ -128,7 +149,7 @@ export default function DatasetDetail() {
       />
       <Controller
         control={control}
-        defaultValue=""
+        defaultValue={cell}
         name="cell_id"
         render={({ field }) => (
           <Autocomplete
@@ -136,18 +157,17 @@ export default function DatasetDetail() {
             className={classes.formInput}
             options={cellData}
             renderInput={(params) => 
-              <TextField  {...params} style={{ width: 360}} label="Cell Used"/>
+              <TextField  {...params} style={{ width: 380}} label="Cell Used"/>
             }
-            getOptionLabel={(option) => typeof option === "object" ? option.uid : option.toString()}
-            getOptionSelected={option => option.id}
-            onChange={(_, data) => field.onChange(data.id)}
+            getOptionLabel={(option) => option.uid}
+            onChange={(_, data) => field.onChange(data)}
           />
         )}
       />
       <Controller
         control={control}
         name="owner"
-        defaultValue=""
+        defaultValue={user}
         render={({ field }) => (
           <Autocomplete
             {...field}
@@ -156,16 +176,15 @@ export default function DatasetDetail() {
             renderInput={(params) => 
               <TextField  {...params} style={{ width: 250}} label="Owner"/>
             }
-            getOptionLabel={(option) => typeof option === "string" ? option: option.username}
-            getOptionSelected={option => option.username}
-            onChange={(_, data) => field.onChange(data.username)}
+            getOptionLabel={(option) => option.username}
+            onChange={(_, data) => field.onChange(data)}
           />
         )}
       />
       <Controller
         control={control}
         name="purpose"
-        defaultValue=""
+        defaultValue={dataset.purpose}
         render={({ field }) => (
           <Autocomplete
             {...field}
@@ -183,12 +202,18 @@ export default function DatasetDetail() {
       <Controller
         control={control}
         name="test_equipment"
-        defaultValue=""
+        defaultValue={dataset.test_equipment}
         render={({ field }) => (
-          <TextField  
-            style={{ width: 500 }}
-            {...field} label="Test Equipment Used" 
+          <Autocomplete
+            {...field}
+            freeSolo
             className={classes.formInput}
+            options={equipmentOptions}
+            
+            renderInput={(params) => 
+              <TextField  {...params} style={{ width: 500 }} label="Test Equipment Used"/>
+            }
+            onChange={(_, data) => field.onChange(data)}
           />
         )}
       />

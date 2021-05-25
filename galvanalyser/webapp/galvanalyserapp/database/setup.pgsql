@@ -175,6 +175,10 @@ CREATE TABLE experiment.dataset
     json_data jsonb,
     
     PRIMARY KEY (name, date),
+    FOREIGN KEY (cell_id)
+        REFERENCES cell_data.cell (id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
     UNIQUE (id)
 )
 WITH (
