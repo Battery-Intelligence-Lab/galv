@@ -26,7 +26,7 @@ import Files from './Files'
 import { Link, useHistory } from "react-router-dom";
 
 import { 
-  monitored_paths, add_monitored_path, users, env,
+  monitored_paths, add_monitored_path, users, env_harvester,
   update_monitored_path, delete_monitored_path
 } from './Api'
 
@@ -166,7 +166,7 @@ export default function HarvesterDetail() {
   const [envData, setEnvData] = useState([])
 
   useEffect(() => {
-    env().then((response) => {
+    env_harvester(id).then((response) => {
       if (response.ok) {
         return response.json().then(setEnvData);
       }

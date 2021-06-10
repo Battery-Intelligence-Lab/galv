@@ -1,9 +1,30 @@
-from galvanalyserapp import init_app
+from galvanalyserapp import create_config, make_celery
+import flask
+from flask_jwt_extended import JWTManager
 import flask_cors
 
 import os
 
-app = init_app()
+app = flask.Flask(__name__)
+
+app.config.from_mapping(
+    create_config(),
+)
+
+JWTManager(app)
+
+celery = make_celery(app)
+
+# ensure the instance folder exists
+try:
+    os.makedirs(app.instance_path)
+except OSError:
+    pass
+
+
+with app.app_context():
+    # Import parts of our core Flask app
+    from galvanalyserapp import routes
 
 # match redash secret_key
 app.secret_key = os.getenv('REDASH_COOKIE_SECRET')

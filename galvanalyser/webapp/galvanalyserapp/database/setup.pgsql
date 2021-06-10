@@ -17,8 +17,12 @@ CREATE TABLE harvesters.harvester
 (
     id bigserial NOT NULL,
     machine_id text NOT NULL,
+    harvester_name text,
+    last_successful_run timestamp with time zone,
+    periodic_hour integer,
     PRIMARY KEY (id),
-    UNIQUE (machine_id)
+    UNIQUE (machine_id),
+    CONSTRAINT is_hour CHECK (periodic_hour >= 0 AND periodic_hour < 24)
 )
 WITH (
     OIDS = FALSE

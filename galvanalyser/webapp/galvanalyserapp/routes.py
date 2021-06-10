@@ -9,6 +9,8 @@ from datetime import datetime
 from datetime import timedelta
 import json
 
+from harvester.__main__ import main as harvester_main
+
 from flask_jwt_extended import create_access_token
 from flask_jwt_extended import jwt_required
 from flask_jwt_extended import get_jwt
@@ -37,10 +39,11 @@ import math
 import psycopg2
 
 from flask import current_app as app
+from celery import current_app as celery
 
 from functools import wraps
 
-from .database.user import User
+from .database.user import User, UserRoles
 
 
 @app.after_request
@@ -115,17 +118,6 @@ def refresh():
 @cross_origin()
 def hello():
     return 'Hello'
-
-@app.route('/api/env', methods=['GET'])
-@cross_origin()
-@jwt_required()
-def env():
-    env_var = 'GALVANALYSER_HARVESTER_BASE_PATH'
-    return jsonify(
-        {env_var: os.getenv(env_var)}
-    )
-
-
 
 @app.route('/api/user', methods=['GET'])
 @cross_origin()
@@ -417,6 +409,52 @@ def timeseries_column(dataset_id, col_id):
     return serialise_numpy_array(array)
 
 
+@celery.task()
+def run_harvester_celery(machine_id):
+    print('running harvester', machine_id)
+    harvester_main(
+        os.getenv('HARVESTER_USERNAME'),
+        os.getenv('HARVESTER_PASSWORD'),
+        machine_id,
+        'galvanalyser_postgres', '5433',
+        'galvanalyser', base_path='/usr/data'
+    )
+
+@celery.task()
+def get_env_celery():
+    env_var = 'GALVANALYSER_HARVESTER_BASE_PATH'
+    return {env_var: os.getenv(env_var)}
+
+@app.route('/api/harvester/<int:id_>/env', methods=['GET'])
+@jwt_required()
+@cross_origin()
+def env_harvester(id_=None):
+    conn = app.config["GET_DATABASE_CONN_FOR_SUPERUSER"]()
+    harvester = HarvesterRow.select_from_id(
+        id_, conn
+    )
+    result = get_env_celery.apply_async(
+        queue=harvester.harvester_name
+    )
+    print('env success!')
+    return jsonify(result.get()), 200
+
+@app.route('/api/harvester/<int:id_>/run', methods=['PUT'])
+@jwt_required()
+@cross_origin()
+def run_harvester(id_=None):
+    conn = app.config["GET_DATABASE_CONN_FOR_SUPERUSER"]()
+    harvester = HarvesterRow.select_from_id(
+        id_, conn
+    )
+    run_harvester_celery.apply_async(
+        args=[harvester.machine_id],
+        queue=harvester.harvester_name
+    )
+    print('success!')
+    return jsonify({'success': True}), 200
+
+
 @app.route('/api/harvester', methods=['GET', 'POST'])
 @app.route('/api/harvester/<int:id_>', methods=['GET', 'PUT', 'DELETE'])
 @jwt_required()
@@ -446,6 +484,7 @@ def harvester(id_=None):
         request_data = request.get_json()
         new_harvester = HarvesterRow(
             request_data.get('machine_id', None),
+            harvester_name=os.getenv('HARVESTER_USERNAME'),
         )
         new_harvester.insert(conn)
         conn.commit()

@@ -121,7 +121,11 @@ def test(path, test):
 )
 def create_galvanalyser_db():
     database.create_database(app.config)
-
+    database.create_harvester_user(
+        app.config,
+        os.getenv('HARVESTER_USERNAME'),
+        os.getenv('HARVESTER_PASSWORD')
+    )
 
 @cli.command("create_redash_db")
 @click.confirmation_option(

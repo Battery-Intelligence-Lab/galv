@@ -70,6 +70,7 @@ function MyTableRow({savedRow, onRowSave, selected, onSelectRow}) {
       <TableCell component="th" scope="row">
         {useRow.id}
       </TableCell>
+      
       <TableCell align="right">
         <TextField
           InputProps={{
@@ -84,7 +85,15 @@ function MyTableRow({savedRow, onRowSave, selected, onSelectRow}) {
         >
         </TextField>
       </TableCell>
-
+      <TableCell component="th" scope="row">
+        {useRow.harvester_name}
+      </TableCell>
+      <TableCell component="th" scope="row">
+        {useRow.last_successful_run}
+      </TableCell>
+      <TableCell component="th" scope="row">
+        {useRow.periodic_hour}
+      </TableCell>
       <TableCell align="right">
         <Tooltip title="Save changes to harvester">
         <span>
@@ -143,7 +152,10 @@ export default function Harvesters() {
         <TableHead>
           <TableRow>
             <TableCell>ID</TableCell>
-            <TableCell align="right">Name</TableCell>
+            <TableCell align="right">Machine</TableCell>
+            <TableCell align="right">Harvester</TableCell>
+            <TableCell align="right">Last Completed Run</TableCell>
+            <TableCell align="right">Periodic</TableCell>
             <TableCell align="right">Save</TableCell>
           </TableRow>
         </TableHead>

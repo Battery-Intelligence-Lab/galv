@@ -45,11 +45,17 @@ async function authFetch(url, options) {
 }
 
 export async function run_harvester(id) { 
-  return authFetch(url + `harvester/${id}/run`);
+  return authFetch(
+    url + `harvester/${id}/run`,
+    {
+      method: 'PUT',
+      headers: headers,
+    }
+  );
 }
 
-export async function env() { 
-  return authFetch(url + `env`);
+export async function env_harvester(id) { 
+  return authFetch(url + `harvester/${id}/env`);
 }
 
 export async function harvesters(id) { 
