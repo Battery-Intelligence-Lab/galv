@@ -32,9 +32,15 @@ TABLESPACE pg_default;
 ALTER TABLE harvesters.harvester
     OWNER to postgres;
 
-GRANT SELECT ON TABLE harvesters.harvester TO ${harvester_role};
+GRANT UPDATE, SELECT ON TABLE harvesters.harvester TO ${harvester_role};
 
 GRANT ALL ON TABLE harvesters.harvester TO postgres;
+
+ALTER TABLE harvesters.harvester ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY harvester_access_policy ON harvesters.harvester
+USING ( harvester_name = current_user);
+
 
 -- Table: harvesters.monitored_path
 

@@ -323,11 +323,10 @@ def main(database_user=None, database_password=None, machine_id=None,
         )
         conn.autocommit = True
 
-        try:
-            my_harvester_id = HarvesterRow.select_from_machine_id(
-                config["machine_id"], conn
-            ).id
-        except AttributeError:
+        harvester = HarvesterRow.select_from_machine_id(
+            config["machine_id"], conn
+        )
+        if harvester is None:
             print(
                 "Error: Could not find a harvester id for a machine called "
                 + config["machine_id"]
@@ -335,7 +334,7 @@ def main(database_user=None, database_password=None, machine_id=None,
             )
             sys.exit(1)
         monitored_paths_rows = MonitoredPathRow.select_from_harvester_id(
-            my_harvester_id, conn
+            harvester.id, conn
         )
         print(
             config["machine_id"]
@@ -353,7 +352,7 @@ def main(database_user=None, database_password=None, machine_id=None,
             )
         # files for import
         stable_observed_file_path_rows = ObservedFilePathRow.select_from_harvester_id_with_state(
-            my_harvester_id, "STABLE", conn
+            harvester.id, "STABLE", conn
         )
         for stable_observed_file_path_row in stable_observed_file_path_rows:
             # import the file
@@ -363,6 +362,8 @@ def main(database_user=None, database_password=None, machine_id=None,
                 config["machine_id"],
                 conn,
             )
+        harvester.last_successful_run = datetime.now(timezone.utc)
+        harvester.update(conn)
     finally:
         if conn:
             conn.close()
