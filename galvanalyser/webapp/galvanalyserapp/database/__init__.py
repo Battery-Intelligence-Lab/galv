@@ -6,15 +6,6 @@ from pygalvanalyser.harvester.harvester_row import HarvesterRow
 from pygalvanalyser.harvester.monitored_path_row import MonitoredPathRow
 from pygalvanalyser.experiment.institution_row import InstitutionRow
 
-def create_user(config, username, password, test=False):
-    conn = _create_superuser_connection(config)
-    if test:
-        role = 'test_user'
-    else:
-        role = 'normal_user'
-
-    _create_user(conn, username, password, role)
-    conn.close()
 
 def create_harvester_user(config, harvester, password, test=False):
     conn = _create_superuser_connection(config)
@@ -210,18 +201,16 @@ def _create(config):
 def _setup(config, test=False):
     conn = _create_superuser_connection(config)
     if test:
-        user_role = 'test_user'
         harvester_role = 'test_harvester'
     else:
-        user_role = 'normal_user'
         harvester_role = 'harvester'
-    print('using roles', user_role, harvester_role)
+    print('using roles', harvester_role)
 
     with conn.cursor() as cur:
         # create roles if they dont exist
         cur.execute("SELECT rolname FROM pg_roles;")
         roles = cur.fetchall()
-        for role in [user_role, harvester_role]:
+        for role in [harvester_role]:
             if (role,) not in roles:
                 cur.execute(sql.SQL("""
                     CREATE ROLE {role} WITH
@@ -256,7 +245,6 @@ def _setup(config, test=False):
             string.Template(
                 open(filename, "r").read()
             ).substitute(
-                user_role=user_role,
                 harvester_role=harvester_role,
             )
         )

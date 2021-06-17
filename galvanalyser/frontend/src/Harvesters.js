@@ -71,7 +71,7 @@ function MyTableRow({savedRow, onRowSave, selected, onSelectRow}) {
         {useRow.id}
       </TableCell>
       
-      <TableCell align="right">
+      <TableCell>
         <TextField
           InputProps={{
             classes: {
@@ -89,7 +89,13 @@ function MyTableRow({savedRow, onRowSave, selected, onSelectRow}) {
         {useRow.harvester_name}
       </TableCell>
       <TableCell component="th" scope="row">
-        {useRow.last_successful_run}
+        {useRow.is_running ? "True" : "False"}
+      </TableCell>
+      <TableCell component="th" scope="row">
+        {Intl.DateTimeFormat('en-GB', 
+          { dateStyle: 'long', timeStyle: 'long' }).format(
+          Date.parse(useRow.last_successful_run)
+        )}
       </TableCell>
       <TableCell component="th" scope="row">
         {useRow.periodic_hour}
@@ -118,7 +124,11 @@ export default function Harvesters() {
   const [selected, setSelected] = useState({id: null})
 
   useEffect(() => {
-    refreshHarvesters(); 
+    refreshHarvesters();
+    const interval = setInterval(() => {
+      refreshHarvesters();
+    }, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   const refreshHarvesters= () => {
@@ -130,6 +140,7 @@ export default function Harvesters() {
       }
       });
   };
+  console.log(harvesterData);
 
   const addNewHarvester = () => {
     add_harvester({machine_id: 'Edit me'}).then(refreshHarvesters);
@@ -140,6 +151,11 @@ export default function Harvesters() {
   const updateHarvester= (value) => {
     update_harvester(value.id, value).then(refreshHarvesters);
   };
+
+  const runSelectedHarvester = () => {
+    run_harvester(selected.id).then(refreshHarvesters);
+  };
+
   
   const isSelected = selected.id !== null;
   let history = useHistory();
@@ -152,11 +168,12 @@ export default function Harvesters() {
         <TableHead>
           <TableRow>
             <TableCell>ID</TableCell>
-            <TableCell align="right">Machine</TableCell>
-            <TableCell align="right">Harvester</TableCell>
-            <TableCell align="right">Last Completed Run</TableCell>
-            <TableCell align="right">Periodic</TableCell>
-            <TableCell align="right">Save</TableCell>
+            <TableCell>Name</TableCell>
+            <TableCell>Harvester</TableCell>
+            <TableCell>Is Running</TableCell>
+            <TableCell>Last Completed Run</TableCell>
+            <TableCell>Periodic</TableCell>
+            <TableCell>Save</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -193,7 +210,7 @@ export default function Harvesters() {
     </Tooltip>
     <Tooltip title="Run the selected harvester">
       <span>
-      <IconButton disabled={!isSelected} onClick={()=>{run_harvester(selected.id)}}>
+      <IconButton disabled={!isSelected} onClick={runSelectedHarvester}>
       <PlayArrowIcon/>
     </IconButton>
     </span>

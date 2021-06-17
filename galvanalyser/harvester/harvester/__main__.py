@@ -13,6 +13,7 @@ from pygalvanalyser.harvester.observed_file_row import (
 )
 from pygalvanalyser.experiment.dataset_row import DatasetRow
 from pygalvanalyser.experiment.access_row import AccessRow
+from pygalvanalyser.user_data import UserRow
 from pygalvanalyser.experiment.timeseries_data_row import (
     TimeseriesDataRow,
 )
@@ -233,9 +234,11 @@ def import_file(base_path, file_path_row, harvester_name, conn):
                     dataset_row.id, conn
                 )
             dataset_id = dataset_row.id
-            for user in file_path_row.monitored_for:
-                print("  Allowing access to " + user)
-                access_row = AccessRow(dataset_id=dataset_id, user_name=user)
+            for user_id in file_path_row.monitored_for:
+                print("  Allowing access to user id" + user_id)
+                access_row = AccessRow(
+                    dataset_id=dataset_id, user_id=user_id
+                )
                 access_row.insert(conn)
             input_file.metadata["dataset_id"] = dataset_id
             new_data = True
@@ -326,6 +329,9 @@ def main(database_user=None, database_password=None, machine_id=None,
         harvester = HarvesterRow.select_from_machine_id(
             config["machine_id"], conn
         )
+        harvester.is_running = True
+        harvester.update(conn)
+        conn.commit()
         if harvester is None:
             print(
                 "Error: Could not find a harvester id for a machine called "
@@ -363,9 +369,10 @@ def main(database_user=None, database_password=None, machine_id=None,
                 conn,
             )
         harvester.last_successful_run = datetime.now(timezone.utc)
-        harvester.update(conn)
     finally:
         if conn:
+            harvester.is_running = False
+            harvester.update(conn)
             conn.close()
 
 

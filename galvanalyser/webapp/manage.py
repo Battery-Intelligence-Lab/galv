@@ -10,6 +10,7 @@ from galvanalyserapp.redash import CustomRedash
 import galvanalyserapp.database as database
 from pygalvanalyser.harvester.monitored_path_row import MonitoredPathRow
 from harvester.__main__ import main as harvester_main
+from pygalvanalyser.user_data import UserRow
 import json
 import subprocess
 
@@ -178,14 +179,11 @@ def backup_redash_db():
 @cli.command("create_user")
 @click.option('--username', prompt=True)
 @click.option('--password', prompt=True, hide_input=True, confirmation_prompt=True)
-def create_user(username, password):
-    database.create_user(app.config, username, password)
-
-
-@cli.command("create_institution")
-@click.option('--name', prompt=True)
-def create_institution(name):
-    database.create_institution(app.config, name)
+@click.option('--email', prompt=True)
+def create_user(username, password, email):
+    conn = app.config["GET_DATABASE_CONN_FOR_SUPERUSER"]()
+    UserRow.create(username, password, email).insert(conn)
+    conn.commit()
 
 
 @cli.command("create_harvester")

@@ -1,3 +1,62 @@
+-- SCHEMA: user_data
+
+-- DROP SCHEMA user_data ;
+
+CREATE SCHEMA user_data
+    AUTHORIZATION postgres;
+
+GRANT ALL ON SCHEMA user_data TO postgres;
+
+-- Table: user_data.user
+
+-- DROP TABLE user_data.user;
+
+CREATE TABLE user_data.user
+(
+  id bigserial PRIMARY KEY,
+  username VARCHAR (100),
+  password VARCHAR (64), --storing a 32-bit hash
+  salt VARCHAR (64), --storing a 32-bit salt
+  email VARCHAR (100),
+  UNIQUE (username),
+  CONSTRAINT username_email_notnull CHECK (
+    NOT (
+      ( username IS NULL  OR  username = '' )
+      AND
+      ( email IS NULL  OR  email = '' )
+    )
+  )
+)
+WITH (
+    OIDS = FALSE
+);
+
+
+ALTER TABLE user_data.user
+    OWNER to postgres;
+
+-- Table: user_data.group
+
+-- DROP TABLE user_data.group;
+
+CREATE TABLE user_data.group
+(
+  id bigserial PRIMARY KEY,
+  groupname VARCHAR (100),
+  UNIQUE (groupname),
+  CONSTRAINT name_notnull CHECK (
+    NOT ( name IS NULL  OR  name = '' )
+  )
+)
+WITH (
+    OIDS = FALSE
+);
+
+
+ALTER TABLE user_data.group
+    OWNER to postgres;
+
+
 -- SCHEMA: harvesters
 
 -- DROP SCHEMA harvesters ;
@@ -19,6 +78,7 @@ CREATE TABLE harvesters.harvester
     machine_id text NOT NULL,
     harvester_name text,
     last_successful_run timestamp with time zone,
+    is_running bool DEFAULT FALSE,
     periodic_hour integer,
     PRIMARY KEY (id),
     UNIQUE (machine_id),
@@ -50,7 +110,7 @@ CREATE TABLE harvesters.monitored_path
 (
     harvester_id bigint NOT NULL,
     path text NOT NULL,
-    monitored_for text[] NOT NULL,
+    monitored_for bigint[] NOT NULL,
     monitor_path_id bigserial NOT NULL,
     PRIMARY KEY (path, harvester_id),
     UNIQUE (monitor_path_id),
@@ -120,9 +180,6 @@ CREATE SCHEMA cell_data
 
 GRANT USAGE ON SCHEMA cell_data TO ${harvester_role};
 
-GRANT USAGE ON SCHEMA cell_data TO ${user_role};
-
-
 -- Table: cell_data.cell
 
 -- DROP TABLE cell_data.cell;
@@ -147,8 +204,6 @@ CREATE TABLE cell_data.cell
 ALTER TABLE cell_data.cell
     OWNER to postgres;
 
-GRANT SELECT ON TABLE cell_data.cell TO ${user_role};
-
 GRANT SELECT ON TABLE cell_data.cell TO ${harvester_role};
 
 GRANT ALL ON TABLE cell_data.cell TO postgres;
@@ -164,8 +219,6 @@ CREATE SCHEMA experiment
 GRANT ALL ON SCHEMA experiment TO postgres;
 
 GRANT USAGE ON SCHEMA experiment TO ${harvester_role};
-
-GRANT USAGE ON SCHEMA experiment TO ${user_role};
 
 -- Table: experiment.dataset
 
@@ -200,13 +253,35 @@ ALTER TABLE experiment.dataset
 
 GRANT INSERT, SELECT, TRIGGER ON TABLE experiment.dataset TO ${harvester_role};
 
-GRANT SELECT ON TABLE experiment.dataset TO ${user_role};
-
 GRANT ALL ON TABLE experiment.dataset TO postgres;
 
 GRANT ALL ON SEQUENCE experiment.dataset_id_seq TO postgres;
 
 GRANT USAGE ON SEQUENCE experiment.dataset_id_seq TO ${harvester_role};
+
+-- Table: experiment.equipment
+
+-- DROP TABLE experiment.equipment;
+
+CREATE TABLE experiment.equipment
+(
+    id bigserial NOT NULL,
+    name VARCHAR (50) NOT NULL,
+    type VARCHAR (50),
+    UNIQUE (name),
+    PRIMARY KEY (id)
+)
+WITH (
+    OIDS = FALSE
+);
+
+ALTER TABLE experiment.equipment
+    OWNER to postgres;
+
+GRANT INSERT, SELECT, TRIGGER ON TABLE experiment.dataset TO ${harvester_role};
+
+GRANT ALL ON TABLE experiment.equipment TO postgres;
+
 
 -- Table: experiment.access
 
@@ -215,10 +290,14 @@ GRANT USAGE ON SEQUENCE experiment.dataset_id_seq TO ${harvester_role};
 CREATE TABLE experiment.access
 (
     dataset_id bigint NOT NULL,
-    user_name text NOT NULL,
-    PRIMARY KEY (dataset_id, user_name),
+    user_id bigint NOT NULL,
+    PRIMARY KEY (dataset_id, user_id),
     FOREIGN KEY (dataset_id)
         REFERENCES experiment.dataset (id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+    FOREIGN KEY (user_id)
+        REFERENCES user_data.user (id) MATCH SIMPLE
         ON UPDATE CASCADE
         ON DELETE CASCADE
 )
@@ -232,8 +311,6 @@ ALTER TABLE experiment.access
 GRANT INSERT, SELECT ON TABLE experiment.access TO ${harvester_role};
 
 GRANT ALL ON TABLE experiment.access TO postgres;
-
-GRANT SELECT ON TABLE experiment.access TO ${user_role};
 
 CREATE TABLE experiment.unit
 (
@@ -250,8 +327,6 @@ TABLESPACE pg_default;
 
 ALTER TABLE experiment.unit
     OWNER TO ${harvester_role};
-
-GRANT SELECT ON TABLE experiment.unit TO ${user_role};
 
 ALTER SEQUENCE experiment.unit_id_seq
     OWNER TO ${harvester_role};
@@ -279,8 +354,6 @@ TABLESPACE pg_default;
 ALTER TABLE experiment.column_type
     OWNER TO ${harvester_role};
 
-GRANT SELECT ON TABLE experiment.column_type TO ${user_role};
-
 ALTER SEQUENCE experiment.column_type_id_seq
     OWNER TO ${harvester_role};
 
@@ -307,8 +380,6 @@ TABLESPACE pg_default;
 
 ALTER TABLE experiment."column"
     OWNER TO ${harvester_role};
-
-GRANT SELECT ON TABLE experiment."column" TO ${user_role};
 
 ALTER SEQUENCE experiment.column_id_seq
     OWNER TO ${harvester_role};
@@ -383,8 +454,6 @@ TABLESPACE pg_default;
 ALTER TABLE experiment.timeseries_data
     OWNER TO ${harvester_role};
 
-GRANT SELECT ON TABLE experiment.timeseries_data TO ${user_role};
-
 CREATE INDEX timeseries_data_dataset_id ON experiment.timeseries_data (dataset_id);
 CREATE INDEX timeseries_data_dataset_id_column_id ON experiment.timeseries_data (dataset_id, value) WHERE column_id = 1;
 
@@ -416,10 +485,7 @@ ALTER TABLE experiment.range_label
 
 GRANT INSERT, SELECT, UPDATE ON TABLE experiment.range_label TO ${harvester_role};
 
-GRANT SELECT ON TABLE experiment.range_label TO ${user_role};
-
 GRANT USAGE ON SEQUENCE experiment.range_label_id_seq TO ${harvester_role};
-GRANT USAGE ON SEQUENCE experiment.range_label_id_seq TO ${user_role};
 
 -- SELECT * FROM experiment.data as d
 -- INNER JOIN experiment.range_label AS m ON
@@ -427,57 +493,3 @@ GRANT USAGE ON SEQUENCE experiment.range_label_id_seq TO ${user_role};
 -- WHERE m.dataset_id = 46 and
 --       texteq(m.label_name, 'test_label_1') and
 -- 	     d.sample_no <@ m.sample_range
-
-ALTER TABLE experiment.access ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY access_access_policy ON experiment.access
-FOR SELECT USING ( user_name = current_user);
-
-ALTER TABLE experiment.dataset ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY dataset_access_policy ON experiment.dataset
-FOR SELECT USING ( current_user in (SELECT user_name FROM experiment.access
-									WHERE dataset_id = experiment.dataset.id));
-
-ALTER TABLE experiment.range_label ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY range_label_access_policy ON experiment.range_label
-FOR SELECT USING ( current_user in (SELECT user_name FROM experiment.access
-									WHERE dataset_id = experiment.range_label.dataset_id));
-
-CREATE POLICY dataset_harvester_policy ON experiment.dataset
-FOR ALL TO ${harvester_role} USING (true);
-
-CREATE POLICY access_harvester_policy ON experiment.access
-FOR ALL TO ${harvester_role} USING (true);
-
-CREATE POLICY range_label_harvester_policy ON experiment.range_label
-FOR ALL TO ${harvester_role} USING (true);
-
--- SCHEMA: user_data
-
--- DROP SCHEMA user_data ;
-
-CREATE SCHEMA user_data
-    AUTHORIZATION postgres;
-
-GRANT ALL ON SCHEMA user_data TO postgres;
-
-CREATE TABLE user_data.range_label
-(
-    access text[],
-    PRIMARY KEY (dataset_id, label_name, created_by),
-    FOREIGN KEY (dataset_id)
-        REFERENCES experiment.dataset (id) MATCH SIMPLE
-        ON UPDATE CASCADE
-        ON DELETE CASCADE
-)
-    INHERITS (experiment.range_label)
-WITH (
-    OIDS = FALSE
-);
-
-ALTER TABLE user_data.range_label
-    OWNER to postgres;
-
-GRANT INSERT, SELECT, UPDATE ON TABLE user_data.range_label TO ${user_role};

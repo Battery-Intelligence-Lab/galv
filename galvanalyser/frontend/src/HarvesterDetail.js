@@ -92,6 +92,10 @@ function MyTableRow({env, userData, savedRow, onRowSave, selected, onSelectRow})
     },
   };
 
+  const idToName = (id) => {
+    return userData.filter((x) => x.id === id)[0].username;
+  };
+
   return (
     <React.Fragment>
     <TableRow 
@@ -125,15 +129,15 @@ function MyTableRow({env, userData, savedRow, onRowSave, selected, onSelectRow})
           input={<Input/>}
           renderValue={(selected) => (
             <div className={classes.chips}>
-              {selected.map((value) => (
-                <Chip key={value} label={value} className={classes.chip} />
+              {selected.map((id) => (
+                <Chip key={id} label={idToName(id)} className={classes.chip} />
               ))}
             </div>
           )}
           MenuProps={MenuProps}
         >
           {userData.map((user) => (
-            <MenuItem key={user.username} value={user.username}>
+            <MenuItem key={user.username} value={user.id}>
               {user.username}
             </MenuItem>
           ))}

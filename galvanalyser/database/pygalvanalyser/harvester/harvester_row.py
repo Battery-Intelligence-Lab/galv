@@ -4,10 +4,12 @@ import pygalvanalyser
 class HarvesterRow(pygalvanalyser.Row):
     def __init__(self, machine_id,
                  harvester_name=None,
+                 is_running=False,
                  last_successful_run=None,
                  periodic_hour=None, id_=None):
         self.machine_id = machine_id
         self.id = id_
+        self.is_running = is_running
         self.harvester_name = harvester_name
         self.periodic_hour = periodic_hour
         self.last_successful_run = last_successful_run
@@ -20,6 +22,7 @@ class HarvesterRow(pygalvanalyser.Row):
         obj = {
             'id': self.id,
             'machine_id': self.machine_id,
+            'is_running': self.is_running,
             'periodic_hour': self.periodic_hour,
             'harvester_name': self.harvester_name,
             'last_successful_run': last_successful_run,
@@ -31,9 +34,11 @@ class HarvesterRow(pygalvanalyser.Row):
             cursor.execute(
                 "INSERT INTO harvesters.harvester "
                 "(machine_id, harvester_name, "
+                "is_running, "
                 "periodic_hour, last_successful_run) "
-                "VALUES (%s, %s, %s, %s) RETURNING id",
+                "VALUES (%s, %s, %s, %s, %s) RETURNING id",
                 [self.machine_id, self.harvester_name,
+                 self.is_running,
                  self.periodic_hour,
                  self.last_successful_run],
             )
@@ -45,11 +50,13 @@ class HarvesterRow(pygalvanalyser.Row):
                 (
                     "UPDATE harvesters.harvester SET "
                     "machine_id = (%s), periodic_hour = (%s), "
+                    "is_running = (%s), "
                     "last_successful_run = (%s), "
                     "harvester_name = (%s) "
                     "WHERE id=(%s)"
                 ),
                 [self.machine_id, self.periodic_hour,
+                 self.is_running,
                  self.last_successful_run, self.harvester_name,
                  self.id],
             )
@@ -71,7 +78,8 @@ class HarvesterRow(pygalvanalyser.Row):
             cursor.execute(
                 (
                     "SELECT machine_id, periodic_hour, "
-                    "last_successful_run, harvester_name "
+                    "last_successful_run, harvester_name, "
+                    "is_running "
                     "FROM harvesters.harvester WHERE "
                     "id=(%s)"
                 ),
@@ -86,6 +94,7 @@ class HarvesterRow(pygalvanalyser.Row):
                 periodic_hour=result[1],
                 last_successful_run=result[2],
                 harvester_name=result[3],
+                is_running=result[4],
             )
 
     @staticmethod
@@ -94,7 +103,7 @@ class HarvesterRow(pygalvanalyser.Row):
             cursor.execute(
                 (
                     "SELECT id, periodic_hour, last_successful_run, "
-                    "harvester_name "
+                    "harvester_name, is_running "
                     "FROM harvesters.harvester WHERE "
                     "machine_id=(%s)"
                 ),
@@ -109,6 +118,7 @@ class HarvesterRow(pygalvanalyser.Row):
                 periodic_hour=result[1],
                 last_successful_run=result[2],
                 harvester_name=result[3],
+                is_running=result[4],
             )
 
     @staticmethod
@@ -118,7 +128,7 @@ class HarvesterRow(pygalvanalyser.Row):
                 (
                     "SELECT id, machine_id, "
                     "periodic_hour, last_successful_run, "
-                    "harvester_name "
+                    "harvester_name, is_running "
                     "FROM harvesters.harvester"
                 ),
             )
@@ -129,6 +139,7 @@ class HarvesterRow(pygalvanalyser.Row):
                     periodic_hour=result[2],
                     last_successful_run=result[3],
                     harvester_name=result[4],
+                    is_running=result[5],
                     id_=result[0],
                 )
                 for result in records

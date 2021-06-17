@@ -43,7 +43,7 @@ from celery import current_app as celery
 
 from functools import wraps
 
-from .database.user import User, UserRoles
+from pygalvanalyser.user_data import UserRow
 
 
 @app.after_request
@@ -71,12 +71,14 @@ def login():
             {'WWW.Authentication': 'Basic realm: "login required"'}
         )
 
-    user = User.get(auth.username)
+    conn = app.config["GET_DATABASE_CONN_FOR_SUPERUSER"]()
+    user = UserRow.select_from_username(auth.username, conn)
+    print('got user', user)
 
     if user.validate_password(auth.password):
         response = jsonify({"message": "login successful"})
         access_token = create_access_token(
-            identity=User.to_json(user)
+            identity=UserRow.to_json(user)
         )
         set_access_cookies(response, access_token)
         return response
@@ -123,9 +125,10 @@ def hello():
 @cross_origin()
 @jwt_required()
 def user():
-    users = User.all()
+    conn = app.config["GET_DATABASE_CONN_FOR_SUPERUSER"]()
+    users = UserRow.all(conn)
     print('called user', users)
-    return User.to_json(users)
+    return UserRow.to_json(users)
 
 @app.route('/api/dataset', methods=['GET'])
 @app.route('/api/dataset/<int:id_>', methods=['GET', 'PUT'])
@@ -460,7 +463,7 @@ def run_harvester(id_=None):
 @jwt_required()
 @cross_origin()
 def harvester(id_=None):
-    user = User.from_json(get_jwt_identity())
+    user = UserRow.from_json(get_jwt_identity())
     print('USER', user)
     conn = app.config["GET_DATABASE_CONN_FOR_SUPERUSER"]()
     if request.method == 'GET':
