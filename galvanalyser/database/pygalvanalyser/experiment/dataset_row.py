@@ -19,7 +19,6 @@ class DatasetRow(pygalvanalyser.Row):
         name,
         date,
         dataset_type,
-        original_collector,
         id_=None,
         cell_id=None,
         owner=None,
@@ -31,7 +30,6 @@ class DatasetRow(pygalvanalyser.Row):
         self.name = name
         self.date = date
         self.dataset_type = dataset_type
-        self.original_collector = original_collector
         self.cell_id = cell_id
         self.owner = owner
         self.purpose = purpose
@@ -45,7 +43,6 @@ class DatasetRow(pygalvanalyser.Row):
             'name': self.name,
             'date': self.date.isoformat(),
             'dataset_type': self.dataset_type,
-            'original_collector': self.original_collector,
             'cell_id': self.cell_id,
             'owner': self.owner,
             'purpose': self.purpose,
@@ -55,9 +52,9 @@ class DatasetRow(pygalvanalyser.Row):
         return obj
 
     def __repr__(self):
-        return 'DatasetRow({}, {}, {}, {}, {})'.format(
+        return 'DatasetRow({}, {}, {}, {})'.format(
             self.id, self.name, self.date,
-            self.dataset_type, self.original_collector
+            self.dataset_type
         )
 
     def update(self, conn):
@@ -87,17 +84,16 @@ class DatasetRow(pygalvanalyser.Row):
             cursor.execute(
                 (
                     "INSERT INTO experiment.dataset "
-                    "(name, date, type, original_collector, "
+                    "(name, date, type, "
                     "cell_id, owner, purpose, test_equipment, "
                     "json_data) "
-                    "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) "
+                    "VALUES (%s, %s, %s, %s, %s, %s, %s, %s) "
                     "RETURNING id"
                 ),
                 [
                     self.name,
                     self.date,
                     self.dataset_type,
-                    self.original_collector,
                     self.cell_id,
                     self.owner,
                     self.purpose,
@@ -132,7 +128,7 @@ class DatasetRow(pygalvanalyser.Row):
             cursor.execute(
                 (
                     "SELECT "
-                    "id, type, original_collector, "
+                    "id, type, "
                     "cell_id, owner, purpose, test_equipment, "
                     "json_data "
                     "FROM experiment.dataset "
@@ -148,13 +144,12 @@ class DatasetRow(pygalvanalyser.Row):
                 name=name,
                 date=date,
                 dataset_type=result[1],
-                original_collector=result[2],
-                cell_id=result[3],
-                owner=result[4],
-                purpose=result[5],
-                test_equipment=result[6],
-                json_data=json.loads(result[7])
-                if result[7] is not None
+                cell_id=result[2],
+                owner=result[3],
+                purpose=result[4],
+                test_equipment=result[5],
+                json_data=json.loads(result[6])
+                if result[6] is not None
                 else None,
             )
 
@@ -163,7 +158,7 @@ class DatasetRow(pygalvanalyser.Row):
         with conn.cursor() as cursor:
             cursor.execute(
                 (
-                    "SELECT name, date, type, original_collector, "
+                    "SELECT name, date, type, "
                     "cell_id, owner, purpose, test_equipment, "
                     "json_data "
                     "FROM experiment.dataset WHERE id=(%s)"
@@ -178,13 +173,12 @@ class DatasetRow(pygalvanalyser.Row):
                 name=result[0],
                 date=result[1],
                 dataset_type=result[2],
-                original_collector=result[3],
-                cell_id=result[4],
-                owner=result[5],
-                purpose=result[6],
-                test_equipment=result[7],
-                json_data=json.loads(result[8])
-                if result[8] is not None
+                cell_id=result[3],
+                owner=result[4],
+                purpose=result[5],
+                test_equipment=result[6],
+                json_data=json.loads(result[7])
+                if result[7] is not None
                 else None,
 
             )
@@ -195,7 +189,6 @@ class DatasetRow(pygalvanalyser.Row):
             cursor.execute(
                 (
                     "SELECT id, name, date, type, "
-                    "original_collector, "
                     "cell_id, owner, purpose, test_equipment, "
                     "json_data "
                     "FROM experiment.dataset"
@@ -208,13 +201,12 @@ class DatasetRow(pygalvanalyser.Row):
                     name=result[1],
                     date=result[2],
                     dataset_type=result[3],
-                    original_collector=result[4],
-                    cell_id=result[5],
-                    owner=result[6],
-                    purpose=result[7],
-                    test_equipment=result[8],
-                    json_data=json.loads(result[9])
-                    if result[9] is not None
+                    cell_id=result[4],
+                    owner=result[5],
+                    purpose=result[6],
+                    test_equipment=result[7],
+                    json_data=json.loads(result[8])
+                    if result[8] is not None
                     else None,
                 )
                 for result in records
@@ -250,7 +242,6 @@ class DatasetRow(pygalvanalyser.Row):
             cursor.execute(
                 (
                     "SELECT id, name, date, type, "
-                    "original_collector, "
                     "cell_id, owner, purpose, test_equipment, "
                     "json_data "
                     "FROM experiment.dataset "
@@ -265,13 +256,12 @@ class DatasetRow(pygalvanalyser.Row):
                     name=result[1],
                     date=result[2],
                     dataset_type=result[3],
-                    original_collector=result[4],
-                    cell_id=result[5],
-                    owner=result[6],
-                    purpose=result[7],
-                    test_equipment=result[8],
-                    json_data=json.loads(result[9])
-                    if result[9] is not None
+                    cell_id=result[4],
+                    owner=result[5],
+                    purpose=result[6],
+                    test_equipment=result[7],
+                    json_data=json.loads(result[8])
+                    if result[8] is not None
                     else None,
                 )
                 for result in records

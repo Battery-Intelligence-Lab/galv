@@ -10,7 +10,6 @@ import Paper from '@material-ui/core/Paper';
 import InputBase from '@material-ui/core/InputBase';
 import Tooltip from '@material-ui/core/Tooltip';
 import AddIcon from '@material-ui/icons/Add';
-import { useParams } from "react-router-dom";
 import IconButton from '@material-ui/core/IconButton';
 import TableCell from '@material-ui/core/TableCell';
 import MenuItem from '@material-ui/core/MenuItem';
@@ -31,9 +30,8 @@ import {
 } from './Api'
 
 const useStyles = makeStyles((theme) => ({
-  container: {
-    paddingTop: theme.spacing(4),
-    paddingBottom: theme.spacing(4),
+  paper: {
+    marginTop: theme.spacing(4),
   },
   table: {
     minWidth: 650,
@@ -63,14 +61,19 @@ const useStyles = makeStyles((theme) => ({
 function MyTableRow({env, userData, savedRow, onRowSave, selected, onSelectRow}) {
   const classes = useStyles();
   const [row, setRow] = useState([])
-
-  useEffect(() => {
-    setRow(savedRow);
-  }, [savedRow]);
+  const [dirty, setDirty] = useState(false)
 
   const rowUnchanged = Object.keys(row).reduce((a, k) => {
     return a && row[k] === savedRow[k];
   }, true);
+
+  useEffect(() => {
+    if (!dirty) { 
+      setRow(savedRow);
+    }
+  }, [dirty, savedRow]);
+
+
 
   let useRow = row;
   if (useRow.monitor_path_id === undefined) {
@@ -78,6 +81,7 @@ function MyTableRow({env, userData, savedRow, onRowSave, selected, onSelectRow})
   }
 
   const setValue = (key) => (e) => {
+    setDirty(true);
     setRow({...useRow, [key]: e.target.value});
   };
 
@@ -93,7 +97,8 @@ function MyTableRow({env, userData, savedRow, onRowSave, selected, onSelectRow})
   };
 
   const idToName = (id) => {
-    return userData.filter((x) => x.id === id)[0].username;
+    const user = userData.find((x) => x.id === id);
+    return user ? user.username : 'Not Found';
   };
 
   return (
@@ -148,7 +153,10 @@ function MyTableRow({env, userData, savedRow, onRowSave, selected, onSelectRow})
         <span>
         <IconButton
           disabled={rowUnchanged} 
-          onClick={() => {onRowSave(row);}}
+          onClick={() => {
+            setDirty(false);
+            onRowSave(row);
+          }}
         >
           <SaveIcon />
         </IconButton>
@@ -160,8 +168,7 @@ function MyTableRow({env, userData, savedRow, onRowSave, selected, onSelectRow})
   )
 }
 
-export default function HarvesterDetail() {
-  const { id } = useParams();
+export default function HarvesterDetail({harvester}) {
   const classes = useStyles();
 
   const [userData, setUserData] = useState([])
@@ -170,12 +177,12 @@ export default function HarvesterDetail() {
   const [envData, setEnvData] = useState([])
 
   useEffect(() => {
-    env_harvester(id).then((response) => {
+    env_harvester(harvester.id).then((response) => {
       if (response.ok) {
         return response.json().then(setEnvData);
       }
       });
-  }, []);
+  }, [harvester.id]);
 
   useEffect(() => {
     users().then((response) => {
@@ -187,20 +194,24 @@ export default function HarvesterDetail() {
 
   useEffect(() => {
     refreshPaths(); 
-  }, []);
+  }, [harvester]);
 
   const refreshPaths= () => {
-      monitored_paths(id).then((response) => {
+      monitored_paths(harvester.id).then((response) => {
       if (response.ok) {
         return response.json().then((result) => {
-          setPaths(result.sort((arg1, arg2) => arg1.id - arg2.id));
+          setPaths(result.sort((arg1, arg2) => arg1.monitor_path_id - arg2.monitor_path_id));
+          setSelected(oldSelected => {
+            const newSelected = result.find(x => x.monitor_path_id === oldSelected.monitor_path_id);
+            return newSelected || {monitor_path_id: null};
+          });
         });
       }
       });
   };
 
   const addNewPath= () => {
-    add_monitored_path({harvester_id: id, path: 'Edit me'}).then(refreshPaths);
+    add_monitored_path({harvester_id: harvester.id, path: 'Edit me'}).then(refreshPaths);
   };
   const deletePath = () => {
     delete_monitored_path(selected.monitor_path_id).then(refreshPaths);
@@ -212,8 +223,10 @@ export default function HarvesterDetail() {
   const isSelected = selected.monitor_path_id !== null;
 
   return (
-    <Container maxWidth="lg" className={classes.container}>
     <Paper className={classes.paper}>
+    <Typography variant='h5'>
+      Harvester "{harvester.machine_id}" monitored paths
+    </Typography>
     <TableContainer>
       <Table className={classes.table} size="small">
         <TableHead>
@@ -250,10 +263,10 @@ export default function HarvesterDetail() {
     </IconButton>
       </span>
     </Tooltip>
-    </Paper>
     {isSelected &&
       <Files path={selected}/>
     }
-    </Container>
+    </Paper>
+    
   );
 }

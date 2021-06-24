@@ -159,7 +159,7 @@ export default function DatasetDetail() {
             renderInput={(params) => 
               <TextField  {...params} style={{ width: 380}} label="Cell Used"/>
             }
-            getOptionLabel={(option) => option.uid}
+            getOptionLabel={(option) => option.name}
             onChange={(_, data) => field.onChange(data)}
           />
         )}

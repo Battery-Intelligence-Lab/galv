@@ -5,6 +5,7 @@ import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
 import Paper from '@material-ui/core/Paper';
 import InputBase from '@material-ui/core/InputBase';
+import Typography from '@material-ui/core/Typography';
 import PlayArrowIcon from '@material-ui/icons/PlayArrow';
 import Tooltip from '@material-ui/core/Tooltip';
 import ListIcon from '@material-ui/icons/List';
@@ -49,16 +50,25 @@ const useStyles = makeStyles((theme) => ({
 function MyTableRow({savedRow, onRowSave, selected, onSelectRow}) {
   const classes = useStyles();
   const [row, setRow] = useState([])
+  const [dirty, setDirty] = useState(false)
+
+  
+  const rowUnchanged = Object.keys(row).reduce((a, k) => {
+    return a && row[k] === savedRow[k];
+  }, true);
 
   useEffect(() => {
-    setRow(savedRow);
-  }, [savedRow]);
+    if (!dirty) { 
+      setRow(savedRow);
+    }
+  }, [dirty, savedRow]);
 
-  const rowUnchanged = row.machine_id === savedRow.machine_id;
+
   let useRow = row;
   if (useRow.id === undefined) {
     useRow = savedRow;
   }
+  console.log(useRow);
 
   return (
     <React.Fragment>
@@ -68,7 +78,7 @@ function MyTableRow({savedRow, onRowSave, selected, onSelectRow}) {
       selected={selected}
     >
       <TableCell component="th" scope="row">
-        {useRow.id}
+        {savedRow.id}
       </TableCell>
       
       <TableCell>
@@ -80,32 +90,52 @@ function MyTableRow({savedRow, onRowSave, selected, onSelectRow}) {
           }}
           value={useRow.machine_id}
           onChange={(e) => {
+            setDirty(true);
             setRow({...row, machine_id: e.target.value});
           }} 
         >
         </TextField>
       </TableCell>
       <TableCell component="th" scope="row">
-        {useRow.harvester_name}
+        {savedRow.harvester_name}
       </TableCell>
       <TableCell component="th" scope="row">
-        {useRow.is_running ? "True" : "False"}
+        {savedRow.is_running &&
+          (<Typography color='secondary'>True</Typography>)
+        }
       </TableCell>
       <TableCell component="th" scope="row">
-        {Intl.DateTimeFormat('en-GB', 
+        {savedRow.last_successful_run && 
+          Intl.DateTimeFormat('en-GB', 
           { dateStyle: 'long', timeStyle: 'long' }).format(
-          Date.parse(useRow.last_successful_run)
+          Date.parse(savedRow.last_successful_run)
         )}
       </TableCell>
-      <TableCell component="th" scope="row">
-        {useRow.periodic_hour}
+      <TableCell>
+        <TextField
+          type="number"
+          InputProps={{
+            classes: {
+              input: classes.resize,
+            },
+          }}
+          value={useRow.periodic_hour ? useRow.periodic_hour : ''}
+          onChange={(e) => {
+            setDirty(true);
+            setRow({...row, periodic_hour: e.target.value});
+          }} 
+        >
+        </TextField>
       </TableCell>
       <TableCell align="right">
         <Tooltip title="Save changes to harvester">
         <span>
         <IconButton
-          disabled={rowUnchanged} 
-          onClick={() => {onRowSave(row);}}
+          disabled={!dirty} 
+          onClick={() => {
+            onRowSave(row);
+            setDirty(false);
+          }}
         >
           <SaveIcon />
         </IconButton>
@@ -136,6 +166,10 @@ export default function Harvesters() {
       if (response.ok) {
         return response.json().then((result) => {
           setHarvesterData(result.sort((arg1, arg2) => arg1.id - arg2.id));
+          setSelected(oldSelected => {
+            const newSelected = result.find(x => x.id === oldSelected.id)
+            return newSelected || {id: null};
+          });
         });
       }
       });
@@ -160,6 +194,16 @@ export default function Harvesters() {
   const isSelected = selected.id !== null;
   let history = useHistory();
 
+  const column_headings = [
+    {label: 'ID', help: 'Harvester id in database'},
+    {label: 'Name', help: 'Harvester name'},
+    {label: 'Harvester', help: 'Username for harvester database account'},
+    {label: 'Is Running', help: 'Displays "True" if harvester is currently running'},
+    {label: 'Last Completed Run', help: 'Datetime of last harvester run that successfully ran until completion'},
+    {label: 'Periodic Hour', help: 'If set, harvester is run every day on this hour'},
+    {label: 'Save', help: 'Click to save edits to a row'},
+  ]
+
   return (
     <Container maxWidth="lg" className={classes.container}>
     <Paper className={classes.paper}>
@@ -167,13 +211,16 @@ export default function Harvesters() {
       <Table className={classes.table} size="small">
         <TableHead>
           <TableRow>
-            <TableCell>ID</TableCell>
-            <TableCell>Name</TableCell>
-            <TableCell>Harvester</TableCell>
-            <TableCell>Is Running</TableCell>
-            <TableCell>Last Completed Run</TableCell>
-            <TableCell>Periodic</TableCell>
-            <TableCell>Save</TableCell>
+            {column_headings.map(heading => (
+            <TableCell key={heading.label}>
+              <Tooltip title={heading.help}>
+                <Typography>
+                  {heading.label}
+                </Typography>
+              </Tooltip>
+            </TableCell>
+            ))
+            }
           </TableRow>
         </TableHead>
         <TableBody>
@@ -215,9 +262,10 @@ export default function Harvesters() {
     </IconButton>
     </span>
     </Tooltip>
-
-
     </Paper>
+    {isSelected &&
+      <HarvesterDetail harvester={selected} />
+    }
     </Container>
   );
 }

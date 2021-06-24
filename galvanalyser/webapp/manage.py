@@ -77,16 +77,13 @@ def test(path, test):
         test=True
     )
 
-    database.create_user(
-        test_config,
-        HarvesterTestCase.USER,
-        HarvesterTestCase.USER_PWD,
-        test=True
-    )
-    database.create_institution(
-        test_config,
-        HarvesterTestCase.HARVESTER_INSTITUTION
-    )
+    # create test user
+    conn = app.config["GET_DATABASE_CONN_FOR_SUPERUSER"]()
+    user = UserRow(HarvesterTestCase.USER,
+            password=HarvesterTestCase.USER_PWD,
+            email='test@gmail.com')
+    user.insert(conn)
+    conn.commit()
 
     database.create_harvester_user(
         test_config,
@@ -103,7 +100,7 @@ def test(path, test):
         test_config,
         HarvesterTestCase.MACHINE_ID,
         HarvesterTestCase.DATA_DIR,
-        [HarvesterTestCase.USER],
+        [user.id],
     )
 
     # run harvester tests

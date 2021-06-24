@@ -51,11 +51,9 @@ def add_machine_path(config, machine_id, path, users):
             'machine_id "{}" does not exist'.format(machine_id)
         )
 
-    format_users = '{' + ','.join(users) + '}'
-
     MonitoredPathRow(
         harvester.id,
-        format_users,
+        users,
         path
     ).insert(conn)
 

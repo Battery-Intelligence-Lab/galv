@@ -23,22 +23,16 @@ class TestHarvester(HarvesterTestCase):
         self.assertEqual([], self.verificationErrors)
 
     def test_main(self):
-        template = {
-            "database_username": self.HARVESTER,
-            "database_password": self.HARVESTER_PWD,
-            "database_host": "galvanalyser_postgres",
-            "database_port": 5433,
-            "database_name": self.DATABASE,
-            "machine_id": self.MACHINE_ID,
-            "institution": self.HARVESTER_INSTITUTION,
-        }
-        if not os.path.exists('./config'):
-            os.makedirs('./config')
+        harvester.main(
+            database_user=self.HARVESTER,
+            database_password=self.HARVESTER_PWD,
+            machine_id=self.MACHINE_ID,
+            database_host="galvanalyser_postgres",
+            database_port=5433,
+            database_name=self.DATABASE,
+            base_path=None
+        )
 
-        with open('./config/harvester-config.json', "w+") as json_file:
-            json.dump(template, json_file, indent=4)
-
-        harvester.main(None)
 
         # should have added files to database
         harvester_row = HarvesterRow.select_from_machine_id(

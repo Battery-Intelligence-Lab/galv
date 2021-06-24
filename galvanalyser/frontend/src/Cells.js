@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
 import { makeStyles } from '@material-ui/core/styles';
 import Table from '@material-ui/core/Table';
@@ -73,14 +74,23 @@ function MyTableRow({savedRow, onRowSave, selected, onSelectRow}) {
     >
       <TableCell >
         <TextField
-          value={useRow.uid} 
-          style={{width: 260}}
+          value={useRow.name} 
           InputProps={{
             classes: {
               input: classes.resize,
             },
           }}
-          onChange={setValue('uid')} />
+          onChange={setValue('name')} />
+      </TableCell>
+      <TableCell align="right">
+      <TextField
+          value={useRow.manufacturer} 
+          InputProps={{
+            classes: {
+              input: classes.resize,
+            },
+          }}
+          onChange={setValue('manufacturer')} />
       </TableCell>
       <TableCell align="right">
         <TextField 
@@ -189,7 +199,7 @@ export default function Cells() {
   }
 
   const addNewCell = () => {
-    add_cell({uid: uuidv4()}).then(refreshCells);
+    add_cell({name: 'Edit me'}).then(refreshCells);
   };
   const deleteCell = () => {
     delete_cell(selected.id).then(refreshCells);
@@ -203,6 +213,17 @@ export default function Cells() {
 
   console.log('cellData', cellData);
 
+const column_headings = [
+    {label: 'Name', help: 'Cell Name'},
+    {label: 'Manufacturer', help: 'Cell Manufacturer'},
+    {label: 'Form Factor', help: 'Form Factor'},
+    {label: 'Datasheet', help: 'URL to datasheet'},
+    {label: 'Anode Chemistry', help: 'Anode Chemistry'},
+    {label: 'Cathode Chemistry', help: 'Cathode Chemistry'},
+    {label: 'Nominal Capacity', help: 'Nominal Capacity'},
+    {label: 'Save', help: 'Click to save edits to a row'},
+  ]
+
   return (
     <Container maxWidth="lg" className={classes.container}>
     <Paper className={classes.paper}>
@@ -210,13 +231,16 @@ export default function Cells() {
       <Table className={classes.table} size="small" >
         <TableHead>
           <TableRow>
-            <TableCell>UID</TableCell>
-            <TableCell align="right">Form Factor</TableCell>
-            <TableCell align="right">Datasheet</TableCell>
-            <TableCell align="right">Anode Chemistry</TableCell>
-            <TableCell align="right">Cathode Chemistry</TableCell>
-            <TableCell align="right">Nominal Capacity</TableCell>
-            <TableCell align="right">Nominal Cell Weight</TableCell>
+            {column_headings.map(heading => (
+            <TableCell key={heading.label}>
+              <Tooltip title={heading.help}>
+                <Typography>
+                  {heading.label}
+                </Typography>
+              </Tooltip>
+            </TableCell>
+            ))
+            }
           </TableRow>
         </TableHead>
         <TableBody>

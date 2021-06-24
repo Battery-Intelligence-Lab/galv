@@ -39,7 +39,7 @@ export default function Files({ path }) {
         response.json().then(setFileData);
       }
     });
-  }, []);
+  }, [path]);
 
   const datetimeOptions = {
     year: 'numeric', month: 'numeric', day: 'numeric',

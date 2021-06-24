@@ -5,9 +5,9 @@ import pygalvanalyser
 class CellRow(pygalvanalyser.Row):
     def __init__(
         self,
+        name,
         id=None,
         manufacturer=None,
-        uid=None,
         form_factor=None,
         link_to_datasheet=None,
         anode_chemistry=None,
@@ -16,7 +16,7 @@ class CellRow(pygalvanalyser.Row):
         nominal_cell_weight=None,
     ):
         self.id = id
-        self.uid = uid
+        self.name = name
         self.manufacturer = manufacturer
         self.form_factor = form_factor
         self.link_to_datasheet = link_to_datasheet
@@ -28,7 +28,7 @@ class CellRow(pygalvanalyser.Row):
     def to_dict(self):
         obj = {
             'id': self.id,
-            'uid': self.uid,
+            'name': self.name,
             'manufacturer': self.manufacturer,
             'form_factor': self.form_factor,
             'link_to_datasheet': self.link_to_datasheet,
@@ -43,7 +43,7 @@ class CellRow(pygalvanalyser.Row):
         if isinstance(other, CellRow):
             return (
                 self.id == other.id and
-                self.uid == other.uid and
+                self.name == other.name and
                 self.manufacturer == other.manufacturer and
                 self.form_factor == other.form_factor and
                 self.link_to_datasheet == other.link_to_datasheet and
@@ -59,7 +59,7 @@ class CellRow(pygalvanalyser.Row):
         return ('CellRow({}, {}, {}, {}, {}, {}, {}, {})'
                 .format(
                     self.id,
-                    self.uid,
+                    self.name,
                     self.manufacturer,
                     self.form_factor,
                     self.link_to_datasheet,
@@ -74,7 +74,7 @@ class CellRow(pygalvanalyser.Row):
             cursor.execute(
                 (
                     "INSERT INTO cell_data.cell ("
-                    "uid, manufacturer, cell_form_factor, "
+                    "name, manufacturer, cell_form_factor, "
                     "link_to_datasheet, anode_chemistry, "
                     "cathode_chemistry, nominal_capacity, "
                     "nominal_cell_weight) "
@@ -82,7 +82,7 @@ class CellRow(pygalvanalyser.Row):
                     "RETURNING id"
                 ),
                 [
-                    self.uid,
+                    self.name,
                     self.manufacturer,
                     self.form_factor,
                     self.link_to_datasheet,
@@ -100,7 +100,7 @@ class CellRow(pygalvanalyser.Row):
             cursor.execute(
                 (
                     "UPDATE cell_data.cell SET "
-                    "uid = (%s), "
+                    "name = (%s), "
                     "manufacturer = (%s), cell_form_factor = (%s), "
                     "link_to_datasheet = (%s), anode_chemistry = (%s), "
                     "cathode_chemistry = (%s), nominal_capacity = (%s), "
@@ -108,7 +108,7 @@ class CellRow(pygalvanalyser.Row):
                     "WHERE id=(%s)"
                 ),
                 [
-                    self.uid,
+                    self.name,
                     self.manufacturer, self.form_factor,
                     self.link_to_datasheet, self.anode_chemistry,
                     self.cathode_chemistry, self.nominal_capacity,
@@ -131,7 +131,7 @@ class CellRow(pygalvanalyser.Row):
         with conn.cursor() as cursor:
             cursor.execute(
                 (
-                    "SELECT id, uid, manufacturer, cell_form_factor, "
+                    "SELECT id, name, manufacturer, cell_form_factor, "
                     "link_to_datasheet, anode_chemistry, "
                     "cathode_chemistry, nominal_capacity, "
                     "nominal_cell_weight FROM "
@@ -142,7 +142,7 @@ class CellRow(pygalvanalyser.Row):
             return [
                 CellRow(
                     id=result[0],
-                    uid=result[1],
+                    name=result[1],
                     manufacturer=result[2],
                     form_factor=result[3],
                     link_to_datasheet=result[4],
@@ -159,7 +159,7 @@ class CellRow(pygalvanalyser.Row):
         with conn.cursor() as cursor:
             cursor.execute(
                 (
-                    "SELECT uid, manufacturer, cell_form_factor, "
+                    "SELECT name, manufacturer, cell_form_factor, "
                     "link_to_datasheet, anode_chemistry, "
                     "cathode_chemistry, nominal_capacity, "
                     "nominal_cell_weight FROM "
@@ -173,7 +173,7 @@ class CellRow(pygalvanalyser.Row):
                 return None
             return CellRow(
                 id=id_,
-                uid=result[0],
+                name=result[0],
                 manufacturer=result[1],
                 form_factor=result[2],
                 link_to_datasheet=result[3],
@@ -184,7 +184,7 @@ class CellRow(pygalvanalyser.Row):
             )
 
     @staticmethod
-    def select_from_uid(uid, conn):
+    def select_from_name(name, conn):
         with conn.cursor() as cursor:
             cursor.execute(
                 (
@@ -193,16 +193,16 @@ class CellRow(pygalvanalyser.Row):
                     "cathode_chemistry, nominal_capacity, "
                     "nominal_cell_weight FROM "
                     "cell_data.cell "
-                    "WHERE uid=(%s)"
+                    "WHERE name=(%s)"
                 ),
-                [uid],
+                [name],
             )
             result = cursor.fetchone()
             if result is None:
                 return None
             return CellRow(
                 id=result[0],
-                uid=uid,
+                name=name,
                 manufacturer=result[1],
                 form_factor=result[2],
                 link_to_datasheet=result[3],

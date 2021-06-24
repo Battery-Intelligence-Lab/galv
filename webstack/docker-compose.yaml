@@ -103,15 +103,16 @@ services:
      - ../galvanalyser/webapp:/usr/src/app/galvanalyser/webapp
      - "${GALVANALYSER_HARVESTER_TEST_PATH}:/usr/test_data"
      - "${GALVANALYSER_HARVESTER_BASE_PATH}:/usr/data"
+     - "${CELERY_LOG_DIR}:/var/log/celery"
     restart: unless-stopped
     working_dir: /usr/src/app/galvanalyser/webapp
-    command: python manage.py run -h 0.0.0.0
+    command: ./server.sh 
     restart: unless-stopped
     env_file:
      - ./.env
   galvanalyser_worker:
     image: galvanalyser_app
-    command: ./celery.sh 
+    command: ./worker.sh 
     depends_on:
       - galvanalyser_app
     volumes:
@@ -119,7 +120,7 @@ services:
      - ../galvanalyser/database:/usr/src/app/galvanalyser/database
      - ../galvanalyser/webapp:/usr/src/app/galvanalyser/webapp
      - "${GALVANALYSER_HARVESTER_BASE_PATH}:/usr/data"
-     - "${CELERY_WORKER_LOG_DIR}:/var/log/celery"
+     - "${CELERY_LOG_DIR}:/var/log/celery"
 
     working_dir: /usr/src/app/galvanalyser/webapp
     restart: unless-stopped

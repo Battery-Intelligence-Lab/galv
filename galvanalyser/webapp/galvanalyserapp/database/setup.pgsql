@@ -45,7 +45,7 @@ CREATE TABLE user_data.group
   groupname VARCHAR (100),
   UNIQUE (groupname),
   CONSTRAINT name_notnull CHECK (
-    NOT ( name IS NULL  OR  name = '' )
+    NOT ( groupname IS NULL  OR  groupname = '' )
   )
 )
 WITH (
@@ -187,7 +187,7 @@ GRANT USAGE ON SCHEMA cell_data TO ${harvester_role};
 CREATE TABLE cell_data.cell
 (
     id bigserial NOT NULL,
-    uid uuid,
+    name text NOT NULL,
     cell_form_factor varchar(11),
     link_to_datasheet text,
     anode_chemistry text,
@@ -195,7 +195,7 @@ CREATE TABLE cell_data.cell
     nominal_capacity double precision,
     nominal_cell_weight double precision,
     manufacturer text,
-    CONSTRAINT cell_unique_uid UNIQUE (uid),
+    CONSTRAINT cell_unique_name UNIQUE (name),
     CONSTRAINT cell_pkey PRIMARY KEY (id)
 ) WITH (
     OIDS = FALSE
@@ -229,7 +229,6 @@ CREATE TABLE experiment.dataset
     id bigserial NOT NULL,
     name text NOT NULL,
     date timestamp with time zone NOT NULL,
-    original_collector text NOT NULL,
     type text NOT NULL,
     cell_id bigint,
     owner text,

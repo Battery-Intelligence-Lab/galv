@@ -224,7 +224,6 @@ def import_file(base_path, file_path_row, harvester_name, conn):
                     name=input_file.metadata["Dataset Name"],
                     date=input_file.metadata["Date of Test"],
                     dataset_type=input_file.metadata["Machine Type"],
-                    original_collector="; ".join(file_path_row.monitored_for),
                 )
                 dataset_row.insert(conn)
                 print("Added dataset id " + str(dataset_row.id))
@@ -235,7 +234,7 @@ def import_file(base_path, file_path_row, harvester_name, conn):
                 )
             dataset_id = dataset_row.id
             for user_id in file_path_row.monitored_for:
-                print("  Allowing access to user id" + user_id)
+                print("  Allowing access to user id", user_id)
                 access_row = AccessRow(
                     dataset_id=dataset_id, user_id=user_id
                 )
@@ -326,6 +325,7 @@ def main(database_user=None, database_password=None, machine_id=None,
         )
         conn.autocommit = True
 
+        print('finding machine', config['machine_id'])
         harvester = HarvesterRow.select_from_machine_id(
             config["machine_id"], conn
         )

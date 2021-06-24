@@ -9,6 +9,8 @@ from datetime import datetime
 from datetime import timedelta
 import json
 
+from celery.schedules import crontab
+
 from harvester.__main__ import main as harvester_main
 
 from flask_jwt_extended import create_access_token
@@ -186,7 +188,7 @@ def cell(id_=None):
     elif request.method == 'POST':
         request_data = request.get_json()
         cell = CellRow(
-            uid=request_data.get('uid', None),
+            name=request_data.get('name', None),
             manufacturer=request_data.get('manufacturer', None),
             form_factor=request_data.get('form_factor', None),
             link_to_datasheet=request_data.get('link_to_datasheet', None),
@@ -210,8 +212,8 @@ def cell(id_=None):
         if 'manufacturer' in request_data:
             cell.manufacturer = \
                 request_data['manufacturer']
-        if 'uid' in request_data:
-            cell.uid = request_data['uid']
+        if 'name' in request_data:
+            cell.name = request_data['name']
         if 'manufacturer' in request_data:
             cell.manufacturer = request_data['manufacturer']
         if 'form_factor' in request_data:
@@ -334,8 +336,8 @@ def metadata(dataset_id):
 
         request_data = request.get_json()
 
-        if 'cell_uid' in request_data:
-            metadata.path = request_data['cell_uid']
+        if 'cell_id' in request_data:
+            metadata.path = request_data['cell_id']
         if 'owner' in request_data:
             metadata.owner = request_data['owner']
         if 'purpose' in request_data:
@@ -423,6 +425,28 @@ def run_harvester_celery(machine_id):
         'galvanalyser', base_path='/usr/data'
     )
 
+def run_harvester_periodic(harvester, sender=celery):
+    if harvester.periodic_hour is None:
+        del_harvester_periodic(harvester, sender=sender)
+    else:
+        print('setting up periodic for harvester', harvester)
+        sender.add_periodic_task(
+            crontab(hour=harvester.periodic_hour, minute=0),
+            run_harvester_celery
+            .s(harvester.machine_id)
+            .set(queue=harvester.harvester_name),
+            name=harvester.machine_id + 'periodic'
+        )
+
+def del_harvester_periodic(harvester, sender=celery):
+    del celery.conf.beat_schedule[harvester.machine_id + 'periodic']
+
+@celery.on_after_finalize.connect
+def setup_periodic_tasks(sender, **kwargs):
+    conn = sender.conf["GET_DATABASE_CONN_FOR_SUPERUSER"]()
+    for harvester in HarvesterRow.all(conn):
+        run_harvester_periodic(harvester, sender=sender)
+
 @celery.task()
 def get_env_celery():
     env_var = 'GALVANALYSER_HARVESTER_BASE_PATH'
@@ -480,8 +504,14 @@ def harvester(id_=None):
         request_data = request.get_json()
         if 'machine_id' in request_data:
             harvester.machine_id = request_data['machine_id']
+        if 'periodic_hour' in request_data:
+            harvester.periodic_hour = request_data['periodic_hour']
         harvester.update(conn)
         conn.commit()
+
+        # add periodic task
+        run_harvester_periodic(harvester)
+
         return HarvesterRow.to_json(harvester)
     elif request.method == 'POST':
         request_data = request.get_json()
@@ -491,6 +521,10 @@ def harvester(id_=None):
         )
         new_harvester.insert(conn)
         conn.commit()
+
+        # add periodic task
+        run_harvester_periodic(harvester)
+
         return HarvesterRow.to_json(new_harvester)
     elif request.method == 'DELETE':
         print('deleting', id_)
@@ -499,6 +533,9 @@ def harvester(id_=None):
         )
         harvester.delete(conn)
         conn.commit()
+
+        # delete periodic task
+        del_harvester_periodic(harvester)
         return jsonify({'success': True}), 200
 
 

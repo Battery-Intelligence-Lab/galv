@@ -229,7 +229,6 @@ export default function App() {
         <Switch>
           <PrivateRoute path="/cells" component={Cells} />
           <PrivateRoute path="/harvesters" component={Harvesters} />
-          <PrivateRoute path="/harvester/:id" component={HarvesterDetail} />
           <PrivateRoute path="/dataset/:id" component={DatasetDetail} />
           <PrivateRoute path="/" component={Datasets} />
         </Switch>
