@@ -250,7 +250,7 @@ WITH (
 ALTER TABLE experiment.dataset
     OWNER to postgres;
 
-GRANT INSERT, SELECT, TRIGGER ON TABLE experiment.dataset TO ${harvester_role};
+GRANT INSERT, UPDATE, SELECT, TRIGGER ON TABLE experiment.dataset TO ${harvester_role};
 
 GRANT ALL ON TABLE experiment.dataset TO postgres;
 
