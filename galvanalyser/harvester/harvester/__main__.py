@@ -18,7 +18,6 @@ from pygalvanalyser.experiment.timeseries_data_row import (
     TimeseriesDataRow,
 )
 from pygalvanalyser.experiment.range_label_row import RangeLabelRow
-from pygalvanalyser.experiment.metadata_row import MetadataRow
 import pygalvanalyser.util.battery_exceptions as battery_exceptions
 
 import traceback
@@ -282,11 +281,8 @@ def import_file(base_path, file_path_row, harvester_name, conn):
                 if "misc_file_data" in input_file.metadata:
                     json_dict = input_file.metadata["misc_file_data"]
                     print("Storing misc file metadata")
-                    mdr = MetadataRow(
-                        dataset_id,
-                        json_data=json_dict
-                    )
-                    mdr.insert(conn)
+                    dataset_row.json_data = json_dict
+                    dataset_row.update(conn)
             file_path_row.update_observed_file_state("IMPORTED", conn)
             print("File successfully imported")
     except Exception as e:
