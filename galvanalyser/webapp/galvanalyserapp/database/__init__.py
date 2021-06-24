@@ -30,13 +30,13 @@ def create_institution(config, name):
     conn.close()
 
 
-def create_machine_id(config, machine_id):
+def create_machine_id(config, machine_id, harvester_name):
     conn = _create_superuser_connection(config)
 
     # if machine_id does not already exist then create it
     harvester = HarvesterRow.select_from_machine_id(machine_id, conn)
     if harvester is None:
-        HarvesterRow(machine_id).insert(conn)
+        HarvesterRow(machine_id, harvester_name).insert(conn)
 
     conn.commit()
     conn.close()

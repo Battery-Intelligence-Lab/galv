@@ -3,7 +3,7 @@ import pygalvanalyser
 
 class HarvesterRow(pygalvanalyser.Row):
     def __init__(self, machine_id,
-                 harvester_name=None,
+                 harvester_name,
                  is_running=False,
                  last_successful_run=None,
                  periodic_hour=None, id_=None):

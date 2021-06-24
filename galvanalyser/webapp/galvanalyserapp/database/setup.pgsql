@@ -409,7 +409,7 @@ INSERT INTO experiment.column_type (id, name, unit_id) VALUES (6, 'Temperature',
 INSERT INTO experiment.column_type (id, name, unit_id) VALUES (7, 'Impedence Magnitude', 8);
 INSERT INTO experiment.column_type (id, name, unit_id) VALUES (8, 'Impedence Phase', 9);
 INSERT INTO experiment.column_type (id, name, unit_id) VALUES (9, 'Frequency', 10);
-SELECT setval('experiment.column_type_id_seq'::regclass, 6);
+SELECT setval('experiment.column_type_id_seq'::regclass, 9);
 
 INSERT INTO experiment."column" (id, type_id, name, description) VALUES (0, 0, 'Sample Number', 'The sample or record number. Is increased by one each time a test machine records a reading. Usually counts from 1 at the start of a test');
 INSERT INTO experiment."column" (id, type_id, name, description) VALUES (1, 1, 'Test Time', 'The time in seconds since the test run began.');
@@ -422,7 +422,7 @@ INSERT INTO experiment."column" (id, type_id, name, description) VALUES (7, 1, '
 INSERT INTO experiment."column" (id, type_id, name, description) VALUES (8, 7, 'Impedence Magnitude', 'The magnitude of the impedence (EIS).');
 INSERT INTO experiment."column" (id, type_id, name, description) VALUES (9, 8, 'Impedence Phase', 'The phase of the impedence (EIS).');
 INSERT INTO experiment."column" (id, type_id, name, description) VALUES (10, 9, 'Frequency', 'The frequency of the input EIS voltage signal.');
-SELECT setval('experiment.column_id_seq'::regclass, 7);
+SELECT setval('experiment.column_id_seq'::regclass, 10);
 
 
 -- Table: experiment.timeseries_data

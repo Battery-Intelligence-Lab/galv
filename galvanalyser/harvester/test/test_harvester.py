@@ -73,7 +73,15 @@ class TestHarvester(HarvesterTestCase):
 
 
         # files are now stable, rerun main to insert them
-        harvester.main(None)
+        harvester.main(
+            database_user=self.HARVESTER,
+            database_password=self.HARVESTER_PWD,
+            machine_id=self.MACHINE_ID,
+            database_host="galvanalyser_postgres",
+            database_port=5433,
+            database_name=self.DATABASE,
+            base_path=None
+        )
 
         # check that they are all inserted successfully
         for root, dirs, files in os.walk(self.DATA_DIR):

@@ -79,9 +79,11 @@ def test(path, test):
 
     # create test user
     conn = app.config["GET_DATABASE_CONN_FOR_SUPERUSER"]()
-    user = UserRow(HarvesterTestCase.USER,
-            password=HarvesterTestCase.USER_PWD,
-            email='test@gmail.com')
+    user = UserRow(
+        HarvesterTestCase.USER,
+        password=HarvesterTestCase.USER_PWD,
+        email='test@gmail.com'
+    )
     user.insert(conn)
     conn.commit()
 
@@ -94,6 +96,7 @@ def test(path, test):
     database.create_machine_id(
         test_config,
         HarvesterTestCase.MACHINE_ID,
+        HarvesterTestCase.HARVESTER,
     )
 
     database.add_machine_path(
@@ -195,8 +198,11 @@ def create_harvester(harvester, password):
 
 @cli.command("create_machine_id")
 @click.option('--machine_id', prompt=True)
-def create_machine_id(machine_id):
-    database.create_machine_id(app.config, machine_id)
+@click.option('--harvester_name', prompt=True)
+def create_machine_id(machine_id, harvester_name):
+    database.create_machine_id(
+        app.config, machine_id, harvester_main
+    )
 
 
 @cli.command("add_machine_path")
