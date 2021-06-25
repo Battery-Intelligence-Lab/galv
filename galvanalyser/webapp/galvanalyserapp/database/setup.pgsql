@@ -110,10 +110,9 @@ CREATE TABLE harvesters.monitored_path
 (
     harvester_id bigint NOT NULL,
     path text NOT NULL,
-    monitored_for bigint[] NOT NULL,
     monitor_path_id bigserial NOT NULL,
-    PRIMARY KEY (path, harvester_id),
-    UNIQUE (monitor_path_id),
+    UNIQUE (path, harvester_id),
+    PRIMARY KEY (monitor_path_id),
     FOREIGN KEY (harvester_id)
         REFERENCES harvesters.harvester (id) MATCH SIMPLE
         ON UPDATE CASCADE
@@ -130,6 +129,33 @@ ALTER TABLE harvesters.monitored_path
 GRANT SELECT ON TABLE harvesters.monitored_path TO ${harvester_role};
 
 GRANT ALL ON TABLE harvesters.monitored_path TO postgres;
+
+-- Table: experiment.monitored_for
+
+-- DROP TABLE experiment.monitored_for;
+
+CREATE TABLE harvesters.monitored_for
+(
+    path_id bigint NOT NULL,
+    user_id bigint NOT NULL,
+    PRIMARY KEY (path_id, user_id),
+    FOREIGN KEY (path_id)
+        REFERENCES harvesters.monitored_path (monitor_path_id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+    FOREIGN KEY (user_id)
+        REFERENCES user_data.user (id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+)
+WITH (
+    OIDS = FALSE
+);
+
+ALTER TABLE harvesters.monitored_for
+    OWNER to postgres;
+
+GRANT ALL ON TABLE harvesters.monitored_for TO postgres;
 
 -- Type: file_state_t
 
@@ -231,16 +257,20 @@ CREATE TABLE experiment.dataset
     date timestamp with time zone NOT NULL,
     type text NOT NULL,
     cell_id bigint,
-    owner text,
+    owner_id bigint,
     purpose text,
-    test_equipment text,
     json_data jsonb,
     
     PRIMARY KEY (name, date),
     FOREIGN KEY (cell_id)
         REFERENCES cell_data.cell (id) MATCH SIMPLE
         ON UPDATE CASCADE
-        ON DELETE CASCADE,
+        ON DELETE SET NULL,
+    FOREIGN KEY (owner_id)
+        REFERENCES user_data.user (id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE SET NULL,
+
     UNIQUE (id)
 )
 WITH (
@@ -277,9 +307,34 @@ WITH (
 ALTER TABLE experiment.equipment
     OWNER to postgres;
 
-GRANT INSERT, SELECT, TRIGGER ON TABLE experiment.dataset TO ${harvester_role};
-
 GRANT ALL ON TABLE experiment.equipment TO postgres;
+
+-- Table: experiment.dataset_equipment
+
+-- DROP TABLE experiment.dataset_equipment;
+
+CREATE TABLE experiment.dataset_equipment
+(
+    dataset_id bigint NOT NULL,
+    equipment_id bigint NOT NULL,
+    PRIMARY KEY (dataset_id, equipment_id),
+    FOREIGN KEY (dataset_id)
+        REFERENCES experiment.dataset (id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+    FOREIGN KEY (equipment_id)
+        REFERENCES experiment.equipment (id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+)
+WITH (
+    OIDS = FALSE
+);
+
+ALTER TABLE experiment.dataset_equipment
+    OWNER to postgres;
+
+GRANT ALL ON TABLE experiment.dataset_equipment TO postgres;
 
 
 -- Table: experiment.access

@@ -14,6 +14,8 @@ import Harvesters from "./Harvesters"
 import HarvesterDetail from "./HarvesterDetail"
 import DatasetDetail from "./DatasetDetail"
 import Cells from "./Cells"
+import SpeedIcon from '@material-ui/icons/Speed';
+import Equipment from "./Equipment"
 import Datasets from "./Datasets"
 import TableChartIcon from '@material-ui/icons/TableChart';
 import BusinessIcon from '@material-ui/icons/Business';
@@ -173,6 +175,13 @@ export default function App() {
         </ListItemIcon>
         <ListItemText primary="Cells" />
       </ListItem>
+      <ListItem button component={Link} to="/equipment">
+        <ListItemIcon>
+          <SpeedIcon/>
+        </ListItemIcon>
+        <ListItemText primary="Equipment" />
+      </ListItem>
+
 
     </div>
   );
@@ -228,6 +237,7 @@ export default function App() {
               renders the first one that matches the current URL. */}
         <Switch>
           <PrivateRoute path="/cells" component={Cells} />
+          <PrivateRoute path="/equipment" component={Equipment} />
           <PrivateRoute path="/harvesters" component={Harvesters} />
           <PrivateRoute path="/dataset/:id" component={DatasetDetail} />
           <PrivateRoute path="/" component={Datasets} />

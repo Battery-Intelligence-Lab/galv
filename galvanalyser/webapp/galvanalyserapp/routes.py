@@ -28,7 +28,7 @@ from pygalvanalyser.experiment.timeseries_data_row import (
     RECORD_NO_COLUMN_ID,
 )
 from pygalvanalyser.experiment import (
-    AccessRow, DatasetRow, ColumnRow, MetadataRow
+    AccessRow, DatasetRow, ColumnRow, MetadataRow, EquipmentRow,
 )
 from pygalvanalyser.cell_data import (
     CellRow, ManufacturerRow
@@ -160,14 +160,71 @@ def dataset(id_=None):
             dataset.cell_id = request_data['cell_id']
         if 'owner' in request_data:
             dataset.owner = request_data['owner']
-        if 'test_equipment' in request_data:
-            dataset.test_equipment = request_data['test_equipment']
+        if 'equipment' in request_data:
+            dataset.equipment = request_data['equipment']
         if 'purpose' in request_data:
             dataset.purpose = request_data['purpose']
 
         dataset.update(conn)
         conn.commit()
         return DatasetRow.to_json(dataset)
+
+@app.route('/api/equipment', methods=['GET', 'POST'])
+@app.route('/api/equipment/<int:id_>', methods=['GET', 'PUT', 'DELETE'])
+@cross_origin()
+@jwt_required()
+def equipment(id_=None):
+    conn = app.config["GET_DATABASE_CONN_FOR_SUPERUSER"]()
+    if request.method == 'GET':
+        if id_ is None:
+            equipment = EquipmentRow.all(conn)
+        else:
+            equipment = EquipmentRow.select_from_id(id_, conn)
+            if equipment is None:
+                return jsonify({
+                    'message': 'equipment not found'
+                }), 404
+        return EquipmentRow.to_json(equipment)
+    elif request.method == 'POST':
+        request_data = request.get_json()
+        equipment = EquipmentRow(
+            name=request_data.get('name', None),
+            type=request_data.get('type', None),
+        )
+        equipment.insert(conn)
+        conn.commit()
+        return EquipmentRow.to_json(equipment)
+    elif request.method == 'PUT':
+        equipment = EquipmentRow.select_from_id(id_, conn)
+        if equipment is None:
+            return jsonify({
+                'message': 'equipment not found'
+            }), 404
+
+        request_data = request.get_json()
+
+        if 'type' in request_data:
+            equipment.type = request_data['type']
+        if 'name' in request_data:
+            equipment.name = request_data['name']
+
+        equipment.update(conn)
+        conn.commit()
+        return EquipmentRow.to_json(equipment)
+    elif request.method == 'DELETE':
+        print('deleting', id_)
+        equipment = EquipmentRow.select_from_id(
+            id_, conn
+        )
+        if equipment is None:
+            return jsonify({
+                'message': 'equipment not found'
+            }), 404
+
+        equipment.delete(conn)
+        conn.commit()
+        return jsonify({'success': True}), 200
+
 
 @app.route('/api/cell', methods=['GET', 'POST'])
 @app.route('/api/cell/<int:id_>', methods=['GET', 'PUT', 'DELETE'])
@@ -342,8 +399,8 @@ def metadata(dataset_id):
             metadata.owner = request_data['owner']
         if 'purpose' in request_data:
             metadata.purpose = request_data['purpose']
-        if 'test_equipment' in request_data:
-            metadata.test_equipment = request_data['test_equipment']
+        if 'equipment' in request_data:
+            metadata.equipment = request_data['equipment']
         if 'json_data' in request_data:
             json_data = request_data['json_data']
             try:

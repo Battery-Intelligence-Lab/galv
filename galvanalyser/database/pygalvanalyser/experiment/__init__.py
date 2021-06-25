@@ -1,4 +1,5 @@
 from .access_row import AccessRow
+from .equipment_row import EquipmentRow
 from .column_row import ColumnRow
 from .dataset_row import DatasetRow
 from .input_file import InputFile

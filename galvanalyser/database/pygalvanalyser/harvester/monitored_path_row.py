@@ -32,36 +32,58 @@ class MonitoredPathRow(pygalvanalyser.Row):
         }
         return obj
 
+    def _insert_monitored_paths(self, cursor):
+        if len(self.monitored_for) > 0:
+            monitored_for_rows = ', '.join(
+                ['({}, {})'.format(self.monitor_path_id, uid)
+                    for uid in self.monitored_for]
+            )
+            print('XXXXX', monitored_for_rows)
+            cursor.execute(
+                (
+                    "INSERT INTO harvesters.monitored_for "
+                    "(path_id, user_id) VALUES %s"
+                ),
+                [monitored_for_rows],
+            )
 
     def insert(self, conn):
         with conn.cursor() as cursor:
             cursor.execute(
                 (
                     "INSERT INTO harvesters.monitored_path "
-                    "(harvester_id, monitored_for, path) VALUES (%s, %s, %s) "
-                    "ON CONFLICT (harvester_id, path)"
-                    "DO UPDATE "
-                    " SET monitored_for = EXCLUDED.monitored_for "
+                    "(harvester_id, path) VALUES (%s, %s) "
                     "RETURNING monitor_path_id"
                 ),
-                [self.harvester_id, self.monitored_for, self.path],
+                [self.harvester_id, self.path],
             )
             self.monitor_path_id = cursor.fetchone()[0]
+
+            self._insert_monitored_paths(cursor)
+
 
     def update(self, conn):
         with conn.cursor() as cursor:
             cursor.execute(
                 (
                     "UPDATE harvesters.monitored_path SET "
-                    "harvester_id = (%s), monitored_for = (%s), "
+                    "harvester_id = (%s), "
                     "path = (%s) "
                     "WHERE monitor_path_id=(%s)"
                 ),
                 [
-                    self.harvester_id, self.monitored_for,
+                    self.harvester_id,
                     self.path, self.monitor_path_id
                 ],
             )
+            cursor.execute(
+                (
+                    "DELETE FROM harvesters.monitored_for "
+                    "WHERE path_id=(%s)"
+                ),
+                [self.monitor_path_id],
+            )
+            self._insert_monitored_paths(cursor)
 
     def delete(self, conn):
         with conn.cursor() as cursor:
@@ -74,11 +96,26 @@ class MonitoredPathRow(pygalvanalyser.Row):
             )
 
     @staticmethod
+    def _get_monitored_for(id_, cursor):
+            cursor.execute(
+                (
+                    "SELECT user_id FROM "
+                    "harvesters.monitored_for "
+                    "WHERE path_id=(%s)"
+                ),
+                [id_],
+            )
+            records = cursor.fetchall()
+            return [result[0] for result in records]
+
+
+
+    @staticmethod
     def select_from_id(id_, conn):
         with conn.cursor() as cursor:
             cursor.execute(
                 (
-                    "SELECT harvester_id, monitored_for, path FROM "
+                    "SELECT harvester_id, path FROM "
                     "harvesters.monitored_path "
                     "WHERE monitor_path_id=(%s)"
                 ),
@@ -89,8 +126,10 @@ class MonitoredPathRow(pygalvanalyser.Row):
                 return None
             return MonitoredPathRow(
                     harvester_id=result[0],
-                    monitored_for=result[1],
-                    path=result[2],
+                    monitored_for=(
+                        MonitoredPathRow._get_monitored_for(result[0], cursor),
+                    ),
+                    path=result[1],
                     monitor_path_id=id_,
                 )
 
@@ -99,7 +138,7 @@ class MonitoredPathRow(pygalvanalyser.Row):
         with conn.cursor() as cursor:
             cursor.execute(
                 (
-                    "SELECT monitored_for, path, monitor_path_id FROM "
+                    "SELECT path, monitor_path_id FROM "
                     "harvesters.monitored_path "
                     "WHERE harvester_id=(%s)"
                 ),
@@ -109,9 +148,11 @@ class MonitoredPathRow(pygalvanalyser.Row):
             return [
                 MonitoredPathRow(
                     harvester_id=harvester_id,
-                    monitored_for=result[0],
-                    path=result[1],
-                    monitor_path_id=result[2],
+                    monitored_for=(
+                        MonitoredPathRow._get_monitored_for(result[1], cursor),
+                    ),
+                    path=result[0],
+                    monitor_path_id=result[1],
                 )
                 for result in records
             ]
@@ -121,7 +162,7 @@ class MonitoredPathRow(pygalvanalyser.Row):
         with conn.cursor() as cursor:
             cursor.execute(
                 (
-                    "SELECT monitored_for, monitor_path_id FROM "
+                    "SELECT monitor_path_id FROM "
                     "harvesters.monitored_path "
                     "WHERE harvester_id=(%s) AND path=(%s)"
                 ),
@@ -132,29 +173,10 @@ class MonitoredPathRow(pygalvanalyser.Row):
                 return None
             return MonitoredPathRow(
                     harvester_id=harvester_id,
-                    monitored_for=result[0],
+                    monitored_for=(
+                        MonitoredPathRow._get_monitored_for(result[0], cursor),
+                    ),
                     path=path,
-                    monitor_path_id=result[1],
+                    monitor_path_id=result[0],
                 )
 
-    @staticmethod
-    def select_from_monitored_for(monitored_for, conn):
-        with conn.cursor() as cursor:
-            cursor.execute(
-                (
-                    "SELECT harvester_id, path, monitor_path_id FROM "
-                    "harvesters.monitored_path "
-                    "WHERE monitored_for=(%s)"
-                ),
-                [monitored_for],
-            )
-            records = cursor.fetchall()
-            return [
-                MonitoredPathRow(
-                    harvester_id=result[0],
-                    monitored_for=monitored_for,
-                    path=result[1],
-                    monitor_path_id=result[2],
-                )
-                for result in records
-            ]

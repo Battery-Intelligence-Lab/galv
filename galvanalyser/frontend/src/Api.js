@@ -182,6 +182,50 @@ export async function metadata(dataset_id) {
   return authFetch(url + `metadata/${dataset_id}`);
 }
 
+export async function equipment(id) { 
+  if (id) {
+    return authFetch(url + `equipment/${id}`);
+  }
+  return authFetch(url + `equipment`);
+}
+
+//// equipment is object with fields:
+//
+// { name: ?, type: ?, }
+export async function add_equipment(equipment) { 
+  return authFetch(
+    url + `equipment`, 
+    {
+      method: 'POST',
+      headers: headers,
+      body: JSON.stringify(equipment),
+    }
+  );
+}
+
+// equipment is object with fields:
+//
+// { name: ?, type: ?, }
+export async function update_equipment(id, equipment) { 
+  return authFetch(
+    url + `equipment/${id}`, 
+    {
+      method: 'PUT',
+      headers: headers,
+      body: JSON.stringify(equipment),
+    }
+  );
+}
+
+export async function delete_equipment(id) { 
+  return authFetch(
+    url + `equipment/${id}`, 
+    {
+      method: 'DELETE',
+    }
+  );
+}
+
 export async function cells(id) { 
   if (id) {
     return authFetch(url + `cell/${id}`);

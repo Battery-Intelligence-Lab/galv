@@ -5,7 +5,6 @@ import Container from '@material-ui/core/Container';
 import { datasets} from './Api';
 import { makeStyles } from '@material-ui/core/styles';
 import DatasetChart from './DatasetChart'
-import DatasetMetadata from './DatasetMetadata'
 import Button from '@material-ui/core/Button';
 import { useHistory } from "react-router-dom";
 
@@ -41,7 +40,7 @@ export default function Datasets() {
     },
     { field: 'dataset_type', headerName: 'Type', width: 100 },
     { field: 'original_collector', headerName: 'User', width: 100 },
-    { field: 'test_equipment', headerName: 'Test Equipment', width: 160 },
+    { field: 'equipment', headerName: 'Test Equipment', width: 160 },
     { field: 'cell_id', headerName: 'Cell ID', width: 100 },
     { field: 'owner', headerName: 'Owner', width: 150 },
     { field: 'purpose', headerName: 'Purpose', width: 150 },
@@ -58,7 +57,7 @@ export default function Datasets() {
       cell_id: d.cell_id,
       owner: d.owner,
       purpose: d.purpose,
-      test_equipment: d.test_equipment,
+      equipment: d.equipment,
     };
   });
 
