@@ -282,7 +282,7 @@ def import_file(base_path, file_path_row, harvester_name, conn):
                     json_dict = input_file.metadata["misc_file_data"]
                     print("Storing misc file metadata")
                     dataset_row.json_data = json_dict
-                    dataset_row.update(conn)
+                    dataset_row.update(conn, update_equipment=False)
             file_path_row.update_observed_file_state("IMPORTED", conn)
             print("File successfully imported")
     except Exception as e:

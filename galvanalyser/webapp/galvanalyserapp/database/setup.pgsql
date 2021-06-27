@@ -157,6 +157,8 @@ ALTER TABLE harvesters.monitored_for
 
 GRANT ALL ON TABLE harvesters.monitored_for TO postgres;
 
+GRANT SELECT ON TABLE harvesters.monitored_for TO ${harvester_role};
+
 -- Type: file_state_t
 
 -- DROP TYPE harvesters.file_state_t;

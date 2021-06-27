@@ -56,7 +56,7 @@ export default function DatasetDetail() {
   const { control, handleSubmit, reset } = useForm();
 
   const [cellData, setCellData] = useState([])
-  const [equipmentData, setEquipmentData] = useState([])
+  const [equipmentData, setEquipmentData] = useState(null)
   const [dataset, setDataset] = useState(null)
   const [userData, setUserData] = useState([])
 
@@ -102,12 +102,13 @@ export default function DatasetDetail() {
   console.log('rendering with dataset', dataset);
   console.log('rendering with userdata', userData);
   console.log('rendering with celldata', cellData);
+  console.log('rendering with equipmentData ', equipmentData);
 
   const cellOptions = cellData.map(cell => (
     {key: cell.name, value: cell.id}
   ));
   const userOptions = userData.map(user => (
-    {key: user.namename, value: user.id}
+    {key: user.username, value: user.id}
   ));
   const equipmentOptions = equipmentData.map(e => (
     {key: e.name, value: e.id}

@@ -608,11 +608,13 @@ def monitored_path(id_=None):
             paths = MonitoredPathRow.select_from_id(
                 id_, conn
             )
+            print('sending monitored_path', paths.monitored_for)
         else:
             harvester_id = request.args['harvester_id']
             paths = MonitoredPathRow.select_from_harvester_id(
                 harvester_id, conn
             )
+            print('sending monitored_paths', [p.monitored_for for p in paths])
         return MonitoredPathRow.to_json(paths)
     elif request.method == 'PUT':
         path = MonitoredPathRow.select_from_id(
@@ -623,6 +625,8 @@ def monitored_path(id_=None):
             path.path = request_data['path']
         if 'monitored_for' in request_data:
             path.monitored_for = request_data['monitored_for']
+            print('got monitored_for: = ', path.monitored_for)
+
         if 'harvester_id' in request_data:
             path.harvester_id = request_data['harvester_id']
         path.update(conn)

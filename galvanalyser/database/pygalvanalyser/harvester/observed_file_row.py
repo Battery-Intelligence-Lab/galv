@@ -1,6 +1,6 @@
 import psycopg2
 import pygalvanalyser
-
+from pygalvanalyser.harvester import MonitoredPathRow
 
 class ObservedFileRow(pygalvanalyser.Row):
     def __init__(
@@ -178,13 +178,15 @@ class ObservedFilePathRow:
         self.last_observed_time = last_observed_time
         self.file_state = file_state
 
+
+
     @staticmethod
     def select_from_harvester_id_with_state(harvester_id, file_state, conn):
         with conn.cursor() as cursor:
             cursor.execute(
                 (
                     "SELECT hof.monitor_path_id, hmp.path, hof.path, "
-                    "hmp.monitored_for, hof.last_observed_size, "
+                    "hof.last_observed_size, "
                     "hof.last_observed_time "
                     "FROM harvesters.observed_file AS hof "
                     "INNER JOIN harvesters.monitored_path AS hmp ON "
@@ -200,9 +202,11 @@ class ObservedFilePathRow:
                     monitor_path_id=result[0],
                     monitored_path=result[1],
                     observed_path=result[2],
-                    monitored_for=result[3],
-                    last_observed_size=result[4],
-                    last_observed_time=result[5],
+                    monitored_for=(
+                        MonitoredPathRow._get_monitored_for(result[0], cursor)
+                    ),
+                    last_observed_size=result[3],
+                    last_observed_time=result[4],
                     file_state=file_state,
                 )
                 for result in records

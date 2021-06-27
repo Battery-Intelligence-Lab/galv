@@ -21,7 +21,7 @@ class DatasetRow(pygalvanalyser.Row):
         dataset_type,
         id_=None,
         cell_id=None,
-        owner=None,
+        owner_id=None,
         purpose=None,
         equipment=None,
         json_data=None
@@ -31,9 +31,12 @@ class DatasetRow(pygalvanalyser.Row):
         self.date = date
         self.dataset_type = dataset_type
         self.cell_id = cell_id
-        self.owner = owner
+        self.owner_id = owner_id
         self.purpose = purpose
-        self.equipment = equipment
+        if equipment is None:
+            self.equipment = []
+        else:
+            self.equipment = equipment
         self.json_data = json_data
 
     def to_dict(self):
@@ -44,7 +47,7 @@ class DatasetRow(pygalvanalyser.Row):
             'date': self.date.isoformat(),
             'dataset_type': self.dataset_type,
             'cell_id': self.cell_id,
-            'owner': self.owner,
+            'owner_id': self.owner_id,
             'purpose': self.purpose,
             'equipment': self.equipment,
             'json_data': json_str,
@@ -57,31 +60,32 @@ class DatasetRow(pygalvanalyser.Row):
             self.dataset_type
         )
 
-    def update(self, conn):
+    def update(self, conn, update_equipment=True):
         with conn.cursor() as cursor:
             cursor.execute(
                 (
                     "UPDATE experiment.dataset SET "
                     "name = (%s), "
-                    "cell_id = (%s), owner = (%s), "
+                    "cell_id = (%s), owner_id = (%s), "
                     "purpose = (%s) "
                     "WHERE id=(%s)"
                 ),
                 [
                     self.name,
-                    self.cell_id, self.owner,
+                    self.cell_id, self.owner_id,
                     self.purpose,
                     self.id
                 ],
             )
-            cursor.execute(
-                (
-                    "DELETE FROM experiment.dataset_equipment "
-                    "WHERE dataset_id=(%s)"
-                ),
-                [self.id],
-            )
-            self._insert_equipment(cursor)
+            if update_equipment:
+                cursor.execute(
+                    (
+                        "DELETE FROM experiment.dataset_equipment "
+                        "WHERE dataset_id=(%s)"
+                    ),
+                    [self.id],
+                )
+                self._insert_equipment(cursor)
 
     @staticmethod
     def _get_equipment(id_, cursor):
@@ -97,17 +101,20 @@ class DatasetRow(pygalvanalyser.Row):
             return [result[0] for result in records]
 
     def _insert_equipment(self, cursor):
-        equipment_rows = ', '.join(
-            ['({}, {})'.format(self.id, eid)
-                for eid in self.equipment]
-        )
-        cursor.execute(
-            (
-                "INSERT INTO experiment.dataset_equipment"
-                "(dataset_id, equipment_id) VALUES %s "
-            ),
-            [equipment_rows],
-        )
+        if len(self.equipment) > 0:
+            equipment_rows = b','.join(
+                    cursor.mogrify(
+                        "(%s,%s)", [self.id, x]
+                    )
+                    for x in self.equipment
+                )
+            cursor.execute(
+                (
+                    b"INSERT INTO experiment.dataset_equipment"
+                    b"(dataset_id, equipment_id) VALUES " + equipment_rows
+                ),
+                [equipment_rows],
+            )
 
     def insert(self, conn):
         # make sure we dont have any null unicode values in the json
@@ -119,7 +126,7 @@ class DatasetRow(pygalvanalyser.Row):
                 (
                     "INSERT INTO experiment.dataset "
                     "(name, date, type, "
-                    "cell_id, owner, purpose, "
+                    "cell_id, owner_id, purpose, "
                     "json_data) "
                     "VALUES (%s, %s, %s, %s, %s, %s, %s) "
                     "RETURNING id"
@@ -129,15 +136,15 @@ class DatasetRow(pygalvanalyser.Row):
                     self.date,
                     self.dataset_type,
                     self.cell_id,
-                    self.owner,
+                    self.owner_id,
                     self.purpose,
                     json_str,
                 ],
             )
+
             self.id = cursor.fetchone()[0]
 
             self._insert_equipment(cursor)
-
 
 
     def delete(self, conn):
@@ -162,7 +169,7 @@ class DatasetRow(pygalvanalyser.Row):
             cursor.execute(
                 (
                     "SELECT equipment_id FROM "
-                    "experiment.dataset_equipment"
+                    "experiment.dataset_equipment "
                     "WHERE dataset_id=(%s)"
                 ),
                 [id_],
@@ -179,7 +186,7 @@ class DatasetRow(pygalvanalyser.Row):
                 (
                     "SELECT "
                     "id, type, "
-                    "cell_id, owner, purpose, "
+                    "cell_id, owner_id, purpose, "
                     "json_data "
                     "FROM experiment.dataset "
                     "WHERE name=(%s) AND date=(%s)"
@@ -195,7 +202,7 @@ class DatasetRow(pygalvanalyser.Row):
                 date=date,
                 dataset_type=result[1],
                 cell_id=result[2],
-                owner=result[3],
+                owner_id=result[3],
                 purpose=result[4],
                 equipment=(
                     DatasetRow._get_equipment(result[0], cursor)
@@ -211,7 +218,7 @@ class DatasetRow(pygalvanalyser.Row):
             cursor.execute(
                 (
                     "SELECT name, date, type, "
-                    "cell_id, owner, purpose, "
+                    "cell_id, owner_id, purpose, "
                     "json_data "
                     "FROM experiment.dataset WHERE id=(%s)"
                 ),
@@ -226,7 +233,7 @@ class DatasetRow(pygalvanalyser.Row):
                 date=result[1],
                 dataset_type=result[2],
                 cell_id=result[3],
-                owner=result[4],
+                owner_id=result[4],
                 purpose=result[5],
                 equipment=(
                     DatasetRow._get_equipment(id_, cursor)
@@ -243,7 +250,7 @@ class DatasetRow(pygalvanalyser.Row):
             cursor.execute(
                 (
                     "SELECT id, name, date, type, "
-                    "cell_id, owner, purpose, "
+                    "cell_id, owner_id, purpose, "
                     "json_data "
                     "FROM experiment.dataset"
                 )
@@ -256,7 +263,7 @@ class DatasetRow(pygalvanalyser.Row):
                     date=result[2],
                     dataset_type=result[3],
                     cell_id=result[4],
-                    owner=result[5],
+                    owner_id=result[5],
                     purpose=result[6],
                     equipment=(
                         DatasetRow._get_equipment(result[0], cursor)
@@ -298,7 +305,7 @@ class DatasetRow(pygalvanalyser.Row):
             cursor.execute(
                 (
                     "SELECT id, name, date, type, "
-                    "cell_id, owner, purpose, "
+                    "cell_id, owner_id, purpose, "
                     "json_data "
                     "FROM experiment.dataset "
                     "WHERE " + filter_query
@@ -313,7 +320,7 @@ class DatasetRow(pygalvanalyser.Row):
                     date=result[2],
                     dataset_type=result[3],
                     cell_id=result[4],
-                    owner=result[5],
+                    owner_id=result[5],
                     purpose=result[6],
                     equipment=(
                         DatasetRow._get_equipment(result[0], cursor)

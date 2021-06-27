@@ -86,9 +86,12 @@ export function FormMultiSelectField({control, name, defaultValue, label, option
           multiple
           renderValue={(selected) => (
             <div className={classes.chips}>
-              {selected.map((value, index) => (
-                <Chip key={value} label={options[index].key} 
-                      className={classes.chip} />
+              {selected.map(value => (
+                <Chip 
+                  key={value} 
+                  label={options.find(x => x.value === value).key} 
+                  className={classes.chip} 
+                />
               ))}
             </div>
           )}

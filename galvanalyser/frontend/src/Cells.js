@@ -221,6 +221,7 @@ const column_headings = [
     {label: 'Anode Chemistry', help: 'Anode Chemistry'},
     {label: 'Cathode Chemistry', help: 'Cathode Chemistry'},
     {label: 'Nominal Capacity', help: 'Nominal Capacity'},
+    {label: 'Nominal Cell Weight', help: 'Nominal Cell Weight'},
     {label: 'Save', help: 'Click to save edits to a row'},
   ]
 

@@ -9,7 +9,7 @@ import json
 def verify_email(email):
     return validate_email(
         email_address=email,
-        check_regex=True, check_mx=True,
+        check_regex=True, check_mx=False,
         from_address='my@from.addr.ess',
         helo_host='my.host.name',
         smtp_timeout=10, dns_timeout=10,

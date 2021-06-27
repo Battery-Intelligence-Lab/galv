@@ -36,7 +36,9 @@ export default function Files({ path }) {
   useEffect(() => {
     files(path.monitor_path_id).then((response) => {
       if (response.ok) {
-        response.json().then(setFileData);
+        response.json().then((result) => {
+          setFileData(result.sort((arg1, arg2) => arg1.id - arg2.id));
+        });
       }
     });
   }, [path]);

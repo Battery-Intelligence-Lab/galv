@@ -8,7 +8,10 @@ class MonitoredPathRow(pygalvanalyser.Row):
         self, harvester_id, monitored_for, path, monitor_path_id=None
     ):
         self.harvester_id = harvester_id
-        self.monitored_for = monitored_for
+        if monitored_for is None:
+            self.monitored_for = []
+        else:
+            self.monitored_for = monitored_for
         self.path = path
         self.monitor_path_id = monitor_path_id
 
@@ -34,17 +37,17 @@ class MonitoredPathRow(pygalvanalyser.Row):
 
     def _insert_monitored_paths(self, cursor):
         if len(self.monitored_for) > 0:
-            monitored_for_rows = ', '.join(
-                ['({}, {})'.format(self.monitor_path_id, uid)
-                    for uid in self.monitored_for]
+            monitored_for_rows = b','.join(
+                cursor.mogrify(
+                    "(%s,%s)", [self.monitor_path_id, x]
+                )
+                for x in self.monitored_for
             )
-            print('XXXXX', monitored_for_rows)
             cursor.execute(
                 (
-                    "INSERT INTO harvesters.monitored_for "
-                    "(path_id, user_id) VALUES %s"
+                    b"INSERT INTO harvesters.monitored_for "
+                    b"(path_id, user_id) VALUES " + monitored_for_rows
                 ),
-                [monitored_for_rows],
             )
 
     def insert(self, conn):
@@ -108,8 +111,6 @@ class MonitoredPathRow(pygalvanalyser.Row):
             records = cursor.fetchall()
             return [result[0] for result in records]
 
-
-
     @staticmethod
     def select_from_id(id_, conn):
         with conn.cursor() as cursor:
@@ -127,7 +128,7 @@ class MonitoredPathRow(pygalvanalyser.Row):
             return MonitoredPathRow(
                     harvester_id=result[0],
                     monitored_for=(
-                        MonitoredPathRow._get_monitored_for(result[0], cursor),
+                        MonitoredPathRow._get_monitored_for(result[0], cursor)
                     ),
                     path=result[1],
                     monitor_path_id=id_,
@@ -149,7 +150,7 @@ class MonitoredPathRow(pygalvanalyser.Row):
                 MonitoredPathRow(
                     harvester_id=harvester_id,
                     monitored_for=(
-                        MonitoredPathRow._get_monitored_for(result[1], cursor),
+                        MonitoredPathRow._get_monitored_for(result[1], cursor)
                     ),
                     path=result[0],
                     monitor_path_id=result[1],
@@ -174,7 +175,7 @@ class MonitoredPathRow(pygalvanalyser.Row):
             return MonitoredPathRow(
                     harvester_id=harvester_id,
                     monitored_for=(
-                        MonitoredPathRow._get_monitored_for(result[0], cursor),
+                        MonitoredPathRow._get_monitored_for(result[0], cursor)
                     ),
                     path=path,
                     monitor_path_id=result[0],
