@@ -522,7 +522,7 @@ CREATE TABLE experiment.range_label
     id bigserial NOT NULL,
     dataset_id bigint NOT NULL,
     label_name text NOT NULL,
-	created_by text NOT NULL,
+	  created_by text NOT NULL,
     sample_range int8range NOT NULL,
     info jsonb,
     PRIMARY KEY (dataset_id, label_name, created_by),

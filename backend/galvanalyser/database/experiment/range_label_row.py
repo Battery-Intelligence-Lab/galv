@@ -10,7 +10,6 @@ class RangeLabelRow:
         lower_bound,
         upper_bound,
         info=None,
-        user_created=False,
         id_=None,
     ):
         self.id = id_
@@ -20,7 +19,6 @@ class RangeLabelRow:
         self.lower_bound = lower_bound
         self.upper_bound = upper_bound
         self.info = info
-        self.user_created = user_created
 
     def insert(self, conn):
         with conn.cursor() as cursor:
@@ -53,8 +51,6 @@ class RangeLabelRow:
             cursor.execute(
                 (
                     "SELECT id, label_name, created_by, sample_range, info, "
-                    "tableoid!='experiment.range_label'::regclass::oid as "
-                    "user_created "
                     "FROM experiment.range_label "
                     "WHERE dataset_id=(%s)"
                 ),
@@ -70,7 +66,6 @@ class RangeLabelRow:
                     lower_bound=result[3].lower,
                     upper_bound=result[3].upper,
                     info=result[4],
-                    user_created=result[5],
                 )
                 for result in records
             ]
@@ -81,8 +76,6 @@ class RangeLabelRow:
             cursor.execute(
                 (
                     "SELECT id, created_by, sample_range, info, "
-                    "tableoid!='experiment.range_label'::regclass::oid as "
-                    "user_created "
                     "FROM experiment.range_label "
                     "WHERE dataset_id=(%s) AND label_name=(%s)"
                 ),
@@ -99,26 +92,17 @@ class RangeLabelRow:
                 lower_bound=result[2][0],
                 upper_bound=result[2][1],
                 info=result[3],
-                user_created=result[4],
             )
 
     @staticmethod
     def select_filtered_from_dataset_id(
-        dataset_id, conn, name_like=None, system_made=True, user_made=True
+        dataset_id, conn, name_like=None
     ):
         filter_query = []
         filter_values = [dataset_id]
         if name_like is not None and len(name_like) > 0:
             filter_query.append("label_name LIKE %s")
             filter_values.append(name_like)
-        if not system_made:
-            if not user_made:
-                return []
-            else:
-                filter_query.append("user_created = TRUE")
-        else:
-            if not user_made:
-                filter_query.append("user_created = FALSE")
         if len(filter_query) == 0:
             return RangeLabelRow.select_from_dataset_id(dataset_id, conn)
         with conn.cursor() as cursor:
@@ -126,8 +110,6 @@ class RangeLabelRow:
                 (
                     "SELECT * FROM ("
                     "SELECT id, label_name, created_by, sample_range, info, "
-                    "tableoid!='experiment.range_label'::regclass::oid as "
-                    "user_created "
                     "FROM experiment.range_label "
                     "WHERE dataset_id=(%s)"
                     ") as t WHERE " + (" AND ".join(filter_query))
@@ -144,7 +126,6 @@ class RangeLabelRow:
                     lower_bound=result[3].lower,
                     upper_bound=result[3].upper,
                     info=result[4],
-                    user_created=result[5],
                 )
                 for result in records
             ]

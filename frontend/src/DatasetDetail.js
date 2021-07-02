@@ -74,6 +74,9 @@ export default function DatasetDetail() {
     datasets(id).then((response) => {
       if (response.ok) {
         response.json().then((d) => {
+          d['cell_id'] = d.cell ? d.cell.id : null
+          d['owner_id'] = d.owner ? d.owner.id : null
+          d['equipment'] = d.equipment.map(x => x.id)
           setDataset(d);
         });
       }

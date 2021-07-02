@@ -171,7 +171,7 @@ def dataset(id_=None):
         if 'owner_id' in request_data:
             dataset.owner_id = request_data['owner_id']
         if 'equipment' in request_data:
-            dataset.equipment = request_data['equipment']
+            dataset.equipment = request_data['equipment_ids']
         if 'purpose' in request_data:
             dataset.purpose = request_data['purpose']
 

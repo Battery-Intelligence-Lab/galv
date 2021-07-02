@@ -20,8 +20,6 @@ const useStyles = makeStyles((theme) => ({
 
 export default function Datasets() {
   const [data, setData] = useState([])
-  const [cellData, setCellData] = useState([])
-  const [userData, setUserData] = useState([])
   const classes = useStyles();
   const history = useHistory();
 
@@ -32,16 +30,6 @@ export default function Datasets() {
   };
 
   useEffect(() => {
-    users().then((response) => {
-      if (response.ok) {
-        response.json().then(setUserData);
-      }
-    });
-    cells().then((response) => {
-      if (response.ok) {
-        return response.json().then(setCellData);
-      }
-    });
     datasets().then((response) => {
       if (response.ok) {
         return response.json().then(data => {
@@ -59,7 +47,7 @@ export default function Datasets() {
     });
   }, [])
 
-  if ( !data || !cellData || !userData) {
+  if ( !data ) {
     return ("Loading...");
   }
   const columns: GridColDef[] = [
@@ -85,10 +73,10 @@ export default function Datasets() {
       name: d.name,
       dataset_type: d.dataset_type,
       date: Date.parse(d.date),
-      cell: d.cell_id ? cellData.find(x => d.cell_id === x.id).name : '',
-      owner: d.owner_id ? userData.find(x => d.owner_id === x.id).username : '',
+      cell: d.cell ? d.cell.name : '',
+      owner: d.owner ? d.owner.username : '',
       purpose: d.purpose,
-      metadata: !(!d.cell_id || !d.owner_id || !d.purpose || !d.equipment)
+      metadata: !(!d.cell || !d.owner || !d.purpose || !d.equipment)
     };
   });
 
