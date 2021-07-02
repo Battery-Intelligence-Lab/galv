@@ -132,7 +132,9 @@ class TimeseriesDataRow:
         with conn.cursor() as cursor:
             print("Copying data to table")
             start = timer()
-            cursor.copy_from(iter_file, "experiment.timeseries_data")
+            cursor.copy_expert(
+                'COPY experiment.timeseries_data FROM STDIN', iter_file
+            )
             end = timer()
             if cursor.rowcount != expected_insert_count:
                 raise battery_exceptions.InsertError(

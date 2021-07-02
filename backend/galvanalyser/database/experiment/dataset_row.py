@@ -40,6 +40,9 @@ class DatasetRow(Row):
             self.equipment = equipment
         self.json_data = json_data
 
+    def __eq__(self, other):
+        return self.id == other.id
+
     def to_dict(self):
         json_str = json.dumps(self.json_data, default=json_serial)
         obj = {
@@ -213,7 +216,7 @@ class DatasetRow(Row):
             )
 
     @staticmethod
-    def select_from_id(id_, conn):
+    def select_from_id(id_, conn, get_equipment=True):
         with conn.cursor() as cursor:
             cursor.execute(
                 (
@@ -236,7 +239,7 @@ class DatasetRow(Row):
                 owner_id=result[4],
                 purpose=result[5],
                 equipment=(
-                    DatasetRow._get_equipment(id_, cursor)
+                    DatasetRow._get_equipment(id_, cursor) if get_equipment else None
                 ),
                 json_data=json.loads(result[6])
                 if result[6] is not None

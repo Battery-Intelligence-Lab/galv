@@ -3,9 +3,9 @@ import ntpath
 import copy
 from galvani import BioLogic
 from galvani.BioLogic import VMPdata_colID_dtype_map, VMPdata_colID_flag_map
-from .database.util.battery_exceptions import UnsupportedFileTypeError
-from .database.experiment.input_file import InputFile
-from .database.experiment.timeseries_data_row import (
+from galvanalyser.database.util.battery_exceptions import UnsupportedFileTypeError
+from galvanalyser.database.experiment.input_file import InputFile
+from galvanalyser.database.experiment.timeseries_data_row import (
     RECORD_NO_COLUMN_ID,
     TEST_TIME_COLUMN_ID,
     VOLTAGE_COLUMN_ID,
@@ -18,7 +18,7 @@ from .database.experiment.timeseries_data_row import (
     IMPEDENCE_PHASE_COLUMN_ID,
     FREQUENCY_COLUMN_ID,
 )
-from .database.experiment.unit import Unit
+from galvanalyser.database.experiment.unit import Unit
 
 
 class BiologicMprInputFile(InputFile):

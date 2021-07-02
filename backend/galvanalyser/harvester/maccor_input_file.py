@@ -22,7 +22,11 @@ import re
 from datetime import datetime
 import xlrd
 import maya
-from .database.experiment.input_file import InputFile
+from galvanalyser.database.experiment.input_file import InputFile
+from galvanalyser.database.util.battery_exceptions import (
+    UnsupportedFileTypeError,
+    EmptyFileError,
+)
 
 
 class MaccorInputFile(InputFile):
@@ -377,14 +381,14 @@ class MaccorInputFile(InputFile):
                 file_path.endswith(".csv") or
                 file_path.endswith(".txt")
         ):
-            raise battery_exceptions.UnsupportedFileTypeError
+            raise UnsupportedFileTypeError
 
         self.delimiter = None
         for delim in [',', '\t']:
             if self.is_maccor_text_file(file_path, delim):
                 self.delimiter = delim
         if self.delimiter is None:
-            raise battery_exceptions.UnsupportedFileTypeError
+            raise UnsupportedFileTypeError
 
 
 class MaccorExcelInputFile(MaccorInputFile):
@@ -521,7 +525,7 @@ class MaccorExcelInputFile(MaccorInputFile):
             col = 0
             self._has_metadata_row = True
             if sheet.ncols == 0:
-                raise battery_exceptions.EmptyFileError()
+                raise EmptyFileError()
             elif "Cyc#" in sheet.cell_value(0, 0):
                 self._has_metadata_row = False
             if self._has_metadata_row:
@@ -576,7 +580,7 @@ class MaccorExcelInputFile(MaccorInputFile):
         if file_path.endswith(".xlsx") or file_path.endswith(".xls"):
             return
         else:
-            raise battery_exceptions.UnsupportedFileTypeError
+            raise UnsupportedFileTypeError
 
 
 class MaccorRawInputFile(MaccorInputFile):
@@ -633,27 +637,27 @@ class MaccorRawInputFile(MaccorInputFile):
             print('got line', line)
             line_start = "Today's Date"
             if not line.startswith(line_start):
-                raise battery_exceptions.UnsupportedFileTypeError
+                raise UnsupportedFileTypeError
             line_bits = line.split("\t")
             if not len(line_bits) == 5:
-                raise battery_exceptions.UnsupportedFileTypeError
+                raise UnsupportedFileTypeError
             date_regex = "\d\d\/\d\d\/\d\d\d\d"
             dates_regex = line_start + " " + date_regex + "  Date of Test:"
             if not re.match(dates_regex, line_bits[0]):
-                raise battery_exceptions.UnsupportedFileTypeError
+                raise UnsupportedFileTypeError
             if not re.match(date_regex, line_bits[1]):
-                raise battery_exceptions.UnsupportedFileTypeError
+                raise UnsupportedFileTypeError
             if not line_bits[2] == " Filename:":
-                raise battery_exceptions.UnsupportedFileTypeError
+                raise UnsupportedFileTypeError
             if not line_bits[4].startswith("Comment/Barcode: "):
-                raise battery_exceptions.UnsupportedFileTypeError
+                raise UnsupportedFileTypeError
             line = f.readline()
             standard_columns = (
                 "Rec#\tCyc#\tStep\tTest (Sec)\tStep (Sec)\tAmp-hr\tWatt-hr\tAmps\t"
                 "Volts\tState\tES\tDPt Time"
             )
             if not line.startswith(standard_columns):
-                raise battery_exceptions.UnsupportedFileTypeError
+                raise UnsupportedFileTypeError
 
 
 class LogFilter(object):
@@ -689,7 +693,7 @@ def handle_recno(row, correct_number_of_columns, recno_col, row_idx):
                 + row[recno_col + 2:]
             )
         else:
-            raise battery_exceptions.InvalidDataInFileError(
+            raise InvalidDataInFileError(
                 (
                     "There are more data columns than headers. "
                     "Row {} has {} cols, expected {}"

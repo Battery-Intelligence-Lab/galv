@@ -1,8 +1,10 @@
 from galvanalyser_test_case import GalvanalyserTestCase
-from pygalvanalyser.experiment.input_file import InputFile
-from pygalvanalyser.experiment.timeseries_data_row import TimeseriesDataRow
-from pygalvanalyser.experiment.dataset_row import DatasetRow
-from pygalvanalyser.experiment.institution_row import InstitutionRow
+from galvanalyser.database.experiment import (
+    InputFile,
+    TimeseriesDataRow,
+    DatasetRow,
+    InstitutionRow
+)
 import datetime
 
 
@@ -75,16 +77,11 @@ class DummyInput(InputFile):
 
 class TestInputFile(GalvanalyserTestCase):
     def test_dummy_input(self):
-        oxford = InstitutionRow.select_from_name(
-            self.INSTITUTION, self.harvester_conn
-        )
 
         dataset = DatasetRow(
             name='dummy',
             date=datetime.datetime.now(),
-            institution_id=oxford.id,
             dataset_type='test',
-            original_collector='test',
         )
         dataset.insert(self.harvester_conn)
 

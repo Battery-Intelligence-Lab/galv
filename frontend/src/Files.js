@@ -62,7 +62,7 @@ export default function Files({ path }) {
         </TableHead>
         <TableBody>
           {fileData.map((row) => (
-            <TableRow key={row.name}>
+            <TableRow key={row.path}>
               <TableCell component="th" scope="row">
                 {row.path}
               </TableCell>

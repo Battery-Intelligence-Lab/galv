@@ -173,7 +173,6 @@ export default function Harvesters() {
       }
       });
   };
-  console.log(harvesterData);
 
   const addNewHarvester = () => {
     add_harvester({machine_id: 'Edit me'}).then(refreshHarvesters);
@@ -246,13 +245,6 @@ export default function Harvesters() {
       <DeleteIcon />
     </IconButton>
       </span>
-    </Tooltip>
-    <Tooltip title="Paths and files for selected harvester">
-      <span>
-      <IconButton disabled={!isSelected} onClick={()=>{history.push(`/harvester/${selected.id}`);}}>
-      <ListIcon/>
-    </IconButton>
-    </span>
     </Tooltip>
     <Tooltip title="Run the selected harvester">
       <span>

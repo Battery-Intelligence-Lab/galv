@@ -11,7 +11,7 @@ import json
 
 from celery.schedules import crontab
 
-from .harvester import main as harvester_main
+from galvanalyser.harvester import main as harvester_main
 
 from flask_jwt_extended import create_access_token
 from flask_jwt_extended import jwt_required

@@ -1,6 +1,6 @@
 import unittest
 import psycopg2
-from pygalvanalyser.experiment.institution_row import InstitutionRow
+from galvanalyser.database.experiment import InstitutionRow
 import os
 
 
@@ -10,20 +10,13 @@ class GalvanalyserTestCase(unittest.TestCase):
     HARVESTER = 'my_test_harvester'
     HARVESTER_PWD = 'my_test_harvester'
     DATABASE = "gtest"
-    INSTITUTION = "Oxford"
+    DATA_DIR = '/usr/test_data'
+    MACHINE_ID = 'my_test_harvester'
     POSTGRES_USER = 'postgres'
     POSTGRES_USER_PWD = os.getenv('POSTGRES_PASSWORD')
 
     @classmethod
     def setUpClass(self):
-        self.user_conn = psycopg2.connect(
-            host="galvanalyser_postgres",
-            port=5433,
-            database=self.DATABASE,
-            user=self.USER,
-            password=self.USER_PWD,
-        )
-
         self.harvester_conn = psycopg2.connect(
             host="galvanalyser_postgres",
             port=5433,
@@ -40,11 +33,7 @@ class GalvanalyserTestCase(unittest.TestCase):
             password=self.POSTGRES_USER_PWD,
         )
 
-        self.oxford = InstitutionRow.select_from_name(
-            self.INSTITUTION, self.harvester_conn
-        )
-
     @classmethod
     def tearDownClass(self):
-        self.user_conn.close()
         self.harvester_conn.close()
+        self.postgres_conn.close()

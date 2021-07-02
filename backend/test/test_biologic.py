@@ -1,8 +1,8 @@
-from harvester_test_case import HarvesterTestCase
+from galvanalyser_test_case import GalvanalyserTestCase
 import glob
-from harvester.biologic_input_file import BiologicMprInputFile
+from galvanalyser.harvester.biologic_input_file import BiologicMprInputFile
 
-class TestBiologicFileFormat(HarvesterTestCase):
+class TestBiologicFileFormat(GalvanalyserTestCase):
     def test_units(self):
         for filename in glob.glob(self.DATA_DIR + '/*.mpr'):
             input_file = BiologicMprInputFile(filename)

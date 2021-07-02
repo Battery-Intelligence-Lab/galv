@@ -1,10 +1,12 @@
-from harvester_test_case import HarvesterTestCase
+from galvanalyser_test_case import GalvanalyserTestCase
 from timeit import default_timer as timer
-import harvester.__main__ as harvester
-from pygalvanalyser.harvester.harvester_row import HarvesterRow
-from pygalvanalyser.harvester.monitored_path_row import MonitoredPathRow
-from pygalvanalyser.harvester.observed_file_row import ObservedFileRow
-from pygalvanalyser.experiment.dataset_row import DatasetRow
+import galvanalyser.harvester as harvester
+from galvanalyser.database.harvester import (
+    HarvesterRow,
+    MonitoredPathRow,
+    ObservedFileRow,
+)
+from galvanalyser.database.experiment import DatasetRow
 
 import os
 import json
@@ -12,7 +14,7 @@ from datetime import datetime, timezone, timedelta
 
 
 
-class TestHarvester(HarvesterTestCase):
+class TestHarvester(GalvanalyserTestCase):
     # well capture all the filename that failed here
     def setUp(self):
         self.verificationErrors = []
@@ -37,7 +39,7 @@ class TestHarvester(HarvesterTestCase):
         # should have added files to database
         harvester_row = HarvesterRow.select_from_machine_id(
             self.MACHINE_ID,
-            self.conn
+            self.harvester_conn
         )
         self.assertIsNotNone(harvester_row)
 
@@ -45,12 +47,12 @@ class TestHarvester(HarvesterTestCase):
             MonitoredPathRow.select_from_harvester_id_and_path(
                 harvester_row.id,
                 self.DATA_DIR,
-                self.conn
+                self.harvester_conn
             )
         self.assertIsNotNone(monitor_path)
         file = ObservedFileRow.select_from_id_(
                     monitor_path.monitor_path_id,
-                    self.conn
+                    self.harvester_conn
                 )
         # check all files are in, then mark them stable for > 1 min
         for root, dirs, files in os.walk(self.DATA_DIR):
@@ -60,16 +62,16 @@ class TestHarvester(HarvesterTestCase):
                 file = ObservedFileRow.select_from_id_and_path(
                     monitor_path.monitor_path_id,
                     name,
-                    self.conn
+                    self.harvester_conn
                 )
                 self.assertIsNotNone(file)
 
                 file.file_state = 'STABLE'
                 file.last_observed_time = \
                     datetime.now(timezone.utc) - timedelta(minutes=1),
-                file.insert(self.conn)
+                file.insert(self.harvester_conn)
             break
-        self.conn.commit()
+        self.harvester_conn.commit()
 
 
         # files are now stable, rerun main to insert them
@@ -89,7 +91,7 @@ class TestHarvester(HarvesterTestCase):
                 file = ObservedFileRow.select_from_id_and_path(
                     monitor_path.monitor_path_id,
                     name,
-                    self.conn
+                    self.harvester_conn
                 )
                 self.assertIsNotNone(file)
                 try:

@@ -20,7 +20,7 @@ import csv
 import ntpath
 import re
 from datetime import datetime
-from .database.experiment.input_file import InputFile
+from galvanalyser.database.experiment.input_file import InputFile
 
 IDF_HEADER = b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xfb\x00\x00\x00\r\x00Version=11'
 

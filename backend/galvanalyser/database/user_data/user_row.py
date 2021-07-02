@@ -9,11 +9,10 @@ from galvanalyser.database import Row
 def verify_email(email):
     return validate_email(
         email_address=email,
-        check_regex=True, check_mx=False,
-        from_address='my@from.addr.ess',
-        helo_host='my.host.name',
-        smtp_timeout=10, dns_timeout=10,
-        use_blacklist=True, debug=False
+        check_blacklist=True,
+        check_format=True,
+        check_dns=True, dns_timeout=10,
+        check_smtp=False,
     )
 
 

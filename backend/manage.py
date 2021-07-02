@@ -8,17 +8,17 @@ import os
 import sys
 import galvanalyser.database as database
 from galvanalyser.database.harvester import MonitoredPathRow
-from galvanalyser.harvester import main as harvester_main
+from galvanalyser.harvester.harvester import main as harvester_main
 from galvanalyser.database.user_data import UserRow
 import json
 import subprocess
 
 cli = FlaskGroup(app)
 
-
-@cli.command("test_api")
-@click.option('--path', default='/usr/src/app/galvanalyser/database/test')
-def test_api(path):
+@cli.command("test")
+@click.option('--path', default='/usr/app/test')
+@click.option('--test', default='')
+def test(path, test):
     if not os.path.exists(os.path.join(path, 'galvanalyser_test_case.py')):
         raise RuntimeError((
             'galvanalyser_test_case.py does not exist in {}. '
@@ -29,48 +29,9 @@ def test_api(path):
     from galvanalyser_test_case import GalvanalyserTestCase
 
     test_config = copy.copy(app.config)
-    test_config["db_conf"]["database_name"] = GalvanalyserTestCase.DATABASE
+    test_config["GALVANISER_DATABASE"]["NAME"] = GalvanalyserTestCase.DATABASE
 
     # create database environment that test case expects
-    database.create_database(
-        test_config,
-        test=True
-    )
-
-    database.create_user(
-        test_config,
-        GalvanalyserTestCase.USER,
-        GalvanalyserTestCase.USER_PWD,
-        test=True
-    )
-    database.create_institution(
-        test_config,
-        GalvanalyserTestCase.INSTITUTION
-    )
-
-    # run harvester tests
-    test_suite = unittest.defaultTestLoader.discover(path)
-    runner = unittest.TextTestRunner()
-    runner.run(test_suite)
-
-
-@cli.command("test_harvester")
-@click.option('--path', default='/usr/src/app/galvanalyser/harvester/test')
-@click.option('--test', default='')
-def test(path, test):
-    if not os.path.exists(os.path.join(path, 'harvester_test_case.py')):
-        raise RuntimeError((
-            'harvester_test_case.py does not exist in {}. '
-            'Is the path correct?').format(path)
-        )
-
-    sys.path.append(path)
-    from harvester_test_case import HarvesterTestCase
-
-    test_config = copy.copy(app.config)
-    test_config["GALVANISER_DATABASE"]["NAME"] = HarvesterTestCase.DATABASE
-
-    # create database environment that harvester test case expects
     database.create_database(
         test_config,
         test=True
@@ -79,8 +40,8 @@ def test(path, test):
     # create test user
     conn = app.config["GET_DATABASE_CONN_FOR_SUPERUSER"]()
     user = UserRow(
-        HarvesterTestCase.USER,
-        password=HarvesterTestCase.USER_PWD,
+        GalvanalyserTestCase.USER,
+        password=GalvanalyserTestCase.USER_PWD,
         email='test@gmail.com'
     )
     user.insert(conn)
@@ -88,20 +49,21 @@ def test(path, test):
 
     database.create_harvester_user(
         test_config,
-        HarvesterTestCase.HARVESTER,
-        HarvesterTestCase.HARVESTER_PWD,
+        GalvanalyserTestCase.HARVESTER,
+        GalvanalyserTestCase.HARVESTER_PWD,
         test=True
     )
+
     database.create_machine_id(
         test_config,
-        HarvesterTestCase.MACHINE_ID,
-        HarvesterTestCase.HARVESTER,
+        GalvanalyserTestCase.MACHINE_ID,
+        GalvanalyserTestCase.HARVESTER,
     )
 
     database.add_machine_path(
         test_config,
-        HarvesterTestCase.MACHINE_ID,
-        HarvesterTestCase.DATA_DIR,
+        GalvanalyserTestCase.MACHINE_ID,
+        GalvanalyserTestCase.DATA_DIR,
         [user.id],
     )
 

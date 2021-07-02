@@ -1,14 +1,14 @@
-from harvester_test_case import HarvesterTestCase
+from galvanalyser_test_case import GalvanalyserTestCase
 import glob
-import pygalvanalyser.util.battery_exceptions as battery_exceptions
-from harvester.maccor_input_file import MaccorInputFile
+from galvanalyser.database.util.battery_exceptions import UnsupportedFileTypeError
+from galvanalyser.harvester.maccor_input_file import MaccorInputFile
 
-class TestMaccorFileFormat(HarvesterTestCase):
+class TestMaccorFileFormat(GalvanalyserTestCase):
     def test_units(self):
         for filename in glob.glob(self.DATA_DIR + '/*'):
             try:
                 input_file = MaccorInputFile(filename)
-            except battery_exceptions.UnsupportedFileTypeError:
+            except UnsupportedFileTypeError:
                 continue
 
             mapping = \
@@ -21,7 +21,7 @@ class TestMaccorFileFormat(HarvesterTestCase):
             try:
                 input_file = MaccorInputFile(filename)
                 files_found += 1
-            except battery_exceptions.UnsupportedFileTypeError:
+            except UnsupportedFileTypeError:
                 continue
             metadata = input_file.metadata
             task_generator = input_file.get_data_labels()
