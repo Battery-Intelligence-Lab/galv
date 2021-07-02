@@ -1,8 +1,0 @@
-psycopg2-binary==2.8.6
-flask-login==0.5.0
-redash-toolbelt==0.1.4
-flask-cors==3.0.10
-flask-jwt-extended==4.2.1
-celery[redis]==5.1.0
-py3-validate-email==0.2.16
-
