@@ -1,7 +1,8 @@
 import psycopg2
+from galvanalyser.database import Row
 
 
-class RangeLabelRow:
+class RangeLabelRow(Row):
     def __init__(
         self,
         dataset_id,
@@ -19,6 +20,18 @@ class RangeLabelRow:
         self.lower_bound = lower_bound
         self.upper_bound = upper_bound
         self.info = info
+
+    def to_dict(self):
+        obj = {
+            'id': self.id,
+            'dataset_id': self.dataset_id,
+            'label_name': self.label_name,
+            'created_by': self.created_by,
+            'lower_bound': self.lower_bound,
+            'upper_bound': self.upper_bound,
+            'info': self.info,
+        }
+        return obj
 
     def insert(self, conn):
         with conn.cursor() as cursor:

@@ -61,6 +61,7 @@ class DatasetRow(Row):
         equipment = [
             EquipmentRow.select_from_id(id_, conn) for id_ in self.equipment
         ]
+        ranges = RangeLabelRow.select_from_dataset_id(self.id, conn)
         owner = UserRow.select_from_id(self.owner_id, conn)
         obj = {
             'id': self.id,
@@ -70,7 +71,8 @@ class DatasetRow(Row):
             'cell': CellRow.to_dict(cell),
             'owner': UserRow.to_dict(owner),
             'purpose': self.purpose,
-            'equipment': EquipmentRow.to_dict(equipment),
+            'ranges': [RangeLabelRow.to_dict(r) for r in ranges],
+            'equipment': [EquipmentRow.to_dict(e) for e in equipment],
             'json_data': json_str,
         }
         return obj
