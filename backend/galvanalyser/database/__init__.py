@@ -7,8 +7,9 @@ from .harvester import (
     HarvesterRow,
     MonitoredPathRow,
 )
-from .experiment import InstitutionRow
+from flask_sqlalchemy import SQLAlchemy
 
+db = SQLAlchemy()
 
 def create_harvester_user(config, harvester, password, test=False):
     conn = _create_superuser_connection(config)
@@ -21,15 +22,6 @@ def create_harvester_user(config, harvester, password, test=False):
     # create harvester user
     _create_user(conn, harvester, password, role)
 
-    conn.close()
-
-def create_institution(config, name):
-    conn = _create_superuser_connection(config)
-    institution = InstitutionRow.select_from_name(name, conn)
-    if institution is None:
-        InstitutionRow(name=name).insert(conn)
-
-    conn.commit()
     conn.close()
 
 

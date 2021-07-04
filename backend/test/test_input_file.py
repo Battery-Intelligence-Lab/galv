@@ -3,7 +3,6 @@ from galvanalyser.database.experiment import (
     InputFile,
     TimeseriesDataRow,
     DatasetRow,
-    InstitutionRow
 )
 import datetime
 

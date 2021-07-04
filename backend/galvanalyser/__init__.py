@@ -6,6 +6,14 @@ from urllib.parse import urlparse
 from flask_jwt_extended import JWTManager
 from datetime import timedelta
 
+import flask
+from flask_jwt_extended import JWTManager
+import flask_cors
+from galvanalyser.database import db
+
+import os
+
+
 def get_db_connection(host, port, name, user, password):
     return psycopg2.connect(
         host=host,
@@ -14,6 +22,7 @@ def get_db_connection(host, port, name, user, password):
         user=user,
         password=password,
     )
+
 
 def create_config():
     redash = urlparse(os.getenv('REDASH_DATABASE_URL'))
@@ -26,6 +35,7 @@ def create_config():
             "USER": "postgres",
             "PASSWORD": os.getenv('POSTGRES_PASSWORD'),
         },
+
         "REDASH_DATABASE": {
             "NAME": redash.path[1:],
             "PORT": redash.port,
@@ -47,6 +57,25 @@ def create_config():
         },
         "SECRET_KEY": os.getenv("GALVANALYSER_SECRET_KEY"),
     }
+
+    config['SQLALCHEMY_DATABASE_URI'] = \
+        'postgresql://{}:{}@{}/{}'.format(
+            config['GALVANISER_DATABASE']['USER'],
+            config['GALVANISER_DATABASE']['PASSWORD'],
+            config['GALVANISER_DATABASE']['HOST'],
+            config['GALVANISER_DATABASE']['NAME'],
+    )
+    config['SQLALCHEMY_BINDS'] = {
+        'harvester': 'postgresql://{}:{}@{}/{}'.format(
+            config['DEFAULT_HARVESTER']['NAME'],
+            config['DEFAULT_HARVESTER']['PASSWORD'],
+            config['GALVANISER_DATABASE']['HOST'],
+            config['GALVANISER_DATABASE']['NAME'],
+        ),
+    }
+
+    config['SQLALCHEMY_ECHO'] = True
+    config['SQLCHEMY_TRACK_MODIFICATIONS'] = False
 
     def get_db_connection_for_superuser():
         return get_db_connection(
@@ -94,6 +123,7 @@ def create_config():
 
     return config
 
+
 def make_celery(app):
     celery = Celery(
         app.import_name,
@@ -111,28 +141,33 @@ def make_celery(app):
     return celery
 
 
-def init_app():
-    app = flask.Flask(__name__)
+app = flask.Flask(__name__)
 
-    app.config.from_mapping(
-        create_config(),
-    )
+app.config.from_mapping(
+    create_config(),
+)
 
-    JWTManager(app)
+db.init_app(app)
 
-    celery = make_celery(app)
+JWTManager(app)
 
-    # ensure the instance folder exists
-    try:
-        os.makedirs(app.instance_path)
-    except OSError:
-        pass
+celery = make_celery(app)
+
+# ensure the instance folder exists
+try:
+    os.makedirs(app.instance_path)
+except OSError:
+    pass
 
 
+with app.app_context():
+    # Import parts of our core Flask app
+    from galvanalyser import routes
 
-    with app.app_context():
-        # Import parts of our core Flask app
-        from . import routes
+# match redash secret_key
+app.secret_key = os.getenv('REDASH_COOKIE_SECRET')
+print('set session key to ', app.secret_key)
 
-    return app
-
+# Initializes CORS so that the api can talk to the react app
+cors = flask_cors.CORS()
+cors.init_app(app)

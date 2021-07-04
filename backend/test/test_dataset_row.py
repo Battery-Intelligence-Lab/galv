@@ -1,26 +1,25 @@
 from galvanalyser_test_case import GalvanalyserTestCase
+from galvanalyser.database import db
 from galvanalyser.database.experiment import (
     MetadataRow,
     AccessRow,
-    DatasetRow
+    DatasetRow,
+    Dataset,
 )
+from sqlalchemy import select
 import datetime
 
 class TestDatasetRow(GalvanalyserTestCase):
     def test_insert(self):
-        dataset = DatasetRow(
+        dataset = Dataset(
             name='test_dataset_row',
             date=datetime.datetime.now(),
             dataset_type='test',
         )
-        dataset.insert(self.harvester_conn)
-
-        self.harvester_conn.commit()
-
-        dataset2 = DatasetRow.select_from_id(
-            dataset.id, self.harvester_conn,
-            get_equipment=False,
-
+        db.session.add(dataset, bind='harvester')
+        db.session.commit()
+        result = session.execute(
+            select(Dataset).where(Dataset.id == dataset.id)
         )
 
-        self.assertEqual(dataset, dataset2)
+        self.assertEqual(dataset, result.first())

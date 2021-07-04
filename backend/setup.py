@@ -19,6 +19,7 @@ setuptools.setup(
     ],
     python_requires='>=3.5',
     install_requires=[
+        'flask_sqlalchemy',
         'psycopg2-binary',
         'flask-login',
         'flask-cors',
