@@ -59,7 +59,7 @@ export default function Datasets() {
         return Intl.DateTimeFormat('en-GB').format(params.value);
       }
     },
-    { field: 'dataset_type', headerName: 'Type', width: 90 },
+    { field: 'type', headerName: 'Type', width: 90 },
     { field: 'cell', headerName: 'Cell', width: 100 },
     { field: 'owner', headerName: 'Owner', width: 120 },
     { field: 'purpose', headerName: 'Purpose', width: 250 },
@@ -71,7 +71,7 @@ export default function Datasets() {
       id: i,
       dataset_id: d.id,
       name: d.name,
-      dataset_type: d.dataset_type,
+      type: d.type,
       date: Date.parse(d.date),
       cell: d.cell ? d.cell.name : '',
       owner: d.owner ? d.owner.username : '',

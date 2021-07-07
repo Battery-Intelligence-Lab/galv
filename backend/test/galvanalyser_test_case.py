@@ -1,6 +1,6 @@
 import unittest
 import psycopg2
-from galvanalyser.database import db
+from galvanalyser import init_database
 import os
 
 import flask
@@ -44,7 +44,9 @@ class GalvanalyserTestCase(unittest.TestCase):
                     },
             }
         )
-        db.init_app(app)
+        print(app.config)
+
+        self.Session, self.HarvesterSession = init_database(app.config)
 
         self.harvester_conn = psycopg2.connect(
             host="galvanalyser_postgres",

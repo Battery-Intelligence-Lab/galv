@@ -1,14 +1,21 @@
-from galvanalyser.database import db
+from galvanalyser.database import Base
 from sqlalchemy import (
     Column, ForeignKey, Integer, String,
     DateTime, JSON, Table
 )
 from sqlalchemy.orm import relationship
+from dataclasses import dataclass
 
 
-class User(db.Model):
+@dataclass
+class User(Base):
     # __table__ = db.Model.metadata.tables['experiment.database']
-    __tablename__ = 'user_data.user'
+    __tablename__ = 'user'
+    __table_args__ = {'schema': 'user_data'}
+
+    id: int
+    username: str
+    email: str
 
     id = Column(Integer, primary_key=True)
     datasets = relationship(
@@ -18,4 +25,3 @@ class User(db.Model):
     password = Column(String)
     salt = Column(String)
     email = Column(String)
-

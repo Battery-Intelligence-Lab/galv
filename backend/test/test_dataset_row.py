@@ -1,5 +1,4 @@
 from galvanalyser_test_case import GalvanalyserTestCase
-from galvanalyser.database import db
 from galvanalyser.database.experiment import (
     MetadataRow,
     AccessRow,
@@ -11,15 +10,16 @@ import datetime
 
 class TestDatasetRow(GalvanalyserTestCase):
     def test_insert(self):
-        dataset = Dataset(
-            name='test_dataset_row',
-            date=datetime.datetime.now(),
-            dataset_type='test',
-        )
-        db.session.add(dataset, bind='harvester')
-        db.session.commit()
-        result = session.execute(
-            select(Dataset).where(Dataset.id == dataset.id)
-        )
+        with self.HarvesterSession() as session:
+            dataset = Dataset(
+                name='test_dataset_row',
+                date=datetime.datetime.now(),
+                type='test',
+            )
+            session.add(dataset)
+            session.commit()
+            dataset2 = session.execute(
+                select(Dataset).where(Dataset.id == dataset.id)
+            ).one()[0]
 
-        self.assertEqual(dataset, result.first())
+            self.assertEqual(dataset, dataset2)

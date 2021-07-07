@@ -7,9 +7,10 @@ from .harvester import (
     HarvesterRow,
     MonitoredPathRow,
 )
-from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import create_engine
 
-db = SQLAlchemy()
+Base = declarative_base()
 
 def create_harvester_user(config, harvester, password, test=False):
     conn = _create_superuser_connection(config)

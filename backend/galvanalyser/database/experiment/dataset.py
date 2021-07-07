@@ -1,4 +1,4 @@
-from galvanalyser.database import db
+from galvanalyser.database import Base
 from galvanalyser.database.cell_data import Cell
 from galvanalyser.database.user_data import User
 from galvanalyser.database.experiment import Equipment
@@ -14,7 +14,7 @@ from dataclasses import dataclass
 
 def dataset_equipment():
     return Table(
-        'experiment.dataset_equipment', db.metadata,
+        'dataset_equipment', Base.metadata,
         Column(
             'dataset_id', Integer,
             ForeignKey('experiment.dataset.id')
@@ -22,19 +22,21 @@ def dataset_equipment():
         Column(
             'equipment_id', Integer,
             ForeignKey('experiment.equipment.id')
-        )
+        ),
+        schema='experiment'
     )
 
 
 @dataclass
-class Dataset(db.Model):
-    # __table__ = db.Model.metadata.tables['experiment.database']
-    __tablename__ = 'experiment.dataset'
+class Dataset(Base):
+    # __table__ = Base.metadata.tables['experiment.dataset']
+    __tablename__ = 'dataset'
+    __table_args__ = {'schema': 'experiment'}
 
     id: int
     name: str
     date: datetime.datetime
-    dataset_type: str
+    type: str
     cell: Cell = None
     owner: User = None
     purpose: str
@@ -44,7 +46,7 @@ class Dataset(db.Model):
     id = Column(Integer, primary_key=True)
     name = Column(String)
     date = Column(DateTime)
-    dataset_type = Column(String)
+    type = Column(String)
     cell_id = Column(Integer, ForeignKey('cell_data.cell.id'))
     owner_id = Column(Integer, ForeignKey('user_data.user.id'))
     purpose = Column(String)

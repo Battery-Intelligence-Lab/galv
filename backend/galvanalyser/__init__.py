@@ -9,7 +9,9 @@ from datetime import timedelta
 import flask
 from flask_jwt_extended import JWTManager
 import flask_cors
-from galvanalyser.database import db
+
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
 import os
 
@@ -59,17 +61,19 @@ def create_config():
     }
 
     config['SQLALCHEMY_DATABASE_URI'] = \
-        'postgresql://{}:{}@{}/{}'.format(
+        'postgresql://{}:{}@{}:{}/{}'.format(
             config['GALVANISER_DATABASE']['USER'],
             config['GALVANISER_DATABASE']['PASSWORD'],
             config['GALVANISER_DATABASE']['HOST'],
+            config['GALVANISER_DATABASE']['PORT'],
             config['GALVANISER_DATABASE']['NAME'],
     )
     config['SQLALCHEMY_BINDS'] = {
-        'harvester': 'postgresql://{}:{}@{}/{}'.format(
+        'harvester': 'postgresql://{}:{}@{}:{}/{}'.format(
             config['DEFAULT_HARVESTER']['NAME'],
             config['DEFAULT_HARVESTER']['PASSWORD'],
             config['GALVANISER_DATABASE']['HOST'],
+            config['GALVANISER_DATABASE']['PORT'],
             config['GALVANISER_DATABASE']['NAME'],
         ),
     }
@@ -140,6 +144,16 @@ def make_celery(app):
     celery.Task = ContextTask
     return celery
 
+def init_database(config):
+    print('creating engine using url',
+          config['SQLALCHEMY_DATABASE_URI'])
+    engine = create_engine(config['SQLALCHEMY_DATABASE_URI'])
+    print('creating harvester engine using url',
+          config['SQLALCHEMY_BINDS']['harvester'])
+    harvester_engine = \
+        create_engine(config['SQLALCHEMY_BINDS']['harvester'])
+    return sessionmaker(engine), sessionmaker(harvester_engine)
+
 
 app = flask.Flask(__name__)
 
@@ -147,7 +161,8 @@ app.config.from_mapping(
     create_config(),
 )
 
-db.init_app(app)
+Session, HarvesterSession = init_database(app.config)
+
 
 JWTManager(app)
 

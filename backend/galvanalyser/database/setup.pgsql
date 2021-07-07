@@ -216,7 +216,7 @@ CREATE TABLE cell_data.cell
 (
     id bigserial NOT NULL,
     name text NOT NULL,
-    cell_form_factor varchar(11),
+    form_factor varchar(11),
     link_to_datasheet text,
     anode_chemistry text,
     cathode_chemistry text,
@@ -311,6 +311,9 @@ ALTER TABLE experiment.equipment
 
 GRANT ALL ON TABLE experiment.equipment TO postgres;
 
+GRANT SELECT ON TABLE experiment.equipment TO ${harvester_role};
+
+
 -- Table: experiment.dataset_equipment
 
 -- DROP TABLE experiment.dataset_equipment;
@@ -337,6 +340,8 @@ ALTER TABLE experiment.dataset_equipment
     OWNER to postgres;
 
 GRANT ALL ON TABLE experiment.dataset_equipment TO postgres;
+
+GRANT SELECT ON TABLE experiment.dataset_equipment TO ${harvester_role};
 
 
 -- Table: experiment.access

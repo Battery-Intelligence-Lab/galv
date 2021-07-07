@@ -2,7 +2,7 @@ import sys
 import flask
 import numpy as np
 from flask_cors import cross_origin
-from flask import request, abort, session, jsonify, make_response
+from flask import request, abort, jsonify, make_response
 import os
 from datetime import timezone
 from datetime import datetime
@@ -25,7 +25,7 @@ from .database.experiment.timeseries_data_row import (
     RECORD_NO_COLUMN_ID,
 )
 from .database.experiment import (
-    AccessRow, DatasetRow, ColumnRow, MetadataRow, EquipmentRow,
+    AccessRow, Dataset, ColumnRow, MetadataRow, Equipment, EquipmentRow,
 )
 from .database.cell_data import (
     CellRow, ManufacturerRow
@@ -43,6 +43,8 @@ from celery import current_app as celery
 from functools import wraps
 
 from .database.user_data import UserRow
+
+from galvanalyser import Session
 
 
 @app.after_request
@@ -138,46 +140,46 @@ def user():
 @jwt_required()
 def dataset(id_=None):
     conn = app.config["GET_DATABASE_CONN_FOR_SUPERUSER"]()
-
-    current_user = json.loads(get_jwt_identity())
-    if (id_ is not None and
-            not AccessRow.exists(id_, current_user['id'], conn)):
-        return jsonify({
-            'message': 'user {} does not have access to dataset {}'.format(
-                current_user['username'], id_
-            )
-        }), 404
-
-    if request.method == 'GET':
-        if id_ is None:
-            datasets = \
-                DatasetRow.all_with_access(current_user['id'], conn)
-        else:
-            datasets = DatasetRow.select_from_id(id_, conn)
-        return DatasetRow.to_json(datasets)
-    elif request.method == 'PUT':
-        dataset = DatasetRow.select_from_id(id_, conn)
-        if dataset is None:
+    with Session() as session:
+        current_user = json.loads(get_jwt_identity())
+        if (id_ is not None and
+                not AccessRow.exists(id_, current_user['id'], conn)):
             return jsonify({
-                'message': 'cell not found'
+                'message': 'user {} does not have access to dataset {}'.format(
+                    current_user['username'], id_
+                )
             }), 404
 
-        request_data = request.get_json()
+        if request.method == 'GET':
+            if id_ is None:
+                return jsonify(session.query(Dataset).all())
+            else:
+                return jsonify(session.get(Dataset, id_))
+        elif request.method == 'PUT':
+            dataset = session.get(Dataset, id_)
+            if dataset is None:
+                return jsonify({
+                    'message': 'cell not found'
+                }), 404
 
-        if 'name' in request_data:
-            dataset.name = request_data['name']
-        if 'cell_id' in request_data:
-            dataset.cell_id = request_data['cell_id']
-        if 'owner_id' in request_data:
-            dataset.owner_id = request_data['owner_id']
-        if 'equipment' in request_data:
-            dataset.equipment = request_data['equipment_ids']
-        if 'purpose' in request_data:
-            dataset.purpose = request_data['purpose']
+            request_data = request.get_json()
 
-        dataset.update(conn)
-        conn.commit()
-        return DatasetRow.to_json(dataset)
+            if 'name' in request_data:
+                dataset.name = request_data['name']
+            if 'cell_id' in request_data:
+                dataset.cell_id = request_data['cell_id']
+            if 'owner_id' in request_data:
+                dataset.owner_id = request_data['owner_id']
+            if 'equipment' in request_data:
+                dataset.equipment =  [
+                    session.get(Equipment, id_)
+                    for id_ in request_data['equipment']
+                ]
+            if 'purpose' in request_data:
+                dataset.purpose = request_data['purpose']
+
+            session.commit()
+            return jsonify(dataset)
 
 
 @app.route('/api/equipment', methods=['GET', 'POST'])
