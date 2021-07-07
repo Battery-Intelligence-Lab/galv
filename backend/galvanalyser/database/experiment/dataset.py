@@ -1,11 +1,12 @@
 from galvanalyser.database import Base
 from galvanalyser.database.cell_data import Cell
 from galvanalyser.database.user_data import User
-from galvanalyser.database.experiment import Equipment
+from galvanalyser.database.experiment import Equipment, RangeLabel
 from sqlalchemy import (
     Column, ForeignKey, Integer, String,
-    DateTime, JSON, Table
+    DateTime, Table
 )
+from sqlalchemy_utils import JSONType
 from sqlalchemy.orm import relationship
 import datetime
 from typing import List
@@ -29,7 +30,6 @@ def dataset_equipment():
 
 @dataclass
 class Dataset(Base):
-    # __table__ = Base.metadata.tables['experiment.dataset']
     __tablename__ = 'dataset'
     __table_args__ = {'schema': 'experiment'}
 
@@ -42,6 +42,8 @@ class Dataset(Base):
     purpose: str
     json_data: object
     equipment: List[Equipment]
+    ranges: List[RangeLabel]
+    columns: List[Column]
 
     id = Column(Integer, primary_key=True)
     name = Column(String)
@@ -50,9 +52,17 @@ class Dataset(Base):
     cell_id = Column(Integer, ForeignKey('cell_data.cell.id'))
     owner_id = Column(Integer, ForeignKey('user_data.user.id'))
     purpose = Column(String)
-    json_data = Column(JSON)
+    json_data = Column(JSONType)
     equipment = relationship(
         'Equipment',
         secondary=dataset_equipment,
         backref='datasets',
+    )
+    ranges = relationship(
+        'RangeLabel',
+        backref='dataset',
+    )
+    columns = relationship(
+        'Column',
+        backref='dataset',
     )

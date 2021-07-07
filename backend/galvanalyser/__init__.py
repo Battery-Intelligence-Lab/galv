@@ -13,6 +13,11 @@ import flask_cors
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
+from flask.json import JSONEncoder
+
+from intervals import IntInterval
+from infinity import is_infinite
+
 import os
 
 
@@ -154,8 +159,21 @@ def init_database(config):
         create_engine(config['SQLALCHEMY_BINDS']['harvester'])
     return sessionmaker(engine), sessionmaker(harvester_engine)
 
+class CustomJSONEncoder(JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, IntInterval):
+            return '%s%s,%s%s' % (
+                '[' if obj.lower_inc else '(',
+                str(obj.lower) if not is_infinite(obj.lower) else '',
+                ' ' + str(obj.upper) if not is_infinite(obj.upper) else '',
+                ']' if obj.upper_inc else ')'
+            )
+        return JSONEncoder.default(self, obj)
+
 
 app = flask.Flask(__name__)
+
+app.json_encoder = CustomJSONEncoder
 
 app.config.from_mapping(
     create_config(),

@@ -11,7 +11,6 @@ from typing import List
 
 @dataclass
 class Cell(Base):
-    # __table__ = db.Model.metadata.tables['experiment.database']
     __tablename__ = 'cell'
     __table_args__ = {'schema': 'cell_data'}
 
