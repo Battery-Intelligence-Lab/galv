@@ -150,11 +150,7 @@ def make_celery(app):
     return celery
 
 def init_database(config):
-    print('creating engine using url',
-          config['SQLALCHEMY_DATABASE_URI'])
     engine = create_engine(config['SQLALCHEMY_DATABASE_URI'])
-    print('creating harvester engine using url',
-          config['SQLALCHEMY_BINDS']['harvester'])
     harvester_engine = \
         create_engine(config['SQLALCHEMY_BINDS']['harvester'])
     return sessionmaker(engine), sessionmaker(harvester_engine)
@@ -199,7 +195,6 @@ with app.app_context():
 
 # match redash secret_key
 app.secret_key = os.getenv('REDASH_COOKIE_SECRET')
-print('set session key to ', app.secret_key)
 
 # Initializes CORS so that the api can talk to the react app
 cors = flask_cors.CORS()

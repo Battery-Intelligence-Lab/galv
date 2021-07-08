@@ -30,7 +30,7 @@ class TestDatasetRow(GalvanalyserTestCase):
 
             self.assertEqual(dataset, dataset2)
 
-    def test_serialise(self):
+    def test_dataset_relationships(self):
         with self.Session() as session:
             # create dataset
             dataset = Dataset(
@@ -86,7 +86,9 @@ class TestDatasetRow(GalvanalyserTestCase):
 
             ])
             session.commit()
+            self.assertEqual(len(dataset.columns), 2)
+            self.assertEqual(len(dataset.equipment), 1)
 
-            print('DATASET is:', dataset)
+
 
 

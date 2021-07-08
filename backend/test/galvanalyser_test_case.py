@@ -44,7 +44,6 @@ class GalvanalyserTestCase(unittest.TestCase):
                     },
             }
         )
-        print(app.config)
 
         self.Session, self.HarvesterSession = init_database(app.config)
 
