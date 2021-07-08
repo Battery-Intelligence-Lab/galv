@@ -21,6 +21,7 @@ setuptools.setup(
     install_requires=[
         'sqlalchemy',
         'sqlalchemy_utils',
+        'marshmallow',
         'intervals',
         'psycopg2-binary',
         'flask-login',
