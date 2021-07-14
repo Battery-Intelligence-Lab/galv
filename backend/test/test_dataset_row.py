@@ -8,6 +8,7 @@ from galvanalyser.database.experiment import (
     Column,
     TimeseriesData,
     RangeLabel,
+    ColumnType,
 )
 from galvanalyser.database.cell_data import (
     Cell
@@ -58,29 +59,38 @@ class TestDatasetRow(GalvanalyserTestCase):
             dataset.cell = cell
 
             # add samples
-            column0 = session.get(Column, 1)
-            column1 = session.get(Column, 2)
+            column_type = session.get(ColumnType, -1)
+            column0 = Column(
+                name='test',
+                dataset_id=dataset.id,
+                type_id=column_type.id,
+            )
+            session.add(column0)
+            column1 = Column(
+                name='test2',
+                dataset_id=dataset.id,
+                type_id=column_type.id,
+            )
+            session.add(column1)
+            session.commit()
+
             session.bulk_save_objects([
                 TimeseriesData(
-                    dataset_id=dataset.id,
                     sample_no=0,
                     column_id=column0.id,
                     value=0
                 ),
                 TimeseriesData(
-                    dataset_id=dataset.id,
                     sample_no=1,
                     column_id=column0.id,
                     value=1
                 ),
                 TimeseriesData(
-                    dataset_id=dataset.id,
                     sample_no=2,
                     column_id=column0.id,
                     value=2
                 ),
                 TimeseriesData(
-                    dataset_id=dataset.id,
                     sample_no=0,
                     column_id=column1.id,
                     value=0

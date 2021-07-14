@@ -27,7 +27,6 @@ class Column(Base):
         Integer, ForeignKey('experiment.dataset.id')
     )
     name = SqlColumn(String)
-    description = SqlColumn(String)
     type = relationship(
         'ColumnType',
         backref='columns',

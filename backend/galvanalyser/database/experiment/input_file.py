@@ -50,39 +50,14 @@ class InputFile:
 
         columns = [
             (name, name_to_type_id.get(name, -1))
-            for name in self.column_info.keys()
+            for name, info in self.column_info.items()
+            if info['has_data'] and info['is_numeric']
         ]
-
-        # add calculate columns (see complete_columns)
-        for calc_col_id in []:
-            not_found = True
-            for name, col_id in columns:
-                if col_id == calc_col_id:
-                    not_found = False
-                    break
-            if not_found:
-                columns.append(("Charge Capacity (calculated)",
-                                CHARGE_CAPACITY_COLUMN_ID))
 
         return columns
 
     def get_test_start_date(self):
         return self.metadata["Date of Test"]
-
-    def complete_columns(self, current_row, previous_row):
-        # if CHARGE_CAPACITY_COLUMN_ID not in current_row:
-        #    prev_time = previous_row[TEST_TIME_COLUMN_ID]
-        #    prev_amps = previous_row[AMPS_COLUMN_ID]
-        #    capacity_total = previous_row[CHARGE_CAPACITY_COLUMN_ID]
-        #    current_amps = float(current_row[AMPS_COLUMN_ID])
-        #    current_time = float(current_row[TEST_TIME_COLUMN_ID])
-        #    capacity_total += ((prev_amps + current_amps) / 2.0) * (
-        #        current_time - prev_time
-        #    )
-        #    current_row[CHARGE_CAPACITY_COLUMN_ID] = capacity_total
-        #    prev_amps = current_amps
-        #    prev_time = current_time
-        return current_row
 
     def convert_unit(self, name, value):
         if 'unit' in self.column_info[name]:
@@ -99,23 +74,24 @@ class InputFile:
             name: type_id
             for name, type_id in self.get_columns()
         }
-
-        col_type_id_to_col_id = {
-            type_id: column_name_to_id[name]
-            for name, type_id in name_to_type_id.items()
+        type_id_to_col_id = {
+            name_to_type_id[name]: col_id
+            for name, col_id in column_name_to_id.items()
         }
+
+        sample_col_id = type_id_to_col_id.get(RECORD_NO_COLUMN_ID, None)
 
         # reconstruct previous row mapping col ids to values
         if last_values is not None:
             previous_row = {
-                tsdr.column_type_id: tsdr.value for tsdr in last_values
+                tsdr.column_id: tsdr.value for tsdr in last_values
             }
-            if RECORD_NO_COLUMN_ID not in previous_row:
-                previous_row[RECORD_NO_COLUMN_ID] = last_values[0].sample_no
+            last_rec_no = last_values[0].sample_no
         else:
             previous_row = {}
-            for name, col_type_id in name_to_type_id.items():
-                previous_row[col_type_id] = 0.0
+            for name, col_id in column_name_to_id.items():
+                previous_row[col_id] = 0.0
+            last_rec_no = -1
 
         # The psycopg2 cursor.copy_from method needs null values to be
         # represented as a literal '\N'
@@ -124,33 +100,33 @@ class InputFile:
 
         try:
             for index, row_with_names in enumerate(self.load_data(
-                self.file_path, self.column_info.keys()
+                self.file_path, name_to_type_id.keys()
             )):
                 # convert dict mapping names to values to dict
-                # of col_type_id => value, use unit info
+                # of col_id => value, use unit info
                 # to convert to database units
                 row = {
-                    name_to_type_id[name]: self.convert_unit(name, value)
+                    column_name_to_id[name]: self.convert_unit(name, value)
                     for name, value in row_with_names.items()
                 }
 
-                # add any missing columns that we can
-                row = self.complete_columns(row, previous_row)
-
                 # get the current sample number
-                rec_no = row.get(RECORD_NO_COLUMN_ID, index)
+                rec_no = int(row.get(sample_col_id, index))
+                if rec_no <= last_rec_no:
+                    continue
 
                 # yield the new timeseries_data row
-                for col_type_id, value in row.items():
-                    if col_type_id == RECORD_NO_COLUMN_ID:
+                for col_id, value in row.items():
+                    if col_id == sample_col_id:
                         continue
                     timeseries_data_row = [
                         rec_no,
-                        col_type_id_to_col_id[col_type_id],
+                        col_id,
                         value,
                     ]
                     yield "\t".join(map(tsv_format, timeseries_data_row))
                 previous_row = row
+
         except:
             traceback.print_exc()
             raise

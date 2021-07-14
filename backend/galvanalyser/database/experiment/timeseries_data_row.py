@@ -72,7 +72,14 @@ class TimeseriesDataRow:
         # create mapping from col id to col name, creating new columns as
         # appropriate
         columns = input_file.get_columns()
+        has_record_column = False
         for name, type_id in columns:
+            # don't want to create a column for sample number
+            if type_id == RECORD_NO_COLUMN_ID:
+                has_record_column = True
+                column_name_to_id[name] = -2
+                continue
+
             col = ColumnRow.select_from_dataset_with_name(
                 dataset_id, name, conn
             )
@@ -92,6 +99,8 @@ class TimeseriesDataRow:
         )
         iter_file = IteratorFile(row_generator)
         num_value_columns = len(columns)
+        if has_record_column:
+            num_value_columns -= 1
         start_row = 0 if last_values is None else last_values[0].sample_no
         num_rows_to_insert = input_file.metadata["num_rows"] - start_row
         expected_insert_count = num_rows_to_insert * num_value_columns
@@ -158,13 +167,16 @@ class TimeseriesDataRow:
         with conn.cursor() as cursor:
             cursor.execute(
                 (
+                    "WITH dataset_columns as ("
+                    'SELECT id FROM experiment."column" WHERE '
+                    "dataset_id=(%s)) "
                     "SELECT sample_no, column_id, value "
                     "FROM experiment.timeseries_data "
-                    "WHERE sample_no IN ( "
+                    "WHERE column_id IN (SELECT id FROM dataset_columns) "
+                    "AND sample_no IN ( "
                     "SELECT sample_no from experiment.timeseries_data "
-                    "WHERE column_id IN ( "
-                    'SELECT id FROM experiment."column" WHERE '
-                    "dataset_id=(%s)) ORDER BY sample_no DESC LIMIT 1) "
+                    "WHERE column_id IN (SELECT id FROM dataset_columns) "
+                    "ORDER BY sample_no DESC LIMIT 1) "
                 ),
                 [dataset_id],
             )
