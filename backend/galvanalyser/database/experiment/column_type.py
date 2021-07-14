@@ -15,8 +15,15 @@ class ColumnType(Base):
 
     id: int
     name: str
+    description: str
     unit: Unit = None
 
     id = Column(Integer, primary_key=True)
     name = Column(String)
+    description = Column(String)
     unit_id = Column(Integer, ForeignKey('experiment.unit.id'))
+    unit = relationship(
+        'Unit',
+        backref='column_types',
+    )
+

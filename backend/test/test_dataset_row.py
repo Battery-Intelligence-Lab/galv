@@ -7,12 +7,14 @@ from galvanalyser.database.experiment import (
     Equipment,
     Column,
     TimeseriesData,
+    RangeLabel,
 )
 from galvanalyser.database.cell_data import (
     Cell
 )
 from sqlalchemy import select
 import datetime
+
 
 class TestDatasetRow(GalvanalyserTestCase):
     def test_insert(self):
@@ -56,8 +58,8 @@ class TestDatasetRow(GalvanalyserTestCase):
             dataset.cell = cell
 
             # add samples
-            column0 = session.get(Column, 0)
-            column1 = session.get(Column, 1)
+            column0 = session.get(Column, 1)
+            column1 = session.get(Column, 2)
             session.bulk_save_objects([
                 TimeseriesData(
                     dataset_id=dataset.id,
@@ -85,10 +87,15 @@ class TestDatasetRow(GalvanalyserTestCase):
                 ),
 
             ])
+
+            range_label = RangeLabel(
+                label_name='test',
+                dataset_id=dataset.id,
+                sample_range=[0, 2],
+                info="a description here"
+            )
+            session.add(range_label)
             session.commit()
             self.assertEqual(len(dataset.columns), 2)
             self.assertEqual(len(dataset.equipment), 1)
-
-
-
-
+            self.assertEqual(len(dataset.ranges), 1)

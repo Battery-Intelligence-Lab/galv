@@ -7,25 +7,9 @@ class TestIviumFileFormat(GalvanalyserTestCase):
     def test_units(self):
         for filename in glob.glob(self.DATA_DIR + '/*.idf'):
             input_file = IviumInputFile(filename)
-            mapping = \
-                input_file.get_standard_column_to_file_column_mapping()
+            mapping = input_file.get_columns()
             self.assertGreater(len(mapping), 0)
-            for i in range(100):
-                row_raw = next(input_file.load_data(
-                    filename, ["amps"]
-                ))
-                row_converted = next(
-                    input_file.convert_file_cols_to_std_cols(
-                        input_file.load_data(
-                            filename, ["amps"]
-                        ),
-                        {'amps': 1}
-                    ),
-                )
-                self.assertEqual(
-                    row_raw['amps'],
-                    row_converted[1]
-                )
+            self.assertEqual(input_file.convert_unit("amps", 1), 1)
 
     def test_read_idf_files(self):
         for filename in glob.glob(self.DATA_DIR + '/*.idf'):

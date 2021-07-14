@@ -7,7 +7,6 @@ class RangeLabelRow(Row):
         self,
         dataset_id,
         label_name,
-        created_by,
         lower_bound,
         upper_bound,
         info=None,
@@ -16,7 +15,6 @@ class RangeLabelRow(Row):
         self.id = id_
         self.dataset_id = dataset_id
         self.label_name = label_name
-        self.created_by = created_by
         self.lower_bound = lower_bound
         self.upper_bound = upper_bound
         self.info = info
@@ -26,7 +24,6 @@ class RangeLabelRow(Row):
             'id': self.id,
             'dataset_id': self.dataset_id,
             'label_name': self.label_name,
-            'created_by': self.created_by,
             'lower_bound': self.lower_bound,
             'upper_bound': self.upper_bound,
             'info': self.info,
@@ -38,8 +35,8 @@ class RangeLabelRow(Row):
             cursor.execute(
                 (
                     "INSERT INTO experiment.range_label "
-                    "(dataset_id, label_name, created_by, sample_range, info) "
-                    "VALUES (%s, %s, %s, '[%s, %s)', %s) "
+                    "(dataset_id, label_name, sample_range, info) "
+                    "VALUES (%s, %s, '[%s, %s)', %s) "
                     "ON CONFLICT ON CONSTRAINT range_label_pkey DO UPDATE SET "
                     "sample_range = '[%s, %s)', info = %s "
                     "RETURNING id"
@@ -47,7 +44,6 @@ class RangeLabelRow(Row):
                 [
                     self.dataset_id,
                     self.label_name,
-                    self.created_by,
                     self.lower_bound,
                     self.upper_bound,
                     self.info,
@@ -63,7 +59,7 @@ class RangeLabelRow(Row):
         with conn.cursor() as cursor:
             cursor.execute(
                 (
-                    "SELECT id, label_name, created_by, sample_range, info, "
+                    "SELECT id, label_name, sample_range, info, "
                     "FROM experiment.range_label "
                     "WHERE dataset_id=(%s)"
                 ),
@@ -75,10 +71,9 @@ class RangeLabelRow(Row):
                     id_=result[0],
                     dataset_id=dataset_id,
                     label_name=result[1],
-                    created_by=result[2],
-                    lower_bound=result[3].lower,
-                    upper_bound=result[3].upper,
-                    info=result[4],
+                    lower_bound=result[2].lower,
+                    upper_bound=result[2].upper,
+                    info=result[3],
                 )
                 for result in records
             ]
@@ -88,7 +83,7 @@ class RangeLabelRow(Row):
         with conn.cursor() as cursor:
             cursor.execute(
                 (
-                    "SELECT id, created_by, sample_range, info, "
+                    "SELECT id, sample_range, info, "
                     "FROM experiment.range_label "
                     "WHERE dataset_id=(%s) AND label_name=(%s)"
                 ),
@@ -101,10 +96,9 @@ class RangeLabelRow(Row):
                 id_=result[0],
                 dataset_id=dataset_id,
                 label_name=label_name,
-                created_by=result[1],
-                lower_bound=result[2][0],
-                upper_bound=result[2][1],
-                info=result[3],
+                lower_bound=result[1][0],
+                upper_bound=result[1][1],
+                info=result[2],
             )
 
     @staticmethod
@@ -122,7 +116,7 @@ class RangeLabelRow(Row):
             cursor.execute(
                 (
                     "SELECT * FROM ("
-                    "SELECT id, label_name, created_by, sample_range, info, "
+                    "SELECT id, label_name, sample_range, info, "
                     "FROM experiment.range_label "
                     "WHERE dataset_id=(%s)"
                     ") as t WHERE " + (" AND ".join(filter_query))
@@ -135,10 +129,9 @@ class RangeLabelRow(Row):
                     id_=result[0],
                     dataset_id=dataset_id,
                     label_name=result[1],
-                    created_by=result[2],
-                    lower_bound=result[3].lower,
-                    upper_bound=result[3].upper,
-                    info=result[4],
+                    lower_bound=result[2].lower,
+                    upper_bound=result[2].upper,
+                    info=result[3],
                 )
                 for result in records
             ]

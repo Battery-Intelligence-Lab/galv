@@ -15,10 +15,28 @@ class Column(Base):
 
     id: int
     name: str
-    description: str
+    unit: str
+    type_id: int
     type: ColumnType = None
 
     id = SqlColumn(Integer, primary_key=True)
-    type_id = SqlColumn(Integer, ForeignKey('experiment.column_type.id'))
+    type_id = SqlColumn(
+        Integer, ForeignKey('experiment.column_type.id')
+    )
+    dataset_id = SqlColumn(
+        Integer, ForeignKey('experiment.dataset.id')
+    )
     name = SqlColumn(String)
     description = SqlColumn(String)
+    type = relationship(
+        'ColumnType',
+        backref='columns',
+    )
+
+    @property
+    def unit(self):
+        if self.type_id != -1:
+            return self.type.unit.symbol
+
+
+

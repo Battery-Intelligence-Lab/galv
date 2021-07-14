@@ -69,17 +69,21 @@ class Dataset(Base):
         'RangeLabel',
         backref='dataset',
     )
+    columns = relationship(
+        'Column',
+        backref='dataset',
+    )
 
     #columns = association_proxy("timeseries_data", "column")
 
-    @property
-    def columns(self):
-        return (
-            object_session(self).query(GColumn).
-            join(TimeseriesData,
-                 GColumn.id == TimeseriesData.column_id).
-            filter(TimeseriesData.dataset_id == self.id).distinct().all()
-        )
+    # @property
+    # def columns(self):
+    #     return (
+    #         object_session(self).query(GColumn).
+    #         join(TimeseriesData,
+    #              GColumn.id == TimeseriesData.column_id).
+    #         filter(TimeseriesData.dataset_id == self.id).distinct().all()
+    #     )
 
 # class DatasetSchema(Schema):
 #    id = fields.Int(dump_only=True)

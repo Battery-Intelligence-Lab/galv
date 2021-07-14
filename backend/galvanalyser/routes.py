@@ -77,10 +77,13 @@ def login():
     user = UserRow.select_from_username(auth.username, conn)
 
     if user.validate_password(auth.password):
-        response = jsonify({"message": "login successful"})
         access_token = create_access_token(
             identity=UserRow.to_json(user)
         )
+        response = jsonify({
+            "message": "login successful",
+            "access_token": access_token,
+        })
         set_access_cookies(response, access_token)
         return response
 

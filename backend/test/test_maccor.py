@@ -11,8 +11,7 @@ class TestMaccorFileFormat(GalvanalyserTestCase):
             except UnsupportedFileTypeError:
                 continue
 
-            mapping = \
-                input_file.get_standard_column_to_file_column_mapping()
+            mapping = input_file.get_columns()
             self.assertGreater(len(mapping), 0)
 
     def test_read_csv_files(self):

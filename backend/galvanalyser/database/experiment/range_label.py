@@ -7,7 +7,7 @@ from sqlalchemy.orm import relationship
 from dataclasses import dataclass
 from sqlalchemy.dialects.postgresql import INT8RANGE
 from typing import List
-from sqlalchemy_utils import Int8RangeType, JSONType
+from sqlalchemy_utils import Int8RangeType
 from intervals import IntInterval
 
 
@@ -19,11 +19,11 @@ class RangeLabel(Base):
     id: int
     label_name: str
     sample_range: IntInterval
-    info: object
+    info: str
 
     id = Column(Integer, primary_key=True)
     dataset_id = Column(Integer, ForeignKey('experiment.dataset.id'))
     label_name = Column(String)
 
     sample_range = Column(Int8RangeType)
-    info = Column(JSONType)
+    info = Column(String)
