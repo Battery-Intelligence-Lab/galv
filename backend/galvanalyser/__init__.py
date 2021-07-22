@@ -158,12 +158,13 @@ def init_database(config):
 class CustomJSONEncoder(JSONEncoder):
     def default(self, obj):
         if isinstance(obj, IntInterval):
-            return '%s%s,%s%s' % (
-                '[' if obj.lower_inc else '(',
-                str(obj.lower) if not is_infinite(obj.lower) else '',
-                ' ' + str(obj.upper) if not is_infinite(obj.upper) else '',
-                ']' if obj.upper_inc else ')'
-            )
+            lower = obj.lower
+            upper = obj.upper
+            if is_infinite(lower):
+                lower = -1
+            if is_infinite(upper):
+                upper = -1
+            return [lower, upper]
         return JSONEncoder.default(self, obj)
 
 

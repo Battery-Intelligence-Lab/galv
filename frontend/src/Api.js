@@ -15,7 +15,7 @@ export async function logout() {
   return fetch(url + '/logout', {method: 'POST'});
 }
 
-function getCookie(name) {
+export function getCookie(name) {
   const value = `; ${document.cookie}`;
   const parts = value.split(`; ${name}=`);
   if (parts.length === 2) return parts.pop().split(';').shift();
@@ -49,6 +49,10 @@ export async function run_harvester(id) {
       headers: headers,
     }
   );
+}
+
+export async function getToken() { 
+  return authFetch(url + 'token');
 }
 
 export async function env_harvester(id) { 

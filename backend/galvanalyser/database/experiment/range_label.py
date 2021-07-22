@@ -4,12 +4,11 @@ from sqlalchemy import (
     DateTime,
 )
 from sqlalchemy.orm import relationship
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from sqlalchemy.dialects.postgresql import INT8RANGE
 from typing import List
 from sqlalchemy_utils import Int8RangeType
 from intervals import IntInterval
-
 
 @dataclass
 class RangeLabel(Base):

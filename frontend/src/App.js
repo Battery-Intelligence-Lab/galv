@@ -18,9 +18,15 @@ import Equipment from "./Equipment"
 import Datasets from "./Datasets"
 import TableChartIcon from '@material-ui/icons/TableChart';
 import BusinessIcon from '@material-ui/icons/Business';
+import Dialog from '@material-ui/core/Dialog';
+import DialogActions from '@material-ui/core/DialogActions';
+import DialogContent from '@material-ui/core/DialogContent';
+import DialogContentText from '@material-ui/core/DialogContentText';
+import DialogTitle from '@material-ui/core/DialogTitle';
+import Alert from '@material-ui/lab/Alert';
 import BatteryUnknownIcon from '@material-ui/icons/BatteryUnknown';
 import BackupIcon from '@material-ui/icons/Backup';
-import {loggedIn, logout} from "./Api"
+import {loggedIn, logout, getToken, getCookie} from "./Api"
 import { makeStyles } from '@material-ui/core/styles';
 import CssBaseline from '@material-ui/core/CssBaseline';
 
@@ -153,6 +159,46 @@ export default function App() {
     setOpen(false);
   };
 
+  const [tokenOpen, setTokenOpen] = React.useState(false);
+  const [token, setToken] = React.useState();
+
+  const handleTokenOpen = () => {
+    getToken().then(response => response.json()).then(data => {
+      setToken(data.access_token)
+      setTokenOpen(true);
+    });
+  };
+
+  const handleTokenClose = () => {
+    setTokenOpen(false);
+  };
+
+  const tokenGenerator = (
+    <React.Fragment>
+    <Button color="inherit" onClick={handleTokenOpen}>
+      Generate API token
+    </Button>
+    <Dialog
+        open={tokenOpen}
+        onClose={handleTokenClose}
+      >
+        <DialogTitle>
+          {"API Token"}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText style={{ wordWrap: 'break-word' }}>
+            {token}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleTokenClose} color="primary" autoFocus>
+            Close 
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </React.Fragment>
+  )
+
   const mainListItems = (
     <div>
       <ListItem button component={Link} to="/">
@@ -206,6 +252,7 @@ export default function App() {
         <Typography component="h1" variant="h6" color="inherit" noWrap className={classes.title}>
           - {location.pathname}
         </Typography>
+        {tokenGenerator}
         <Button color="inherit" onClick={() => {
           logout().then(()=> {history.push('/login');});
         }}>

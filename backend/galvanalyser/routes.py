@@ -82,7 +82,6 @@ def login():
         )
         response = jsonify({
             "message": "login successful",
-            "access_token": access_token,
         })
         set_access_cookies(response, access_token)
         return response
@@ -99,6 +98,20 @@ def logout():
     unset_jwt_cookies(response)
     return response
 
+@app.route('/api/token', methods=['GET'])
+@cross_origin()
+@jwt_required()
+def get_token():
+    current_user = json.loads(get_jwt_identity())
+    conn = app.config["GET_DATABASE_CONN_FOR_SUPERUSER"]()
+    user = UserRow.select_from_id(current_user['id'], conn)
+    access_token = create_access_token(
+        identity=UserRow.to_json(user)
+    )
+    response = jsonify({
+        "access_token": access_token,
+    })
+    return response
 
 @app.route('/api/refresh', methods=['POST'])
 def refresh():

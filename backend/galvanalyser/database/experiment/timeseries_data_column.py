@@ -34,8 +34,8 @@ def select_timeseries_column(
     max_sample_number = (
         'SELECT MAX(sample_no) '
         'FROM experiment.timeseries_data '
-        'WHERE dataset_id={},'
-    ).format(dataset_id)
+        'WHERE column_id={},'
+    ).format(column.id)
 
     if max_samples is None:
         filter_by_max_samples = ''
@@ -46,10 +46,10 @@ def select_timeseries_column(
     sql = (
         'SELECT {} '
         'FROM experiment.timeseries_data '
-        'WHERE dataset_id={} {}'
+        'WHERE column_id={} {}'
         'GROUP BY sample_no '
         'ORDER by sample_no '
-    ).format(pivot_for_column, dataset_id,
+    ).format(pivot_for_column, column.id,
              filter_by_max_samples)
 
     print('final sql is')

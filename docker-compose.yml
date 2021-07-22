@@ -12,7 +12,6 @@ services:
     ports:
       - "5001:5000"
     volumes:
-     - ./harvester:/usr/harvester
      - ./backend:/usr/app
      - "${GALVANALYSER_HARVESTER_TEST_PATH}:/usr/test_data"
      - "${GALVANALYSER_HARVESTER_BASE_PATH}:/usr/data"
@@ -29,7 +28,6 @@ services:
     depends_on:
       - galvanalyser_app
     volumes:
-     - ./harvester:/usr/harvester
      - ./backend:/usr/app
      - "${GALVANALYSER_HARVESTER_BASE_PATH}:/usr/data"
      - "${CELERY_LOG_DIR}:/var/log/celery"
@@ -46,12 +44,11 @@ services:
     depends_on:
       - galvanalyser_app
     ports:
-      - "3000:3000"
+      - "80:80"
     volumes:
      - ./frontend:/app
     restart: unless-stopped
     working_dir: /app
-    command: yarn start 
     restart: unless-stopped
     env_file:
      - ./.env

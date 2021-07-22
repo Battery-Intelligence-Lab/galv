@@ -7,6 +7,12 @@ import { makeStyles } from '@material-ui/core/styles';
 import DatasetChart from './DatasetChart'
 import Button from '@material-ui/core/Button';
 import { useHistory } from "react-router-dom";
+import GetDatasetPython from "./GetDatasetPython"
+import Dialog from '@material-ui/core/Dialog';
+import DialogActions from '@material-ui/core/DialogActions';
+import DialogContent from '@material-ui/core/DialogContent';
+import DialogTitle from '@material-ui/core/DialogTitle';
+
 
 const useStyles = makeStyles((theme) => ({
   container: {
@@ -14,6 +20,9 @@ const useStyles = makeStyles((theme) => ({
     paddingBottom: theme.spacing(4),
     height: '100%',
   },
+  button: {
+    margin: theme.spacing(1),
+  }
 }));
 
 
@@ -25,15 +34,24 @@ export default function Datasets() {
 
   const [select, setSelect] = useState(null)
 
+  // TODO: use controlled selectionModel, cause this api is changin...
   const handleSelectionChange = (e) => {
-    setSelect(e.selectionModel[0]);
+    console.log(e)
+    if (e.selectionModel) {
+      if (e.selectionModel.length > 0) {
+        setSelect(e.selectionModel[0]);
+      }
+    } else {
+      if (e.length > 0) {
+        setSelect(e[0]);
+      }
+    }
   };
 
   useEffect(() => {
     datasets().then((response) => {
       if (response.ok) {
         return response.json().then(data => {
-          console.log(data)
           setData(data.sort((a, b) => {
             if (a.date > b.date) {
               return -1;
@@ -47,6 +65,18 @@ export default function Datasets() {
       }
     });
   }, [])
+
+  const [codeOpen, setCodeOpen] = React.useState(false);
+
+  const handleCodeOpen = () => {
+    setCodeOpen(true);
+  };
+
+  const handleCodeClose = () => {
+    setCodeOpen(false);
+  };
+
+ 
 
   if ( !data ) {
     return ("Loading...");
@@ -102,10 +132,39 @@ export default function Datasets() {
     </div>
     {data[select] &&
         <Button variant="contained" 
+          className={classes.button}
           onClick={()=>{history.push(`/dataset/${data[select].id}`);}}
         >
           Edit Metadata
         </Button>
+    }
+    {data[select] &&
+      <React.Fragment>
+      <Button 
+        variant="contained" onClick={handleCodeOpen}
+        className={classes.button}
+      >
+        API Code (Python)
+      </Button>
+      <Dialog
+        fullWidth={true}
+        maxWidth={'md'}
+        open={codeOpen}
+        onClose={handleCodeClose}
+      >
+        <DialogTitle>
+          {`API Code (Python) for dataset "${data[select].name}"`}
+        </DialogTitle>
+        <DialogContent>
+          <GetDatasetPython dataset={data[select]} />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCodeClose} color="primary" autoFocus>
+            Close 
+          </Button>
+        </DialogActions>
+      </Dialog>
+      </React.Fragment>
     }
     </Container>
   );
