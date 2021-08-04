@@ -17,7 +17,8 @@ There are two user interfaces to the system:
   
 A diagram of the logical structure of the system is shown below. The arrows indicate the 
 direction of data flow.
-![The logical relationship of the various Galvanalyser components](./documentation/GalvanalyserStructure.PNG)
+![The logical relationship of the various Galvanalyser 
+components](./docs/GalvanalyserStructure.PNG)
 
 ## Project documentation
 
@@ -65,4 +66,4 @@ and using [Material-UI](https://material-ui.com/) components.
 
 The project uses PostgreSQL for its database. Other databases are currently not 
 supported. An entity relationship diagram is shown below.
-![Galvanalyser entity relationship diagram](./documentation/Galvanalyser_DB_ERD.png)
+![Galvanalyser entity relationship diagram](./docs/Galvanalyser_DB_ERD.png)
