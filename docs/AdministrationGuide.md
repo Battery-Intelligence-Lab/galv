@@ -7,10 +7,10 @@ This guide assumes you have a Galvanalyser server setup.
 There are two types of users in galvanalyser:
 1. The first are standard user accounts, that are used for authentication on the 
    frontend, and the REST API. 
-2. The second are harvester user accounts. Ordinarily, there is only one harvester user 
-   account, and the username and password for this account is set in the `.env` file in 
-   the server. This account is a postgres account on the database, and the harvesters 
-   use this account to upload data directly to the database.
+2. The second is the harvester user account. Ordinarily, there is only one harvester 
+   user account, and the username and password for this account is set in the `.env` 
+   file in the server. This account is a postgres account on the database, and the 
+   harvesters use this account to upload data directly to the database.
 
 
 ## Creating users
