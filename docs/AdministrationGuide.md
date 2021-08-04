@@ -24,4 +24,26 @@ docker-compose run --rm galvanalyser_app python manage.py create_user
 
 ## Configuring harvesters
 
-Harvesters are created and configured via the frontend web application
+Harvesters are created and configured via the frontend web application. 
+
+First navigate to the harvester page (the cloud upload icon in the left hand side 
+drawer). Here you are presented with an (initially empty) table of harvester machines. 
+Add a new machine using the "plus" button and fill in a name. Click the save button 
+(disk icon) to save your new name.
+
+Click on your new harvester and you will be presented with an (initially empty) list of 
+paths to monitor. The base path should correspond with the 
+GALVANALYSER_HARVESTER_BASE_PATH environment variable that you set in the `.env` file. 
+Use the "plus" button to add a new path and edit it to the directory that you wish to 
+monitor.
+
+Now that you have a harvester and a path to monitor, click on the harvester and click 
+the "play" button to run it. While the harvester is running, the "Is Running" column 
+will indicate this, and once it has completed the "Last Completed Run" will record the 
+last time the harvester ran to completion. If you wish to run the harvester periodically 
+then enter a number in the "Periodic Hour" column. This correspond to the hour of the 
+day that you wish the harvester to run in 24 hour time, so for example if you enter in 
+"1", then the harvester will be run every day at 1am.
+
+Once you have run your new harvester, you can click on each monitored path to see a list
+of the files that have been found in each path, as well as their current status.

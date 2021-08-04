@@ -42,6 +42,14 @@ you can use to setup your galvanalyser installation, such as passwords and data
 locations. Comments in the file give more detailed information on each option. Please go 
 through each option and edit to your desired configuration.
 
+## Building docker images (only when upgrading to a new version of galvanalyser)
+
+If you have previously installed and run galvanalyser you might already have old docker 
+images already built. To rebuild the images, run the following command:
+
+```bash
+docker-compose build
+```
 
 ## Setting up and creating user accounts on the galvanalyser database
 

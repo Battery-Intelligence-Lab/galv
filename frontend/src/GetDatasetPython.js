@@ -22,7 +22,7 @@ export default function GetDatasetPython({dataset}) {
     return `      '${column.name}': ${column.id},`
   })
   const column_ids_str = column_ids.join('\n')
-  const setupEnvString = `pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple batteryclient numpy`
+  const setupEnvString = `pip install batteryclient numpy`
 
   const codeString = `import batteryclient
 from batteryclient.api import users_api
