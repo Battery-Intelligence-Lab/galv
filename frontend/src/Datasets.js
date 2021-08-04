@@ -1,10 +1,9 @@
 
-import React, {useEffect, useState, useRef} from "react";
+import React, {useEffect, useState} from "react";
 import { DataGrid, GridRowsProp, GridColDef } from '@material-ui/data-grid';
 import Container from '@material-ui/core/Container';
-import { datasets, users, cells } from './Api';
+import { datasets } from './Api';
 import { makeStyles } from '@material-ui/core/styles';
-import DatasetChart from './DatasetChart'
 import Button from '@material-ui/core/Button';
 import { useHistory } from "react-router-dom";
 import GetDatasetPython from "./GetDatasetPython"
@@ -36,7 +35,6 @@ export default function Datasets() {
 
   // TODO: use controlled selectionModel, cause this api is changin...
   const handleSelectionChange = (e) => {
-    console.log(e)
     if (e.selectionModel) {
       if (e.selectionModel.length > 0) {
         setSelect(e.selectionModel[0]);
@@ -107,7 +105,7 @@ export default function Datasets() {
       cell: d.cell ? d.cell.name : '',
       owner: d.owner ? d.owner.username : '',
       purpose: d.purpose,
-      metadata: !(!d.cell || !d.owner || !d.purpose || !d.equipment)
+      metadata: !(!d.cell || !d.owner || !d.purpose || d.equipment.length === 0)
     };
   });
 

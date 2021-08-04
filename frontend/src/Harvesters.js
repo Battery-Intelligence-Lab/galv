@@ -4,14 +4,11 @@ import { makeStyles } from '@material-ui/core/styles';
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
 import Paper from '@material-ui/core/Paper';
-import InputBase from '@material-ui/core/InputBase';
 import Typography from '@material-ui/core/Typography';
 import PlayArrowIcon from '@material-ui/icons/PlayArrow';
 import Tooltip from '@material-ui/core/Tooltip';
-import ListIcon from '@material-ui/icons/List';
 import AddIcon from '@material-ui/icons/Add';
 import IconButton from '@material-ui/core/IconButton';
-import SettingsIcon from '@material-ui/icons/Settings';
 import TableCell from '@material-ui/core/TableCell';
 import Container from '@material-ui/core/Container';
 import SaveIcon from '@material-ui/icons/Save';
@@ -19,7 +16,6 @@ import TableContainer from '@material-ui/core/TableContainer';
 import TableHead from '@material-ui/core/TableHead';
 import DeleteIcon from '@material-ui/icons/Delete';
 import TableRow from '@material-ui/core/TableRow';
-import { Link, useHistory } from "react-router-dom";
 
 import HarvesterDetail from './HarvesterDetail';
 import { 
@@ -51,11 +47,6 @@ function MyTableRow({savedRow, onRowSave, selected, onSelectRow}) {
   const classes = useStyles();
   const [row, setRow] = useState([])
   const [dirty, setDirty] = useState(false)
-
-  
-  const rowUnchanged = Object.keys(row).reduce((a, k) => {
-    return a && row[k] === savedRow[k];
-  }, true);
 
   useEffect(() => {
     if (!dirty) { 
@@ -190,7 +181,6 @@ export default function Harvesters() {
 
   
   const isSelected = selected.id !== null;
-  let history = useHistory();
 
   const column_headings = [
     {label: 'ID', help: 'Harvester id in database'},

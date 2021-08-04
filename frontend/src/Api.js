@@ -384,10 +384,6 @@ export async function update_metadata(dataset_id, metadata) {
   );
 }
 
-export async function columns(dataset_id) { 
-  return authFetch(url + `column?dataset_id=${dataset_id}`);
-}
-
 export async function timeseries_column(dataset_id, col_id) { 
   return authFetch(url + `dataset/${dataset_id}/${col_id}`,
     {

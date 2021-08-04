@@ -58,6 +58,7 @@ function MyTableRow({savedRow, onRowSave, selected, onSelectRow}) {
   }
   Object.keys(useRow).map((k) => {
     useRow[k] = useRow[k] === null ? '' : useRow[k];
+    return null
   });
 
   const setValue = (key) => (e) => {
@@ -138,6 +139,7 @@ export default function Equipment() {
   const updateEquip = (value) => {
     Object.keys(value).map((k) => {
       value[k] = value[k] === '' ? null : value[k];
+      return null
     });
     update_equipment(value.id, value).then(refreshEquip);
   };

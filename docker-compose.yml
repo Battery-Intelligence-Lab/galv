@@ -37,7 +37,7 @@ services:
     env_file:
      - ./.env
   galvanalyser_frontend:
-    container_name: galvanalyser_frontend
+    image: galvanalyser_frontend
     build:
       dockerfile: Dockerfile
       context: ./frontend

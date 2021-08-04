@@ -400,24 +400,6 @@ def file():
     return ObservedFileRow.to_json(files)
 
 
-@app.route('/api/column', methods=['GET'])
-@jwt_required()
-@cross_origin()
-def column():
-    conn = app.config["GET_DATABASE_CONN_FOR_SUPERUSER"]()
-    dataset_id = request.args['dataset_id']
-
-    column_ids = \
-        TimeseriesDataRow.select_column_ids_in_dataset(
-            dataset_id, conn
-        )
-
-    columns = [ColumnRow.select_from_id(cid, conn)
-               for cid in column_ids]
-
-    return ColumnRow.to_json(columns)
-
-
 def serialise_numpy_array(np_array):
     response = flask.make_response(np_array.tobytes())
     response.headers.set('Content-Type', 'application/octet-stream')

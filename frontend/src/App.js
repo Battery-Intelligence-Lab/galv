@@ -1,6 +1,5 @@
 import React from "react";
 import {
-  BrowserRouter as Router,
   Switch,
   Route,
   Redirect,
@@ -10,23 +9,20 @@ import {
 } from "react-router-dom";
 import Login from "./Login"
 import Harvesters from "./Harvesters"
-import HarvesterDetail from "./HarvesterDetail"
 import DatasetDetail from "./DatasetDetail"
 import Cells from "./Cells"
 import SpeedIcon from '@material-ui/icons/Speed';
 import Equipment from "./Equipment"
 import Datasets from "./Datasets"
 import TableChartIcon from '@material-ui/icons/TableChart';
-import BusinessIcon from '@material-ui/icons/Business';
 import Dialog from '@material-ui/core/Dialog';
 import DialogActions from '@material-ui/core/DialogActions';
 import DialogContent from '@material-ui/core/DialogContent';
 import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogTitle from '@material-ui/core/DialogTitle';
-import Alert from '@material-ui/lab/Alert';
 import BatteryUnknownIcon from '@material-ui/icons/BatteryUnknown';
 import BackupIcon from '@material-ui/icons/Backup';
-import {loggedIn, logout, getToken, getCookie} from "./Api"
+import {loggedIn, logout, getToken} from "./Api"
 import { makeStyles } from '@material-ui/core/styles';
 import CssBaseline from '@material-ui/core/CssBaseline';
 
@@ -45,12 +41,7 @@ import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
-import DashboardIcon from '@material-ui/icons/Dashboard';
-import ShoppingCartIcon from '@material-ui/icons/ShoppingCart';
 import { ReactComponent as GalvanalyserLogo } from './Galvanalyser-logo.svg';
-
-
-
 
 const PrivateRoute = ({ component: Component, ...rest }) => {
   const logged = loggedIn();
