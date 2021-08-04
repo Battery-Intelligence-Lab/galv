@@ -1,5 +1,17 @@
 import psycopg2
 from galvanalyser.database import Row
+from galvanalyser.database.experiment import (
+    EquipmentRow,
+    ColumnRow,
+    RangeLabelRow,
+)
+from galvanalyser.database.cell_data import (
+    CellRow,
+)
+from galvanalyser.database.user_data import (
+    UserRow
+)
+
 from datetime import date, datetime
 import json
 
@@ -43,17 +55,24 @@ class DatasetRow(Row):
     def __eq__(self, other):
         return self.id == other.id
 
-    def to_dict(self):
+    def to_dict(self, conn):
         json_str = json.dumps(self.json_data, default=json_serial)
+        cell = CellRow.select_from_id(self.cell_id, conn)
+        equipment = [
+            EquipmentRow.select_from_id(id_, conn) for id_ in self.equipment
+        ]
+        ranges = RangeLabelRow.select_from_dataset_id(self.id, conn)
+        owner = UserRow.select_from_id(self.owner_id, conn)
         obj = {
             'id': self.id,
             'name': self.name,
             'date': self.date.isoformat(),
             'dataset_type': self.dataset_type,
-            'cell_id': self.cell_id,
-            'owner_id': self.owner_id,
+            'cell': CellRow.to_dict(cell),
+            'owner': UserRow.to_dict(owner),
             'purpose': self.purpose,
-            'equipment': self.equipment,
+            'ranges': [RangeLabelRow.to_dict(r) for r in ranges],
+            'equipment': [EquipmentRow.to_dict(e) for e in equipment],
             'json_data': json_str,
         }
         return obj

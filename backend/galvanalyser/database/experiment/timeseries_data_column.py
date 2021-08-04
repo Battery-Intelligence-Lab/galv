@@ -23,8 +23,6 @@ def select_timeseries_column(
     max_samples: int
         subsample to give an array of only max_samples
     """
-    print('select_from_timeseries', dataset_id, column_id)
-
     column = ColumnRow.select_from_id(column_id, conn)
 
     pivot_for_column = (
@@ -34,8 +32,8 @@ def select_timeseries_column(
     max_sample_number = (
         'SELECT MAX(sample_no) '
         'FROM experiment.timeseries_data '
-        'WHERE dataset_id={},'
-    ).format(dataset_id)
+        'WHERE column_id={},'
+    ).format(column.id)
 
     if max_samples is None:
         filter_by_max_samples = ''
@@ -46,14 +44,12 @@ def select_timeseries_column(
     sql = (
         'SELECT {} '
         'FROM experiment.timeseries_data '
-        'WHERE dataset_id={} {}'
+        'WHERE column_id={} {}'
         'GROUP BY sample_no '
         'ORDER by sample_no '
-    ).format(pivot_for_column, dataset_id,
+    ).format(pivot_for_column, column.id,
              filter_by_max_samples)
 
-    print('final sql is')
-    print(sql)
     with conn.cursor() as cursor:
         cursor.execute(sql)
         records = cursor.fetchall()

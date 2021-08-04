@@ -58,6 +58,7 @@ function MyTableRow({savedRow, onRowSave, selected, onSelectRow}) {
   }
   Object.keys(useRow).map((k) => {
     useRow[k] = useRow[k] === null ? '' : useRow[k];
+    return null
   });
 
   const setValue = (key) => (e) => {
@@ -191,12 +192,6 @@ export default function Cells() {
       });
   };
 
-  function uuidv4() {
-    return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
-      (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
-    );
-  }
-
   const addNewCell = () => {
     add_cell({name: 'Edit me'}).then(refreshCells);
   };
@@ -206,6 +201,7 @@ export default function Cells() {
   const updateCell = (value) => {
     Object.keys(value).map((k) => {
       value[k] = value[k] === '' ? null : value[k];
+      return null
     });
     update_cell(value.id, value).then(refreshCells);
   };

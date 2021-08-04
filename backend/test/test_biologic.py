@@ -6,25 +6,9 @@ class TestBiologicFileFormat(GalvanalyserTestCase):
     def test_units(self):
         for filename in glob.glob(self.DATA_DIR + '/*.mpr'):
             input_file = BiologicMprInputFile(filename)
-            mapping = \
-                input_file.get_standard_column_to_file_column_mapping()
+            mapping = input_file.get_columns()
             self.assertGreater(len(mapping), 0)
-            for i in range(100):
-                row_raw = next(input_file.load_data(
-                    filename, ["I/mA"]
-                ))
-                row_converted = next(
-                    input_file.convert_file_cols_to_std_cols(
-                        input_file.load_data(
-                            filename, ["I/mA"]
-                        ),
-                        {'I/mA': 1}
-                    ),
-                )
-                self.assertEqual(
-                    1e-3 * row_raw['I/mA'],
-                    row_converted[1]
-                )
+            self.assertEqual(input_file.convert_unit("I/mA", 1e3), 1)
 
     def test_read_mpr_files(self):
         for filename in glob.glob(self.DATA_DIR + '/*.mpr'):

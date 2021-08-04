@@ -1,19 +1,12 @@
 import React, { useEffect, useState } from "react";
-import TextField from '@material-ui/core/TextField';
 import Typography from '@material-ui/core/Typography';
-import { useForm, Controller  } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import Card from "@material-ui/core/Card";
-import CardActionArea from "@material-ui/core/CardActionArea";
 import CardActions from "@material-ui/core/CardActions";
 import CardContent from "@material-ui/core/CardContent";
-import MenuItem from '@material-ui/core/MenuItem';
 import { makeStyles } from '@material-ui/core/styles';
-import Paper from '@material-ui/core/Paper';
 import SaveIcon from '@material-ui/icons/Save';
 import IconButton from '@material-ui/core/IconButton';
-import FormControl from '@material-ui/core/FormControl';
-import InputLabel from '@material-ui/core/InputLabel';
-import Select from '@material-ui/core/Select';
 import Container from '@material-ui/core/Container';
 import { useParams } from "react-router-dom";
 import {
@@ -37,23 +30,11 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 
-const renderTextField = (
-  { input, label, meta: { touched, error }, ...custom },
-) => (
-  <TextField
-    hintText={label}
-    floatingLabelText={label}
-    errorText={touched && error}
-    {...input}
-    {...custom}
-  />
-);
-
 export default function DatasetDetail() {
   const { id } = useParams();
   const classes = useStyles();
 
-  const { control, handleSubmit, reset } = useForm();
+  const { control, handleSubmit } = useForm();
 
   const [cellData, setCellData] = useState([])
   const [equipmentData, setEquipmentData] = useState(null)
@@ -74,6 +55,9 @@ export default function DatasetDetail() {
     datasets(id).then((response) => {
       if (response.ok) {
         response.json().then((d) => {
+          d['cell_id'] = d.cell ? d.cell.id : null
+          d['owner_id'] = d.owner ? d.owner.id : null
+          d['equipment'] = d.equipment.map(x => x.id)
           setDataset(d);
         });
       }
@@ -85,7 +69,7 @@ export default function DatasetDetail() {
         });
       }
     });
-  }, []);
+  }, [id]);
 
   const onSubmit = (values) => {
     update_dataset(dataset.id, values);

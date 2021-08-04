@@ -6,6 +6,21 @@ from urllib.parse import urlparse
 from flask_jwt_extended import JWTManager
 from datetime import timedelta
 
+import flask
+from flask_jwt_extended import JWTManager
+import flask_cors
+
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
+from flask.json import JSONEncoder
+
+from intervals import IntInterval
+from infinity import is_infinite
+
+import os
+
+
 def get_db_connection(host, port, name, user, password):
     return psycopg2.connect(
         host=host,
@@ -14,6 +29,7 @@ def get_db_connection(host, port, name, user, password):
         user=user,
         password=password,
     )
+
 
 def create_config():
     redash = urlparse(os.getenv('REDASH_DATABASE_URL'))
@@ -26,6 +42,7 @@ def create_config():
             "USER": "postgres",
             "PASSWORD": os.getenv('POSTGRES_PASSWORD'),
         },
+
         "REDASH_DATABASE": {
             "NAME": redash.path[1:],
             "PORT": redash.port,
@@ -47,6 +64,27 @@ def create_config():
         },
         "SECRET_KEY": os.getenv("GALVANALYSER_SECRET_KEY"),
     }
+
+    config['SQLALCHEMY_DATABASE_URI'] = \
+        'postgresql://{}:{}@{}:{}/{}'.format(
+            config['GALVANISER_DATABASE']['USER'],
+            config['GALVANISER_DATABASE']['PASSWORD'],
+            config['GALVANISER_DATABASE']['HOST'],
+            config['GALVANISER_DATABASE']['PORT'],
+            config['GALVANISER_DATABASE']['NAME'],
+    )
+    config['SQLALCHEMY_BINDS'] = {
+        'harvester': 'postgresql://{}:{}@{}:{}/{}'.format(
+            config['DEFAULT_HARVESTER']['NAME'],
+            config['DEFAULT_HARVESTER']['PASSWORD'],
+            config['GALVANISER_DATABASE']['HOST'],
+            config['GALVANISER_DATABASE']['PORT'],
+            config['GALVANISER_DATABASE']['NAME'],
+        ),
+    }
+
+    config['SQLALCHEMY_ECHO'] = True
+    config['SQLCHEMY_TRACK_MODIFICATIONS'] = False
 
     def get_db_connection_for_superuser():
         return get_db_connection(
@@ -94,6 +132,7 @@ def create_config():
 
     return config
 
+
 def make_celery(app):
     celery = Celery(
         app.import_name,
@@ -110,29 +149,54 @@ def make_celery(app):
     celery.Task = ContextTask
     return celery
 
+def init_database(config):
+    engine = create_engine(config['SQLALCHEMY_DATABASE_URI'])
+    harvester_engine = \
+        create_engine(config['SQLALCHEMY_BINDS']['harvester'])
+    return sessionmaker(engine), sessionmaker(harvester_engine)
 
-def init_app():
-    app = flask.Flask(__name__)
-
-    app.config.from_mapping(
-        create_config(),
-    )
-
-    JWTManager(app)
-
-    celery = make_celery(app)
-
-    # ensure the instance folder exists
-    try:
-        os.makedirs(app.instance_path)
-    except OSError:
-        pass
+class CustomJSONEncoder(JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, IntInterval):
+            lower = obj.lower
+            upper = obj.upper
+            if is_infinite(lower):
+                lower = -1
+            if is_infinite(upper):
+                upper = -1
+            return [lower, upper]
+        return JSONEncoder.default(self, obj)
 
 
+app = flask.Flask(__name__)
 
-    with app.app_context():
-        # Import parts of our core Flask app
-        from . import routes
+app.json_encoder = CustomJSONEncoder
 
-    return app
+app.config.from_mapping(
+    create_config(),
+)
 
+Session, HarvesterSession = init_database(app.config)
+
+
+JWTManager(app)
+
+celery = make_celery(app)
+
+# ensure the instance folder exists
+try:
+    os.makedirs(app.instance_path)
+except OSError:
+    pass
+
+
+with app.app_context():
+    # Import parts of our core Flask app
+    from galvanalyser import routes
+
+# match redash secret_key
+app.secret_key = os.getenv('REDASH_COOKIE_SECRET')
+
+# Initializes CORS so that the api can talk to the react app
+cors = flask_cors.CORS()
+cors.init_app(app)

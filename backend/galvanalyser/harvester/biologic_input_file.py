@@ -34,9 +34,9 @@ class BiologicMprInputFile(InputFile):
 
     def get_file_column_to_standard_column_mapping(self):
         """
-            Return a dict with a key of the column name in the file that maps to
-            the standard column name in the value. Only return values where a
-            mapping exists
+        Return a dict with a key of the column name in the file that maps to
+        the standard column name in the value. Only return values where a
+        mapping exists
         """
         return {
             "I/mA": AMPS_COLUMN_ID,

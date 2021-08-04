@@ -3,7 +3,6 @@ from galvanalyser.database.experiment import (
     InputFile,
     TimeseriesDataRow,
     DatasetRow,
-    InstitutionRow
 )
 import datetime
 
@@ -91,7 +90,7 @@ class TestInputFile(GalvanalyserTestCase):
         )
         latest_row = TimeseriesDataRow\
             .select_latest_by_dataset_id(dataset.id, self.harvester_conn)
-        self.assertEquals(
+        self.assertCountEqual(
             [6.0, 7.0, 8.0],
             [x.value for x in latest_row]
         )

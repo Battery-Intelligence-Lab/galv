@@ -266,7 +266,6 @@ def import_file(base_path, file_path_row, harvester_name, conn):
                 RangeLabelRow(
                     dataset_id,
                     "all",
-                    harvester_name,
                     int(input_file.metadata["first_sample_no"]),
                     int(input_file.metadata["last_sample_no"]) + 1,
                 ).insert(conn)
@@ -275,7 +274,6 @@ def import_file(base_path, file_path_row, harvester_name, conn):
                     RangeLabelRow(
                         dataset_id,
                         label,
-                        harvester_name,
                         sample_range[0],
                         sample_range[1],
                     ).insert(conn)

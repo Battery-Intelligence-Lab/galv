@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import TextField from '@material-ui/core/TextField';
 import Typography from '@material-ui/core/Typography';
 import Input from '@material-ui/core/Input';
@@ -7,7 +7,6 @@ import { makeStyles } from '@material-ui/core/styles';
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
 import Paper from '@material-ui/core/Paper';
-import InputBase from '@material-ui/core/InputBase';
 import Tooltip from '@material-ui/core/Tooltip';
 import AddIcon from '@material-ui/icons/Add';
 import IconButton from '@material-ui/core/IconButton';
@@ -15,14 +14,12 @@ import TableCell from '@material-ui/core/TableCell';
 import MenuItem from '@material-ui/core/MenuItem';
 import Select from '@material-ui/core/Select';
 import Chip from '@material-ui/core/Chip';
-import Container from '@material-ui/core/Container';
 import SaveIcon from '@material-ui/icons/Save';
 import TableContainer from '@material-ui/core/TableContainer';
 import TableHead from '@material-ui/core/TableHead';
 import DeleteIcon from '@material-ui/icons/Delete';
 import TableRow from '@material-ui/core/TableRow';
 import Files from './Files'
-import { Link, useHistory } from "react-router-dom";
 
 import { 
   monitored_paths, add_monitored_path, users, env_harvester,
@@ -192,23 +189,26 @@ export default function HarvesterDetail({harvester}) {
     });
   }, []);
 
+  const refreshPaths = useCallback(
+    () => {
+      monitored_paths(harvester.id).then((response) => {
+        if (response.ok) {
+          return response.json().then((result) => {
+            setPaths(result.sort((arg1, arg2) => arg1.monitor_path_id - arg2.monitor_path_id));
+            setSelected(oldSelected => {
+              const newSelected = result.find(x => x.monitor_path_id === oldSelected.monitor_path_id);
+              return newSelected || {monitor_path_id: null};
+            });
+          });
+        }
+      });
+    },
+    [harvester.id],
+  );
+
   useEffect(() => {
     refreshPaths(); 
-  }, [harvester]);
-
-  const refreshPaths= () => {
-      monitored_paths(harvester.id).then((response) => {
-      if (response.ok) {
-        return response.json().then((result) => {
-          setPaths(result.sort((arg1, arg2) => arg1.monitor_path_id - arg2.monitor_path_id));
-          setSelected(oldSelected => {
-            const newSelected = result.find(x => x.monitor_path_id === oldSelected.monitor_path_id);
-            return newSelected || {monitor_path_id: null};
-          });
-        });
-      }
-      });
-  };
+  }, [harvester, refreshPaths]);
 
   const addNewPath= () => {
     add_monitored_path({harvester_id: harvester.id, path: 'Edit me'}).then(refreshPaths);

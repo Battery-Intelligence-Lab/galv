@@ -2,7 +2,7 @@ import sys
 import flask
 import numpy as np
 from flask_cors import cross_origin
-from flask import request, abort, session, jsonify, make_response
+from flask import request, abort, jsonify, make_response
 import os
 from datetime import timezone
 from datetime import datetime
@@ -25,10 +25,10 @@ from .database.experiment.timeseries_data_row import (
     RECORD_NO_COLUMN_ID,
 )
 from .database.experiment import (
-    AccessRow, DatasetRow, ColumnRow, MetadataRow, EquipmentRow,
+    AccessRow, Dataset, ColumnRow, MetadataRow, Equipment,
 )
 from .database.cell_data import (
-    CellRow, ManufacturerRow
+    Cell
 )
 from .database.harvester import (
     MonitoredPathRow, HarvesterRow, ObservedFileRow
@@ -43,6 +43,8 @@ from celery import current_app as celery
 from functools import wraps
 
 from .database.user_data import UserRow
+
+from galvanalyser import Session
 
 
 @app.after_request
@@ -75,10 +77,12 @@ def login():
     user = UserRow.select_from_username(auth.username, conn)
 
     if user.validate_password(auth.password):
-        response = jsonify({"message": "login successful"})
         access_token = create_access_token(
             identity=UserRow.to_json(user)
         )
+        response = jsonify({
+            "message": "login successful",
+        })
         set_access_cookies(response, access_token)
         return response
 
@@ -94,6 +98,20 @@ def logout():
     unset_jwt_cookies(response)
     return response
 
+@app.route('/api/token', methods=['GET'])
+@cross_origin()
+@jwt_required()
+def get_token():
+    current_user = json.loads(get_jwt_identity())
+    conn = app.config["GET_DATABASE_CONN_FOR_SUPERUSER"]()
+    user = UserRow.select_from_id(current_user['id'], conn)
+    access_token = create_access_token(
+        identity=UserRow.to_json(user)
+    )
+    response = jsonify({
+        "access_token": access_token,
+    })
+    return response
 
 @app.route('/api/refresh', methods=['POST'])
 def refresh():
@@ -138,46 +156,46 @@ def user():
 @jwt_required()
 def dataset(id_=None):
     conn = app.config["GET_DATABASE_CONN_FOR_SUPERUSER"]()
-
-    current_user = json.loads(get_jwt_identity())
-    if (id_ is not None and
-            not AccessRow.exists(id_, current_user['id'], conn)):
-        return jsonify({
-            'message': 'user {} does not have access to dataset {}'.format(
-                current_user['username'], id_
-            )
-        }), 404
-
-    if request.method == 'GET':
-        if id_ is None:
-            datasets = \
-                DatasetRow.all_with_access(current_user['id'], conn)
-        else:
-            datasets = DatasetRow.select_from_id(id_, conn)
-        return DatasetRow.to_json(datasets)
-    elif request.method == 'PUT':
-        dataset = DatasetRow.select_from_id(id_, conn)
-        if dataset is None:
+    with Session() as session:
+        current_user = json.loads(get_jwt_identity())
+        if (id_ is not None and
+                not AccessRow.exists(id_, current_user['id'], conn)):
             return jsonify({
-                'message': 'cell not found'
+                'message': 'user {} does not have access to dataset {}'.format(
+                    current_user['username'], id_
+                )
             }), 404
 
-        request_data = request.get_json()
+        if request.method == 'GET':
+            if id_ is None:
+                return jsonify(session.query(Dataset).all())
+            else:
+                return jsonify(session.get(Dataset, id_))
+        elif request.method == 'PUT':
+            dataset = session.get(Dataset, id_)
+            if dataset is None:
+                return jsonify({
+                    'message': 'cell not found'
+                }), 404
 
-        if 'name' in request_data:
-            dataset.name = request_data['name']
-        if 'cell_id' in request_data:
-            dataset.cell_id = request_data['cell_id']
-        if 'owner_id' in request_data:
-            dataset.owner_id = request_data['owner_id']
-        if 'equipment' in request_data:
-            dataset.equipment = request_data['equipment']
-        if 'purpose' in request_data:
-            dataset.purpose = request_data['purpose']
+            request_data = request.get_json()
 
-        dataset.update(conn)
-        conn.commit()
-        return DatasetRow.to_json(dataset)
+            if 'name' in request_data:
+                dataset.name = request_data['name']
+            if 'cell_id' in request_data:
+                dataset.cell_id = request_data['cell_id']
+            if 'owner_id' in request_data:
+                dataset.owner_id = request_data['owner_id']
+            if 'equipment' in request_data:
+                dataset.equipment =  [
+                    session.get(Equipment, id_)
+                    for id_ in request_data['equipment']
+                ]
+            if 'purpose' in request_data:
+                dataset.purpose = request_data['purpose']
+
+            session.commit()
+            return jsonify(dataset)
 
 
 @app.route('/api/equipment', methods=['GET', 'POST'])
@@ -185,55 +203,52 @@ def dataset(id_=None):
 @cross_origin()
 @jwt_required()
 def equipment(id_=None):
-    conn = app.config["GET_DATABASE_CONN_FOR_SUPERUSER"]()
-    if request.method == 'GET':
-        if id_ is None:
-            equipment = EquipmentRow.all(conn)
-        else:
-            equipment = EquipmentRow.select_from_id(id_, conn)
+    with Session() as session:
+        if request.method == 'GET':
+            if id_ is None:
+                return jsonify(session.query(Equipment).all())
+            else:
+                equipment = session.get(Equipment, id_)
+                if equipment is None:
+                    return jsonify({
+                        'message': 'equipment not found'
+                    }), 404
+                return jsonify(equipment)
+        elif request.method == 'POST':
+            request_data = request.get_json()
+            equipment = Equipment(
+                name=request_data.get('name', None),
+                type=request_data.get('type', None),
+            )
+            session.add(equipment)
+            session.commit()
+            return jsonify(equipment)
+        elif request.method == 'PUT':
+            equipment = session.get(Equipment, id_)
             if equipment is None:
                 return jsonify({
                     'message': 'equipment not found'
                 }), 404
-        return EquipmentRow.to_json(equipment)
-    elif request.method == 'POST':
-        request_data = request.get_json()
-        equipment = EquipmentRow(
-            name=request_data.get('name', None),
-            type=request_data.get('type', None),
-        )
-        equipment.insert(conn)
-        conn.commit()
-        return EquipmentRow.to_json(equipment)
-    elif request.method == 'PUT':
-        equipment = EquipmentRow.select_from_id(id_, conn)
-        if equipment is None:
-            return jsonify({
-                'message': 'equipment not found'
-            }), 404
 
-        request_data = request.get_json()
+            request_data = request.get_json()
 
-        if 'type' in request_data:
-            equipment.type = request_data['type']
-        if 'name' in request_data:
-            equipment.name = request_data['name']
+            if 'type' in request_data:
+                equipment.type = request_data['type']
+            if 'name' in request_data:
+                equipment.name = request_data['name']
 
-        equipment.update(conn)
-        conn.commit()
-        return EquipmentRow.to_json(equipment)
-    elif request.method == 'DELETE':
-        equipment = EquipmentRow.select_from_id(
-            id_, conn
-        )
-        if equipment is None:
-            return jsonify({
-                'message': 'equipment not found'
-            }), 404
+            session.commit()
+            return jsonify(equipment)
+        elif request.method == 'DELETE':
+            equipment = session.get(Equipment, id_)
+            if equipment is None:
+                return jsonify({
+                    'message': 'equipment not found'
+                }), 404
 
-        equipment.delete(conn)
-        conn.commit()
-        return jsonify({'success': True}), 200
+            session.delete(equipment)
+            session.commit()
+            return jsonify({'success': True}), 200
 
 
 @app.route('/api/cell', methods=['GET', 'POST'])
@@ -241,78 +256,76 @@ def equipment(id_=None):
 @cross_origin()
 @jwt_required()
 def cell(id_=None):
-    conn = app.config["GET_DATABASE_CONN_FOR_SUPERUSER"]()
-    if request.method == 'GET':
-        if id_ is None:
-            cell = CellRow.all(conn)
-        else:
-            cell = CellRow.select_from_id(id_, conn)
+    with Session() as session:
+        if request.method == 'GET':
+            if id_ is None:
+                return jsonify(session.query(Cell).all())
+            else:
+                cell = session.get(Cell, id_)
+                if cell is None:
+                    return jsonify({
+                        'message': 'cell not found'
+                    }), 404
+                return jsonify(cell)
+
+        elif request.method == 'POST':
+            request_data = request.get_json()
+            cell = Cell(
+                name=request_data.get('name', None),
+                manufacturer=request_data.get('manufacturer', None),
+                form_factor=request_data.get('form_factor', None),
+                link_to_datasheet=request_data.get('link_to_datasheet', None),
+                anode_chemistry=request_data.get('anode_chemistry', None),
+                cathode_chemistry=request_data.get('cathode_chemistry', None),
+                nominal_capacity=request_data.get('nominal_capacity', None),
+                nominal_cell_weight=request_data.get('nominal_cell_weight', None),
+            )
+            session.add(cell)
+            session.commit()
+            return jsonify(cell)
+        elif request.method == 'PUT':
+            cell = session.get(Cell, id_)
             if cell is None:
                 return jsonify({
                     'message': 'cell not found'
                 }), 404
-        return CellRow.to_json(cell)
-    elif request.method == 'POST':
-        request_data = request.get_json()
-        cell = CellRow(
-            name=request_data.get('name', None),
-            manufacturer=request_data.get('manufacturer', None),
-            form_factor=request_data.get('form_factor', None),
-            link_to_datasheet=request_data.get('link_to_datasheet', None),
-            anode_chemistry=request_data.get('anode_chemistry', None),
-            cathode_chemistry=request_data.get('cathode_chemistry', None),
-            nominal_capacity=request_data.get('nominal_capacity', None),
-            nominal_cell_weight=request_data.get('nominal_cell_weight', None),
-        )
-        cell.insert(conn)
-        conn.commit()
-        return CellRow.to_json(cell)
-    elif request.method == 'PUT':
-        cell = CellRow.select_from_id(id_, conn)
-        if cell is None:
-            return jsonify({
-                'message': 'cell not found'
-            }), 404
 
-        request_data = request.get_json()
+            request_data = request.get_json()
 
-        if 'manufacturer' in request_data:
-            cell.manufacturer = \
-                request_data['manufacturer']
-        if 'name' in request_data:
-            cell.name = request_data['name']
-        if 'manufacturer' in request_data:
-            cell.manufacturer = request_data['manufacturer']
-        if 'form_factor' in request_data:
-            cell.form_factor = request_data['form_factor']
-        if 'link_to_datasheet' in request_data:
-            cell.link_to_datasheet = \
-                request_data['link_to_datasheet']
-        if 'anode_chemistry' in request_data:
-            cell.anode_chemistry = request_data['anode_chemistry']
-        if 'cathode_chemistry' in request_data:
-            cell.cathode_chemistry = request_data['cathode_chemistry']
-        if 'nominal_capacity' in request_data:
-            cell.nominal_capacity = request_data['nominal_capacity']
-        if 'nominal_cell_weight' in request_data:
-            cell.nominal_cell_weight = \
-                request_data['nominal_cell_weight']
+            if 'manufacturer' in request_data:
+                cell.manufacturer = \
+                    request_data['manufacturer']
+            if 'name' in request_data:
+                cell.name = request_data['name']
+            if 'manufacturer' in request_data:
+                cell.manufacturer = request_data['manufacturer']
+            if 'form_factor' in request_data:
+                cell.form_factor = request_data['form_factor']
+            if 'link_to_datasheet' in request_data:
+                cell.link_to_datasheet = \
+                    request_data['link_to_datasheet']
+            if 'anode_chemistry' in request_data:
+                cell.anode_chemistry = request_data['anode_chemistry']
+            if 'cathode_chemistry' in request_data:
+                cell.cathode_chemistry = request_data['cathode_chemistry']
+            if 'nominal_capacity' in request_data:
+                cell.nominal_capacity = request_data['nominal_capacity']
+            if 'nominal_cell_weight' in request_data:
+                cell.nominal_cell_weight = \
+                    request_data['nominal_cell_weight']
 
-        cell.update(conn)
-        conn.commit()
-        return CellRow.to_json(cell)
-    elif request.method == 'DELETE':
-        cell = CellRow.select_from_id(
-            id_, conn
-        )
-        if cell is None:
-            return jsonify({
-                'message': 'cell not found'
-            }), 404
+            session.commit()
+            return jsonify(cell)
+        elif request.method == 'DELETE':
+            cell = session.get(Cell, id_)
+            if cell is None:
+                return jsonify({
+                    'message': 'cell not found'
+                }), 404
 
-        cell.delete(conn)
-        conn.commit()
-        return jsonify({'success': True}), 200
+            session.delete(cell)
+            session.commit()
+            return jsonify({'success': True}), 200
 
 
 @app.route('/api/manufacturer', methods=['GET', 'POST'])
@@ -385,24 +398,6 @@ def file():
     path_id = request.args['path_id']
     files = ObservedFileRow.select_from_id_(path_id, conn)
     return ObservedFileRow.to_json(files)
-
-
-@app.route('/api/column', methods=['GET'])
-@jwt_required()
-@cross_origin()
-def column():
-    conn = app.config["GET_DATABASE_CONN_FOR_SUPERUSER"]()
-    dataset_id = request.args['dataset_id']
-
-    column_ids = \
-        TimeseriesDataRow.select_column_ids_in_dataset(
-            dataset_id, conn
-        )
-
-    columns = [ColumnRow.select_from_id(cid, conn)
-               for cid in column_ids]
-
-    return ColumnRow.to_json(columns)
 
 
 def serialise_numpy_array(np_array):

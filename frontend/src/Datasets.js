@@ -1,12 +1,17 @@
 
-import React, {useEffect, useState, useRef} from "react";
+import React, {useEffect, useState} from "react";
 import { DataGrid, GridRowsProp, GridColDef } from '@material-ui/data-grid';
 import Container from '@material-ui/core/Container';
-import { datasets, users, cells } from './Api';
+import { datasets } from './Api';
 import { makeStyles } from '@material-ui/core/styles';
-import DatasetChart from './DatasetChart'
 import Button from '@material-ui/core/Button';
 import { useHistory } from "react-router-dom";
+import GetDatasetPython from "./GetDatasetPython"
+import Dialog from '@material-ui/core/Dialog';
+import DialogActions from '@material-ui/core/DialogActions';
+import DialogContent from '@material-ui/core/DialogContent';
+import DialogTitle from '@material-ui/core/DialogTitle';
+
 
 const useStyles = makeStyles((theme) => ({
   container: {
@@ -14,34 +19,34 @@ const useStyles = makeStyles((theme) => ({
     paddingBottom: theme.spacing(4),
     height: '100%',
   },
+  button: {
+    margin: theme.spacing(1),
+  }
 }));
 
 
 
 export default function Datasets() {
   const [data, setData] = useState([])
-  const [cellData, setCellData] = useState([])
-  const [userData, setUserData] = useState([])
   const classes = useStyles();
   const history = useHistory();
 
   const [select, setSelect] = useState(null)
 
+  // TODO: use controlled selectionModel, cause this api is changin...
   const handleSelectionChange = (e) => {
-    setSelect(e.selectionModel[0]);
+    if (e.selectionModel) {
+      if (e.selectionModel.length > 0) {
+        setSelect(e.selectionModel[0]);
+      }
+    } else {
+      if (e.length > 0) {
+        setSelect(e[0]);
+      }
+    }
   };
 
   useEffect(() => {
-    users().then((response) => {
-      if (response.ok) {
-        response.json().then(setUserData);
-      }
-    });
-    cells().then((response) => {
-      if (response.ok) {
-        return response.json().then(setCellData);
-      }
-    });
     datasets().then((response) => {
       if (response.ok) {
         return response.json().then(data => {
@@ -59,7 +64,19 @@ export default function Datasets() {
     });
   }, [])
 
-  if ( !data || !cellData || !userData) {
+  const [codeOpen, setCodeOpen] = React.useState(false);
+
+  const handleCodeOpen = () => {
+    setCodeOpen(true);
+  };
+
+  const handleCodeClose = () => {
+    setCodeOpen(false);
+  };
+
+ 
+
+  if ( !data ) {
     return ("Loading...");
   }
   const columns: GridColDef[] = [
@@ -71,7 +88,7 @@ export default function Datasets() {
         return Intl.DateTimeFormat('en-GB').format(params.value);
       }
     },
-    { field: 'dataset_type', headerName: 'Type', width: 90 },
+    { field: 'type', headerName: 'Type', width: 90 },
     { field: 'cell', headerName: 'Cell', width: 100 },
     { field: 'owner', headerName: 'Owner', width: 120 },
     { field: 'purpose', headerName: 'Purpose', width: 250 },
@@ -83,12 +100,12 @@ export default function Datasets() {
       id: i,
       dataset_id: d.id,
       name: d.name,
-      dataset_type: d.dataset_type,
+      type: d.type,
       date: Date.parse(d.date),
-      cell: d.cell_id ? cellData.find(x => d.cell_id === x.id).name : '',
-      owner: d.owner_id ? userData.find(x => d.owner_id === x.id).username : '',
+      cell: d.cell ? d.cell.name : '',
+      owner: d.owner ? d.owner.username : '',
       purpose: d.purpose,
-      metadata: !(!d.cell_id || !d.owner_id || !d.purpose || !d.equipment)
+      metadata: !(!d.cell || !d.owner || !d.purpose || d.equipment.length === 0)
     };
   });
 
@@ -113,10 +130,39 @@ export default function Datasets() {
     </div>
     {data[select] &&
         <Button variant="contained" 
+          className={classes.button}
           onClick={()=>{history.push(`/dataset/${data[select].id}`);}}
         >
           Edit Metadata
         </Button>
+    }
+    {data[select] &&
+      <React.Fragment>
+      <Button 
+        variant="contained" onClick={handleCodeOpen}
+        className={classes.button}
+      >
+        API Code (Python)
+      </Button>
+      <Dialog
+        fullWidth={true}
+        maxWidth={'md'}
+        open={codeOpen}
+        onClose={handleCodeClose}
+      >
+        <DialogTitle>
+          {`API Code (Python) for dataset "${data[select].name}"`}
+        </DialogTitle>
+        <DialogContent>
+          <GetDatasetPython dataset={data[select]} />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCodeClose} color="primary" autoFocus>
+            Close 
+          </Button>
+        </DialogActions>
+      </Dialog>
+      </React.Fragment>
     }
     </Container>
   );

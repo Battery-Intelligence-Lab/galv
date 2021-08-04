@@ -1,3 +1,11 @@
+from galvanalyser.database import Base
+from sqlalchemy import (
+    Column, ForeignKey, Integer, String,
+    DateTime, JSON,
+)
+from sqlalchemy.orm import relationship
+from dataclasses import dataclass
+
 from .timeseries_data_row import (
     UNIT_UNITLESS,
     UNIT_SECONDS,
@@ -12,7 +20,21 @@ from .timeseries_data_row import (
     UNIT_HERTZ,
 )
 
-class Unit:
+@dataclass
+class Unit(Base):
+    __tablename__ = 'unit'
+    __table_args__ = {'schema': 'experiment'}
+
+    id: int
+    name: str
+    symbol: str
+    description: str
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String)
+    symbol = Column(String)
+    description = Column(String)
+
     conversions = {
         'V': {
             'multiplier': 1,

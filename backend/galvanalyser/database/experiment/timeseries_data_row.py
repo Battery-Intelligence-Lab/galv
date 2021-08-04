@@ -2,7 +2,7 @@ import psycopg2
 from galvanalyser.database.util.iter_file import IteratorFile
 from timeit import default_timer as timer
 
-from galvanalyser.database.experiment.column_row import ColumnRow
+from galvanalyser.database.experiment import ColumnRow
 
 import galvanalyser.database.util.battery_exceptions as battery_exceptions
 
@@ -31,18 +31,17 @@ UNIT_DEGREES = 9
 UNIT_HERTZ = 10
 
 class TimeseriesDataRow:
-    def __init__(self, dataset_id, sample_no, column_id, value):
-        self.dataset_id = dataset_id
+    def __init__(self, sample_no, column_id, value, column_type_id=None):
         self.sample_no = sample_no
         self.column_id = column_id
+        self.column_type_id = column_type_id
         self.value = value
 
     def __str__(self):
         return (
-            'TimeseriesDataRow(dataset_id={}, sample_no={} '
+            'TimeseriesDataRow(sample_no={} '
             'column_id={}, value={})'
         ).format(
-            self.dataset_id,
             self.sample_no,
             self.column_id,
             self.value
@@ -56,76 +55,52 @@ class TimeseriesDataRow:
             cursor.execute(
                 (
                     "INSERT INTO experiment.timeseries_data "
-                    "(dataset_id, sample_no, column_id, value) "
-                    "VALUES (%s, %s, %s, %s)"
+                    "(sample_no, column_id, value) "
+                    "VALUES (, %s, %s, %s)"
                 ),
-                [self.dataset_id, self.sample_no, self.column_id, self.value],
+                [self.sample_no, self.column_id, self.value],
             )
-
-    @staticmethod
-    def select_column_ids_in_dataset(dataset_id, conn):
-        with conn.cursor() as cursor:
-            cursor.execute(
-                (
-                    "SELECT DISTINCT column_id "
-                    "FROM experiment.timeseries_data "
-                    "WHERE dataset_id=(%s) "
-                ),
-                [dataset_id],
-            )
-            records = cursor.fetchall()
-            return [record[0] for record in records]
 
     @staticmethod
     def insert_input_file(
         input_file,
         dataset_id,
         conn,
-        standard_cols_to_file_cols=None,
         last_values=None,
     ):
-        if standard_cols_to_file_cols is None:
-            standard_cols_to_file_cols = {}
-        required_column_ids = {RECORD_NO_COLUMN_ID, TEST_TIME_COLUMN_ID}
+        column_name_to_id = {}
+        # create mapping from col id to col name, creating new columns as
+        # appropriate
+        columns = input_file.get_columns()
+        has_record_column = False
+        for name, type_id in columns:
+            # don't want to create a column for sample number
+            if type_id == RECORD_NO_COLUMN_ID:
+                has_record_column = True
+                column_name_to_id[name] = -2
+                continue
 
-        builtin_std_cols_to_file_cols = (
-            input_file.get_standard_column_to_file_column_mapping()
-        )
-        # override builtin definitions with external ones if provided
-        builtin_std_cols_to_file_cols.update(standard_cols_to_file_cols)
-        standard_cols_to_file_cols = builtin_std_cols_to_file_cols
-
-        # Check if we need to create new column types
-        unknown_column_names = input_file.get_unknown_numeric_columns_with_data_names(
-            standard_cols_to_file_cols
-        )
-        for name in unknown_column_names:
-            col = ColumnRow.select_one_unknown_with_name(name, conn)
+            col = ColumnRow.select_from_dataset_with_name(
+                dataset_id, name, conn
+            )
             if col is None:
-                new_column = ColumnRow(-1, name)
-                new_column.insert(conn)
-                standard_cols_to_file_cols[new_column.id] = name
-            else:
-                standard_cols_to_file_cols[col.id] = name
-
-        # Get all numeric data from the file
-        numeric_file_cols_with_data = (
-            input_file.get_names_of_numeric_columns_with_data()
-        )
-        for standard_id, file_col_name in standard_cols_to_file_cols.items():
-            if file_col_name in numeric_file_cols_with_data:
-                required_column_ids.add(standard_id)
+                col = ColumnRow(
+                    dataset_id=dataset_id,
+                    type_id=type_id,
+                    name=name
+                )
+                col.insert(conn)
+            column_name_to_id[name] = col.id
 
         print("Getting data")
         row_generator = input_file.get_data_row_generator(
-            list(required_column_ids),
-            dataset_id,
-            RECORD_NO_COLUMN_ID,
-            standard_cols_to_file_cols,
+            column_name_to_id,
             last_values,
         )
         iter_file = IteratorFile(row_generator)
-        num_value_columns = len(required_column_ids) - 1
+        num_value_columns = len(columns)
+        if has_record_column:
+            num_value_columns -= 1
         start_row = 0 if last_values is None else last_values[0].sample_no
         num_rows_to_insert = input_file.metadata["num_rows"] - start_row
         expected_insert_count = num_rows_to_insert * num_value_columns
@@ -175,50 +150,44 @@ class TimeseriesDataRow:
             )
 
     @staticmethod
-    def select_from_dataset_id_column_id_and_sample_no(
-        dataset_id, column_id, sample_no, conn
-    ):
-        with conn.cursor() as cursor:
-            cursor.execute(
-                (
-                    "SELECT value "
-                    "FROM experiment.timeseries_data "
-                    "WHERE dataset_id=(%s) AND "
-                    "column_id=(%s) AND "
-                    "sample_no=(%s)"
-                ),
-                [dataset_id, column_id, sample_no],
-            )
-            result = cursor.fetchone()
-            if result is None:
-                return None
-            return TimeseriesDataRow(
-                dataset_id=dataset_id,
-                sample_no=sample_no,
-                column_id=column_id,
-                value=result[0],
-            )
+    def get_column_type_id(col_id, cursor):
+        cursor.execute(
+            (
+                "SELECT type_id "
+                'FROM experiment."column" '
+                "WHERE id=(%s)"
+                ""
+            ),
+            [col_id],
+        )
+        return cursor.fetchone()[0]
 
     @staticmethod
     def select_latest_by_dataset_id(dataset_id, conn):
         with conn.cursor() as cursor:
             cursor.execute(
                 (
+                    "WITH dataset_columns as ("
+                    'SELECT id FROM experiment."column" WHERE '
+                    "dataset_id=(%s)) "
                     "SELECT sample_no, column_id, value "
                     "FROM experiment.timeseries_data "
-                    "WHERE dataset_id=(%s) AND sample_no=("
-                    "SELECT sample_no FROM experiment.timeseries_data WHERE "
-                    "dataset_id=(%s) ORDER BY sample_no DESC LIMIT 1"
-                    ")"
+                    "WHERE column_id IN (SELECT id FROM dataset_columns) "
+                    "AND sample_no IN ( "
+                    "SELECT sample_no from experiment.timeseries_data "
+                    "WHERE column_id IN (SELECT id FROM dataset_columns) "
+                    "ORDER BY sample_no DESC LIMIT 1) "
                 ),
-                [dataset_id, dataset_id],
+                [dataset_id],
             )
             records = cursor.fetchall()
             return [
                 TimeseriesDataRow(
-                    dataset_id=dataset_id,
                     sample_no=result[0],
                     column_id=result[1],
+                    column_type_id=TimeseriesDataRow.get_column_type_id(
+                        result[1], cursor
+                    ),
                     value=result[2],
                 )
                 for result in records

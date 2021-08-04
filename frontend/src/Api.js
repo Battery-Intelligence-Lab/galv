@@ -15,7 +15,7 @@ export async function logout() {
   return fetch(url + '/logout', {method: 'POST'});
 }
 
-function getCookie(name) {
+export function getCookie(name) {
   const value = `; ${document.cookie}`;
   const parts = value.split(`; ${name}=`);
   if (parts.length === 2) return parts.pop().split(';').shift();
@@ -49,6 +49,10 @@ export async function run_harvester(id) {
       headers: headers,
     }
   );
+}
+
+export async function getToken() { 
+  return authFetch(url + 'token');
 }
 
 export async function env_harvester(id) { 
@@ -378,10 +382,6 @@ export async function update_metadata(dataset_id, metadata) {
       body: JSON.stringify(metadata),
     }
   );
-}
-
-export async function columns(dataset_id) { 
-  return authFetch(url + `column?dataset_id=${dataset_id}`);
 }
 
 export async function timeseries_column(dataset_id, col_id) { 

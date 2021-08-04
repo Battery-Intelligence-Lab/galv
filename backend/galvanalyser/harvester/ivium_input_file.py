@@ -21,6 +21,10 @@ import ntpath
 import re
 from datetime import datetime
 from galvanalyser.database.experiment.input_file import InputFile
+from galvanalyser.database.util.battery_exceptions import (
+    UnsupportedFileTypeError,
+    InvalidDataInFileError,
+)
 
 IDF_HEADER = b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xfb\x00\x00\x00\r\x00Version=11'
 
@@ -67,7 +71,7 @@ class IviumInputFile(InputFile):
 
                 if len(line) != 40:
                     print(line)
-                    raise battery_exceptions.InvalidDataInFileError(
+                    raise InvalidDataInFileError(
                         (
                             "Incorrect line length on line {} was {} expected {}"
                         ).format(current_line, len(line), 40)
@@ -110,7 +114,7 @@ class IviumInputFile(InputFile):
             elif end == 'select':
                 continue
             else:
-                raise battery_exceptions.UnsupportedFileTypeError(
+                raise UnsupportedFileTypeError(
                     'task end condition {} unknown'.format(end)
                 )
 
@@ -179,7 +183,7 @@ class IviumInputFile(InputFile):
                         if keys[0] == 'Tasks':
                             array_index_match = regex_key_array.search(keys[1])
                             if not array_index_match:
-                                raise battery_exceptions.UnsupportedFileTypeError(
+                                raise UnsupportedFileTypeError(
                                     'Tasks entry should be a list:', keys[1]
                                 )
                             key = array_index_match.group(1)
@@ -187,7 +191,7 @@ class IviumInputFile(InputFile):
                             if index < len(base_metadata):
                                 base_metadata[index][key] = key_value[1]
                             else:
-                                raise battery_exceptions.UnsupportedFileTypeError(
+                                raise UnsupportedFileTypeError(
                                     'unexpected array index {} for line {}'.format(
                                         index, line
                                     ))
@@ -209,7 +213,7 @@ class IviumInputFile(InputFile):
                                 and keys[1] == 'AnalogInputData':
                             array_index_match = regex_key_array.search(keys[2])
                             if not array_index_match:
-                                raise battery_exceptions.UnsupportedFileTypeError(
+                                raise UnsupportedFileTypeError(
                                     'Data Options.AnalogInputData entry should be a list:', keys[2]
                                 )
                             key = array_index_match.group(1)
@@ -217,14 +221,14 @@ class IviumInputFile(InputFile):
                             if index < len(base_metadata):
                                 base_metadata[index][key] = key_value[1]
                     else:
-                        raise battery_exceptions.UnsupportedFileTypeError(
+                        raise UnsupportedFileTypeError(
                             'found unexpected # of keys'
                         )
 
                 else:
                     # check if we've parsed the file ok
                     if not 'Mconfig' in ivium_metadata:
-                        raise battery_exceptions.UnsupportedFileTypeError(
+                        raise UnsupportedFileTypeError(
                             'found unexpected line', line
                         )
                     # looks ok, check samples start where we expect them to
@@ -233,7 +237,7 @@ class IviumInputFile(InputFile):
                         line = line.replace('\n', '').replace('\r', '')
                         samples_start += 1
                     if len(match_sci_notation.findall(line)) != 3:
-                        raise battery_exceptions.UnsupportedFileTypeError(
+                        raise UnsupportedFileTypeError(
                             'cannot find samples start', line
                         )
                     # everything looks good, so we can terminate the loop
@@ -298,10 +302,10 @@ class IviumInputFile(InputFile):
 
     def validate_file(self, file_path):
         if not file_path.endswith(".idf"):
-            raise battery_exceptions.UnsupportedFileTypeError
+            raise UnsupportedFileTypeError
         with open(file_path, "rb") as f:
             line = f.readline()
             if not line.startswith(IDF_HEADER):
-                raise battery_exceptions.UnsupportedFileTypeError(
+                raise UnsupportedFileTypeError(
                     'incorrect header - {}'.format(line)
                 )

@@ -1,19 +1,22 @@
 from galvanalyser_test_case import GalvanalyserTestCase
 from galvanalyser.database.cell_data import (
-    CellRow,
+    Cell,
 )
 
-class TestCellRow(GalvanalyserTestCase):
-    def test_insert_and_select(self):
-        uid = '123e4567-e89b-12d3-a456-426614174000'
-        cell = CellRow(
-            name=uid,
-        )
-        cell.insert(self.postgres_conn)
-        self.postgres_conn.commit()
+from sqlalchemy import select
 
-        cell2 = CellRow.select_from_name(
-            uid,
-            self.postgres_conn
-        )
-        self.assertEqual(cell, cell2)
+class TestCellRow(GalvanalyserTestCase):
+    def test_insert(self):
+        with self.Session() as session:
+            uid = '123e4567-e89b-12d3-a456-426614174000'
+            cell = Cell(
+                name=uid,
+            )
+            session.add(cell)
+            session.commit()
+            cell2 = session.execute(
+                select(Cell).where(Cell.id == cell.id)
+            ).one()[0]
+
+            self.assertEqual(cell, cell2)
+            self.assertEqual(cell, cell2)

@@ -74,7 +74,7 @@ class CellRow(Row):
             cursor.execute(
                 (
                     "INSERT INTO cell_data.cell ("
-                    "name, manufacturer, cell_form_factor, "
+                    "name, manufacturer, form_factor, "
                     "link_to_datasheet, anode_chemistry, "
                     "cathode_chemistry, nominal_capacity, "
                     "nominal_cell_weight) "
@@ -101,7 +101,7 @@ class CellRow(Row):
                 (
                     "UPDATE cell_data.cell SET "
                     "name = (%s), "
-                    "manufacturer = (%s), cell_form_factor = (%s), "
+                    "manufacturer = (%s), form_factor = (%s), "
                     "link_to_datasheet = (%s), anode_chemistry = (%s), "
                     "cathode_chemistry = (%s), nominal_capacity = (%s), "
                     "nominal_cell_weight = (%s) "
@@ -131,7 +131,7 @@ class CellRow(Row):
         with conn.cursor() as cursor:
             cursor.execute(
                 (
-                    "SELECT id, name, manufacturer, cell_form_factor, "
+                    "SELECT id, name, manufacturer, form_factor, "
                     "link_to_datasheet, anode_chemistry, "
                     "cathode_chemistry, nominal_capacity, "
                     "nominal_cell_weight FROM "
@@ -159,7 +159,7 @@ class CellRow(Row):
         with conn.cursor() as cursor:
             cursor.execute(
                 (
-                    "SELECT name, manufacturer, cell_form_factor, "
+                    "SELECT name, manufacturer, form_factor, "
                     "link_to_datasheet, anode_chemistry, "
                     "cathode_chemistry, nominal_capacity, "
                     "nominal_cell_weight FROM "
@@ -188,7 +188,7 @@ class CellRow(Row):
         with conn.cursor() as cursor:
             cursor.execute(
                 (
-                    "SELECT id, manufacturer, cell_form_factor, "
+                    "SELECT id, manufacturer, form_factor, "
                     "link_to_datasheet, anode_chemistry, "
                     "cathode_chemistry, nominal_capacity, "
                     "nominal_cell_weight FROM "

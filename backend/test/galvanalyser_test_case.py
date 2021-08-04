@@ -1,7 +1,11 @@
 import unittest
 import psycopg2
-from galvanalyser.database.experiment import InstitutionRow
+from galvanalyser import init_database
 import os
+
+import flask
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
 
 class GalvanalyserTestCase(unittest.TestCase):
@@ -17,6 +21,32 @@ class GalvanalyserTestCase(unittest.TestCase):
 
     @classmethod
     def setUpClass(self):
+        app = flask.Flask(__name__)
+
+        app.config.from_mapping(
+            {
+                'SQLALCHEMY_DATABASE_URI':
+                    'postgresql://{}:{}@{}/{}'.format(
+                        self.POSTGRES_USER,
+                        self.POSTGRES_USER_PWD,
+                        'galvanalyser_postgres:5433',
+                        self.DATABASE,
+                    ),
+                'SQLALCHEMY_ECHO': True,
+                'SQLCHEMY_TRACK_MODIFICATIONS': False,
+                'SQLALCHEMY_BINDS': {
+                    'harvester': 'postgresql://{}:{}@{}/{}'.format(
+                        self.HARVESTER,
+                        self.HARVESTER_PWD,
+                        'galvanalyser_postgres:5433',
+                        self.DATABASE,
+                    ),
+                    },
+            }
+        )
+
+        self.Session, self.HarvesterSession = init_database(app.config)
+
         self.harvester_conn = psycopg2.connect(
             host="galvanalyser_postgres",
             port=5433,

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { ResponsiveLine, ResponsiveLineCanvas } from '@nivo/line'
-import { timeseries_column, columns } from './Api'
+import { ResponsiveLine } from '@nivo/line'
+import { timeseries_column } from './Api'
 
 const TEST_TIME_COLUMN_ID = 1
 const VOLTAGE_COLUMN_ID = 2
@@ -10,44 +10,29 @@ const AMPS_COLUMN_ID = 3
 export default function DatasetChart({ dataset }) {
 
   const [timeseries, setTimeseries] = useState({})
-  const [cols, setCols] = useState([])
-  const [selectedColumns, setSelectedColumns] = useState([
-    VOLTAGE_COLUMN_ID, AMPS_COLUMN_ID
-  ])
-  const [dsColumns, setDsColumns] = useState([])
+  
 
-  useEffect(() => {
-    columns(dataset.id).then((response) => {
-      if (response.ok) {
-        return response.json().then((result) => {
-          setCols(result.sort((arg1, arg2) => {
-            let nameA = arg1.name.toUpperCase(); // ignore upper and lowercase
-            let nameB = arg2.name.toUpperCase(); // ignore upper and lowercase
-            if (nameA === 'VOLTS') {
-              nameA = 'ZZZVOLTS';
-            }
-            if (nameA === 'AMPS') {
-              nameA = 'ZZZAMPS';
-            }
-            if (nameB === 'VOLTS') {
-              nameB = 'ZZZVOLTS';
-            }
-            if (nameB === 'AMPS') {
-              nameB = 'ZZZAMPS';
-            }
-            if (nameA > nameB) {
-              return -1;
-            }
-            if (nameA < nameB ) {
-              return 1;
-            }
-            // names must be equal
-            return 0;
-          }));
-        });
-      }
-    });
-  }, [dataset.id])
+  const cols = dataset.columns.sort((arg1, arg2) => {
+    let type1 = arg1.type_id
+    let type2 = arg2.type_id
+
+    // priorities volts or amps
+    if (type1 === 2 || type1 === 3) {
+      type1 += 1000;
+    }
+    if (type2 === 2 || type2 === 3) {
+      type2 += 1000;
+    }
+    return type2 - type1
+  })
+
+  const time_col = cols.find(c => c.type_id === TEST_TIME_COLUMN_ID)
+  const volts_col = cols.find(c => c.type_id === VOLTAGE_COLUMN_ID)
+  const amps_col = cols.find(c => c.type_id === AMPS_COLUMN_ID)
+
+  const [selectedColumns, setSelectedColumns] = useState([
+    volts_col.id, amps_col.id
+  ])
 
   const handleLegendClick = (d) => {
     if (cols.length === 0) {
@@ -81,24 +66,24 @@ export default function DatasetChart({ dataset }) {
 
   useEffect(() => {
     const dlColumns = [
-      TEST_TIME_COLUMN_ID, VOLTAGE_COLUMN_ID, AMPS_COLUMN_ID
+      time_col, volts_col, amps_col
     ];
     let new_timeseries = {};
-    dlColumns.reduce( async (previousPromise, nextID) => {
+    dlColumns.reduce( async (previousPromise, nextCol) => {
       await previousPromise;
-      return timeseries_column(dataset.id, nextID).then(
+      return timeseries_column(dataset.id, nextCol.id).then(
         (array) => {
-          new_timeseries[nextID] = array;
+          new_timeseries[nextCol.id] = array;
         }
       );
     }, Promise.resolve()).then(() => {
       setTimeseries(new_timeseries);
     });
-  }, [dataset]);
+  }, [dataset, cols, time_col, volts_col, amps_col]);
 
   let renderChart = false;
   const chart_data = cols.map((col) => {
-    if (col.id === TEST_TIME_COLUMN_ID) {
+    if (col.id === time_col.id) {
       return null;
     }
     const defaultData = {
@@ -108,7 +93,7 @@ export default function DatasetChart({ dataset }) {
         y: 0,
       }]
     };
-    if (!timeseries[TEST_TIME_COLUMN_ID]) {
+    if (!timeseries[time_col.id]) {
       return defaultData;
     }
     if (!timeseries[col.id]) {
@@ -126,7 +111,7 @@ export default function DatasetChart({ dataset }) {
     const int_subsample = Math.round(subsample);
     for(let i = 0; i < timeseries[col.id].length; i += int_subsample) {
       data.push({
-          x: timeseries[TEST_TIME_COLUMN_ID][i],
+          x: timeseries[time_col.id][i],
           y: timeseries[col.id][i],
       });
     }

@@ -216,7 +216,7 @@ CREATE TABLE cell_data.cell
 (
     id bigserial NOT NULL,
     name text NOT NULL,
-    cell_form_factor varchar(11),
+    form_factor varchar(11),
     link_to_datasheet text,
     anode_chemistry text,
     cathode_chemistry text,
@@ -311,6 +311,9 @@ ALTER TABLE experiment.equipment
 
 GRANT ALL ON TABLE experiment.equipment TO postgres;
 
+GRANT SELECT ON TABLE experiment.equipment TO ${harvester_role};
+
+
 -- Table: experiment.dataset_equipment
 
 -- DROP TABLE experiment.dataset_equipment;
@@ -337,6 +340,8 @@ ALTER TABLE experiment.dataset_equipment
     OWNER to postgres;
 
 GRANT ALL ON TABLE experiment.dataset_equipment TO postgres;
+
+GRANT SELECT ON TABLE experiment.dataset_equipment TO ${harvester_role};
 
 
 -- Table: experiment.access
@@ -395,6 +400,7 @@ CREATE TABLE experiment.column_type
 (
     id bigserial NOT NULL,
     name text NOT NULL,
+    description text,
     unit_id bigint,
     PRIMARY KEY (id),
     FOREIGN KEY (unit_id)
@@ -420,14 +426,19 @@ ALTER SEQUENCE experiment.column_type_id_seq
 CREATE TABLE experiment."column"
 (
     id bigserial NOT NULL,
-    type_id bigint NOT NULL,
     name text NOT NULL,
-    description text,
+    dataset_id bigint NOT NULL,
+    type_id bigint NOT NULL,
     PRIMARY KEY (id),
+    CONSTRAINT column_in_dataset_unique UNIQUE (name, dataset_id),
     FOREIGN KEY (type_id)
         REFERENCES experiment.column_type (id) MATCH SIMPLE
         ON UPDATE CASCADE
-        ON DELETE RESTRICT
+        ON DELETE RESTRICT,
+    FOREIGN KEY (dataset_id)
+        REFERENCES experiment.dataset (id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
 )
 WITH (
     OIDS = FALSE
@@ -455,31 +466,19 @@ INSERT INTO experiment.unit (id, name, symbol, description) VALUES (9, 'Degrees'
 INSERT INTO experiment.unit (id, name, symbol, description) VALUES (10, 'Frequency', 'Hz', 'Frequency in Hz');
 SELECT setval('experiment.unit_id_seq'::regclass, 10);
 
-INSERT INTO experiment.column_type (id, name, unit_id) VALUES (-1, 'Unknown', NULL);
-INSERT INTO experiment.column_type (id, name, unit_id) VALUES (0, 'Sample Number', 0);
-INSERT INTO experiment.column_type (id, name, unit_id) VALUES (1, 'Time', 1);
-INSERT INTO experiment.column_type (id, name, unit_id) VALUES (2, 'Volts', 2);
-INSERT INTO experiment.column_type (id, name, unit_id) VALUES (3, 'Amps', 3);
-INSERT INTO experiment.column_type (id, name, unit_id) VALUES (4, 'Energy Capacity', 4);
-INSERT INTO experiment.column_type (id, name, unit_id) VALUES (5, 'Charge Capacity', 5);
-INSERT INTO experiment.column_type (id, name, unit_id) VALUES (6, 'Temperature', 6);
-INSERT INTO experiment.column_type (id, name, unit_id) VALUES (7, 'Impedence Magnitude', 8);
-INSERT INTO experiment.column_type (id, name, unit_id) VALUES (8, 'Impedence Phase', 9);
-INSERT INTO experiment.column_type (id, name, unit_id) VALUES (9, 'Frequency', 10);
-SELECT setval('experiment.column_type_id_seq'::regclass, 9);
-
-INSERT INTO experiment."column" (id, type_id, name, description) VALUES (0, 0, 'Sample Number', 'The sample or record number. Is increased by one each time a test machine records a reading. Usually counts from 1 at the start of a test');
-INSERT INTO experiment."column" (id, type_id, name, description) VALUES (1, 1, 'Test Time', 'The time in seconds since the test run began.');
-INSERT INTO experiment."column" (id, type_id, name, description) VALUES (2, 2, 'Volts', 'The voltage of the cell.');
-INSERT INTO experiment."column" (id, type_id, name, description) VALUES (3, 3, 'Amps', 'The current current.');
-INSERT INTO experiment."column" (id, type_id, name, description) VALUES (4, 4, 'Energy Capacity', 'The Energy Capacity.');
-INSERT INTO experiment."column" (id, type_id, name, description) VALUES (5, 5, 'Charge Capacity', 'The Charge Capacity.');
-INSERT INTO experiment."column" (id, type_id, name, description) VALUES (6, 6, 'Temperature', 'The temperature.');
-INSERT INTO experiment."column" (id, type_id, name, description) VALUES (7, 1, 'Step Time', 'The time in seconds since the current step began.');
-INSERT INTO experiment."column" (id, type_id, name, description) VALUES (8, 7, 'Impedence Magnitude', 'The magnitude of the impedence (EIS).');
-INSERT INTO experiment."column" (id, type_id, name, description) VALUES (9, 8, 'Impedence Phase', 'The phase of the impedence (EIS).');
-INSERT INTO experiment."column" (id, type_id, name, description) VALUES (10, 9, 'Frequency', 'The frequency of the input EIS voltage signal.');
-SELECT setval('experiment.column_id_seq'::regclass, 10);
+INSERT INTO experiment.column_type (id, name, description, unit_id) VALUES (-1, 'Unknown', 'unknown column type', NULL);
+INSERT INTO experiment.column_type (id, name, description, unit_id) VALUES (0, 'Sample Number', 'The sample or record number. Is increased by one each time a test machine records a reading. Usually counts from 1 at the start of a test', 0);
+INSERT INTO experiment.column_type (id, name, description, unit_id) VALUES (1, 'Time', 'The time in seconds since the test run began.', 1);
+INSERT INTO experiment.column_type (id, name, description, unit_id) VALUES (2, 'Volts', 'The voltage of the cell.', 2);
+INSERT INTO experiment.column_type (id, name, description, unit_id) VALUES (3, 'Amps', 'The current current.', 3);
+INSERT INTO experiment.column_type (id, name, description, unit_id) VALUES (4, 'Energy Capacity', 'The Energy Capacity.', 4);
+INSERT INTO experiment.column_type (id, name, description, unit_id) VALUES (5, 'Charge Capacity', 'The Charge Capacity.', 5);
+INSERT INTO experiment.column_type (id, name, description, unit_id) VALUES (6, 'Temperature', 'The temperature.', 6);
+INSERT INTO experiment.column_type (id, name, description, unit_id) VALUES (7, 'Step Time', 'The time in seconds since the current step began.', 1);
+INSERT INTO experiment.column_type (id, name, description, unit_id) VALUES (8, 'Impedence Magnitude', 'The magnitude of the impedence (EIS).', 8);
+INSERT INTO experiment.column_type (id, name, description, unit_id) VALUES (9, 'Impedence Phase', 'The phase of the impedence (EIS).', 9);
+INSERT INTO experiment.column_type (id, name, description, unit_id) VALUES (10, 'Frequency', 'The frequency of the input EIS voltage signal.', 10);
+SELECT setval('experiment.column_type_id_seq'::regclass, 10);
 
 
 -- Table: experiment.timeseries_data
@@ -488,17 +487,12 @@ SELECT setval('experiment.column_id_seq'::regclass, 10);
 
 CREATE TABLE experiment.timeseries_data
 (
-    dataset_id bigint NOT NULL,
     sample_no bigint NOT NULL,
     column_id bigint NOT NULL,
     value double precision NOT NULL,
-    PRIMARY KEY (dataset_id, sample_no, column_id),
+    PRIMARY KEY (sample_no, column_id),
     FOREIGN KEY (column_id)
         REFERENCES experiment."column" (id) MATCH SIMPLE
-        ON UPDATE CASCADE
-        ON DELETE RESTRICT,
-    FOREIGN KEY (dataset_id)
-        REFERENCES experiment.dataset (id) MATCH SIMPLE
         ON UPDATE CASCADE
         ON DELETE RESTRICT
 )
@@ -510,9 +504,6 @@ TABLESPACE pg_default;
 ALTER TABLE experiment.timeseries_data
     OWNER TO ${harvester_role};
 
-CREATE INDEX timeseries_data_dataset_id ON experiment.timeseries_data (dataset_id);
-CREATE INDEX timeseries_data_dataset_id_column_id ON experiment.timeseries_data (dataset_id, value) WHERE column_id = 1;
-
 -- Table: experiment.range_label
 
 -- DROP TABLE experiment.range_label;
@@ -522,10 +513,9 @@ CREATE TABLE experiment.range_label
     id bigserial NOT NULL,
     dataset_id bigint NOT NULL,
     label_name text NOT NULL,
-	created_by text NOT NULL,
     sample_range int8range NOT NULL,
-    info jsonb,
-    PRIMARY KEY (dataset_id, label_name, created_by),
+    info text,
+    PRIMARY KEY (dataset_id, label_name),
     FOREIGN KEY (dataset_id)
         REFERENCES experiment.dataset (id) MATCH SIMPLE
         ON UPDATE CASCADE
