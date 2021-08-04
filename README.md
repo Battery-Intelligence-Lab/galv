@@ -22,14 +22,14 @@ direction of data flow.
 ## Project documentation
 
 The `documentation` directory contains more detailed documentation on a number of topics. It contains the following items:
-* [FirstTimeQuickSetup.md](./documentation/FirstTimeQuickSetup.md) - A quick start guide 
-  to setting up your first complete Galvanalyser system
-* [AdministrationGuide.md](./documentation/AdministrationGuide.md) - A guide to performing administration tasks such as creating users and setting up harvesters
-* [DevelopmentGuide.md](./documentation/DevelopmentGuide.md) - A guide for developers on 
+* [FirstTimeQuickSetup.md](./docs/FirstTimeQuickSetup.md) - A quick start guide to 
+  setting up your first complete Galvanalyser system
+* [AdministrationGuide.md](./docs/AdministrationGuide.md) - A guide to performing 
+  administration tasks such as creating users and setting up harvesters
+* [DevelopmentGuide.md](./docs/DevelopmentGuide.md) - A guide for developers on 
   Galvanalyser
-* [ProjectStructure.md](./documentation/ProjectStructure.md) - An overview of the 
-  project folder structure to guide developers to the locations of the various parts of 
-  the project
+* [ProjectStructure.md](./docs/ProjectStructure.md) - An overview of the project folder 
+  structure to guide developers to the locations of the various parts of the project
 
 ## Technology used
 
