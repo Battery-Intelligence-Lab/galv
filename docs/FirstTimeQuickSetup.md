@@ -37,13 +37,13 @@ cd galvanalyser
 
 ## Setup global environment variables
 
-Open the `webstack/.env` file. This file specifies the options that you can use to setup 
-your Galvanalyser installation, such as passwords and data locations. Comments in the 
-file give more detailed information on each option. Please go through each option and 
-edit to your desired configuration.
+Open the `.env` file in the root of the repository. This file specifies the options that 
+you can use to setup your galvanalyser installation, such as passwords and data 
+locations. Comments in the file give more detailed information on each option. Please go 
+through each option and edit to your desired configuration.
 
 
-## Setting up and creating user accounts on the Galvanalyser database
+## Setting up and creating user accounts on the galvanalyser database
 
 Installation and administration of galvanalyser is done using a command line interface 
 (cli) that you can run via `docker-compose`. Change directory to the `webstack`
@@ -73,8 +73,11 @@ You can run the galvanalyser server and web application frontend using the follo
 docker-compose up
 ```
 
-Now view the url `localhost:3000` in your browser and you should see the Galvanalyser 
-login page. Use one of the user accounts you created earlier to log-in to the frontend.
+Now view the 'localhost' IP address [http://127.0.0.1/](http://127.0.0.1/) in your 
+browser and you should see the Galvanalyser login page. If you wish to use the frontend 
+from another machine, use the IP address or URL of the server instead. 
+
+Use one of the user accounts you created earlier to log-in to the frontend.
 
 To run the server in detached mode (i.e. run containers in the background) using the 
 `-d` option
