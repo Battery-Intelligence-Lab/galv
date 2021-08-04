@@ -67,7 +67,7 @@ docker-compose run --rm galvanalyser_app python manage.py create_user
 # Running Galvanalyser
 
 You can run the galvanalyser server and web application frontend using the following 
-`docker-compose` command from the `webstack` folder.
+`docker-compose` command from the root folder of the repository.
 
 ```bash
 docker-compose up
