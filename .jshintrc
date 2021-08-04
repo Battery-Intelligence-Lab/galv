@@ -1,7 +1,0 @@
-{
-    "esversion": 6,
-    "browser": true,
-    "devel": true,
-    "globals": {"Plotly": true, "goog": true},
-    "globalstrict": true
-  }
