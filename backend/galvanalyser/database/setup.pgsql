@@ -52,8 +52,24 @@ WITH (
     OIDS = FALSE
 );
 
+INSERT INTO user_data.group (groupname) VALUES ('admin');
 
-ALTER TABLE user_data.group
+-- Table: user_data.membership
+
+-- DROP TABLE user_data.membership;
+
+CREATE TABLE user_data.membership
+(
+  user_id bigint,
+  group_id bigint,
+  PRIMARY KEY (user_id, group_id)
+)
+WITH (
+    OIDS = FALSE
+);
+
+
+ALTER TABLE user_data.membership
     OWNER to postgres;
 
 

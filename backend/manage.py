@@ -6,10 +6,12 @@ import copy
 import unittest
 import os
 import sys
+from galvanalyser import Session
 import galvanalyser.database as database
 from galvanalyser.database.harvester import MonitoredPathRow
 from galvanalyser.harvester.harvester import main as harvester_main
-from galvanalyser.database.user_data import UserRow
+from galvanalyser.database.user_data import UserRow, Group, User
+from sqlalchemy import select
 import json
 import subprocess
 
@@ -141,10 +143,22 @@ def backup_redash_db():
 @click.option('--username', prompt=True)
 @click.option('--password', prompt=True, hide_input=True, confirmation_prompt=True)
 @click.option('--email', prompt=True)
-def create_user(username, password, email):
+@click.option('--admin/--no-admin', prompt=True)
+def create_user(username, password, email, admin):
     conn = app.config["GET_DATABASE_CONN_FOR_SUPERUSER"]()
     UserRow.create(username, password, email).insert(conn)
     conn.commit()
+    if admin:
+        with Session() as session:
+            # TODO: change above UserRow to a User to reuse here
+            user = session.execute(
+                select(User).where(User.username == username)
+            ).scalar_one()
+            admin = session.execute(
+                select(Group).where(Group.groupname == 'admin')
+            ).scalar_one()
+            user.groups.append(admin)
+            session.commit()
 
 
 @cli.command("create_harvester")

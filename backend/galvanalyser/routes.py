@@ -27,6 +27,9 @@ from .database.experiment.timeseries_data_row import (
 from .database.experiment import (
     AccessRow, Dataset, ColumnRow, MetadataRow, Equipment,
 )
+from .database.user_data import (
+    User, Group
+)
 from .database.cell_data import (
     Cell
 )
@@ -34,6 +37,7 @@ from .database.harvester import (
     MonitoredPathRow, HarvesterRow, ObservedFileRow
 )
 from .database.experiment import select_timeseries_column
+from sqlalchemy import select
 import math
 import psycopg2
 
@@ -98,6 +102,7 @@ def logout():
     unset_jwt_cookies(response)
     return response
 
+
 @app.route('/api/token', methods=['GET'])
 @cross_origin()
 @jwt_required()
@@ -112,6 +117,7 @@ def get_token():
         "access_token": access_token,
     })
     return response
+
 
 @app.route('/api/refresh', methods=['POST'])
 def refresh():
@@ -155,24 +161,52 @@ def user():
 @cross_origin()
 @jwt_required()
 def dataset(id_=None):
-    conn = app.config["GET_DATABASE_CONN_FOR_SUPERUSER"]()
     with Session() as session:
         current_user = json.loads(get_jwt_identity())
-        if (id_ is not None and
-                not AccessRow.exists(id_, current_user['id'], conn)):
-            return jsonify({
-                'message': 'user {} does not have access to dataset {}'.format(
-                    current_user['username'], id_
-                )
-            }), 404
+        user = session.get(User, current_user['id'])
+        is_admin = any([g.groupname == 'admin' for g in user.groups])
 
         if request.method == 'GET':
+            if is_admin:
+                if id_ is None:
+                    return jsonify(session.execute(select(Dataset)).all())
+                else:
+                    return jsonify(session.get(Dataset, id_))
+
             if id_ is None:
-                return jsonify(session.query(Dataset).all())
+                return jsonify(user.accessible_datasets)
             else:
-                return jsonify(session.get(Dataset, id_))
+                dataset = next(
+                    (i for i in user.accessible_datasets if i.id == id_),
+                    None
+                )
+                if dataset is None:
+                    return jsonify({
+                        'message': (
+                            'dataset {} not found or user {} '
+                            'does not have access'.format(
+                                id_, current_user['username'],
+                            )
+                        )
+                    }), 404
+                return jsonify(dataset)
         elif request.method == 'PUT':
-            dataset = session.get(Dataset, id_)
+            if is_admin:
+                dataset = session.get(Dataset, id_)
+            else:
+                dataset = next(
+                    (i for i in user.datasets if i.id == id_),
+                    None
+                )
+            if dataset is None:
+                return jsonify({
+                    'message': (
+                        'dataset {} not found or user {} is not owner'
+                               .format(
+                                   id_, current_user['username'],
+                               ))
+                }), 404
+
             if dataset is None:
                 return jsonify({
                     'message': 'cell not found'
@@ -187,7 +221,7 @@ def dataset(id_=None):
             if 'owner_id' in request_data:
                 dataset.owner_id = request_data['owner_id']
             if 'equipment' in request_data:
-                dataset.equipment =  [
+                dataset.equipment = [
                     session.get(Equipment, id_)
                     for id_ in request_data['equipment']
                 ]
@@ -198,10 +232,10 @@ def dataset(id_=None):
             return jsonify(dataset)
 
 
-@app.route('/api/equipment', methods=['GET', 'POST'])
-@app.route('/api/equipment/<int:id_>', methods=['GET', 'PUT', 'DELETE'])
-@cross_origin()
-@jwt_required()
+@ app.route('/api/equipment', methods=['GET', 'POST'])
+@ app.route('/api/equipment/<int:id_>', methods=['GET', 'PUT', 'DELETE'])
+@ cross_origin()
+@ jwt_required()
 def equipment(id_=None):
     with Session() as session:
         if request.method == 'GET':
@@ -251,10 +285,10 @@ def equipment(id_=None):
             return jsonify({'success': True}), 200
 
 
-@app.route('/api/cell', methods=['GET', 'POST'])
-@app.route('/api/cell/<int:id_>', methods=['GET', 'PUT', 'DELETE'])
-@cross_origin()
-@jwt_required()
+@ app.route('/api/cell', methods=['GET', 'POST'])
+@ app.route('/api/cell/<int:id_>', methods=['GET', 'PUT', 'DELETE'])
+@ cross_origin()
+@ jwt_required()
 def cell(id_=None):
     with Session() as session:
         if request.method == 'GET':
@@ -293,8 +327,7 @@ def cell(id_=None):
             request_data = request.get_json()
 
             if 'manufacturer' in request_data:
-                cell.manufacturer = \
-                    request_data['manufacturer']
+                cell.manufacturer = request_data['manufacturer']
             if 'name' in request_data:
                 cell.name = request_data['name']
             if 'manufacturer' in request_data:
@@ -302,8 +335,7 @@ def cell(id_=None):
             if 'form_factor' in request_data:
                 cell.form_factor = request_data['form_factor']
             if 'link_to_datasheet' in request_data:
-                cell.link_to_datasheet = \
-                    request_data['link_to_datasheet']
+                cell.link_to_datasheet = request_data['link_to_datasheet']
             if 'anode_chemistry' in request_data:
                 cell.anode_chemistry = request_data['anode_chemistry']
             if 'cathode_chemistry' in request_data:
@@ -311,8 +343,7 @@ def cell(id_=None):
             if 'nominal_capacity' in request_data:
                 cell.nominal_capacity = request_data['nominal_capacity']
             if 'nominal_cell_weight' in request_data:
-                cell.nominal_cell_weight = \
-                    request_data['nominal_cell_weight']
+                cell.nominal_cell_weight = request_data['nominal_cell_weight']
 
             session.commit()
             return jsonify(cell)
@@ -328,10 +359,10 @@ def cell(id_=None):
             return jsonify({'success': True}), 200
 
 
-@app.route('/api/manufacturer', methods=['GET', 'POST'])
-@app.route('/api/manufacturer/<int:id_>', methods=['GET', 'PUT', 'DELETE'])
-@jwt_required()
-@cross_origin()
+@ app.route('/api/manufacturer', methods=['GET', 'POST'])
+@ app.route('/api/manufacturer/<int:id_>', methods=['GET', 'PUT', 'DELETE'])
+@ jwt_required()
+@ cross_origin()
 def manufacturer(id_=None):
     conn = app.config["GET_DATABASE_CONN_FOR_SUPERUSER"]()
     if request.method == 'GET':
@@ -381,18 +412,18 @@ def manufacturer(id_=None):
         return jsonify({'success': True}), 200
 
 
-@app.route('/api/dataset/<int:dataset_id>', methods=['GET'])
-@jwt_required()
-@cross_origin()
+@ app.route('/api/dataset/<int:dataset_id>', methods=['GET'])
+@ jwt_required()
+@ cross_origin()
 def dataset_by_id(dataset_id):
     conn = app.config["GET_DATABASE_CONN_FOR_SUPERUSER"]()
     datasets = DatasetRow.select_from_id(dataset_id, conn)
     return DatasetRow.to_json(datasets)
 
 
-@app.route('/api/file', methods=['GET'])
-@jwt_required()
-@cross_origin()
+@ app.route('/api/file', methods=['GET'])
+@ jwt_required()
+@ cross_origin()
 def file():
     conn = app.config["GET_DATABASE_CONN_FOR_SUPERUSER"]()
     path_id = request.args['path_id']
@@ -406,9 +437,9 @@ def serialise_numpy_array(np_array):
     return response
 
 
-@app.route('/api/dataset/<int:dataset_id>/<int:col_id>', methods=['GET'])
-@jwt_required()
-@cross_origin()
+@ app.route('/api/dataset/<int:dataset_id>/<int:col_id>', methods=['GET'])
+@ jwt_required()
+@ cross_origin()
 def timeseries_column(dataset_id, col_id):
     conn = app.config["GET_DATABASE_CONN_FOR_SUPERUSER"]()
 
@@ -421,7 +452,7 @@ def timeseries_column(dataset_id, col_id):
     return serialise_numpy_array(array)
 
 
-@celery.task()
+@ celery.task()
 def run_harvester_celery(machine_id):
     harvester_main(
         os.getenv('HARVESTER_USERNAME'),
@@ -449,22 +480,22 @@ def del_harvester_periodic(harvester, sender=celery):
     del celery.conf.beat_schedule[harvester.machine_id + 'periodic']
 
 
-@celery.on_after_finalize.connect
+@ celery.on_after_finalize.connect
 def setup_periodic_tasks(sender, **kwargs):
     conn = sender.conf["GET_DATABASE_CONN_FOR_SUPERUSER"]()
     for harvester in HarvesterRow.all(conn):
         run_harvester_periodic(harvester, sender=sender)
 
 
-@celery.task()
+@ celery.task()
 def get_env_celery():
     env_var = 'GALVANALYSER_HARVESTER_BASE_PATH'
     return {env_var: os.getenv(env_var)}
 
 
-@app.route('/api/harvester/<int:id_>/env', methods=['GET'])
-@jwt_required()
-@cross_origin()
+@ app.route('/api/harvester/<int:id_>/env', methods=['GET'])
+@ jwt_required()
+@ cross_origin()
 def env_harvester(id_=None):
     conn = app.config["GET_DATABASE_CONN_FOR_SUPERUSER"]()
     harvester = HarvesterRow.select_from_id(
@@ -476,9 +507,9 @@ def env_harvester(id_=None):
     return jsonify(result.get()), 200
 
 
-@app.route('/api/harvester/<int:id_>/run', methods=['PUT'])
-@jwt_required()
-@cross_origin()
+@ app.route('/api/harvester/<int:id_>/run', methods=['PUT'])
+@ jwt_required()
+@ cross_origin()
 def run_harvester(id_=None):
     conn = app.config["GET_DATABASE_CONN_FOR_SUPERUSER"]()
     harvester = HarvesterRow.select_from_id(
@@ -491,10 +522,10 @@ def run_harvester(id_=None):
     return jsonify({'success': True}), 200
 
 
-@app.route('/api/harvester', methods=['GET', 'POST'])
-@app.route('/api/harvester/<int:id_>', methods=['GET', 'PUT', 'DELETE'])
-@jwt_required()
-@cross_origin()
+@ app.route('/api/harvester', methods=['GET', 'POST'])
+@ app.route('/api/harvester/<int:id_>', methods=['GET', 'PUT', 'DELETE'])
+@ jwt_required()
+@ cross_origin()
 def harvester(id_=None):
     user = UserRow.from_json(get_jwt_identity())
     conn = app.config["GET_DATABASE_CONN_FOR_SUPERUSER"]()
@@ -545,10 +576,10 @@ def harvester(id_=None):
         return jsonify({'success': True}), 200
 
 
-@app.route('/api/monitored_path', methods=['GET', 'POST'])
-@app.route('/api/monitored_path/<int:id_>', methods=['GET', 'PUT', 'DELETE'])
-@jwt_required()
-@cross_origin()
+@ app.route('/api/monitored_path', methods=['GET', 'POST'])
+@ app.route('/api/monitored_path/<int:id_>', methods=['GET', 'PUT', 'DELETE'])
+@ jwt_required()
+@ cross_origin()
 def monitored_path(id_=None):
     conn = app.config["GET_DATABASE_CONN_FOR_SUPERUSER"]()
     if request.method == 'GET':
