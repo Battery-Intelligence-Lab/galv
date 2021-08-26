@@ -124,11 +124,11 @@ USING ( harvester_name = current_user);
 
 CREATE TABLE harvesters.monitored_path
 (
+    id bigserial NOT NULL,
     harvester_id bigint NOT NULL,
     path text NOT NULL,
-    monitor_path_id bigserial NOT NULL,
     UNIQUE (path, harvester_id),
-    PRIMARY KEY (monitor_path_id),
+    PRIMARY KEY (id),
     FOREIGN KEY (harvester_id)
         REFERENCES harvesters.harvester (id) MATCH SIMPLE
         ON UPDATE CASCADE
@@ -156,7 +156,7 @@ CREATE TABLE harvesters.monitored_for
     user_id bigint NOT NULL,
     PRIMARY KEY (path_id, user_id),
     FOREIGN KEY (path_id)
-        REFERENCES harvesters.monitored_path (monitor_path_id) MATCH SIMPLE
+        REFERENCES harvesters.monitored_path (id) MATCH SIMPLE
         ON UPDATE CASCADE
         ON DELETE CASCADE,
     FOREIGN KEY (user_id)

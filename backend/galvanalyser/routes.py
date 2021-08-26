@@ -34,7 +34,8 @@ from .database.cell_data import (
     Cell
 )
 from .database.harvester import (
-    MonitoredPathRow, HarvesterRow, ObservedFileRow
+    MonitoredPathRow, HarvesterRow, ObservedFileRow,
+    MonitoredPath, Harvester, ObservedFile,
 )
 from .database.experiment import select_timeseries_column
 from sqlalchemy import select
@@ -529,51 +530,67 @@ def run_harvester(id_=None):
 def harvester(id_=None):
     user = UserRow.from_json(get_jwt_identity())
     conn = app.config["GET_DATABASE_CONN_FOR_SUPERUSER"]()
-    if request.method == 'GET':
-        if id_ is not None:
-            harvesters = HarvesterRow.select_from_id(id_, conn)
-        else:
-            harvesters = HarvesterRow.all(conn)
-        return HarvesterRow.to_json(harvesters)
-    elif request.method == 'PUT':
-        harvester = HarvesterRow.select_from_id(
-            id_, conn
-        )
-        request_data = request.get_json()
-        if 'machine_id' in request_data:
-            harvester.machine_id = request_data['machine_id']
-        if 'periodic_hour' in request_data:
-            harvester.periodic_hour = request_data['periodic_hour']
-        harvester.update(conn)
-        conn.commit()
+    with Session() as session:
+        current_user = json.loads(get_jwt_identity())
+        user = session.get(User, current_user['id'])
+        is_admin = any([g.groupname == 'admin' for g in user.groups])
+        if request.method == 'GET':
+            if id_ is None:
+                return jsonify(session.execute(select(Harvester)).all())
+            else:
+                return jsonify(session.get(Harvester, id_))
+        elif request.method == 'PUT':
+            if not is_admin:
+                return jsonify({
+                    'message': (
+                        'only admin users can edit harvesters'
+                    )
+                }), 404
+            harvester = session.get(Harvester, id_)
+            request_data = request.get_json()
+            if 'machine_id' in request_data:
+                harvester.machine_id = request_data['machine_id']
+            if 'periodic_hour' in request_data:
+                harvester.periodic_hour = request_data['periodic_hour']
+            session.commit()
 
-        # add periodic task
-        run_harvester_periodic(harvester)
+            # add periodic task
+            run_harvester_periodic(harvester)
 
-        return HarvesterRow.to_json(harvester)
-    elif request.method == 'POST':
-        request_data = request.get_json()
-        new_harvester = HarvesterRow(
-            request_data.get('machine_id', None),
-            harvester_name=os.getenv('HARVESTER_USERNAME'),
-        )
-        new_harvester.insert(conn)
-        conn.commit()
+            return jsonify(Harvester)
+        elif request.method == 'POST':
+            if not is_admin:
+                return jsonify({
+                    'message': (
+                        'only admin users can create harvesters'
+                    )
+                }), 404
+            request_data = request.get_json()
+            new_harvester = Harvester(
+                machine_id=request_data.get('machine_id', None),
+                harvester_name=os.getenv('HARVESTER_USERNAME'),
+            )
+            session.add(new_harvester)
+            session.commit()
 
-        # add periodic task
-        run_harvester_periodic(harvester)
+            # add periodic task
+            run_harvester_periodic(harvester)
 
-        return HarvesterRow.to_json(new_harvester)
-    elif request.method == 'DELETE':
-        harvester = HarvesterRow.select_from_id(
-            id_, conn
-        )
-        harvester.delete(conn)
-        conn.commit()
+            return HarvesterRow.to_json(new_harvester)
+        elif request.method == 'DELETE':
+            if not is_admin:
+                return jsonify({
+                    'message': (
+                        'only admin users can delete harvesters'
+                    )
+                }), 404
+            harvester = session.get(Harvester, id_)
+            session.delete(harvester)
+            session.commit()
 
-        # delete periodic task
-        del_harvester_periodic(harvester)
-        return jsonify({'success': True}), 200
+            # delete periodic task
+            del_harvester_periodic(harvester)
+            return jsonify({'success': True}), 200
 
 
 @ app.route('/api/monitored_path', methods=['GET', 'POST'])
