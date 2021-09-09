@@ -52,8 +52,24 @@ WITH (
     OIDS = FALSE
 );
 
+INSERT INTO user_data.group (groupname) VALUES ('admin');
 
-ALTER TABLE user_data.group
+-- Table: user_data.membership
+
+-- DROP TABLE user_data.membership;
+
+CREATE TABLE user_data.membership
+(
+  user_id bigint,
+  group_id bigint,
+  PRIMARY KEY (user_id, group_id)
+)
+WITH (
+    OIDS = FALSE
+);
+
+
+ALTER TABLE user_data.membership
     OWNER to postgres;
 
 
@@ -108,11 +124,11 @@ USING ( harvester_name = current_user);
 
 CREATE TABLE harvesters.monitored_path
 (
+    id bigserial NOT NULL,
     harvester_id bigint NOT NULL,
     path text NOT NULL,
-    monitor_path_id bigserial NOT NULL,
     UNIQUE (path, harvester_id),
-    PRIMARY KEY (monitor_path_id),
+    PRIMARY KEY (id),
     FOREIGN KEY (harvester_id)
         REFERENCES harvesters.harvester (id) MATCH SIMPLE
         ON UPDATE CASCADE
@@ -140,7 +156,7 @@ CREATE TABLE harvesters.monitored_for
     user_id bigint NOT NULL,
     PRIMARY KEY (path_id, user_id),
     FOREIGN KEY (path_id)
-        REFERENCES harvesters.monitored_path (monitor_path_id) MATCH SIMPLE
+        REFERENCES harvesters.monitored_path (id) MATCH SIMPLE
         ON UPDATE CASCADE
         ON DELETE CASCADE,
     FOREIGN KEY (user_id)

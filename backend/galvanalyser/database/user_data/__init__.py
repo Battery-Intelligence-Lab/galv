@@ -1,2 +1,2 @@
 from .user_row import UserRow
-from .user import User
+from .user_and_group import User, Group

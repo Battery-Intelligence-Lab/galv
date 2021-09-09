@@ -3,14 +3,16 @@ from psycopg2 import sql
 import string
 import os
 from .row import Row
+
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import create_engine
+Base = declarative_base()
+
 from .harvester import (
     HarvesterRow,
     MonitoredPathRow,
 )
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import create_engine
 
-Base = declarative_base()
 
 def create_harvester_user(config, harvester, password, test=False):
     conn = _create_superuser_connection(config)

@@ -20,7 +20,7 @@ import TableRow from '@material-ui/core/TableRow';
 import HarvesterDetail from './HarvesterDetail';
 import { 
   run_harvester, harvesters, add_harvester, 
-  update_harvester, delete_harvester
+  update_harvester, delete_harvester, isAdmin 
 } from './Api'
 
 const useStyles = makeStyles((theme) => ({
@@ -43,7 +43,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-function MyTableRow({savedRow, onRowSave, selected, onSelectRow}) {
+function MyTableRow({savedRow, onRowSave, selected, onSelectRow, disableSave}) {
   const classes = useStyles();
   const [row, setRow] = useState([])
   const [dirty, setDirty] = useState(false)
@@ -121,7 +121,7 @@ function MyTableRow({savedRow, onRowSave, selected, onSelectRow}) {
         <Tooltip title="Save changes to harvester">
         <span>
         <IconButton
-          disabled={!dirty} 
+          disabled={disableSave || !dirty} 
           onClick={() => {
             onRowSave(row);
             setDirty(false);
@@ -142,6 +142,7 @@ export default function Harvesters() {
 
   const [harvesterData, setHarvesterData] = useState([])
   const [selected, setSelected] = useState({id: null})
+  const userIsAdmin = isAdmin()
 
   useEffect(() => {
     refreshHarvesters();
@@ -219,26 +220,38 @@ export default function Harvesters() {
                 onRowSave={updateHarvester} 
                 selected={selected.id === row.id}
                 onSelectRow={setSelected}
+                disableSave={!userIsAdmin}
             />
           ))}
         </TableBody>
       </Table>
     </TableContainer>
     <Tooltip title="Add new harvester">
-      <IconButton aria-label="add" onClick={addNewHarvester}>
+      <IconButton 
+        aria-label="add" 
+        onClick={addNewHarvester}
+        disabled={!userIsAdmin}
+      >
       <AddIcon/>
     </IconButton>
     </Tooltip>
     <Tooltip title="Delete selected harvester">
       <span>
-    <IconButton disabled={!isSelected} aria-label="delete" onClick={deleteHarvester}>
+    <IconButton 
+      disabled={!userIsAdmin || !isSelected} 
+      aria-label="delete" 
+      onClick={deleteHarvester}
+    >
       <DeleteIcon />
     </IconButton>
       </span>
     </Tooltip>
     <Tooltip title="Run the selected harvester">
       <span>
-      <IconButton disabled={!isSelected} onClick={runSelectedHarvester}>
+      <IconButton 
+        disabled={!userIsAdmin || !isSelected} 
+        onClick={runSelectedHarvester}
+      >
       <PlayArrowIcon/>
     </IconButton>
     </span>
