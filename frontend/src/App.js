@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useEffect} from "react";
 import {
   Switch,
   Route,
@@ -6,6 +6,7 @@ import {
   Link,
   useHistory,
   useLocation,
+  matchPath,
 } from "react-router-dom";
 import Login from "./Login"
 import Harvesters from "./Harvesters"
@@ -22,7 +23,7 @@ import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import BatteryUnknownIcon from '@material-ui/icons/BatteryUnknown';
 import BackupIcon from '@material-ui/icons/Backup';
-import {loggedIn, logout, getToken} from "./Api"
+import {loggedIn, logout, getToken, getUser, isAdmin} from "./Api"
 import { makeStyles } from '@material-ui/core/styles';
 import CssBaseline from '@material-ui/core/CssBaseline';
 
@@ -141,7 +142,46 @@ const useStyles = makeStyles((theme) => ({
 
 
 export default function App() {
+  const { pathname } = useLocation();
   const classes = useStyles();
+  const [user, setUser] = React.useState(null);
+
+  useEffect(() => {
+    getUser().then(setUser)
+  }, []);
+
+  const handleLogin = () => {
+    getUser().then(setUser)
+  }
+
+  const userIsAdmin = isAdmin()
+
+  let userDisplayName = ''
+  if (user) {
+    userDisplayName = userIsAdmin ? 
+      user.username + " (Admin)" :
+      user.username
+  }
+
+  const datasetsPath = "/"
+  const isDatasetPath = matchPath(pathname, 
+    {path: datasetsPath, exact:true}
+  )
+  const harvestersPath = "/harvesters"
+  const isHarvestersPath = matchPath(pathname, 
+    {path: harvestersPath, exact:true}
+  )
+  const cellsPath = "/cells"
+  const isCellsPath = matchPath(pathname, 
+    {path: cellsPath, exact:true}
+  )
+  const equipmentPath = "/equipment"
+  const isEquipmentPath = matchPath(pathname, 
+    {path: equipmentPath, exact:true}
+  )
+  console.log('paths:', isDatasetPath, isHarvestersPath)
+
+
   const [open, setOpen] = React.useState(false);
   const handleDrawerOpen = () => {
     setOpen(true);
@@ -192,25 +232,33 @@ export default function App() {
 
   const mainListItems = (
     <div>
-      <ListItem button component={Link} to="/">
+      <ListItem button 
+        selected={isDatasetPath} 
+        component={Link} to={datasetsPath}>
         <ListItemIcon>
           <TableChartIcon />
         </ListItemIcon>
         <ListItemText primary="Datasets" />
       </ListItem>
-      <ListItem button component={Link} to="/harvesters">
+      <ListItem button 
+        selected={isHarvestersPath} 
+        component={Link} to={harvestersPath}>
         <ListItemIcon>
           <BackupIcon />
         </ListItemIcon>
         <ListItemText primary="Harvesters" />
       </ListItem>
-      <ListItem button component={Link} to="/cells">
+      <ListItem button 
+        selected={isCellsPath} 
+        component={Link} to={cellsPath}>
         <ListItemIcon>
           <BatteryUnknownIcon />
         </ListItemIcon>
         <ListItemText primary="Cells" />
       </ListItem>
-      <ListItem button component={Link} to="/equipment">
+      <ListItem button 
+        selected={isEquipmentPath} 
+        component={Link} to={equipmentPath}>
         <ListItemIcon>
           <SpeedIcon/>
         </ListItemIcon>
@@ -222,8 +270,6 @@ export default function App() {
   );
 
   let history = useHistory();
-
-  const location = useLocation();
 
   const logged_in = (
     <div className={classes.root}>
@@ -241,8 +287,11 @@ export default function App() {
         </IconButton>
         <GalvanalyserLogo className={classes.galvanalyserLogo}/>
         <Typography component="h1" variant="h6" color="inherit" noWrap className={classes.title}>
-          - {location.pathname}
         </Typography>
+
+        <Button color="inherit" >
+          User: {userDisplayName}
+        </Button>
         {tokenGenerator}
         <Button color="inherit" onClick={() => {
           logout().then(()=> {history.push('/login');});
@@ -285,7 +334,7 @@ export default function App() {
   return (
       <Switch>
         <Route path="/login">
-          <Login />
+          <Login onLogin={handleLogin}/>
         </Route>
         <Route>
           {logged_in}

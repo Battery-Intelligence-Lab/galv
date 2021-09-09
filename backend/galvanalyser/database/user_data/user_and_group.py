@@ -64,7 +64,6 @@ class Group(Base):
 
     id: int
     groupname: str
-    users: List[User]
 
     id = Column(Integer, primary_key=True)
     users = relationship(

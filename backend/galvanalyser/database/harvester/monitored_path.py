@@ -31,7 +31,9 @@ class MonitoredPath(Base):
     path: str
 
     id = Column(Integer, primary_key=True)
-    harvester_id = Column(Integer)
+    harvester_id = Column(Integer, ForeignKey('harvesters.harvester.id'))
+
+    cell_id = Column(Integer, )
     path = Column(String)
     monitored_for = relationship(
         "User",

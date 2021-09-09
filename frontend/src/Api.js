@@ -5,10 +5,32 @@ const headers = {
       'Content-Type': 'application/json'
     };
 
+let user = null;
+
+export function getUser() {
+  return authFetch(url + 'user/current').then(response => {
+    if (!response.ok) {
+      return Promise.reject()
+    }
+    return response.json()
+  }).then(data => {
+    console.log('setUser ', data)
+    user = data
+    return data
+  });
+}
+
+export function isAdmin() {
+  if (!user) {
+    return false;
+  }
+  return user.groups.find(g => g.groupname === 'admin')
+}
+
 export async function login(username, password) {
   let headers = new Headers();
   headers.set('Authorization', 'Basic ' + btoa(username + ":" + password));
-  return fetch(url + '/login', {method: 'POST', headers: headers});
+  return fetch(url + '/login', {method: 'POST', headers: headers})
 }
 
 export async function logout() {

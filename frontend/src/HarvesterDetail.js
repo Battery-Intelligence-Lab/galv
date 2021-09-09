@@ -23,7 +23,7 @@ import Files from './Files'
 
 import { 
   monitored_paths, add_monitored_path, users, env_harvester,
-  update_monitored_path, delete_monitored_path
+  update_monitored_path, delete_monitored_path, isAdmin, 
 } from './Api'
 
 const useStyles = makeStyles((theme) => ({
@@ -55,7 +55,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-function MyTableRow({env, userData, savedRow, onRowSave, selected, onSelectRow}) {
+function MyTableRow({env, userData, savedRow, onRowSave, selected, onSelectRow, disableSave}) {
   const classes = useStyles();
   const [row, setRow] = useState([])
   const [dirty, setDirty] = useState(false)
@@ -149,7 +149,7 @@ function MyTableRow({env, userData, savedRow, onRowSave, selected, onSelectRow})
         <Tooltip title="Save changes to path">
         <span>
         <IconButton
-          disabled={rowUnchanged} 
+          disabled={disableSave || rowUnchanged} 
           onClick={() => {
             setDirty(false);
             onRowSave(row);
@@ -172,6 +172,8 @@ export default function HarvesterDetail({harvester}) {
   const [paths, setPaths] = useState([])
   const [selected, setSelected] = useState({monitor_path_id: null})
   const [envData, setEnvData] = useState([])
+
+  const userIsAdmin = isAdmin();
 
   useEffect(() => {
     env_harvester(harvester.id).then((response) => {
@@ -246,19 +248,28 @@ export default function HarvesterDetail({harvester}) {
                 onRowSave={updatePath} 
                 selected={selected.monitor_path_id === row.monitor_path_id}
                 onSelectRow={setSelected}
+                disableSave={!userIsAdmin}
             />
           ))}
         </TableBody>
       </Table>
     </TableContainer>
     <Tooltip title="Add new path">
-      <IconButton aria-label="add" onClick={addNewPath}>
+      <IconButton 
+        aria-label="add" 
+        onClick={addNewPath}
+        disabled={!userIsAdmin}
+      >
       <AddIcon/>
     </IconButton>
     </Tooltip>
     <Tooltip title="Delete selected path">
       <span>
-    <IconButton disabled={!isSelected} aria-label="delete" onClick={deletePath}>
+    <IconButton 
+      disabled={!userIsAdmin || !isSelected} 
+      aria-label="delete" 
+      onClick={deletePath}
+    >
       <DeleteIcon />
     </IconButton>
       </span>

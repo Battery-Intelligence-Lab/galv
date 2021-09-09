@@ -11,7 +11,7 @@ from dataclasses import dataclass
 
 @dataclass
 class ObservedFile(Base):
-    __tablename__ = 'monitored_path'
+    __tablename__ = 'observed_file'
     __table_args__ = {'schema': 'harvesters'}
 
     monitor_path_id: int

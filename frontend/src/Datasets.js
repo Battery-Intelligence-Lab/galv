@@ -27,7 +27,7 @@ const useStyles = makeStyles((theme) => ({
 
 
 export default function Datasets() {
-  const [data, setData] = useState([])
+  const [data, setData] = useState(null)
   const classes = useStyles();
   const history = useHistory();
 
@@ -76,9 +76,6 @@ export default function Datasets() {
 
  
 
-  if ( !data ) {
-    return ("Loading...");
-  }
   const columns: GridColDef[] = [
     { field: 'dataset_id', headerName: 'ID', width: 70},
     { field: 'name', headerName: 'Name', flex: true},
@@ -95,24 +92,27 @@ export default function Datasets() {
     { field: 'metadata', headerName: 'Metadata', type: 'boolean', width: 120 },
   ];
 
-  const rows: GridRowsProp = data.map((d, i) => {
-    return {
-      id: i,
-      dataset_id: d.id,
-      name: d.name,
-      type: d.type,
-      date: Date.parse(d.date),
-      cell: d.cell ? d.cell.name : '',
-      owner: d.owner ? d.owner.username : '',
-      purpose: d.purpose,
-      metadata: !(!d.cell || !d.owner || !d.purpose || d.equipment.length === 0)
-    };
-  });
+  let rows: GridRowsProp = []
+  if ( data ) {
+    rows = data.map((d, i) => {
+      return {
+        id: i,
+        dataset_id: d.id,
+        name: d.name,
+        type: d.type,
+        date: Date.parse(d.date),
+        cell: d.cell ? d.cell.name : '',
+        owner: d.owner ? d.owner.username : '',
+        purpose: d.purpose,
+        metadata: !(!d.cell || !d.owner || !d.purpose || d.equipment.length === 0)
+      };
+    });
+  }
 
-  
 
   let autoHeight = true;
   let divStyle = { width: '100%' };
+  console.log('datasets', rows)
   
 
   return (
@@ -122,13 +122,13 @@ export default function Datasets() {
         rows={rows} columns={columns} 
         density='compact'
         autoPageSize
-        loading={rows.length === 0}
+        loading={ !data }
         rowHeight={38}
         autoHeight={autoHeight}
         onSelectionModelChange={handleSelectionChange}
       />
     </div>
-    {data[select] &&
+    {data && data[select] &&
         <Button variant="contained" 
           className={classes.button}
           onClick={()=>{history.push(`/dataset/${data[select].id}`);}}
@@ -136,7 +136,7 @@ export default function Datasets() {
           Edit Metadata
         </Button>
     }
-    {data[select] &&
+    {data && data[select] &&
       <React.Fragment>
       <Button 
         variant="contained" onClick={handleCodeOpen}

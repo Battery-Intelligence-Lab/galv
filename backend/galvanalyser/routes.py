@@ -8,10 +8,10 @@ from datetime import timezone
 from datetime import datetime
 from datetime import timedelta
 import json
+import dataclasses
 
 from celery.schedules import crontab
 
-from galvanalyser.harvester import main as harvester_main
 
 from flask_jwt_extended import create_access_token
 from flask_jwt_extended import jwt_required
@@ -20,10 +20,7 @@ from flask_jwt_extended import set_access_cookies
 from flask_jwt_extended import unset_jwt_cookies
 from flask_jwt_extended import get_jwt_identity
 
-from .database.experiment.timeseries_data_row import (
-    TimeseriesDataRow,
-    RECORD_NO_COLUMN_ID,
-)
+
 from .database.experiment import (
     AccessRow, Dataset, ColumnRow, MetadataRow, Equipment,
 )
@@ -38,6 +35,11 @@ from .database.harvester import (
     MonitoredPath, Harvester, ObservedFile,
 )
 from .database.experiment import select_timeseries_column
+
+from .database.experiment.timeseries_data_row import (
+    TimeseriesDataRow,
+    RECORD_NO_COLUMN_ID,
+)
 from sqlalchemy import select
 import math
 import psycopg2
@@ -50,6 +52,8 @@ from functools import wraps
 from .database.user_data import UserRow
 
 from galvanalyser import Session
+
+from galvanalyser.harvester import main as harvester_main
 
 
 @app.after_request
@@ -81,15 +85,24 @@ def login():
     conn = app.config["GET_DATABASE_CONN_FOR_SUPERUSER"]()
     user = UserRow.select_from_username(auth.username, conn)
 
-    if user.validate_password(auth.password):
-        access_token = create_access_token(
-            identity=UserRow.to_json(user)
-        )
-        response = jsonify({
-            "message": "login successful",
-        })
-        set_access_cookies(response, access_token)
-        return response
+    if user is not None and user.validate_password(auth.password):
+        with Session() as session:
+            current_user = session.get(User, user.id)
+            access_token = create_access_token(
+                identity=json.dumps(
+                    dataclasses.asdict(current_user)
+                )
+            )
+            response = jsonify({
+                "message": "login successful",
+                "user": dataclasses.asdict(current_user)
+            })
+            set_access_cookies(response, access_token)
+            return response
+
+    return jsonify({
+        "message": "login unsuccessful"
+    }), 401
 
     return make_response(
         'could not verify',  401,
@@ -148,13 +161,25 @@ def hello():
     return 'Hello'
 
 
+@app.route('/api/user/current', methods=['GET'])
+@cross_origin()
+@jwt_required()
+def current_user():
+    with Session() as session:
+        current_user = json.loads(get_jwt_identity())
+        user = session.get(User, current_user['id'])
+        return jsonify(user)
+
+
 @app.route('/api/user', methods=['GET'])
 @cross_origin()
 @jwt_required()
-def user():
-    conn = app.config["GET_DATABASE_CONN_FOR_SUPERUSER"]()
-    users = UserRow.all(conn)
-    return UserRow.to_json(users)
+def user(id_=None):
+    with Session() as session:
+        if id_ is None:
+            return jsonify(session.execute(select(User)).scalars().all())
+        else:
+            return jsonify(session.get(User, id_))
 
 
 @app.route('/api/dataset', methods=['GET'])
@@ -170,7 +195,7 @@ def dataset(id_=None):
         if request.method == 'GET':
             if is_admin:
                 if id_ is None:
-                    return jsonify(session.execute(select(Dataset)).all())
+                    return jsonify(session.execute(select(Dataset)).scalars().all())
                 else:
                     return jsonify(session.get(Dataset, id_))
 
@@ -536,7 +561,7 @@ def harvester(id_=None):
         is_admin = any([g.groupname == 'admin' for g in user.groups])
         if request.method == 'GET':
             if id_ is None:
-                return jsonify(session.execute(select(Harvester)).all())
+                return jsonify(session.execute(select(Harvester)).scalars().all())
             else:
                 return jsonify(session.get(Harvester, id_))
         elif request.method == 'PUT':

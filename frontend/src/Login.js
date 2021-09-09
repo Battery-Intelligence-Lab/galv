@@ -3,6 +3,7 @@ import { makeStyles } from '@material-ui/core/styles';
 import React, { useState } from "react";
 import Button from '@material-ui/core/Button';
 import CssBaseline from '@material-ui/core/CssBaseline';
+import Alert from '@material-ui/lab/Alert';
 import TextField from '@material-ui/core/TextField';
 import Typography from '@material-ui/core/Typography';
 import Container from '@material-ui/core/Container';
@@ -31,10 +32,11 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 
-export default function Login() {
+export default function Login({ onLogin }) {
   const classes = useStyles();
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
 
   const history = useHistory();
 
@@ -42,14 +44,15 @@ export default function Login() {
     e.preventDefault()
     console.log("You pressed login")
     login(username, password).then(r => {
-      if (r.ok) {
-        return r.json();
+      if (!r.ok) {
+        console.log(r, r.data)
+        return r.json().then(data=>setError(data.message));
       }
-      console.log('login failed');
-      console.log("Please type in correct username/password")
-    }).then(response => {
-        console.log('login success', response);          
+      return r.json().then(data => {
+        setError('')
+        onLogin()
         history.push('/');
+      })
     });
   }
 
@@ -94,6 +97,11 @@ export default function Login() {
           id="password"
           autoComplete="current-password"
         />
+        {error &&
+        <Alert severity="error">
+          {error}
+        </Alert>
+        }
         <Button
           type="submit"
           fullWidth
