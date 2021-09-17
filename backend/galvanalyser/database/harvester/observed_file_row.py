@@ -190,7 +190,7 @@ class ObservedFilePathRow:
                     "hof.last_observed_time "
                     "FROM harvesters.observed_file AS hof "
                     "INNER JOIN harvesters.monitored_path AS hmp ON "
-                    "hof.monitor_path_id = hmp.monitor_path_id "
+                    "hof.monitor_path_id = hmp.id "
                     "WHERE "
                     "hmp.harvester_id=(%s) AND hof.file_state=(%s)"
                 ),
