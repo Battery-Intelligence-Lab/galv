@@ -345,7 +345,7 @@ def main(database_user=None, database_password=None, machine_id=None,
         )
         for monitored_paths_row in monitored_paths_rows:
             monitor_path(
-                monitored_paths_row.monitor_path_id,
+                monitored_paths_row.id,
                 base_path,
                 monitored_paths_row.path,
                 monitored_paths_row.monitored_for,

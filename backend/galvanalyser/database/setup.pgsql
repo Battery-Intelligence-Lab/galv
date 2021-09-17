@@ -199,7 +199,7 @@ CREATE TABLE harvesters.observed_file
     file_state harvesters.file_state_t NOT NULL DEFAULT 'UNSTABLE'::harvesters.file_state_t,
     CONSTRAINT observed_file_pkey PRIMARY KEY (monitor_path_id, path),
     FOREIGN KEY (monitor_path_id)
-        REFERENCES harvesters.monitored_path (monitor_path_id) MATCH SIMPLE
+        REFERENCES harvesters.monitored_path (id) MATCH SIMPLE
         ON UPDATE NO ACTION
         ON DELETE NO ACTION
 )

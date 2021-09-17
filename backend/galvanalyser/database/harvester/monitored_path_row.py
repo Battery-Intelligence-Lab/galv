@@ -5,7 +5,7 @@ from galvanalyser.database import Row
 
 class MonitoredPathRow(Row):
     def __init__(
-        self, harvester_id, monitored_for, path, monitor_path_id=None
+        self, harvester_id, monitored_for, path, id_=None
     ):
         self.harvester_id = harvester_id
         if monitored_for is None:
@@ -13,17 +13,17 @@ class MonitoredPathRow(Row):
         else:
             self.monitored_for = monitored_for
         self.path = path
-        self.monitor_path_id = monitor_path_id
+        self.id = id_
 
     def __str__(self):
         return (
             'MonitoredPathRow(harvester_id={}, monitored_for={} '
-            'path={}, monitor_path_id={})'
+            'path={}, id={})'
         ).format(
             self.harvester_id,
             self.monitored_for,
             self.path,
-            self.monitor_path_id
+            self.id
         )
 
     def to_dict(self):
@@ -31,7 +31,7 @@ class MonitoredPathRow(Row):
             'harvester_id': self.harvester_id,
             'monitored_for': self.monitored_for,
             'path': self.path,
-            'monitor_path_id': self.monitor_path_id,
+            'id': self.id,
         }
         return obj
 
@@ -39,7 +39,7 @@ class MonitoredPathRow(Row):
         if len(self.monitored_for) > 0:
             monitored_for_rows = b','.join(
                 cursor.mogrify(
-                    "(%s,%s)", [self.monitor_path_id, x]
+                    "(%s,%s)", [self.id, x]
                 )
                 for x in self.monitored_for
             )
@@ -56,11 +56,11 @@ class MonitoredPathRow(Row):
                 (
                     "INSERT INTO harvesters.monitored_path "
                     "(harvester_id, path) VALUES (%s, %s) "
-                    "RETURNING monitor_path_id"
+                    "RETURNING id"
                 ),
                 [self.harvester_id, self.path],
             )
-            self.monitor_path_id = cursor.fetchone()[0]
+            self.id = cursor.fetchone()[0]
 
             self._insert_monitored_paths(cursor)
 
@@ -71,11 +71,11 @@ class MonitoredPathRow(Row):
                     "UPDATE harvesters.monitored_path SET "
                     "harvester_id = (%s), "
                     "path = (%s) "
-                    "WHERE monitor_path_id=(%s)"
+                    "WHERE id=(%s)"
                 ),
                 [
                     self.harvester_id,
-                    self.path, self.monitor_path_id
+                    self.path, self.id
                 ],
             )
             cursor.execute(
@@ -83,7 +83,7 @@ class MonitoredPathRow(Row):
                     "DELETE FROM harvesters.monitored_for "
                     "WHERE path_id=(%s)"
                 ),
-                [self.monitor_path_id],
+                [self.id],
             )
             self._insert_monitored_paths(cursor)
 
@@ -92,9 +92,9 @@ class MonitoredPathRow(Row):
             cursor.execute(
                 (
                     "DELETE FROM harvesters.monitored_path "
-                    "WHERE monitor_path_id=(%s)"
+                    "WHERE id=(%s)"
                 ),
-                [self.monitor_path_id],
+                [self.id],
             )
 
     @staticmethod
@@ -117,7 +117,7 @@ class MonitoredPathRow(Row):
                 (
                     "SELECT harvester_id, path FROM "
                     "harvesters.monitored_path "
-                    "WHERE monitor_path_id=(%s)"
+                    "WHERE id=(%s)"
                 ),
                 [id_],
             )
@@ -130,7 +130,7 @@ class MonitoredPathRow(Row):
                     MonitoredPathRow._get_monitored_for(result[0], cursor)
                 ),
                 path=result[1],
-                monitor_path_id=id_,
+                id_=id_,
             )
 
     @staticmethod
@@ -138,7 +138,7 @@ class MonitoredPathRow(Row):
         with conn.cursor() as cursor:
             cursor.execute(
                 (
-                    "SELECT path, monitor_path_id FROM "
+                    "SELECT path, id FROM "
                     "harvesters.monitored_path "
                     "WHERE harvester_id=(%s)"
                 ),
@@ -152,7 +152,7 @@ class MonitoredPathRow(Row):
                         MonitoredPathRow._get_monitored_for(result[1], cursor)
                     ),
                     path=result[0],
-                    monitor_path_id=result[1],
+                    id_=result[1],
                 )
                 for result in records
             ]
@@ -162,7 +162,7 @@ class MonitoredPathRow(Row):
         with conn.cursor() as cursor:
             cursor.execute(
                 (
-                    "SELECT monitor_path_id FROM "
+                    "SELECT id FROM "
                     "harvesters.monitored_path "
                     "WHERE harvester_id=(%s) AND path=(%s)"
                 ),
@@ -177,5 +177,5 @@ class MonitoredPathRow(Row):
                     MonitoredPathRow._get_monitored_for(result[0], cursor)
                 ),
                 path=path,
-                monitor_path_id=result[0],
+                id_=result[0],
             )

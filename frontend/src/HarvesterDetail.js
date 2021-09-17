@@ -73,7 +73,7 @@ function MyTableRow({env, userData, savedRow, onRowSave, selected, onSelectRow, 
 
 
   let useRow = row;
-  if (useRow.monitor_path_id === undefined) {
+  if (useRow.id === undefined) {
     useRow = savedRow;
   }
 
@@ -106,7 +106,7 @@ function MyTableRow({env, userData, savedRow, onRowSave, selected, onSelectRow, 
       selected={selected}
     >
       <TableCell component="th" scope="row">
-        {useRow.monitor_path_id}
+        {useRow.id}
       </TableCell>
       <TableCell align="right">
         <TextField
@@ -170,7 +170,7 @@ export default function HarvesterDetail({harvester}) {
 
   const [userData, setUserData] = useState([])
   const [paths, setPaths] = useState([])
-  const [selected, setSelected] = useState({monitor_path_id: null})
+  const [selected, setSelected] = useState({id: null})
   const [envData, setEnvData] = useState([])
 
   const userIsAdmin = isAdmin();
@@ -196,10 +196,10 @@ export default function HarvesterDetail({harvester}) {
       monitored_paths(harvester.id).then((response) => {
         if (response.ok) {
           return response.json().then((result) => {
-            setPaths(result.sort((arg1, arg2) => arg1.monitor_path_id - arg2.monitor_path_id));
+            setPaths(result.sort((arg1, arg2) => arg1.id - arg2.id));
             setSelected(oldSelected => {
-              const newSelected = result.find(x => x.monitor_path_id === oldSelected.monitor_path_id);
-              return newSelected || {monitor_path_id: null};
+              const newSelected = result.find(x => x.id === oldSelected.id);
+              return newSelected || {id: null};
             });
           });
         }
@@ -216,13 +216,13 @@ export default function HarvesterDetail({harvester}) {
     add_monitored_path({harvester_id: harvester.id, path: 'Edit me'}).then(refreshPaths);
   };
   const deletePath = () => {
-    delete_monitored_path(selected.monitor_path_id).then(refreshPaths);
+    delete_monitored_path(selected.id).then(refreshPaths);
   };
   const updatePath = (value) => {
-    update_monitored_path(value.monitor_path_id, value).then(refreshPaths);
+    update_monitored_path(value.id, value).then(refreshPaths);
   };
   
-  const isSelected = selected.monitor_path_id !== null;
+  const isSelected = selected.id !== null;
 
   return (
     <Paper className={classes.paper}>
@@ -241,12 +241,12 @@ export default function HarvesterDetail({harvester}) {
         <TableBody>
           {paths.map((row) => (
             <MyTableRow 
-                key={row.monitor_path_id} 
+                key={row.id} 
                 env={envData}
                 savedRow={row} 
                 userData={userData}
                 onRowSave={updatePath} 
-                selected={selected.monitor_path_id === row.monitor_path_id}
+                selected={selected.id === row.id}
                 onSelectRow={setSelected}
                 disableSave={!userIsAdmin}
             />
