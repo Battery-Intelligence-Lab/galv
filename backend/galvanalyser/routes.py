@@ -200,10 +200,16 @@ def dataset(id_=None):
                     return jsonify(session.get(Dataset, id_))
 
             if id_ is None:
-                return jsonify(
+                accessible_ids = [
+                    d.id for d in user.accessible_datasets
+                ]
+                all_datasets = (
                     user.accessible_datasets +
-                    user.datasets
+                    [d for d in user.datasets
+                     if d.id not in accessible_ids]
                 )
+
+                return jsonify(all_datasets)
             else:
                 dataset = next(
                     (i for i in user.accessible_datasets if i.id == id_),
