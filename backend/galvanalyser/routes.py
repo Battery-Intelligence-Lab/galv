@@ -527,7 +527,9 @@ def run_harvester_periodic(harvester, sender=celery):
 
 
 def del_harvester_periodic(harvester, sender=celery):
-    del celery.conf.beat_schedule[harvester.machine_id + 'periodic']
+    key = harvester.machine_id + 'periodic'
+    if key in celery.conf.beat_schedule:
+        del celery.conf.beat_schedule[key]
 
 
 @ celery.on_after_finalize.connect
@@ -606,7 +608,7 @@ def harvester(id_=None):
             # add periodic task
             run_harvester_periodic(harvester)
 
-            return jsonify(Harvester)
+            return jsonify(harvester)
         elif request.method == 'POST':
             if not is_admin:
                 return jsonify({
@@ -623,9 +625,9 @@ def harvester(id_=None):
             session.commit()
 
             # add periodic task
-            run_harvester_periodic(harvester)
+            run_harvester_periodic(new_harvester)
 
-            return HarvesterRow.to_json(new_harvester)
+            return jsonify(new_harvester)
         elif request.method == 'DELETE':
             if not is_admin:
                 return jsonify({

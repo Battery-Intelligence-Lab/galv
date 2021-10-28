@@ -249,7 +249,7 @@ export default function Harvesters() {
     <Tooltip title="Run the selected harvester">
       <span>
       <IconButton 
-        disabled={!userIsAdmin || !isSelected} 
+        disabled={!userIsAdmin || !isSelected || selected.is_running} 
         onClick={runSelectedHarvester}
       >
       <PlayArrowIcon/>
