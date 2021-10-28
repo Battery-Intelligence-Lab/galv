@@ -309,21 +309,23 @@ def main(database_user=None, database_password=None, machine_id=None,
         config["database_port"] = database_port
         config["database_name"] = database_name
 
-    conn = None
-    try:
-        conn = psycopg2.connect(
-            host=config["database_host"],
-            port=config["database_port"],
-            database=config["database_name"],
-            user=config["database_username"],
-            password=config["database_password"],
-        )
-        conn.autocommit = True
+    conn = psycopg2.connect(
+        host=config["database_host"],
+        port=config["database_port"],
+        database=config["database_name"],
+        user=config["database_username"],
+        password=config["database_password"],
+    )
+    conn.autocommit = True
+    print('finding machine', config['machine_id'])
+    harvester = HarvesterRow.select_from_machine_id(
+        config["machine_id"], conn
+    )
 
-        print('finding machine', config['machine_id'])
-        harvester = HarvesterRow.select_from_machine_id(
-            config["machine_id"], conn
-        )
+    if harvester.is_running:
+        return
+
+    try:
         harvester.is_running = True
         harvester.update(conn)
         conn.commit()
@@ -352,9 +354,10 @@ def main(database_user=None, database_password=None, machine_id=None,
                 conn,
             )
         # files for import
-        stable_observed_file_path_rows = ObservedFilePathRow.select_from_harvester_id_with_state(
-            harvester.id, "STABLE", conn
-        )
+        stable_observed_file_path_rows = \
+            ObservedFilePathRow.select_from_harvester_id_with_state(
+                harvester.id, "STABLE", conn
+            )
         for stable_observed_file_path_row in stable_observed_file_path_rows:
             # import the file
             import_file(

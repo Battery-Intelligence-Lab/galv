@@ -200,12 +200,21 @@ def dataset(id_=None):
                     return jsonify(session.get(Dataset, id_))
 
             if id_ is None:
-                return jsonify(user.accessible_datasets)
+                return jsonify(
+                    user.accessible_datasets +
+                    user.datasets
+                )
             else:
                 dataset = next(
                     (i for i in user.accessible_datasets if i.id == id_),
                     None
                 )
+                if dataset is None:
+                    dataset = next(
+                        (i for i in user.datasets if i.id == id_),
+                        None
+                    )
+
                 if dataset is None:
                     return jsonify({
                         'message': (
@@ -217,13 +226,20 @@ def dataset(id_=None):
                     }), 404
                 return jsonify(dataset)
         elif request.method == 'PUT':
-            if is_admin:
+            no_owner = session.get(Dataset, id_).owner_id is None
+            if is_admin or no_owner:
                 dataset = session.get(Dataset, id_)
             else:
                 dataset = next(
                     (i for i in user.datasets if i.id == id_),
                     None
                 )
+                if dataset is None:
+                    dataset = next(
+                        (i for i in user.datasets if i.id == id_),
+                        None
+                    )
+
             if dataset is None:
                 return jsonify({
                     'message': (
@@ -235,7 +251,7 @@ def dataset(id_=None):
 
             if dataset is None:
                 return jsonify({
-                    'message': 'cell not found'
+                    'message': 'dataset not found'
                 }), 404
 
             request_data = request.get_json()
@@ -244,6 +260,8 @@ def dataset(id_=None):
                 dataset.name = request_data['name']
             if 'cell_id' in request_data:
                 dataset.cell_id = request_data['cell_id']
+                if dataset.cell_id == '':
+                    dataset.cell_id = None
             if 'owner_id' in request_data:
                 dataset.owner_id = request_data['owner_id']
             if 'equipment' in request_data:

@@ -54,8 +54,8 @@ docker-compose build
 ## Setting up and creating user accounts on the galvanalyser database
 
 Installation and administration of galvanalyser is done using a command line interface 
-(cli) that you can run via `docker-compose`. Change directory to the `webstack`
-directory and run the following command to create the galvanalyser database tables. 
+(cli) that you can run via `docker-compose`. Change directory to the root of the repository 
+and run the following command to create the galvanalyser database tables. 
 
 **Note**: *when this command is run, it will drop all tables from the current database, 
 so if you have existing data it will be deleted.*

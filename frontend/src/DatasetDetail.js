@@ -7,6 +7,7 @@ import CardContent from "@material-ui/core/CardContent";
 import { makeStyles } from '@material-ui/core/styles';
 import SaveIcon from '@material-ui/icons/Save';
 import IconButton from '@material-ui/core/IconButton';
+import Alert from '@material-ui/lab/Alert';
 import Container from '@material-ui/core/Container';
 import { useParams } from "react-router-dom";
 import {
@@ -29,18 +30,114 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
+function DatasetForm({ dataset, setDataset, cellData, userData, equipmentData }) {
+  const [datasetError, setDatasetError] = useState(null)
+  const { reset, control, handleSubmit, formState: {isDirty} } = useForm({
+    defaultValues: dataset
+  });
+  let cellOptions = cellData.map(cell => (
+    {key: cell.name, value: cell.id}
+  ));
+  cellOptions.push({key: "None", value: null})
+  let userOptions = userData.map(user => (
+    {key: user.username, value: user.id}
+  ));
+  userOptions.push({key: "None", value: null})
+  const equipmentOptions = equipmentData.map(e => (
+    {key: e.name, value: e.id}
+  ))
+
+  const purposeOptions = [
+    'Ageing',
+    'Real world/drive cycling',
+    'Characterisation/check-up',
+    'Thermal performance',
+    'Pulse',
+    'Charge',
+    'Discharge',
+    'EIS',
+    'GITT',
+    'Pseudo-OCV',
+  ]
+
+  const onSubmit = (values) => {
+    update_dataset(dataset.id, values).then(response => {
+      if (response.ok) {
+        const newDataset = {...dataset, ...values}
+        setDataset(newDataset)
+        setDatasetError(null)
+        reset(newDataset)
+      } else {
+        response.json().then(data => setDatasetError(data.message))
+      }
+    });
+  };
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} autoComplete="off">
+      <Card style={{display: 'inline-block'}}>
+      <CardContent>
+      <FormTextField 
+        control={control}
+        name="name"
+        label="Dataset Name"
+        style={{ width: 320 }}
+      />
+
+      <FormSelectField
+        control={control}
+        name="cell_id"
+        label="Cell"
+        style={{ width: 380 }}
+        options={cellOptions}
+      />
+      <FormSelectField
+        control={control}
+        name="owner_id"
+        label="Owner"
+        options={userOptions}
+        style={{ width: 250 }}
+      />
+      <FormAutocompleteField
+        control={control}
+        name="purpose"
+        label="Purpose of the experiment"
+        options={purposeOptions}
+        style={{ width: 500 }}
+      />
+      <FormMultiSelectField
+        control={control}
+        name="equipment"
+        label="Test Equipment Used"
+        options={equipmentOptions}
+        style={{ width: 500 }}
+      />
+      {datasetError &&
+        <Alert severity="error">
+          {datasetError}
+        </Alert>
+      }
+      </CardContent>
+      <CardActions disableSpacing>
+        <IconButton type="submit" disabled={!isDirty}>
+          <SaveIcon/>
+        </IconButton>
+      </CardActions>
+    </Card>
+    </form>
+  )
+}
 
 export default function DatasetDetail() {
   const { id } = useParams();
   const classes = useStyles();
-
-  const { control, handleSubmit } = useForm();
 
   const [cellData, setCellData] = useState([])
   const [equipmentData, setEquipmentData] = useState(null)
   const [dataset, setDataset] = useState(null)
   const [userData, setUserData] = useState([])
 
+  
   useEffect(() => {
     users().then((response) => {
       if (response.ok) {
@@ -71,98 +168,25 @@ export default function DatasetDetail() {
     });
   }, [id]);
 
-  const onSubmit = (values) => {
-    update_dataset(dataset.id, values);
-  };
-
-
   if (!equipmentData || !dataset || !cellData || !userData) {
     return (null);
   }
-
-
-  let cellOptions = cellData.map(cell => (
-    {key: cell.name, value: cell.id}
-  ));
-  cellOptions.push({key: "None", value: null})
-  let userOptions = userData.map(user => (
-    {key: user.username, value: user.id}
-  ));
-  userOptions.push({key: "None", value: null})
-  const equipmentOptions = equipmentData.map(e => (
-    {key: e.name, value: e.id}
-  ))
-
-  const purposeOptions = [
-    'Ageing',
-    'Real world/drive cycling',
-    'Characterisation/check-up',
-    'Thermal performance',
-    'Pulse',
-    'Charge',
-    'Discharge',
-    'EIS',
-    'GITT',
-    'Pseudo-OCV',
-  ]
 
   return (
     <Container maxWidth="lg" className={classes.container}>
       <Typography variant="h5">
           {dataset.name} - {dataset.date} - {dataset.dataset_type}
       </Typography>
+      {dataset &&
       <DatasetChart dataset={dataset} />
-      <form onSubmit={handleSubmit(onSubmit)} autoComplete="off">
-      <Card style={{display: 'inline-block'}}>
-      <CardContent>
-      <FormTextField 
-        control={control}
-        defaultValue={dataset.name}
-        name="name"
-        label="Dataset Name"
-        style={{ width: 320 }}
+      }
+      {dataset &&
+      <DatasetForm 
+        dataset={dataset} cellData={cellData} 
+        userData={userData} equipmentData={equipmentData} 
+        setDataset={setDataset}
       />
-
-      <FormSelectField
-        control={control}
-        defaultValue={dataset.cell_id || ''}
-        name="cell_id"
-        label="Cell"
-        style={{ width: 380 }}
-        options={cellOptions}
-      />
-      <FormSelectField
-        control={control}
-        name="owner_id"
-        label="Owner"
-        defaultValue={dataset.owner_id || ''}
-        options={userOptions}
-        style={{ width: 250 }}
-      />
-      <FormAutocompleteField
-        control={control}
-        name="purpose"
-        defaultValue={dataset.purpose}
-        label="Purpose of the experiment"
-        options={purposeOptions}
-        style={{ width: 500 }}
-      />
-      <FormMultiSelectField
-        control={control}
-        name="equipment"
-        label="Test Equipment Used"
-        defaultValue={dataset.equipment}
-        options={equipmentOptions}
-        style={{ width: 500 }}
-      />
-      </CardContent>
-      <CardActions disableSpacing>
-        <IconButton type="submit">
-          <SaveIcon/>
-        </IconButton>
-      </CardActions>
-    </Card>
-    </form>
+      }
     </Container>
   );
 }
