@@ -6,7 +6,9 @@ This guide assumes you have a Galvanalyser server setup.
 
 There are two types of users in galvanalyser:
 1. The first are standard user accounts, that are used for authentication on the 
-   frontend, and the REST API. 
+   frontend, and the REST API. Users can optionally belong to an Admin group, which 
+   allows them more permissions in terms of viewing and editing dataset metadata, and 
+   allows for setting up and altering harvester schedules and directories.
 2. The second is the harvester user account. Ordinarily, there is only one harvester 
    user account, and the username and password for this account is set in the `.env` 
    file in the server. This account is a postgres account on the database, and the 
@@ -22,9 +24,13 @@ creating a new user is:
 docker-compose run --rm galvanalyser_app python manage.py create_user
 ```
 
+You will be promoted for a username, password and email for the new user, and asked if 
+this user should belong to the Admin group
+
 ## Configuring harvesters
 
-Harvesters are created and configured via the frontend web application. 
+Harvesters are created and configured via the frontend web application, and only by 
+users that belong to the Admin group.
 
 First navigate to the harvester page (the cloud upload icon in the left hand side 
 drawer). Here you are presented with an (initially empty) table of harvester machines. 
