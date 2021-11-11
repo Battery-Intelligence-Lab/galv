@@ -24,7 +24,7 @@ creating a new user is:
 docker-compose run --rm galvanalyser_app python manage.py create_user
 ```
 
-You will be promoted for a username, password and email for the new user, and asked if 
+You will be prompted for a username, password and email for the new user, and asked if 
 this user should belong to the Admin group
 
 ## Configuring harvesters
