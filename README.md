@@ -17,8 +17,9 @@ There are two user interfaces to the system:
   
 A diagram of the logical structure of the system is shown below. The arrows indicate the 
 direction of data flow.
-![The logical relationship of the various Galvanalyser 
-components](./docs/GalvanalyserStructure.PNG)
+
+<img src="https://github.com/Battery-Intelligence-Lab/galvanalyser/raw/main/docs/GalvanalyserStructure.PNG" width="600" />
+
 
 ## Project documentation
 
@@ -61,9 +62,13 @@ distributed task queue.
 The frontend is written using Javascript, the [React](https://reactjs.org/) framework 
 and using [Material-UI](https://material-ui.com/) components.
 
+<img src="https://github.com/Battery-Intelligence-Lab/galvanalyser/raw/main/docs/galvanalyser_frontend.jpg" width="600" />
+
 
 ### Database
 
 The project uses PostgreSQL for its database. Other databases are currently not 
 supported. An entity relationship diagram is shown below.
-![Galvanalyser entity relationship diagram](./docs/Galvanalyser_DB_ERD.png)
+
+<img src="https://github.com/Battery-Intelligence-Lab/galvanalyser/raw/main/docs/Galvanalyser_DB_ERD.png" width="600" />
+
