@@ -20,21 +20,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y smbclient
 
-      - name: Get Date
-        id: get-date
-        run: |
-          echo "::set-output name=date::$(/bin/date -u "+%Y%m%d")"
-        shell: bash
-
-      - name: Cache test suite
-        id: cache-test-suite
-        uses: actions/cache@v2
-        with:
-          path: ${{ env.GALVANALYSER_HARVESTER_TEST_PATH }}
-          key: test-suite-${{ steps.get-date.outputs.date }}
-
       - name: Download test suite
-        if: steps.cache-test-suite.outputs.cache-hit != 'true'
         env:
           LIIONSDEN_SMB_PATH: ${{ secrets.LIIONSDEN_SMB_PATH }}
           LIIONSDEN_SMB_USERNAME: ${{ secrets.LIIONSDEN_SMB_USERNAME}}
