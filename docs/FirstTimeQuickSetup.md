@@ -95,7 +95,7 @@ docker-compose up -d
 ```
 
 To start the server side system again after it has been stopped simply run 
-`docker-compose up` in the `webstack` directory.
+`docker-compose up` in the root folder.
 
 A template SystemD service file is included in the repository root directory 
 `galvanalyser.service` that can be used to automatically start the system.
