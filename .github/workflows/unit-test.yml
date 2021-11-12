@@ -1,0 +1,36 @@
+name: Unit Tests (Docker)
+on: push
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - '**'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install smbclient
+        run: sudo apt-get install -y smbclient
+
+      - name: Download test suite
+        env:
+          LIIONSDEN_SMB_PATH: ${{ secrets.LIIONSDEN_SMB_PATH }}
+          LIIONSDEN_SMB_USERNAME: ${{ secrets.LIIONSDEN_SMB_USERNAME}}
+          LIIONSDEN_SMB_PASSWORD: ${{ secrets.LIIONSDEN_SMB_PASSWORD}}
+          GALVANALYSER_HARVESTER_TEST_PATH: /home/mrobins/git/tmp/galvanalyser_test_datafiles
+        run: |
+          mkdir -p $GALVANALYSER_HARVESTER_TEST_PATH 
+          cd $GALVANALYSER_HARVESTER_TEST_PATH
+          smbget -R $LIIONSDEN_SMB_PATH/test-suite-small -U "$LIIONSDEN_SMB_USERNAME%$LIIONSDEN_SMB_PASSWORD"
+
+      - name: Build the stack
+        run: docker-compose up --detach --build
+
+      - name: Run tests
+        run: docker-compose run --rm galvanalyser_app python manage.py test
+
