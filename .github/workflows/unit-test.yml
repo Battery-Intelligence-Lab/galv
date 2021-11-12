@@ -25,9 +25,9 @@ jobs:
           LIIONSDEN_SMB_PASSWORD: ${{ secrets.LIIONSDEN_SMB_PASSWORD}}
           GALVANALYSER_HARVESTER_TEST_PATH: /home/mrobins/git/tmp/galvanalyser_test_datafiles
         run: |
-          mkdir -p $GALVANALYSER_HARVESTER_TEST_PATH 
+          sudo mkdir -p $GALVANALYSER_HARVESTER_TEST_PATH 
           cd $GALVANALYSER_HARVESTER_TEST_PATH
-          smbget -R $LIIONSDEN_SMB_PATH/test-suite-small -U "$LIIONSDEN_SMB_USERNAME%$LIIONSDEN_SMB_PASSWORD"
+          sudo smbget -R $LIIONSDEN_SMB_PATH/test-suite-small -U "$LIIONSDEN_SMB_USERNAME%$LIIONSDEN_SMB_PASSWORD"
 
       - name: Build the stack
         run: docker-compose up --detach --build
