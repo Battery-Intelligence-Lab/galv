@@ -1,5 +1,4 @@
 name: Unit Tests (Docker)
-on: push
 on:
   push:
     branches:
