@@ -1,12 +1,12 @@
 FROM node:lts as build
 RUN mkdir -p /app
 WORKDIR /app
-COPY package.json /app
+COPY package.json yarn.lock /app/
 
-RUN npm install --legacy-peer-deps
+RUN yarn install
 
 COPY . /app
-RUN npm run build
+RUN yarn build
 
 FROM nginx:alpine
 COPY --from=build /app/build /usr/share/nginx/html
