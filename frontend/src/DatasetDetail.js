@@ -7,8 +7,12 @@ import CardContent from "@material-ui/core/CardContent";
 import { makeStyles } from '@material-ui/core/styles';
 import SaveIcon from '@material-ui/icons/Save';
 import IconButton from '@material-ui/core/IconButton';
+import Button from '@material-ui/core/Button';
 import Alert from '@material-ui/lab/Alert';
 import Container from '@material-ui/core/Container';
+import CircularProgress from '@material-ui/core/CircularProgress';
+import Box from '@material-ui/core/Box';
+import { green } from '@material-ui/core/colors';
 import { useParams } from "react-router-dom";
 import {
   FormTextField, FormSelectField, 
@@ -32,6 +36,8 @@ const useStyles = makeStyles((theme) => ({
 
 function DatasetForm({ dataset, setDataset, cellData, userData, equipmentData }) {
   const [datasetError, setDatasetError] = useState(null)
+  const [uploadTrackerId, setUploadTrackerId] = React.useState(null);
+  const [uploadSuccess, setUploadSuccess] = React.useState(false);
   const { reset, control, handleSubmit, formState: {isDirty} } = useForm({
     defaultValues: dataset
   });
@@ -46,6 +52,43 @@ function DatasetForm({ dataset, setDataset, cellData, userData, equipmentData })
   const equipmentOptions = equipmentData.map(e => (
     {key: e.name, value: e.id}
   ))
+  const timer = React.useRef();
+  const baseUrl = 'http://143.198.98.214:4000/ga/publish/'
+
+  useEffect(() => {
+    const pollUpload = () => {
+      fetch(baseUrl + `status/${uploadTrackerId}`).then((response) => {
+        return response.json()
+      }).then(data => {
+        console.log('upload status is:', data)
+      }).catch(error => {
+        console.log('error in battery archive upload status:', error)
+      })
+    }
+    if (uploadTrackerId) {
+      timer.interval = setInterval(() => {
+        pollUpload(uploadTrackerId);
+      }, 1000);
+      return () => clearInterval(timer.interval);
+    } else {
+      clearInterval(timer.interval)
+    }
+  }, [uploadTrackerId]);
+
+  const handleBatteryArchiveUpload = () => {
+    if (!uploadTrackerId) {
+      setUploadSuccess(false);
+      fetch(baseUrl + `${dataset.id}`, { method: 'POST' }).then((response) => {
+        return response.json()
+      }).then(data => {
+        setUploadTrackerId(data.tracker);
+      }).catch(error => {
+        console.log('error in battery archive upload:', error)
+      })
+      timer.current = window.setTimeout(() => {
+      }, 2000);
+    }
+  };
 
   const purposeOptions = [
     'Ageing',
@@ -122,6 +165,35 @@ function DatasetForm({ dataset, setDataset, cellData, userData, equipmentData })
         <IconButton type="submit" disabled={!isDirty}>
           <SaveIcon/>
         </IconButton>
+        <Box sx={{ m: 1, position: 'relative' }}>
+        <Button
+          variant="contained" 
+          onClick={handleBatteryArchiveUpload}
+          sx={{
+            ...(uploadSuccess && {
+              bgcolor: green[500],
+              '&:hover': {
+                bgcolor: green[700],
+              },
+            }),
+          }}
+        >
+          Upload to Battery Archive
+        </Button>
+        {uploadTrackerId && (
+          <CircularProgress
+            size={24}
+            sx={{
+              color: green[500],
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              marginTop: '-12px',
+              marginLeft: '-12px',
+            }}
+          />
+        )}
+      </Box>
       </CardActions>
     </Card>
     </form>

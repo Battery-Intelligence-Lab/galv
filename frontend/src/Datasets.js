@@ -13,6 +13,7 @@ import DialogContent from '@material-ui/core/DialogContent';
 import DialogTitle from '@material-ui/core/DialogTitle';
 
 
+
 const useStyles = makeStyles((theme) => ({
   container: {
     paddingTop: theme.spacing(4),
@@ -45,6 +46,7 @@ export default function Datasets() {
       }
     }
   };
+  
 
   useEffect(() => {
     datasets().then((response) => {
@@ -73,8 +75,6 @@ export default function Datasets() {
   const handleCodeClose = () => {
     setCodeOpen(false);
   };
-
- 
 
   const columns: GridColDef[] = [
     { field: 'dataset_id', headerName: 'ID', width: 70},
