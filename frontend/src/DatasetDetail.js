@@ -30,12 +30,25 @@ const useStyles = makeStyles((theme) => ({
     paddingBottom: theme.spacing(4),
     height: '100%',
   },
+  circularProgressWrapper: {
+    m: 1, 
+    position: 'relative' 
+  },
+  circularProgress: {
+    color: green[500],
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    marginTop: '-12px',
+    marginLeft: '-12px',
+  },
   formInput: {
     margin: theme.spacing(1),
   },
 }));
 
 function DatasetForm({ dataset, setDataset, cellData, userData, equipmentData }) {
+  const classes = useStyles();
   const [datasetError, setDatasetError] = useState(null)
   const [uploadTrackerId, setUploadTrackerId] = React.useState(null);
   const [uploadSuccess, setUploadSuccess] = React.useState(false);
@@ -67,19 +80,18 @@ function DatasetForm({ dataset, setDataset, cellData, userData, equipmentData })
       })
     }
     if (uploadTrackerId) {
-      timer.interval = setInterval(() => {
+      timer.current = setInterval(() => {
         pollUpload(uploadTrackerId);
       }, 1000);
-      return () => clearInterval(timer.interval);
+      return () => clearInterval(timer.current);
     } else {
-      clearInterval(timer.interval)
+      clearInterval(timer.current)
     }
   }, [uploadTrackerId]);
 
   const handleBatteryArchiveUpload = () => {
     if (!uploadTrackerId) {
       setUploadSuccess(false);
-      
       getToken().then(response => response.json()).then(data => {
         const options = {
           method: 'POST',
@@ -95,8 +107,6 @@ function DatasetForm({ dataset, setDataset, cellData, userData, equipmentData })
       }).catch(error => {
         console.log('error in getting token for battery archive upload', error)
       })
-      timer.current = window.setTimeout(() => {
-      }, 2000);
     }
   };
 
@@ -125,6 +135,15 @@ function DatasetForm({ dataset, setDataset, cellData, userData, equipmentData })
       }
     });
   };
+
+  const buttonSx = {
+    ...(uploadSuccess && {
+      bgcolor: green[500],
+      '&:hover': {
+        bgcolor: green[700],
+      },
+    }),
+  }
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} autoComplete="off">
@@ -175,32 +194,19 @@ function DatasetForm({ dataset, setDataset, cellData, userData, equipmentData })
         <IconButton type="submit" disabled={!isDirty}>
           <SaveIcon/>
         </IconButton>
-        <Box sx={{ m: 1, position: 'relative' }}>
+        <Box className={classes.circularProgressWrapper}>
         <Button
           variant="contained" 
           onClick={handleBatteryArchiveUpload}
-          sx={{
-            ...(uploadSuccess && {
-              bgcolor: green[500],
-              '&:hover': {
-                bgcolor: green[700],
-              },
-            }),
-          }}
+          disabled={uploadTrackerId}
+          sx={buttonSx}
         >
           Upload to Battery Archive
         </Button>
         {uploadTrackerId && (
           <CircularProgress
             size={24}
-            sx={{
-              color: green[500],
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              marginTop: '-12px',
-              marginLeft: '-12px',
-            }}
+            className={classes.circularProgress}
           />
         )}
       </Box>
