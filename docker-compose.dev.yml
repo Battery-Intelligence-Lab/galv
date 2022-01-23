@@ -46,7 +46,7 @@ services:
     ports:
       - "3000:3000"
     volumes:
-     - ./frontend:/app
+     - ./frontend/src:/app/src
     restart: unless-stopped
     working_dir: /app
     command: yarn start 

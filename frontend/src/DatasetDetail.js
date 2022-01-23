@@ -8,6 +8,7 @@ import { makeStyles } from '@material-ui/core/styles';
 import SaveIcon from '@material-ui/icons/Save';
 import IconButton from '@material-ui/core/IconButton';
 import Button from '@material-ui/core/Button';
+import {getToken} from "./Api"
 import Alert from '@material-ui/lab/Alert';
 import Container from '@material-ui/core/Container';
 import CircularProgress from '@material-ui/core/CircularProgress';
@@ -78,12 +79,21 @@ function DatasetForm({ dataset, setDataset, cellData, userData, equipmentData })
   const handleBatteryArchiveUpload = () => {
     if (!uploadTrackerId) {
       setUploadSuccess(false);
-      fetch(baseUrl + `${dataset.id}`, { method: 'POST' }).then((response) => {
-        return response.json()
-      }).then(data => {
-        setUploadTrackerId(data.tracker);
+      
+      getToken().then(response => response.json()).then(data => {
+        const options = {
+          method: 'POST',
+          body: data.access_token,
+        }
+        fetch(baseUrl + `${dataset.id}`, options).then((response) => {
+          return response.json()
+        }).then(data => {
+          setUploadTrackerId(data.tracker);
+        }).catch(error => {
+          console.log('error in battery archive upload:', error)
+        })
       }).catch(error => {
-        console.log('error in battery archive upload:', error)
+        console.log('error in getting token for battery archive upload', error)
       })
       timer.current = window.setTimeout(() => {
       }, 2000);
