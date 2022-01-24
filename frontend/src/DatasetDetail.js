@@ -7,6 +7,7 @@ import CardContent from "@material-ui/core/CardContent";
 import { makeStyles } from '@material-ui/core/styles';
 import SaveIcon from '@material-ui/icons/Save';
 import IconButton from '@material-ui/core/IconButton';
+import DoneIcon from '@material-ui/icons/Done';
 import Button from '@material-ui/core/Button';
 import {getToken} from "./Api"
 import Alert from '@material-ui/lab/Alert';
@@ -33,6 +34,13 @@ const useStyles = makeStyles((theme) => ({
   circularProgressWrapper: {
     m: 1, 
     position: 'relative' 
+  },
+  uploadButton: {
+  },
+  uploadButtonSuccess: {
+    "&:disabled":{
+        backgroundColor: green[500],
+    }
   },
   circularProgress: {
     color: green[500],
@@ -144,15 +152,6 @@ function DatasetForm({ dataset, setDataset, cellData, userData, equipmentData })
     });
   };
 
-  const buttonSx = {
-    ...(uploadSuccess && {
-      bgcolor: green[500],
-      '&:hover': {
-        bgcolor: green[700],
-      },
-    }),
-  }
-
   return (
     <form onSubmit={handleSubmit(onSubmit)} autoComplete="off">
       <Card style={{display: 'inline-block'}}>
@@ -203,14 +202,27 @@ function DatasetForm({ dataset, setDataset, cellData, userData, equipmentData })
           <SaveIcon/>
         </IconButton>
         <Box className={classes.circularProgressWrapper}>
+        { uploadSuccess &&
         <Button
           variant="contained" 
           onClick={handleBatteryArchiveUpload}
-          disabled={uploadTrackerId}
-          sx={buttonSx}
+          className={classes.uploadButtonSuccess}
+          disabled={true}
+          endIcon={<DoneIcon />}
         >
           Upload to Battery Archive
         </Button>
+        }
+        { !uploadSuccess &&
+        <Button
+          variant="contained" 
+          onClick={handleBatteryArchiveUpload}
+          className={classes.uploadButton}
+          disabled={uploadTrackerId}
+        >
+          Upload to Battery Archive
+        </Button>
+        }
         {uploadTrackerId && (
           <CircularProgress
             size={24}
