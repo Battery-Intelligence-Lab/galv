@@ -95,7 +95,7 @@ function DatasetForm({ dataset, setDataset, cellData, userData, equipmentData })
       getToken().then(response => response.json()).then(data => {
         const options = {
           method: 'POST',
-          body: data.access_token,
+          body: JSON.stringify({ token: data.access_token }),
         }
         fetch(baseUrl + `${dataset.id}`, options).then((response) => {
           return response.json()
