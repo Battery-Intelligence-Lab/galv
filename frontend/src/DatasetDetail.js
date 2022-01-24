@@ -75,6 +75,11 @@ function DatasetForm({ dataset, setDataset, cellData, userData, equipmentData })
         return response.json()
       }).then(data => {
         console.log('upload status is:', data)
+        if (data.status === 'FINISHED') {
+          setUploadTrackerId(null)
+          setUploadSuccess(true)
+          clearInterval(timer.current)
+        }
       }).catch(error => {
         console.log('error in battery archive upload status:', error)
       })
