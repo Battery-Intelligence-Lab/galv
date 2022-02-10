@@ -294,7 +294,8 @@ class IviumInputFile(InputFile):
         # number of samples is total line count minus sample start, minus last line
         metadata["num_rows"] = len(self._sample_rows)
         metadata["first_sample_no"] = 1
-        metadata["last_sample_no"] = len(self._sample_rows)
+        # if sample number not provided by file then we count from 0
+        metadata["last_sample_no"] = len(self._sample_rows) - 1
         print(metadata)
         # put in all the ivium metadata
         metadata["misc_file_data"] = dict(self._file_metadata)

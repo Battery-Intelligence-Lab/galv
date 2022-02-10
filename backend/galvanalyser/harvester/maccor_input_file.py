@@ -122,8 +122,8 @@ class MaccorInputFile(InputFile):
             first_rec = 1  # Maccor count from 1
             last_rec = total_rows
         else:
-            first_rec = first_data[recno_col]
-            last_rec = row[recno_col]
+            first_rec = int(first_data[recno_col])
+            last_rec = int(row[recno_col])
         print(column_info)
         print("Num rows {}".format(total_rows))
         return column_info, total_rows, first_rec, last_rec
