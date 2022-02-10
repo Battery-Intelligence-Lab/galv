@@ -35,7 +35,6 @@ class TestHarvester(GalvanalyserTestCase):
             base_path=None
         )
 
-
         # should have added files to database
         harvester_row = HarvesterRow.select_from_machine_id(
             self.MACHINE_ID,
@@ -51,17 +50,17 @@ class TestHarvester(GalvanalyserTestCase):
             )
         self.assertIsNotNone(monitor_path)
         file = ObservedFileRow.select_from_id_(
-                    monitor_path.monitor_path_id,
+                    monitor_path.id,
                     self.harvester_conn
                 )
         # check all files are in, then mark them stable for > 1 min
         for root, dirs, files in os.walk(self.DATA_DIR):
             for name in files:
                 # check that filename is in list of files
-                print(name)
+                relname = os.path.relpath(os.path.join(root, name), self.DATA_DIR)
                 file = ObservedFileRow.select_from_id_and_path(
-                    monitor_path.monitor_path_id,
-                    name,
+                    monitor_path.id,
+                    relname,
                     self.harvester_conn
                 )
                 self.assertIsNotNone(file)
@@ -70,7 +69,6 @@ class TestHarvester(GalvanalyserTestCase):
                 file.last_observed_time = \
                     datetime.now(timezone.utc) - timedelta(minutes=1),
                 file.insert(self.harvester_conn)
-            break
         self.harvester_conn.commit()
 
 
@@ -88,9 +86,10 @@ class TestHarvester(GalvanalyserTestCase):
         # check that they are all inserted successfully
         for root, dirs, files in os.walk(self.DATA_DIR):
             for name in files:
+                relname = os.path.relpath(os.path.join(root, name), self.DATA_DIR)
                 file = ObservedFileRow.select_from_id_and_path(
-                    monitor_path.monitor_path_id,
-                    name,
+                    monitor_path.id,
+                    relname,
                     self.harvester_conn
                 )
                 self.assertIsNotNone(file)

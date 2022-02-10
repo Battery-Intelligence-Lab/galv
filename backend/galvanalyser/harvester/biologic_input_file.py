@@ -111,7 +111,8 @@ class BiologicMprInputFile(InputFile):
                     data['unit'] = unit
 
         metadata["num_rows"] = len(self.mpr_file.data)
-        metadata["first_sample_no"] = 1
-        metadata["last_sample_no"] = metadata["num_rows"]
+        # if sample number not provided by file then we count from 0
+        metadata["first_sample_no"] = 0
+        metadata["last_sample_no"] = metadata["num_rows"] - 1
         print(metadata, columns_with_data)
         return metadata, columns_with_data

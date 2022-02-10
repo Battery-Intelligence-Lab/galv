@@ -81,7 +81,15 @@ def monitor_path(monitor_path_id, base_path, path, monitored_for, conn):
 
     print("Examining " + absolute_path + " for users " + str(monitored_for))
     try:
-        current_files = os.listdir(absolute_path)
+        current_files_old = os.listdir(absolute_path)
+        current_files = [
+            os.path.relpath(os.path.join(dp, f), absolute_path)
+            for dp, dn, fn in os.walk(absolute_path)
+            for f in fn
+        ]
+        print(current_files_old)
+        print(current_files)
+
     except FileNotFoundError:
         print("ERROR: Requested path not found on this machine: " + absolute_path)
         return
@@ -232,6 +240,10 @@ def import_file(base_path, file_path_row, harvester_name, conn):
                 last_data = TimeseriesDataRow.select_latest_by_dataset_id(
                     dataset_row.id, conn
                 )
+                last_sample_no = max([ts_row.sample_no for ts_row in last_data])
+                print("last sample number in database = {}".format(last_sample_no))
+                print("last sample number in file = {}"
+                      .format(input_file.metadata["last_sample_no"]))
             dataset_id = dataset_row.id
             for user_id in file_path_row.monitored_for:
                 print("  Allowing access to user id", user_id)
@@ -248,16 +260,14 @@ def import_file(base_path, file_path_row, harvester_name, conn):
                 )
                 print("Finished inserting Data")
             elif (
-                TimeseriesDataRow.select_one_from_dataset_id_and_sample_no(
-                    dataset_id, input_file.metadata["last_sample_no"], conn
-                )
-                is None
+                last_sample_no < input_file.metadata["last_sample_no"]
             ):
                 # This is more data for an existing experiment
                 print("Inserting Additional Data")
                 TimeseriesDataRow.insert_input_file(
                     input_file, dataset_id, conn, last_values=last_data
                 )
+                print("Finished Additional Data")
                 # TODO handle inserting metadata when extending a dataset
             else:
                 print("Dataset already in database")
