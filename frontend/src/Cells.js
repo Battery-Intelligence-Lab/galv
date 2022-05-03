@@ -136,6 +136,7 @@ function MyTableRow({savedRow, onRowSave, selected, onSelectRow}) {
         <TextField 
           value={useRow.nominal_capacity} 
           style={{width: 60}}
+          type="number"
           InputProps={{
             classes: {
               input: classes.resize,
@@ -147,6 +148,7 @@ function MyTableRow({savedRow, onRowSave, selected, onSelectRow}) {
         <TextField 
           value={useRow.nominal_cell_weight} 
           style={{width: 60}}
+          type="number"
           InputProps={{
             classes: {
               input: classes.resize,

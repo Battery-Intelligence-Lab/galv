@@ -117,9 +117,11 @@ def monitor_path(monitor_path_id, base_path, path, monitored_for, conn):
             print(current_observation.last_observed_time)
             print(database_observation.last_observed_time)
             if (
-                database_observation.file_state == "STABLE"
-                and current_observation.last_observed_size
-                != database_observation.last_observed_size
+                database_observation.file_state in {
+                    "STABLE",
+                    "IMPORT_FAILED",
+                } and current_observation.last_observed_size
+                    != database_observation.last_observed_size
             ):
                 print(
                     "File has changed size since last it was checked, "
@@ -129,9 +131,10 @@ def monitor_path(monitor_path_id, base_path, path, monitored_for, conn):
                 current_observation.insert(conn)
                 continue
             elif (
-                database_observation.file_state == "IMPORTED"
-                and current_observation.last_observed_size
-                > database_observation.last_observed_size
+                database_observation.file_state in {
+                    "IMPORTED",
+                } and current_observation.last_observed_size
+                    > database_observation.last_observed_size
             ):
                 print(
                     "Imported file has changed size since last it was "
