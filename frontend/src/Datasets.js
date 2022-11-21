@@ -7,6 +7,7 @@ import { makeStyles } from '@material-ui/core/styles';
 import Button from '@material-ui/core/Button';
 import { useHistory } from "react-router-dom";
 import GetDatasetPython from "./GetDatasetPython"
+import GetDatasetMatlab from "./GetDatasetMatlab"
 import Dialog from '@material-ui/core/Dialog';
 import DialogActions from '@material-ui/core/DialogActions';
 import DialogContent from '@material-ui/core/DialogContent';
@@ -72,6 +73,16 @@ export default function Datasets() {
 
   const handleCodeClose = () => {
     setCodeOpen(false);
+  };
+
+  const [codeMatlabOpen, setMatlabCodeOpen] = React.useState(false);
+
+  const handleMatlabCodeOpen = () => {
+    setMatlabCodeOpen(true);
+  };
+
+  const handleMatlabCodeClose = () => {
+    setMatlabCodeOpen(false);
   };
 
  
@@ -159,6 +170,34 @@ export default function Datasets() {
         <DialogActions>
           <Button onClick={handleCodeClose} color="primary" autoFocus>
             Close 
+          </Button>
+        </DialogActions>
+      </Dialog>
+      </React.Fragment>
+    }
+    {data && data[select] &&
+      <React.Fragment>
+      <Button
+        variant="contained" onClick={handleMatlabCodeOpen}
+        className={classes.button}
+      >
+        API Code (MATLAB)
+      </Button>
+      <Dialog
+        fullWidth={true}
+        maxWidth={'md'}
+        open={codeMatlabOpen}
+        onClose={handleMatlabCodeClose}
+      >
+        <DialogTitle>
+          {`API Code (MATLAB) for dataset "${data[select].name}"`}
+        </DialogTitle>
+        <DialogContent>
+          <GetDatasetMatlab dataset={data[select]} />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleMatlabCodeClose} color="primary" autoFocus>
+            Close
           </Button>
         </DialogActions>
       </Dialog>
