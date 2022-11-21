@@ -1,4 +1,4 @@
-from galvanalyser_test_case import GalvanalyserTestCase
+from test_case import GalvanalyserTestCase
 from timeit import default_timer as timer
 import galvanalyser.harvester as harvester
 from galvanalyser.database.harvester import (
@@ -29,7 +29,7 @@ class TestHarvester(GalvanalyserTestCase):
             database_user=self.HARVESTER,
             database_password=self.HARVESTER_PWD,
             machine_id=self.MACHINE_ID,
-            database_host="galvanalyser_postgres",
+            database_host="postgres",
             database_port=5433,
             database_name=self.DATABASE,
             base_path=None
@@ -77,7 +77,7 @@ class TestHarvester(GalvanalyserTestCase):
             database_user=self.HARVESTER,
             database_password=self.HARVESTER_PWD,
             machine_id=self.MACHINE_ID,
-            database_host="galvanalyser_postgres",
+            database_host="postgres",
             database_port=5433,
             database_name=self.DATABASE,
             base_path=None

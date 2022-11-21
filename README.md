@@ -64,7 +64,7 @@ distributed task queue.
 The frontend is written using Javascript, the [React](https://reactjs.org/) framework 
 and using [Material-UI](https://material-ui.com/) components.
 
-<img src="https://github.com/Battery-Intelligence-Lab/galvanalyser/raw/main/docs/galvanalyser_frontend.jpg" width="600" />
+<img src="https://github.com/Battery-Intelligence-Lab/galvanalyser/raw/main/docs/frontend.jpg" width="600" />
 
 
 ### Database

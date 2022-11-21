@@ -11,3 +11,9 @@ webstack/.env
 .pnpm-store
 *.egg-info
 env
+
+.idea/
+
+.run/
+
+.test-data/

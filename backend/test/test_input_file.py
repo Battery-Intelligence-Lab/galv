@@ -1,4 +1,4 @@
-from galvanalyser_test_case import GalvanalyserTestCase
+from test_case import GalvanalyserTestCase
 from galvanalyser.database.experiment import (
     InputFile,
     TimeseriesDataRow,

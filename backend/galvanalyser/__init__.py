@@ -42,7 +42,7 @@ def create_config():
         "GALVANISER_DATABASE": {
             "NAME": "galvanalyser",
             "PORT": 5433,
-            "HOST": "galvanalyser_postgres",
+            "HOST": "postgres",
             "USER": "postgres",
             "PASSWORD": os.getenv('POSTGRES_PASSWORD'),
         },

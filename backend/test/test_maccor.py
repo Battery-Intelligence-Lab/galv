@@ -1,4 +1,4 @@
-from galvanalyser_test_case import GalvanalyserTestCase
+from test_case import GalvanalyserTestCase
 import os
 from galvanalyser.database.util.battery_exceptions import UnsupportedFileTypeError
 from galvanalyser.harvester.maccor_input_file import MaccorInputFile

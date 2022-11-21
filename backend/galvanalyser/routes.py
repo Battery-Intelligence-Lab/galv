@@ -165,6 +165,12 @@ def hello():
     return 'Hello'
 
 
+@app.route('/', methods=['GET'])
+@cross_origin()
+def root():
+    return 'Hello'
+
+
 @app.route('/api/user/current', methods=['GET'])
 @cross_origin()
 @jwt_required()
@@ -512,7 +518,7 @@ def run_harvester_celery(machine_id):
         os.getenv('HARVESTER_USERNAME'),
         os.getenv('HARVESTER_PASSWORD'),
         machine_id,
-        'galvanalyser_postgres', '5433',
+        'postgres', '5433',
         'galvanalyser', base_path='/usr/data'
     )
 

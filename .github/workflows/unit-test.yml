@@ -11,7 +11,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     env:
-      GALVANALYSER_HARVESTER_TEST_PATH: /home/mrobins/git/tmp/galvanalyser_test_datafiles
+      GALVANALYSER_HARVESTER_TEST_PATH: /home/mrobins/git/tmp/test_datafiles
     steps:
       - uses: actions/checkout@v2
 
@@ -34,4 +34,4 @@ jobs:
         run: docker-compose up --detach --build
 
       - name: Run tests
-        run: docker-compose run --rm galvanalyser_app python manage.py test
+        run: docker-compose run --rm app python manage.py test
