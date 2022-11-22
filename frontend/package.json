@@ -4,29 +4,33 @@
   "private": true,
   "proxy": "http://app:5000",
   "dependencies": {
-    "@material-ui/core": "^4.11.4",
-    "@material-ui/data-grid": "^4.0.0-alpha.28",
-    "@material-ui/icons": "^4.11.2",
-    "@material-ui/lab": "^4.0.0-alpha.58",
-    "@nivo/core": "^0.69.0",
-    "@nivo/line": "^0.69.1",
+    "@emotion/react": "^11.10.5",
+    "@emotion/styled": "^11.10.5",
+    "@mui/material": "^5.10.15",
+    "@nivo/core": "^0.80.0",
+    "@nivo/line": "^0.80.0",
     "@testing-library/jest-dom": "^5.11.4",
     "@testing-library/react": "^11.1.0",
     "@testing-library/user-event": "^12.1.10",
-    "react": "^17.0.2",
-    "react-dom": "^17.0.2",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
     "react-hook-form": "^7.6.3",
-    "react-router-dom": "^5.2.0",
-    "react-scripts": "4.0.3",
-    "react-syntax-highlighter": "^11.0.3",
-    "react-token-auth": "^1.1.8",
-    "web-vitals": "^1.0.1"
+    "react-router-dom": "^6.4.3",
+    "react-scripts": "^5.0.1",
+    "react-syntax-highlighter": "^15.5.0",
+    "react-token-auth": "^2.3.8",
+    "web-vitals": "^3.1.0"
+  },
+  "devDependencies": {
+    "react-styleguidist": "^13.0.0"
   },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "styleguide": "styleguidist server",
+    "styleguide:build": "styleguidist build"
   },
   "eslintConfig": {
     "extends": [

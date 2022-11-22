@@ -18,8 +18,7 @@ services:
      - "${CELERY_LOG_DIR}:/var/log/celery"
     restart: unless-stopped
     working_dir: /usr/app
-    command: ./server.sh 
-    restart: unless-stopped
+    command: ./server.sh
     env_file:
      - ./.env
   worker:
@@ -49,7 +48,6 @@ services:
      - ./frontend:/app
     restart: unless-stopped
     working_dir: /app
-    restart: unless-stopped
     env_file:
      - ./.env
   rabbitmq:

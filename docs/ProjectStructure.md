@@ -4,7 +4,6 @@ Below is a tree diagram of the folder structure of this project and a short desc
 ```
 ├── .env -- configuration environment variables for the server
 ├── docker-compose.yml -- docker-compose file for production
-├── docker-compose.dev.yml -- docker-compose file for development
 ├── backend/ -- The flask backend and harvester code
 │   ├── Dockerfile -- docker file for production and development
 │   ├── galvanalyser/ -- Library files for interacting with the database

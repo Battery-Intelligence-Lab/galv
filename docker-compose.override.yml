@@ -1,0 +1,10 @@
+version: "2"
+services:
+  frontend:
+    image: frontend_dev
+    build:
+      dockerfile: Dockerfile_dev
+      context: ./frontend
+    ports:
+      - "3000:3000"
+    command: yarn start

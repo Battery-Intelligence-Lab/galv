@@ -34,8 +34,22 @@ docker-compose run --rm app python manage.py test
 
 ### To run the entire stack for development
 
+Create a `docker-compose.override.yml` file in the root directory next to `docker-compose.yml`.
+Put the following in there:
+
+```yaml
+version: "2"
+services:
+  frontend:
+    image: frontend_dev
+    build:
+      dockerfile: Dockerfile_dev
+      context: ./frontend
+
+```
+
 ```bash
-sudo docker-compose -f docker-compose.dev.yml up 
+sudo docker-compose up 
 ```
 
 The main difference from the production `docker-compose.yml` file is that the developer 
