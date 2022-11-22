@@ -1,14 +1,14 @@
 version: "2"
 services:
-  galvanalyser_app:
-    image: galvanalyser_app
+  app:
+    image: app
     build:
       dockerfile: Dockerfile
       context: ./backend
     depends_on:
-      - galvanalyser_redis
-      - galvanalyser_rabbitmq
-      - galvanalyser_postgres
+      - redis
+      - rabbitmq
+      - postgres
     ports:
       - "5001:5000"
     volumes:
@@ -22,11 +22,11 @@ services:
     restart: unless-stopped
     env_file:
      - ./.env
-  galvanalyser_worker:
-    image: galvanalyser_app
+  worker:
+    image: app
     command: ./worker.sh 
     depends_on:
-      - galvanalyser_app
+      - app
     volumes:
      - ./backend:/usr/app
      - "${GALVANALYSER_HARVESTER_BASE_PATH}:/usr/data"
@@ -36,31 +36,31 @@ services:
     restart: unless-stopped
     env_file:
      - ./.env
-  galvanalyser_frontend:
-    image: galvanalyser_frontend_dev
+  frontend:
+    image: frontend_dev
     build:
       dockerfile: Dockerfile_dev
       context: ./frontend
     depends_on:
-      - galvanalyser_app
+      - app
     ports:
       - "3000:3000"
     volumes:
      - ./frontend:/app
     restart: unless-stopped
     working_dir: /app
-    command: yarn start 
+    command: yarn start
     restart: unless-stopped
     env_file:
      - ./.env
-  galvanalyser_rabbitmq:
+  rabbitmq:
     image: "rabbitmq"
     ports:
       - "5672:5672"
     env_file:
       - ./.env
     restart: unless-stopped
-  galvanalyser_redis:
+  redis:
     image: redis:5.0-alpine
     restart: always
     command: redis-server --requirepass ${REDIS_PASSWORD}
@@ -68,7 +68,7 @@ services:
      - "6379:6379"
     volumes:
      - "${REDIS_DATA_PATH}:/var/lib/redis"
-  galvanalyser_postgres:
+  postgres:
     image: "postgres"
     stop_signal: SIGINT                 # Fast Shutdown mode
     ports:

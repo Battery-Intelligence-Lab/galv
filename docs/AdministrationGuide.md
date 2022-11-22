@@ -21,7 +21,7 @@ User accounts can be added using the `docker-compose` CLI interface. The command
 creating a new user is:
 
 ```bash
-docker-compose run --rm galvanalyser_app python manage.py create_user
+docker-compose run --rm app python manage.py create_user
 ```
 
 You will be prompted for a username, password and email for the new user, and asked if 

@@ -61,7 +61,7 @@ and run the following command to create the galvanalyser database tables.
 so if you have existing data it will be deleted.*
 
 ```bash
-docker-compose run --rm galvanalyser_app python manage.py create_galvanalyser_db
+docker-compose run --rm app python manage.py create_db
 ```
 
 Now you can create one or more user accounts. Create one user account for each user you 
@@ -69,7 +69,7 @@ want to be able to login to the galvanalyser web application. Access permissions
 dataset stored in galvanalyser give access only to certain user accounts.
 
 ```bash
-docker-compose run --rm galvanalyser_app python manage.py create_user
+docker-compose run --rm app python manage.py create_user
 ```
 
 # Running Galvanalyser

@@ -1,20 +1,20 @@
 ### Create initial galvanalyser database:
 
 ```bash
-docker-compose run --rm galvanalyser_app python manage.py create_galvanalyser_db
+docker-compose run --rm app python manage.py create_db
 ```
 
 
 ### Create a harvester user (can be shared amongst particular machines)
 
 There is normally only a single harvester user account, which is used by the backend 
-server to run harvesters, and which is created by the `create_galvanalyser_db` command 
+server to run harvesters, and which is created by the `create_db` command 
 using the information in the `.env` file. However, there is also the possibility to run 
 harvesters not part of the main backend server (i.e. on a tester machine), and this 
 command will create new harvester users for this purpose.
 
 ```bash
-docker-compose run --rm galvanalyser_app python manage.py create_harvester
+docker-compose run --rm app python manage.py create_harvester
 ```
 
 Options:
@@ -28,7 +28,7 @@ The test-suite runs over a set of battery tester files in the directory specifie
 `GALVANALYSER_HARVESTER_TEST_PATH`
 
 ```bash
-docker-compose run --rm galvanalyser_app python manage.py test
+docker-compose run --rm app python manage.py test
 ```
 
 

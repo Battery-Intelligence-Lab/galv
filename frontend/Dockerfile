@@ -3,6 +3,9 @@ RUN mkdir -p /app
 WORKDIR /app
 COPY package.json yarn.lock /app/
 
+# Required to get react running:
+ENV NODE_OPTIONS=--openssl-legacy-provider
+
 RUN yarn install
 
 COPY . /app

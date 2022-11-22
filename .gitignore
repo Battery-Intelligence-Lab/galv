@@ -11,3 +11,11 @@ webstack/.env
 .pnpm-store
 *.egg-info
 env
+
+.idea/
+
+.run/
+
+.test-data/
+
+frontend/src/demo_matlab_code.m

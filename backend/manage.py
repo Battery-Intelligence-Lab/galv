@@ -21,14 +21,14 @@ cli = FlaskGroup(app)
 @click.option('--path', default='/usr/app/test')
 @click.option('--test', default='')
 def test(path, test):
-    if not os.path.exists(os.path.join(path, 'galvanalyser_test_case.py')):
+    if not os.path.exists(os.path.join(path, 'test_case.py')):
         raise RuntimeError((
-            'galvanalyser_test_case.py does not exist in {}. '
+            'test_case.py does not exist in {}. '
             'Is the path correct?').format(path)
         )
 
     sys.path.append(path)
-    from galvanalyser_test_case import GalvanalyserTestCase
+    from test_case import GalvanalyserTestCase
 
     test_config = copy.copy(app.config)
     test_config["GALVANISER_DATABASE"]["NAME"] = GalvanalyserTestCase.DATABASE
@@ -79,11 +79,11 @@ def test(path, test):
     runner.run(test_suite)
 
 
-@cli.command("create_galvanalyser_db")
+@cli.command("create_db")
 @click.confirmation_option(
     prompt='This will delete the current database, are you sure?'
 )
-def create_galvanalyser_db():
+def create_db():
     database.create_database(app.config)
     database.create_harvester_user(
         app.config,
@@ -207,7 +207,7 @@ def edit_machine_path(machine_id):
 def run_harvester(harvester, password, machine_id):
     harvester_main(
         harvester, password, machine_id,
-        'galvanalyser_postgres', '5433',
+        'postgres', '5433',
         'galvanalyser', base_path='/usr/data'
     )
 

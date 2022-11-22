@@ -7,7 +7,7 @@ from galvanalyser.database import Row
 
 
 def verify_email(email):
-    return validate_email(
+    return os.environ.get('FLASK_DEBUG', False) or validate_email(
         email_address=email,
         check_blacklist=True,
         check_format=True,

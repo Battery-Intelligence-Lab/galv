@@ -1,4 +1,4 @@
-from galvanalyser_test_case import GalvanalyserTestCase
+from test_case import GalvanalyserTestCase
 import glob
 from galvanalyser.harvester.ivium_input_file import IviumInputFile
 

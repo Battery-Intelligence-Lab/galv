@@ -29,7 +29,7 @@ class GalvanalyserTestCase(unittest.TestCase):
                     'postgresql://{}:{}@{}/{}'.format(
                         self.POSTGRES_USER,
                         self.POSTGRES_USER_PWD,
-                        'galvanalyser_postgres:5433',
+                        'postgres:5433',
                         self.DATABASE,
                     ),
                 'SQLALCHEMY_ECHO': True,
@@ -38,7 +38,7 @@ class GalvanalyserTestCase(unittest.TestCase):
                     'harvester': 'postgresql://{}:{}@{}/{}'.format(
                         self.HARVESTER,
                         self.HARVESTER_PWD,
-                        'galvanalyser_postgres:5433',
+                        'postgres:5433',
                         self.DATABASE,
                     ),
                     },
@@ -48,7 +48,7 @@ class GalvanalyserTestCase(unittest.TestCase):
         self.Session, self.HarvesterSession = init_database(app.config)
 
         self.harvester_conn = psycopg2.connect(
-            host="galvanalyser_postgres",
+            host="postgres",
             port=5433,
             database=self.DATABASE,
             user=self.HARVESTER,
@@ -56,7 +56,7 @@ class GalvanalyserTestCase(unittest.TestCase):
         )
 
         self.postgres_conn = psycopg2.connect(
-            host="galvanalyser_postgres",
+            host="postgres",
             port=5433,
             database=self.DATABASE,
             user=self.POSTGRES_USER,
