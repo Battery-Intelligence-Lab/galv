@@ -1,13 +1,13 @@
 import {login} from "./Api"
-import { makeStyles } from '@material-ui/core/styles';
+import { makeStyles } from '@mui/styles'
 import React, { useState } from "react";
-import Button from '@material-ui/core/Button';
-import CssBaseline from '@material-ui/core/CssBaseline';
-import Alert from '@material-ui/lab/Alert';
-import TextField from '@material-ui/core/TextField';
-import Typography from '@material-ui/core/Typography';
-import Container from '@material-ui/core/Container';
-import { useHistory } from "react-router-dom";
+import Button from '@mui/material/Button';
+import CssBaseline from '@mui/material/CssBaseline';
+import Alert from '@mui/lab/Alert';
+import TextField from '@mui/material/TextField';
+import Typography from '@mui/material/Typography';
+import Container from '@mui/material/Container';
+import { useNavigate } from "react-router-dom";
 import { ReactComponent as GalvanalyserIcon} from './Galvanalyser-icon.svg';
 
 const useStyles = makeStyles((theme) => ({
@@ -38,7 +38,7 @@ export default function Login({ onLogin }) {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
 
-  const history = useHistory();
+  const navigate =useNavigate();
 
   const onSubmitClick = (e)=>{
     e.preventDefault()
@@ -51,7 +51,7 @@ export default function Login({ onLogin }) {
       return r.json().then(data => {
         setError('')
         onLogin()
-        history.push('/');
+        navigate('/');
       })
     });
   }

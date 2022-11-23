@@ -6,7 +6,11 @@
   "dependencies": {
     "@emotion/react": "^11.10.5",
     "@emotion/styled": "^11.10.5",
+    "@mui/icons-material": "^5.10.15",
+    "@mui/lab": "^5.0.0-alpha.109",
     "@mui/material": "^5.10.15",
+    "@mui/styles": "^5.10.15",
+    "@mui/x-data-grid": "^5.17.12",
     "@nivo/core": "^0.80.0",
     "@nivo/line": "^0.80.0",
     "@testing-library/jest-dom": "^5.11.4",

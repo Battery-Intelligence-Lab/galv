@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from "react";
-import Typography from '@material-ui/core/Typography';
+import Typography from '@mui/material/Typography';
 import { useForm } from "react-hook-form";
-import Card from "@material-ui/core/Card";
-import CardActions from "@material-ui/core/CardActions";
-import CardContent from "@material-ui/core/CardContent";
-import { makeStyles } from '@material-ui/core/styles';
-import SaveIcon from '@material-ui/icons/Save';
-import IconButton from '@material-ui/core/IconButton';
-import Alert from '@material-ui/lab/Alert';
-import Container from '@material-ui/core/Container';
+import Card from "@mui/material/Card";
+import CardActions from "@mui/material/CardActions";
+import CardContent from "@mui/material/CardContent";
+import { makeStyles } from '@mui/styles'
+import SaveIcon from '@mui/icons-material/Save';
+import IconButton from '@mui/material/IconButton';
+import Alert from '@mui/lab/Alert';
+import Container from '@mui/material/Container';
 import { useParams } from "react-router-dom";
 import {
   FormTextField, FormSelectField, 
@@ -154,7 +154,7 @@ export default function DatasetDetail() {
         response.json().then((d) => {
           d['cell_id'] = d.cell ? d.cell.id : null
           d['owner_id'] = d.owner ? d.owner.id : null
-          d['equipment'] = d.equipment.map(x => x.id)
+          d['equipment'] = d.equipment? d.equipment.map(x => x.id) : []
           setDataset(d);
         });
       }

@@ -2,7 +2,7 @@ import React, {useEffect, useState} from "react";
 import SyntaxHighlighter from 'react-syntax-highlighter';
 import { docco } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 import {getToken} from "./Api"
-import Typography from '@material-ui/core/Typography';
+import Typography from '@mui/material/Typography';
 
 
 export default function GetDatasetPython({dataset}) {

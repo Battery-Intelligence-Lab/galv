@@ -1,17 +1,17 @@
 
 import React, {useEffect, useState} from "react";
-import { DataGrid, GridRowsProp, GridColDef } from '@material-ui/data-grid';
-import Container from '@material-ui/core/Container';
+import { DataGrid, GridRowsProp, GridColDef } from '@mui/x-data-grid/';
+import Container from '@mui/material/Container';
 import { datasets } from './Api';
-import { makeStyles } from '@material-ui/core/styles';
-import Button from '@material-ui/core/Button';
-import { useHistory } from "react-router-dom";
+import { makeStyles } from '@mui/styles'
+import Button from '@mui/material/Button';
+import { useNavigate } from "react-router-dom";
 import GetDatasetPython from "./GetDatasetPython"
 import GetDatasetMatlab from "./GetDatasetMatlab"
-import Dialog from '@material-ui/core/Dialog';
-import DialogActions from '@material-ui/core/DialogActions';
-import DialogContent from '@material-ui/core/DialogContent';
-import DialogTitle from '@material-ui/core/DialogTitle';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogTitle from '@mui/material/DialogTitle';
 
 
 const useStyles = makeStyles((theme) => ({
@@ -30,7 +30,7 @@ const useStyles = makeStyles((theme) => ({
 export default function Datasets() {
   const [data, setData] = useState(null)
   const classes = useStyles();
-  const history = useHistory();
+  const navigate = useNavigate();
 
   const [select, setSelect] = useState(null)
 
@@ -92,7 +92,7 @@ export default function Datasets() {
     { field: 'name', headerName: 'Name', flex: true},
     { 
       field: 'date', headerName: 'Date', width: 110,
-      valueFormatter: (params: GridValueFormatterParams) => {
+      valueFormatter: (params: GridValueFormatterParams<number>) => {
         return Intl.DateTimeFormat('en-GB').format(params.value);
       }
     },
@@ -132,7 +132,6 @@ export default function Datasets() {
       <DataGrid 
         rows={rows} columns={columns} 
         density='compact'
-        autoPageSize
         loading={ !data }
         rowHeight={38}
         autoHeight={autoHeight}
@@ -142,7 +141,7 @@ export default function Datasets() {
     {data && data[select] &&
         <Button variant="contained" 
           className={classes.button}
-          onClick={()=>{history.push(`/dataset/${data[select].id}`);}}
+          onClick={()=>{navigate(`/dataset/${data[select].id}`);}}
         >
           Edit Metadata
         </Button>
