@@ -22,4 +22,3 @@ class TestBiologicFileFormat(GalvanalyserTestCase):
             )
             num_samples = sum(1 for d in data_generator)
             self.assertEqual(num_samples, metadata['num_rows'])
-

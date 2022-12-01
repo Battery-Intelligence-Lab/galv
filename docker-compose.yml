@@ -1,7 +1,7 @@
 version: "2"
 services:
   app:
-    image: app
+#    image: app
     build:
       dockerfile: Dockerfile
       context: ./backend

@@ -85,12 +85,12 @@ export default function Datasets() {
     setMatlabCodeOpen(false);
   };
 
- 
+
 
   const columns: GridColDef[] = [
     { field: 'dataset_id', headerName: 'ID', width: 70},
     { field: 'name', headerName: 'Name', flex: true},
-    { 
+    {
       field: 'date', headerName: 'Date', width: 110,
       valueFormatter: (params: GridValueFormatterParams<number>) => {
         return Intl.DateTimeFormat('en-GB').format(params.value);
@@ -124,13 +124,13 @@ export default function Datasets() {
   let autoHeight = true;
   let divStyle = { width: '100%' };
   console.log('datasets', rows)
-  
+
 
   return (
     <Container maxWidth="lg" className={classes.container}>
       <div style={divStyle}>
-      <DataGrid 
-        rows={rows} columns={columns} 
+      <DataGrid
+        rows={rows} columns={columns}
         density='compact'
         loading={ !data }
         rowHeight={38}
@@ -139,7 +139,7 @@ export default function Datasets() {
       />
     </div>
     {data && data[select] &&
-        <Button variant="contained" 
+        <Button variant="contained"
           className={classes.button}
           onClick={()=>{navigate(`/dataset/${data[select].id}`);}}
         >
@@ -148,7 +148,7 @@ export default function Datasets() {
     }
     {data && data[select] &&
       <React.Fragment>
-      <Button 
+      <Button
         variant="contained" onClick={handleCodeOpen}
         className={classes.button}
       >
@@ -168,7 +168,7 @@ export default function Datasets() {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCodeClose} color="primary" autoFocus>
-            Close 
+            Close
           </Button>
         </DialogActions>
       </Dialog>
