@@ -14,8 +14,13 @@ while [ $PGUP -ne 0 ]; do
 done
 
 >&2 echo "Postgres ready - initialising"
+cd backend_django
 python manage.py makemigrations
 python manage.py migrate
+
+>&2 echo "... populating database"
+python manage.py loaddata galvanalyser/fixtures/DataUnit.json
+python manage.py loaddata galvanalyser/fixtures/DataColumnType.json
 
 >&2 echo "Initialisation complete - starting server"
 #exec "$@"
@@ -24,6 +29,7 @@ mkdir -p /var/run/celery /var/log/celery
 chown -R nobody:nogroup /var/run/celery /var/log/celery
 
 python manage.py runserver 0.0.0.0:5000 & \
+cd .. && \
 celery -A backend_django.celery beat \
       --loglevel=DEBUG \
       --logfile=/var/log/celery/scheduler.log \

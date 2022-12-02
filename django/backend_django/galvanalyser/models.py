@@ -17,7 +17,7 @@ class Machine(models.Model):
 
 
 class Harvester(models.Model):
-    machine_id = models.ForeignKey(to=Machine, on_delete=models.CASCADE, unique=True)
+    machine_id = models.TextField(unique=True)
     name = models.TextField()
     last_successful_run = models.DateTimeField()
     is_running = models.BooleanField(default=False)
@@ -27,8 +27,11 @@ class Harvester(models.Model):
 
 
 class MonitoredPath(models.Model):
-    harvester = models.ForeignKey(to=Harvester, on_delete=models.CASCADE, unique=True)
+    harvester = models.ForeignKey(to=Harvester, on_delete=models.CASCADE)
     path = models.TextField(unique=True)
+
+    class Meta:
+        unique_together = [['harvester', 'path']]
 
 
 class MonitoredFor(models.Model):
@@ -59,8 +62,8 @@ class CellData(models.Model):
 
 
 class Dataset(models.Model):
-    cell_id = models.ForeignKey(to=CellData, on_delete=models.SET_NULL)
-    owner_id = models.ForeignKey(to=User, on_delete=models.SET_NULL)
+    cell_id = models.ForeignKey(to=CellData, on_delete=models.SET_NULL, null=True)
+    owner_id = models.ForeignKey(to=User, on_delete=models.SET_NULL, null=True)
     access_group = models.ForeignKey(to=Group, on_delete=models.CASCADE)
     name = models.TextField(null=False)
     date = models.DateTimeField(null=False)
@@ -91,15 +94,18 @@ class DataUnit(models.Model):
     description = models.TextField()
 
 
-class DataColumType(models.Model):
-    unit = models.ForeignKey(to=DataUnit, on_delete=models.SET_NULL)
+class DataColumnType(models.Model):
+    unit = models.ForeignKey(to=DataUnit, on_delete=models.SET_NULL, null=True)
     name = models.TextField(null=False)
     description = models.TextField()
+
+    class Meta:
+        unique_together = [['unit', 'name']]
 
 
 class DataColumn(models.Model):
     dataset = models.ForeignKey(to=Dataset, on_delete=models.CASCADE)
-    type = models.ForeignKey(to=DataColumType, on_delete=models.RESTRICT)
+    type = models.ForeignKey(to=DataColumnType, on_delete=models.RESTRICT)
     name = models.TextField(null=False)
 
     class Meta:
