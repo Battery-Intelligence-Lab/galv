@@ -12,10 +12,6 @@ class FileState(models.IntegerChoices):
     IMPORTED = 4
 
 
-class Machine(models.Model):
-    pass
-
-
 class Harvester(models.Model):
     machine_id = models.TextField(unique=True)
     name = models.TextField()
@@ -127,33 +123,3 @@ class TimeseriesRangeLabel(models.Model):
     range_start = models.PositiveBigIntegerField(null=False)
     range_end = models.PositiveBigIntegerField(null=False)
     info = models.TextField()
-
-
-# -- Add required column
-#
-# INSERT INTO experiment.unit (id, name, symbol, description) VALUES (0, 'Unitless', '', 'A value with no units');
-# INSERT INTO experiment.unit (id, name, symbol, description) VALUES (1, 'Time', 's', 'Time in seconds');
-# INSERT INTO experiment.unit (id, name, symbol, description) VALUES (2, 'Volts', 'V', 'Voltage');
-# INSERT INTO experiment.unit (id, name, symbol, description) VALUES (3, 'Amps', 'A', 'Current');
-# INSERT INTO experiment.unit (id, name, symbol, description) VALUES (4, 'Energy', 'Wh', 'Energy in Watt-Hours');
-# INSERT INTO experiment.unit (id, name, symbol, description) VALUES (5, 'Charge', 'Ah', 'Charge in Amp-Hours');
-# INSERT INTO experiment.unit (id, name, symbol, description) VALUES (6, 'Temperature', '°c', 'Temperature in Centigrade');
-# INSERT INTO experiment.unit (id, name, symbol, description) VALUES (7, 'Power', 'W', 'Power in Watts');
-# INSERT INTO experiment.unit (id, name, symbol, description) VALUES (8, 'Ohm', 'Ω', 'Resistance or impediance in Ohms');
-# INSERT INTO experiment.unit (id, name, symbol, description) VALUES (9, 'Degrees', '°', 'Angle in degrees');
-# INSERT INTO experiment.unit (id, name, symbol, description) VALUES (10, 'Frequency', 'Hz', 'Frequency in Hz');
-# SELECT setval('experiment.unit_id_seq'::regclass, 10);
-#
-# INSERT INTO experiment.column_type (id, name, description, unit_id) VALUES (-1, 'Unknown', 'unknown column type', NULL);
-# INSERT INTO experiment.column_type (id, name, description, unit_id) VALUES (0, 'Sample Number', 'The sample or record number. Is increased by one each time a test machine records a reading. Usually counts from 1 at the start of a test', 0);
-# INSERT INTO experiment.column_type (id, name, description, unit_id) VALUES (1, 'Time', 'The time in seconds since the test run began.', 1);
-# INSERT INTO experiment.column_type (id, name, description, unit_id) VALUES (2, 'Volts', 'The voltage of the cell.', 2);
-# INSERT INTO experiment.column_type (id, name, description, unit_id) VALUES (3, 'Amps', 'The current current.', 3);
-# INSERT INTO experiment.column_type (id, name, description, unit_id) VALUES (4, 'Energy Capacity', 'The Energy Capacity.', 4);
-# INSERT INTO experiment.column_type (id, name, description, unit_id) VALUES (5, 'Charge Capacity', 'The Charge Capacity.', 5);
-# INSERT INTO experiment.column_type (id, name, description, unit_id) VALUES (6, 'Temperature', 'The temperature.', 6);
-# INSERT INTO experiment.column_type (id, name, description, unit_id) VALUES (7, 'Step Time', 'The time in seconds since the current step began.', 1);
-# INSERT INTO experiment.column_type (id, name, description, unit_id) VALUES (8, 'Impedence Magnitude', 'The magnitude of the impedence (EIS).', 8);
-# INSERT INTO experiment.column_type (id, name, description, unit_id) VALUES (9, 'Impedence Phase', 'The phase of the impedence (EIS).', 9);
-# INSERT INTO experiment.column_type (id, name, description, unit_id) VALUES (10, 'Frequency', 'The frequency of the input EIS voltage signal.', 10);
-# SELECT setval('experiment.column_type_id_seq'::regclass, 10);
