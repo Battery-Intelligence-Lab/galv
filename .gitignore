@@ -19,3 +19,5 @@ env
 .test-data/
 
 frontend/src/demo_matlab_code.m
+
+**/.env.secret
