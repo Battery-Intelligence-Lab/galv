@@ -28,15 +28,22 @@ from .models import Harvester, \
     TimeseriesRangeLabel
 from django.contrib.auth.models import User, Group
 from rest_framework import viewsets
-from rest_framework import permissions
+from rest_framework.permissions import AllowAny
+from knox.views import LoginView as KnoxLoginView
+from rest_framework.authentication import BasicAuthentication
+
+
+class LoginView(KnoxLoginView):
+    permission_classes = [AllowAny]
+    authentication_classes = [BasicAuthentication]
+
 
 class HarvesterViewSet(viewsets.ModelViewSet):
     """
     TODO: document
     """
     serializer_class = HarvesterSerializer
-    queryset = Harvester.objects.all()
-    permission_classes = [permissions.IsAuthenticated]
+    queryset = Harvester.objects.all().order_by('is_running', 'pk')
 
 
 class MonitoredPathViewSet(viewsets.ModelViewSet):
@@ -45,7 +52,6 @@ class MonitoredPathViewSet(viewsets.ModelViewSet):
     """
     serializer_class = MonitoredPathSerializer
     queryset = MonitoredPath.objects.all()
-    permission_classes = [permissions.IsAuthenticated]
 
 
 class MonitoredForViewSet(viewsets.ModelViewSet):
@@ -54,7 +60,6 @@ class MonitoredForViewSet(viewsets.ModelViewSet):
     """
     serializer_class = MonitoredForSerializer
     queryset = MonitoredFor.objects.all()
-    permission_classes = [permissions.IsAuthenticated]
 
 
 class ObservedFileViewSet(viewsets.ModelViewSet):
@@ -63,7 +68,6 @@ class ObservedFileViewSet(viewsets.ModelViewSet):
     """
     serializer_class = ObservedFileSerializer
     queryset = ObservedFile.objects.all()
-    permission_classes = [permissions.IsAuthenticated]
 
 
 class CellDataViewSet(viewsets.ModelViewSet):
@@ -72,7 +76,6 @@ class CellDataViewSet(viewsets.ModelViewSet):
     """
     serializer_class = CellDataSerializer
     queryset = CellData.objects.all()
-    permission_classes = [permissions.IsAuthenticated]
 
 
 class DatasetViewSet(viewsets.ModelViewSet):
@@ -81,7 +84,6 @@ class DatasetViewSet(viewsets.ModelViewSet):
     """
     serializer_class = DatasetSerializer
     queryset = Dataset.objects.all()
-    permission_classes = [permissions.IsAuthenticated]
 
 
 class EquipmentViewSet(viewsets.ModelViewSet):
@@ -90,7 +92,6 @@ class EquipmentViewSet(viewsets.ModelViewSet):
     """
     serializer_class = EquipmentSerializer
     queryset = Equipment.objects.all()
-    permission_classes = [permissions.IsAuthenticated]
 
 
 class DatasetEquipmentViewSet(viewsets.ModelViewSet):
@@ -99,7 +100,6 @@ class DatasetEquipmentViewSet(viewsets.ModelViewSet):
     """
     serializer_class = DatasetEquipmentSerializer
     queryset = DatasetEquipment.objects.all()
-    permission_classes = [permissions.IsAuthenticated]
 
 
 class DataUnitViewSet(viewsets.ModelViewSet):
@@ -124,7 +124,6 @@ class DataColumnViewSet(viewsets.ModelViewSet):
     """
     serializer_class = DataColumnSerializer
     queryset = DataColumn.objects.all()
-    permission_classes = [permissions.IsAuthenticated]
 
 
 class TimeseriesDataViewSet(viewsets.ModelViewSet):
@@ -133,7 +132,6 @@ class TimeseriesDataViewSet(viewsets.ModelViewSet):
     """
     serializer_class = TimeseriesDataSerializer
     queryset = TimeseriesData.objects.all()
-    permission_classes = [permissions.IsAuthenticated]
 
 
 class TimeseriesRangeLabelViewSet(viewsets.ModelViewSet):
@@ -142,7 +140,6 @@ class TimeseriesRangeLabelViewSet(viewsets.ModelViewSet):
     """
     serializer_class = TimeseriesRangeLabelSerializer
     queryset = TimeseriesRangeLabel.objects.all()
-    permission_classes = [permissions.IsAuthenticated]
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -151,7 +148,6 @@ class UserViewSet(viewsets.ModelViewSet):
     """
     serializer_class = UserSerializer
     queryset = User.objects.all()
-    permission_classes = [permissions.IsAuthenticated]
 
 
 class GroupViewSet(viewsets.ModelViewSet):
@@ -160,5 +156,4 @@ class GroupViewSet(viewsets.ModelViewSet):
     """
     serializer_class = GroupSerializer
     queryset = Group.objects.all()
-    permission_classes = [permissions.IsAuthenticated]
 

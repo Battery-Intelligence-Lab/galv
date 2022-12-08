@@ -33,7 +33,7 @@ export default function GetDatasetMatlab({dataset}) {
 
 % login to galvanalyser > Generate API Token
 token = '${token}';
-apiURL = '${host}/api/dataset';
+apiURL = '${host}/Dataset';
 options = weboptions('HeaderFields', {'Authorization' ['Bearer ' token]});
 
 % Datasets can be referenced by name or by id. 

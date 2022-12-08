@@ -89,6 +89,11 @@ class DataUnit(models.Model):
     symbol = models.TextField(null=False)
     description = models.TextField()
 
+    def __str__(self):
+        if self.symbol:
+            return f"{self.symbol} | {self.name} - {self.description}"
+        return f"{self.name} - {self.description}"
+
 
 class DataColumnType(models.Model):
     unit = models.ForeignKey(to=DataUnit, on_delete=models.SET_NULL, null=True)

@@ -147,7 +147,7 @@ export default function Harvesters() {
   useEffect(() => {
     refreshHarvesters();
     const interval = setInterval(() => {
-      refreshHarvesters();
+      // refreshHarvesters();
     }, 5000);
     return () => clearInterval(interval);
   }, []);
@@ -156,9 +156,10 @@ export default function Harvesters() {
       harvesters().then((response) => {
       if (response.ok) {
         return response.json().then((result) => {
-          setHarvesterData(result.sort((arg1, arg2) => arg1.id - arg2.id));
+          const results = result.results;
+          setHarvesterData(results.sort((arg1, arg2) => arg1.id - arg2.id));
           setSelected(oldSelected => {
-            const newSelected = result.find(x => x.id === oldSelected.id)
+            const newSelected = results.find(x => x.id === oldSelected.id)
             return newSelected || {id: null};
           });
         });

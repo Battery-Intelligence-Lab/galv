@@ -24,7 +24,7 @@ import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 import BatteryUnknownIcon from '@mui/icons-material/BatteryUnknown';
 import BackupIcon from '@mui/icons-material/Backup';
-import {loggedIn, logout, getToken, getUser, isAdmin} from "./Api"
+import {loggedIn, handleLogin, logout, getToken, getUser, isAdmin} from "./Api"
 import { makeStyles} from "@mui/styles";
 import CssBaseline from '@mui/material/CssBaseline';
 
@@ -141,15 +141,8 @@ const useStyles = makeStyles((theme) => ({
 export default function Core() {
   const { pathname } = useLocation();
   const classes = useStyles();
-  const [user, setUser] = React.useState(null);
 
-  useEffect(() => {
-    getUser().then(setUser)
-  }, []);
-
-  const handleLogin = () => {
-    getUser().then(setUser)
-  }
+  const user = getUser()
 
   const userIsAdmin = isAdmin()
 
@@ -253,8 +246,6 @@ export default function Core() {
         </ListItemIcon>
         <ListItemText primary="Equipment" />
       </ListItem>
-
-
     </div>
   );
 

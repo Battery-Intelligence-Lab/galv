@@ -6,7 +6,8 @@ ENV PYTHONUNBUFFERED=1
 # Install postgresql-client for healthchecking
 RUN apt-get update && \
     apt-get install -y \
-    	postgresql-client && \
+    	postgresql-client \
+    	build-essential libssl-dev libffi-dev python3-dev python-dev && \
     apt-get autoremove && \
     apt-get autoclean
 

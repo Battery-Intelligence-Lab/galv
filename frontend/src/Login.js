@@ -1,6 +1,6 @@
 import {login} from "./Api"
 import { makeStyles } from '@mui/styles'
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import Button from '@mui/material/Button';
 import CssBaseline from '@mui/material/CssBaseline';
 import Alert from '@mui/lab/Alert';
@@ -38,22 +38,38 @@ export default function Login({ onLogin }) {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
 
-  const navigate =useNavigate();
+  const navigate = useNavigate();
+
+  const submit = useRef(null);
+  const username_input = useRef(null);
+  const password_input = useRef(null);
+
+  const handleEnterKey = (e) => {
+    if(e.key === "Enter") {
+      if (username === "") username_input.current.focus();
+      else if (password === "") password_input.current.focus();
+      else submit.current.click();
+    }
+  }
 
   const onSubmitClick = (e)=>{
     e.preventDefault()
     console.log("You pressed login")
-    login(username, password).then(r => {
-      if (!r.ok) {
-        console.log(r, r.data)
-        return r.json().then(data=>setError(data.message));
-      }
-      return r.json().then(data => {
-        setError('')
-        onLogin()
-        navigate('/');
-      })
-    });
+    if (username === "") username_input.current.focus();
+    else if (password === "") password_input.current.focus();
+    else {
+      login(username, password).then(r => {
+        if (!r.ok) {
+          console.log(r, r.data)
+          return r.json().then(data=>setError(data.message));
+        }
+        return r.json().then(data => {
+          setError('')
+          onLogin(data)
+          navigate('/');
+        })
+      });
+    }
   }
 
   const handleUsernameChange = (e) => {
@@ -83,6 +99,8 @@ export default function Login({ onLogin }) {
           name="username"
           autoComplete="username"
           onChange={handleUsernameChange}
+          onKeyDown={handleEnterKey}
+          ref={username_input}
           autoFocus
         />
         <TextField
@@ -94,6 +112,8 @@ export default function Login({ onLogin }) {
           label="Password"
           type="password"
           onChange={handlePasswordChange}
+          onKeyDown={handleEnterKey}
+          ref={password_input}
           id="password"
           autoComplete="current-password"
         />
@@ -104,6 +124,7 @@ export default function Login({ onLogin }) {
         }
         <Button
           type="submit"
+          ref={submit}
           fullWidth
           variant="contained"
           color="primary"

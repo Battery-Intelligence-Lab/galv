@@ -75,7 +75,7 @@ def refresh_expiring_jwts(response):
         return response
 
 
-@app.route('/api/login', methods=['POST'])
+@app.route('/api-auth/login', methods=['POST'])
 def login():
 
     auth = request.authorization
@@ -114,7 +114,7 @@ def login():
     )
 
 
-@app.route("/api/logout", methods=["POST"])
+@app.route("/api-auth/logout", methods=["POST"])
 def logout():
     response = jsonify({"message": "logout successful"})
     unset_jwt_cookies(response)
@@ -192,8 +192,8 @@ def user(id_=None):
             return jsonify(session.get(User, id_))
 
 
-@app.route('/api/dataset', methods=['GET'])
-@app.route('/api/dataset/<int:id_>', methods=['GET', 'PUT'])
+@app.route('/Dataset', methods=['GET'])
+@app.route('/Dataset/<int:id_>', methods=['GET', 'PUT'])
 @cross_origin()
 @jwt_required()
 def dataset(id_=None):
@@ -292,8 +292,8 @@ def dataset(id_=None):
             return jsonify(dataset)
 
 
-@ app.route('/api/equipment', methods=['GET', 'POST'])
-@ app.route('/api/equipment/<int:id_>', methods=['GET', 'PUT', 'DELETE'])
+@ app.route('/Equipment', methods=['GET', 'POST'])
+@ app.route('/Equipment/<int:id_>', methods=['GET', 'PUT', 'DELETE'])
 @ cross_origin()
 @ jwt_required()
 def equipment(id_=None):
@@ -345,8 +345,8 @@ def equipment(id_=None):
             return jsonify({'success': True}), 200
 
 
-@ app.route('/api/cell', methods=['GET', 'POST'])
-@ app.route('/api/cell/<int:id_>', methods=['GET', 'PUT', 'DELETE'])
+@ app.route('/CellData', methods=['GET', 'POST'])
+@ app.route('/CellData/<int:id_>', methods=['GET', 'PUT', 'DELETE'])
 @ cross_origin()
 @ jwt_required()
 def cell(id_=None):
@@ -419,8 +419,8 @@ def cell(id_=None):
             return jsonify({'success': True}), 200
 
 
-@ app.route('/api/manufacturer', methods=['GET', 'POST'])
-@ app.route('/api/manufacturer/<int:id_>', methods=['GET', 'PUT', 'DELETE'])
+@ app.route('/Manufacturer', methods=['GET', 'POST'])
+@ app.route('/Manufacturer/<int:id_>', methods=['GET', 'PUT', 'DELETE'])
 @ jwt_required()
 @ cross_origin()
 def manufacturer(id_=None):
@@ -481,7 +481,7 @@ def dataset_by_id(dataset_id):
     return DatasetRow.to_json(datasets)
 
 
-@ app.route('/api/file', methods=['GET'])
+@ app.route('/MonitoredPath', methods=['GET'])
 @ jwt_required()
 @ cross_origin()
 def file():
@@ -555,7 +555,7 @@ def get_env_celery():
     return {env_var: os.getenv(env_var)}
 
 
-@ app.route('/api/harvester/<int:id_>/env', methods=['GET'])
+@ app.route('/Harvester/<int:id_>/env', methods=['GET'])
 @ jwt_required()
 @ cross_origin()
 def env_harvester(id_=None):
@@ -584,8 +584,8 @@ def run_harvester(id_=None):
     return jsonify({'success': True}), 200
 
 
-@ app.route('/api/harvester', methods=['GET', 'POST'])
-@ app.route('/api/harvester/<int:id_>', methods=['GET', 'PUT', 'DELETE'])
+@ app.route('/Harvester', methods=['GET', 'POST'])
+@ app.route('/Harvester/<int:id_>', methods=['GET', 'PUT', 'DELETE'])
 @ jwt_required()
 @ cross_origin()
 def harvester(id_=None):
@@ -654,8 +654,8 @@ def harvester(id_=None):
             return jsonify({'success': True}), 200
 
 
-@ app.route('/api/monitored_path', methods=['GET', 'POST'])
-@ app.route('/api/monitored_path/<int:id_>', methods=['GET', 'PUT', 'DELETE'])
+@ app.route('/MonitoredPath', methods=['GET', 'POST'])
+@ app.route('/MonitoredPath/<int:id_>', methods=['GET', 'PUT', 'DELETE'])
 @ jwt_required()
 @ cross_origin()
 def monitored_path(id_=None):
