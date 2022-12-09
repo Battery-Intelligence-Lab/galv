@@ -1,6 +1,7 @@
 from django.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.contrib.auth.models import User, Group
+from django.utils.text import slugify
 
 
 class FileState(models.IntegerChoices):
@@ -13,13 +14,28 @@ class FileState(models.IntegerChoices):
 
 
 class Harvester(models.Model):
-    machine_id = models.TextField(unique=True)
-    name = models.TextField()
-    last_successful_run = models.DateTimeField()
+    username = models.TextField(unique=True, null=True)
+    name = models.TextField(unique=True)
+    last_successful_run = models.DateTimeField(null=True)
     is_running = models.BooleanField(default=False)
-    periodic_hour = models.IntegerField(validators=[
-        MinValueValidator(1), MaxValueValidator(24)
-    ])
+    periodic_hour = models.IntegerField(
+        null=True,
+        validators=[MinValueValidator(1), MaxValueValidator(24)]
+    )
+
+    def save(self, *args, **kwargs):
+        username = slugify(self.name)
+        if self.id is None:
+            # Create user for Harvester
+            group, _ = Group.objects.get_or_create(name="Harvesters")
+            group.user_set.add(User.objects.create_user(username=username))
+        elif username != self.username:
+            # Update user for Harvester
+            user = User.objects.get(username=self.username)
+            user.username = username
+            user.save()
+
+        super(Harvester, self).save(*args, **kwargs)
 
 
 class MonitoredPath(models.Model):

@@ -7,6 +7,10 @@ import { BrowserRouter as Router } from 'react-router-dom'
 
 const root = createRoot(document.getElementById('root'))
 
+if (module.hot) {
+    module.hot.accept();
+}
+
 root.render(
   <React.StrictMode>
     <Router>

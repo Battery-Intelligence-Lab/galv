@@ -21,7 +21,8 @@ python manage.py migrate
 >&2 echo "... populating database"
 python manage.py loaddata galvanalyser/fixtures/DataUnit.json
 python manage.py loaddata galvanalyser/fixtures/DataColumnType.json
-python manage.py loaddata galvanalyser/fixtures/Users.json
+python manage.py loaddata galvanalyser/fixtures/Users.json || \
+  echo "admin:admin already exists; continuing"
 
 >&2 echo "Initialisation complete - starting server"
 #exec "$@"

@@ -14,7 +14,7 @@ export function handleLogin(data) {
 export function getUser() {return user;}
 
 export function isAdmin() {
-    return false;
+    return user !== null;
   if (!user) {
     return false;
   }

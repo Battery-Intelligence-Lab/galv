@@ -43,7 +43,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-function MyTableRow({savedRow, onRowSave, selected, onSelectRow, disableSave}) {
+function MyTableRow({savedRow, onRowSave, selected, onSelectRow, disableSave, addIcon}) {
   const classes = useStyles();
   const [row, setRow] = useState([])
   const [dirty, setDirty] = useState(false)
@@ -59,6 +59,8 @@ function MyTableRow({savedRow, onRowSave, selected, onSelectRow, disableSave}) {
   if (useRow.id === undefined) {
     useRow = savedRow;
   }
+
+  const Icon = addIcon ? <AddIcon/> : <SaveIcon/> ;
 
   return (
     <React.Fragment>
@@ -77,29 +79,30 @@ function MyTableRow({savedRow, onRowSave, selected, onSelectRow, disableSave}) {
             classes: {
               input: classes.resize,
             },
+            placeholder: "New Harvester"
           }}
-          value={useRow.machine_id}
+          value={useRow.name}
           onChange={(e) => {
             setDirty(true);
-            setRow({...row, machine_id: e.target.value});
+            setRow({...row, name: e.target.value});
           }} 
         >
         </TextField>
       </TableCell>
       <TableCell component="th" scope="row">
-        {savedRow.harvester_name}
+        {savedRow.username}
       </TableCell>
       <TableCell component="th" scope="row">
-        {savedRow.is_running &&
-          (<Typography color='secondary'>True</Typography>)
+        {(savedRow.is_running && (<Typography color='secondary'>Yes</Typography>)) ||
+            (<Typography color='grey'>No</Typography>)
         }
       </TableCell>
       <TableCell component="th" scope="row">
-        {savedRow.last_successful_run && 
-          Intl.DateTimeFormat('en-GB', 
+        {(savedRow.last_successful_run &&
+          Intl.DateTimeFormat('en-GB',
           { dateStyle: 'long', timeStyle: 'long' }).format(
           Date.parse(savedRow.last_successful_run)
-        )}
+        )) || (<Typography color='grey'>None</Typography>)}
       </TableCell>
       <TableCell>
         <TextField
@@ -127,7 +130,7 @@ function MyTableRow({savedRow, onRowSave, selected, onSelectRow, disableSave}) {
             setDirty(false);
           }}
         >
-          <SaveIcon />
+          { Icon }
         </IconButton>
         </span>
         </Tooltip>
@@ -147,16 +150,18 @@ export default function Harvesters() {
   useEffect(() => {
     refreshHarvesters();
     const interval = setInterval(() => {
-      // refreshHarvesters();
-    }, 5000);
+      refreshHarvesters();
+    }, 15000);
     return () => clearInterval(interval);
   }, []);
 
-  const refreshHarvesters= () => {
+  const refreshHarvesters = () => {
       harvesters().then((response) => {
       if (response.ok) {
         return response.json().then((result) => {
-          const results = result.results;
+          // Inject ID
+          const results = result.results.map((r, i) => ({id: i, ...r}));
+          console.log('refreshHarvesters:', results);
           setHarvesterData(results.sort((arg1, arg2) => arg1.id - arg2.id));
           setSelected(oldSelected => {
             const newSelected = results.find(x => x.id === oldSelected.id)
@@ -167,8 +172,8 @@ export default function Harvesters() {
       });
   };
 
-  const addNewHarvester = () => {
-    add_harvester({machine_id: 'Edit me'}).then(refreshHarvesters);
+  const addNewHarvester = (data) => {
+    add_harvester({name: data.name, periodic_hour: data.periodic_hour}).then(refreshHarvesters);
   };
   const deleteHarvester= () => {
     delete_harvester(selected.id).then(refreshHarvesters);
@@ -181,13 +186,12 @@ export default function Harvesters() {
     run_harvester(selected.id).then(refreshHarvesters);
   };
 
-  
   const isSelected = selected.id !== null;
 
   const column_headings = [
     {label: 'ID', help: 'Harvester id in database'},
     {label: 'Name', help: 'Harvester name'},
-    {label: 'Harvester', help: 'Username for harvester database account'},
+    {label: 'Login', help: 'Username for harvester database account'},
     {label: 'Is Running', help: 'Displays "True" if harvester is currently running'},
     {label: 'Last Completed Run', help: 'Datetime of last harvester run that successfully ran until completion'},
     {label: 'Periodic Hour', help: 'If set, harvester is run every day on this hour'},
@@ -217,25 +221,32 @@ export default function Harvesters() {
           {harvesterData.map((row) => (
             <MyTableRow 
                 key={row.id} 
-                savedRow={row} 
+                savedRow={row}
                 onRowSave={updateHarvester} 
                 selected={selected.id === row.id}
                 onSelectRow={setSelected}
                 disableSave={!userIsAdmin}
             />
           ))}
+          <MyTableRow
+              key={'new'}
+              savedRow={{
+                id: Math.max(...[-1, ...harvesterData.map(d => d.id)]) + 1,
+                name: '',
+                username: '',
+                last_successful_run: '',
+                is_running: false,
+                periodic_hour: 12,
+              }}
+              onRowSave={addNewHarvester}
+              selected={false}
+              onSelectRow={() => {}}
+              disableSave={false}
+              addIcon={true}
+          />
         </TableBody>
       </Table>
     </TableContainer>
-    <Tooltip title="Add new harvester">
-      <IconButton 
-        aria-label="add" 
-        onClick={addNewHarvester}
-        disabled={!userIsAdmin}
-      >
-      <AddIcon/>
-    </IconButton>
-    </Tooltip>
     <Tooltip title="Delete selected harvester">
       <span>
     <IconButton 

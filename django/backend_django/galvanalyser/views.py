@@ -45,6 +45,9 @@ class HarvesterViewSet(viewsets.ModelViewSet):
     serializer_class = HarvesterSerializer
     queryset = Harvester.objects.all().order_by('is_running', 'pk')
 
+    def create(self, request, *args, **kwargs):
+        super(HarvesterViewSet, self).create(request=request, *args, **kwargs)
+
 
 class MonitoredPathViewSet(viewsets.ModelViewSet):
     """
