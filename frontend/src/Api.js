@@ -40,8 +40,12 @@ export function getCookie(name) {
   if (parts.length === 2) return parts.pop().split(';').shift();
 }
 
-export function loggedIn() {
+export async function loggedIn(skip = true) {
+    await login('admin', 'admin').then(r => r.json()).then(data => handleLogin(data))
   const cookie = getCookie('csrf_access_token');
+    if (cookie === undefined || !user)
+        if (!skip)
+            return loggedIn(false);
   return  cookie !== undefined && user;
 }
 
@@ -62,6 +66,9 @@ async function authFetch(url, options) {
       });
     }
     return response;
+  }).catch(e => {
+      console.error(e);
+      return null;
   });
 }
 

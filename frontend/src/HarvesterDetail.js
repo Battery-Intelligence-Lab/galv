@@ -55,7 +55,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-function MyTableRow({env, userData, savedRow, onRowSave, selected, onSelectRow, disableSave}) {
+function MyTableRow({env, userData, savedRow, onRowSave, selected, onSelectRow, disableSave, addIcon}) {
   const classes = useStyles();
   const [row, setRow] = useState([])
   const [dirty, setDirty] = useState(false)
@@ -98,6 +98,10 @@ function MyTableRow({env, userData, savedRow, onRowSave, selected, onSelectRow, 
     return user ? user.username : 'Not Found';
   };
 
+  const Icon = addIcon ? <AddIcon/> : <SaveIcon/> ;
+
+  console.log('userData:', userData.results)
+
   return (
     <React.Fragment>
     <TableRow 
@@ -114,6 +118,7 @@ function MyTableRow({env, userData, savedRow, onRowSave, selected, onSelectRow, 
             classes: {
               input: classes.resize,
             },
+            placeholder: "New Monitored Path",
             startAdornment: <InputAdornment 
                               className={classes.inputAdornment} 
                               position="start">
@@ -138,7 +143,7 @@ function MyTableRow({env, userData, savedRow, onRowSave, selected, onSelectRow, 
           )}
           MenuProps={MenuProps}
         >
-          {userData.map((user) => (
+          {userData.results.map((user) => (
             <MenuItem key={user.username} value={user.id}>
               {user.username}
             </MenuItem>
@@ -155,7 +160,7 @@ function MyTableRow({env, userData, savedRow, onRowSave, selected, onSelectRow, 
             onRowSave(row);
           }}
         >
-          <SaveIcon />
+          {Icon}
         </IconButton>
         </span>
         </Tooltip>
@@ -168,7 +173,7 @@ function MyTableRow({env, userData, savedRow, onRowSave, selected, onSelectRow, 
 export default function HarvesterDetail({harvester}) {
   const classes = useStyles();
 
-  const [userData, setUserData] = useState([])
+  const [userData, setUserData] = useState({results: []})
   const [paths, setPaths] = useState([])
   const [selected, setSelected] = useState({id: null})
   const [envData, setEnvData] = useState([])
@@ -196,9 +201,11 @@ export default function HarvesterDetail({harvester}) {
       monitored_paths(harvester.id).then((response) => {
         if (response.ok) {
           return response.json().then((result) => {
-            setPaths(result.sort((arg1, arg2) => arg1.id - arg2.id));
+            const results = result.results;
+            console.log('Harvester details:', results)
+            setPaths(results.sort((arg1, arg2) => arg1.id - arg2.id));
             setSelected(oldSelected => {
-              const newSelected = result.find(x => x.id === oldSelected.id);
+              const newSelected = results.find(x => x.id === oldSelected.id);
               return newSelected || {id: null};
             });
           });
@@ -212,8 +219,8 @@ export default function HarvesterDetail({harvester}) {
     refreshPaths(); 
   }, [harvester, refreshPaths]);
 
-  const addNewPath= () => {
-    add_monitored_path({harvester_id: harvester.id, path: 'Edit me'}).then(refreshPaths);
+  const addNewPath = (data) => {
+    add_monitored_path({harvester_id: harvester.id, path: data.path}).then(refreshPaths);
   };
   const deletePath = () => {
     delete_monitored_path(selected.id).then(refreshPaths);
@@ -227,7 +234,7 @@ export default function HarvesterDetail({harvester}) {
   return (
     <Paper className={classes.paper}>
     <Typography variant='h5'>
-      Harvester "{harvester.machine_id}" monitored paths
+      Harvester "{harvester.name}" monitored paths
     </Typography>
     <TableContainer>
       <Table className={classes.table} size="small">
@@ -251,6 +258,23 @@ export default function HarvesterDetail({harvester}) {
                 disableSave={!userIsAdmin}
             />
           ))}
+          <MyTableRow
+              key={'new'}
+              env={envData}
+              savedRow={{
+                id: '',
+                harvester_id: harvester.id,
+                path: '',
+                monitored_for: [],
+              }}
+              userData={userData}
+              onRowSave={addNewPath}
+              selected={false}
+              onSelectRow={() => {}}
+              disableSave={false}
+              addIcon={true}
+              placeholder={'Add Monitored Path'}
+          />
         </TableBody>
       </Table>
     </TableContainer>

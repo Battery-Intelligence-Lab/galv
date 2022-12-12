@@ -3,7 +3,8 @@
 mkdir -p /var/run/celery /var/log/celery
 chown -R nobody:nogroup /var/run/celery /var/log/celery
 
-exec celery -A backend_django.celery worker \
+cd backend_django || exit 1
+exec celery -A config.celery_settings worker \
             --loglevel=INFO  \
             --logfile=/var/log/celery/worker.log \
             -O fair \

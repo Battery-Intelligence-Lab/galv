@@ -14,7 +14,7 @@ while [ $PGUP -ne 0 ]; do
 done
 
 >&2 echo "Postgres ready - initialising"
-cd backend_django
+cd backend_django || exit 1
 python manage.py makemigrations
 python manage.py migrate
 
@@ -31,8 +31,7 @@ mkdir -p /var/run/celery /var/log/celery
 chown -R nobody:nogroup /var/run/celery /var/log/celery
 
 python manage.py runserver 0.0.0.0:5000 & \
-cd .. && \
-celery -A backend_django.celery beat \
+celery -A config.celery_settings beat \
       --loglevel=DEBUG \
       --logfile=/var/log/celery/scheduler.log \
       -s /var/run/celery/celerybeat-schedule \

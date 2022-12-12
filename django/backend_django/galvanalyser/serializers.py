@@ -93,13 +93,24 @@ class TimeseriesRangeLabelSerializer(serializers.HyperlinkedModelSerializer):
         fields = '__all__'
 
 
-class UserSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta:
-        model = User
-        fields = '__all__'
-
-
 class GroupSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Group
         fields = '__all__'
+
+
+class UserSerializer(serializers.HyperlinkedModelSerializer):
+    groups = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+    groups = GroupSerializer(groups, many=True)
+
+    class Meta:
+        model = User
+        fields = [
+            'url',
+            'username',
+            'first_name',
+            'last_name',
+            'is_staff',
+            'is_superuser',
+            'groups',
+        ]

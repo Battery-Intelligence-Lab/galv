@@ -29,8 +29,11 @@ from .models import Harvester, \
 from django.contrib.auth.models import User, Group
 from rest_framework import viewsets
 from rest_framework.permissions import AllowAny
+from rest_framework.decorators import action
+from rest_framework.response import Response
 from knox.views import LoginView as KnoxLoginView
 from rest_framework.authentication import BasicAuthentication
+from .tasks import get_env
 
 
 class LoginView(KnoxLoginView):
@@ -43,10 +46,16 @@ class HarvesterViewSet(viewsets.ModelViewSet):
     TODO: document
     """
     serializer_class = HarvesterSerializer
-    queryset = Harvester.objects.all().order_by('is_running', 'pk')
+    queryset = Harvester.objects.all().order_by('is_running', 'id')
 
-    def create(self, request, *args, **kwargs):
-        super(HarvesterViewSet, self).create(request=request, *args, **kwargs)
+    # def create(self, request, *args, **kwargs):
+    #     super(HarvesterViewSet, self).create(request=request, *args, **kwargs)
+
+    @action(detail=True, methods=['GET'])
+    def env(self, request, pk: int = None):
+        harvester = Harvester.objects.get(id=pk)
+        result = get_env.apply_async(queue=harvester.name)
+        return Response(result.get())
 
 
 class MonitoredPathViewSet(viewsets.ModelViewSet):
@@ -54,7 +63,7 @@ class MonitoredPathViewSet(viewsets.ModelViewSet):
     TODO: document
     """
     serializer_class = MonitoredPathSerializer
-    queryset = MonitoredPath.objects.all()
+    queryset = MonitoredPath.objects.all().order_by('id')
 
 
 class MonitoredForViewSet(viewsets.ModelViewSet):
