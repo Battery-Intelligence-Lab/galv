@@ -124,7 +124,8 @@ export default function Equipment() {
       equipment().then((response) => {
       if (response.ok) {
         return response.json().then((result) => {
-          setEquipData(result.sort((arg1, arg2) => arg1.id - arg2.id));
+          const results = result.results;
+          setEquipData(results.sort((arg1, arg2) => arg1.id - arg2.id));
         });
       }
       });

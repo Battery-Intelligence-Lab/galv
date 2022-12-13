@@ -151,7 +151,7 @@ function MyTableRow({env, userData, savedRow, onRowSave, selected, onSelectRow, 
       </Select>
       </TableCell>
       <TableCell align="right">
-        <Tooltip title="Save changes to path">
+        <Tooltip title={addIcon? "Add new Path" : "Save changes to Path"}>
         <span>
         <IconButton
           disabled={disableSave || rowUnchanged} 

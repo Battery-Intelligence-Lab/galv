@@ -51,6 +51,7 @@ export default function Datasets() {
     datasets().then((response) => {
       if (response.ok) {
         return response.json().then(data => {
+          const results = data.results;
           setData(data.sort((a, b) => {
             if (a.date > b.date) {
               return -1;

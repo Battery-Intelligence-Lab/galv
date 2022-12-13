@@ -188,7 +188,8 @@ export default function Cells() {
       cells().then((response) => {
       if (response.ok) {
         return response.json().then((result) => {
-          setCellData(result.sort((arg1, arg2) => arg1.id - arg2.id));
+          const results = result.results;
+          setCellData(results.sort((arg1, arg2) => arg1.id - arg2.id));
         });
       }
       });

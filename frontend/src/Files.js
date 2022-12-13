@@ -36,7 +36,8 @@ export default function Files({ path }) {
     files(path.id).then((response) => {
       if (response.ok) {
         response.json().then((result) => {
-          setFileData(result.sort((arg1, arg2) => arg1.id - arg2.id));
+          const results = result.results;
+          setFileData(results.sort((arg1, arg2) => arg1.id - arg2.id));
         });
       }
     });

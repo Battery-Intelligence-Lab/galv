@@ -121,7 +121,7 @@ function MyTableRow({savedRow, onRowSave, selected, onSelectRow, disableSave, ad
         </TextField>
       </TableCell>
       <TableCell align="right">
-        <Tooltip title="Save changes to harvester">
+        <Tooltip title={addIcon? "Add new Harvester" : "Save changes to Harvester"}>
         <span>
         <IconButton
           disabled={disableSave || !dirty} 
