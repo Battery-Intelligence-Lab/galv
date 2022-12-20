@@ -1,7 +1,11 @@
+from django.utils import timezone
 from django.db import models
-from django.core.validators import MaxValueValidator, MinValueValidator
 from django.contrib.auth.models import User, Group
-from django.utils.text import slugify
+
+from .parsers import *
+from pathlib import Path
+import os
+import random
 
 
 class FileState(models.IntegerChoices):
@@ -14,28 +18,42 @@ class FileState(models.IntegerChoices):
 
 
 class Harvester(models.Model):
-    username = models.TextField(unique=True, null=True)
     name = models.TextField(unique=True)
-    last_successful_run = models.DateTimeField(null=True)
-    is_running = models.BooleanField(default=False)
-    periodic_hour = models.IntegerField(
+    api_key = models.TextField(null=True)
+    last_check_in = models.DateTimeField(null=True)
+    sleep_time = models.IntegerField(default=10)  # default to short time so updates happen quickly
+    admin_group = models.ForeignKey(
+        to=Group,
+        on_delete=models.CASCADE,
         null=True,
-        validators=[MinValueValidator(1), MaxValueValidator(24)]
+        related_name='harvester_admins'
+    )
+    user_group = models.ForeignKey(
+        to=Group,
+        on_delete=models.CASCADE,
+        null=True,
+        related_name='harvester_users'
     )
 
     def save(self, *args, **kwargs):
-        username = slugify(self.name)
         if self.id is None:
-            # Create user for Harvester
-            group, _ = Group.objects.get_or_create(name="Harvesters")
-            group.user_set.add(User.objects.create_user(username=username))
-        elif username != self.username:
-            # Update user for Harvester
-            user = User.objects.get(username=self.username)
-            user.username = username
-            user.save()
-
+            # Create groups for Harvester
+            text = 'abcdefghijklmnopqrstuvwxyz' + \
+                   'ABCDEFGHIJKLMNOPQRSTUVWXYZ' + \
+                   '0123456789' + \
+                   '!£$%^&*-=+'
+            self.api_key = f"galv_hrv_{''.join(random.choices(text, k=60))}"
         super(Harvester, self).save(*args, **kwargs)
+
+    # Perform harvesting
+    def run(self):
+        paths = MonitoredPath.objects.filter(harvester=self)
+        for path in paths:
+            files = ObservedFile.objects.filter(monitored_path=path)
+            for file in files:
+                if file.state == FileState.STABLE:
+                    file.import_content()
+        self.last_successful_run = timezone.now()
 
 
 class MonitoredPath(models.Model):
@@ -48,7 +66,7 @@ class MonitoredPath(models.Model):
 
 class MonitoredFor(models.Model):
     path = models.ForeignKey(to=MonitoredPath, on_delete=models.CASCADE)
-    user_id = models.ForeignKey(to=User, on_delete=models.CASCADE)
+    user = models.ForeignKey(to=User, on_delete=models.CASCADE)
 
 
 class ObservedFile(models.Model):
@@ -56,7 +74,34 @@ class ObservedFile(models.Model):
     relative_path = models.TextField()
     last_observed_size = models.PositiveBigIntegerField(null=False)
     last_observed_time = models.DateTimeField()
-    file_state = models.SmallIntegerField(choices=FileState.choices, default=FileState.UNSTABLE, null=False)
+    state = models.SmallIntegerField(choices=FileState.choices, default=FileState.UNSTABLE, null=False)
+
+    def inspect_size(self):
+        path = Path(os.path.join(self.monitored_path.path, self.relative_path))
+        last_observed_size = path.stat().st_size
+        if last_observed_size > self.last_observed_size:
+            self.last_observed_size = last_observed_size
+            self.state = FileState.GROWING
+        elif last_observed_size == self.last_observed_size:
+            if self.last_observed_time + timezone.timedelta(minutes=5) < timezone.now():
+                self.state = FileState.STABLE
+            else:
+                self.state = FileState.UNSTABLE
+
+        self.last_observed_time = timezone.now()
+
+    def import_content(self):
+        path = Path(os.path.join(self.monitored_path.path, self.relative_path))
+        self.state = FileState.IMPORTING
+        try:
+            if not os.path.isfile(path):
+                raise FileNotFoundError
+            print(f"Importing {path}")
+            parse(path, DataColumnType.objects.filter(is_default=True))
+            self.state = FileState.IMPORTED
+        except BaseException as e:
+            self.state = FileState.IMPORT_FAILED
+            raise e
 
     class Meta:
         unique_together = [['monitored_path', 'relative_path']]
@@ -74,8 +119,8 @@ class CellData(models.Model):
 
 
 class Dataset(models.Model):
-    cell_id = models.ForeignKey(to=CellData, on_delete=models.SET_NULL, null=True)
-    owner_id = models.ForeignKey(to=User, on_delete=models.SET_NULL, null=True)
+    cell = models.ForeignKey(to=CellData, on_delete=models.SET_NULL, null=True)
+    owner = models.ForeignKey(to=User, on_delete=models.SET_NULL, null=True)
     access_group = models.ForeignKey(to=Group, on_delete=models.CASCADE)
     name = models.TextField(null=False)
     date = models.DateTimeField(null=False)
@@ -115,6 +160,7 @@ class DataColumnType(models.Model):
     unit = models.ForeignKey(to=DataUnit, on_delete=models.SET_NULL, null=True)
     name = models.TextField(null=False)
     description = models.TextField()
+    is_default = models.BooleanField(default=False)
 
     class Meta:
         unique_together = [['unit', 'name']]

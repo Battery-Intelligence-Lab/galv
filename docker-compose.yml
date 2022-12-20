@@ -21,20 +21,20 @@ services:
     command: ./server.sh
     env_file:
      - ./.env
-  worker:
-    image: app
-    command: ./worker.sh 
-    depends_on:
-      - app
-    volumes:
-     - ./backend:/usr/app
-     - "${GALVANALYSER_HARVESTER_BASE_PATH}:/usr/data"
-     - "${CELERY_LOG_DIR}:/var/log/celery"
-
-    working_dir: /usr/app
-    restart: unless-stopped
-    env_file:
-     - ./.env
+#  worker:
+#    image: app
+#    command: ./worker.sh
+#    depends_on:
+#      - app
+#    volumes:
+#     - ./backend:/usr/app
+#     - "${GALVANALYSER_HARVESTER_BASE_PATH}:/usr/data"
+#     - "${CELERY_LOG_DIR}:/var/log/celery"
+#
+#    working_dir: /usr/app
+#    restart: unless-stopped
+#    env_file:
+#     - ./.env
   frontend:
     image: frontend
     build:

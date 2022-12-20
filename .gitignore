@@ -21,3 +21,6 @@ env
 frontend/src/demo_matlab_code.m
 
 **/.env.secret
+django/backend_django/django_celery_beat.schedulersDatabaseScheduler
+
+.harvester/

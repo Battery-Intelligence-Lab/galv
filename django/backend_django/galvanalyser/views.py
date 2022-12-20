@@ -46,16 +46,47 @@ class HarvesterViewSet(viewsets.ModelViewSet):
     TODO: document
     """
     serializer_class = HarvesterSerializer
-    queryset = Harvester.objects.all().order_by('is_running', 'id')
+    queryset = Harvester.objects.all().order_by('last_check_in', 'id')
 
-    # def create(self, request, *args, **kwargs):
-    #     super(HarvesterViewSet, self).create(request=request, *args, **kwargs)
+    def create(self, request, *args, **kwargs):
+        # Validate input
+        if not request.data['name']:
+            return Response({'error': 'No name specified for Harvester.'}, status=400)
+        if not request.data['user']:
+            return Response({'error': 'No administrator id specified for Harvester.'}, status=400)
+        if len(Harvester.objects.filter(name=request.data['name'])):
+            return Response({'error': 'Harvester with that name already exists'}, status=400)
+        if len(User.objects.filter(id=int(request.data['user']))) != 1:
+            return Response({'error': f'No user exists with id {request.data["user"]}'}, status=400)
+
+        # Create Harvester
+        harvester = Harvester.objects.create(name=request.data['name'])
+        # Create user/admin groups
+        harvester.user_group = Group.objects.create(name=f"harvester_{harvester.id}_users")
+        harvester.admin_group = Group.objects.create(name=f"harvester_{harvester.id}_admins")
+        harvester.save()
+        # Add user as admin
+        user = User.objects.get(id=int(request.data['user']))
+        user.groups.add(harvester.admin_group)
+        user.save()
+
+        return Response(self.get_serializer(harvester).data)
 
     @action(detail=True, methods=['GET'])
     def env(self, request, pk: int = None):
         harvester = Harvester.objects.get(id=pk)
         result = get_env.apply_async(queue=harvester.name)
         return Response(result.get())
+
+    @action(detail=False, methods=['GET'])
+    def by_name(self, request):
+        """
+        Used by the harvesters' init.py call to check their prospective name is free.
+        Returns a list of Harvesters with the specified name (should be length 1 or 0).
+        """
+        name = request.query_params.get('name', '')
+        harvester = self.paginate_queryset(Harvester.objects.filter(name=name))
+        return self.get_paginated_response(self.get_serializer(harvester, many=True).data)
 
 
 class MonitoredPathViewSet(viewsets.ModelViewSet):

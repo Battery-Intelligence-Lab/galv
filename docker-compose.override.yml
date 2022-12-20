@@ -24,19 +24,18 @@ services:
      - ./.env
      - ./django/.env.secret
   worker:
-    image: app
-    command: ./worker.sh
+    build:
+      dockerfile: Dockerfile
+      context: ./harvester
+    command: python init.py --name harvey --url http://app:5000/ --user_id 42 --run_foreground
+#    command: tail -F anything
     depends_on:
       - app
     volumes:
-     - ./django:/usr/app
-     - "${GALVANALYSER_HARVESTER_BASE_PATH}:/usr/data"
-     - "${CELERY_LOG_DIR}:/var/log/celery"
+     - ./harvester:/usr/harvester
+     - ./.harvester:/harvester_files
 
-    working_dir: /usr/app
-    restart: unless-stopped
-    env_file:
-     - ./.env
+    working_dir: /usr/harvester
   frontend:
     image: frontend_dev
     build:
