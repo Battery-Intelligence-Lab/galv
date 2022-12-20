@@ -4,7 +4,8 @@
         "model": "galvanalyser.DataColumnType",
         "fields": {
             "name": "Unknown",
-            "description": "unknown column type"
+            "description": "unknown column type",
+            "is_default": true
         }
     },
     {
@@ -13,7 +14,8 @@
         "fields": {
             "name": "Sample Number",
             "description": "The sample or record number. Is increased by one each time a test machine records a reading. Usually counts from 1 at the start of a test",
-            "unit": 1
+            "unit": 1,
+            "is_default": true
         }
     },
     {
@@ -22,7 +24,8 @@
         "fields": {
             "name": "Time",
             "description": "The time in seconds since the test run began.",
-            "unit": 2
+            "unit": 2,
+            "is_default": true
         }
     },
     {
@@ -31,7 +34,8 @@
         "fields": {
             "name": "Volts",
             "description": "The voltage of the cell.",
-            "unit": 3
+            "unit": 3,
+            "is_default": true
         }
     },
     {
@@ -40,7 +44,8 @@
         "fields": {
             "name": "Amps",
             "description": "The current current.",
-            "unit": 4
+            "unit": 4,
+            "is_default": true
         }
     },
     {
@@ -49,7 +54,8 @@
         "fields": {
             "name": "Energy Capacity",
             "description": "The Energy Capacity.",
-            "unit": 5
+            "unit": 5,
+            "is_default": true
         }
     },
     {
@@ -58,7 +64,8 @@
         "fields": {
             "name": "Charge Capacity",
             "description": "The Charge Capacity.",
-            "unit": 6
+            "unit": 6,
+            "is_default": true
         }
     },
     {
@@ -67,7 +74,8 @@
         "fields": {
             "name": "Temperature",
             "description": "The temperature.",
-            "unit": 7
+            "unit": 7,
+            "is_default": true
         }
     },
     {
@@ -76,7 +84,8 @@
         "fields": {
             "name": "Step Time",
             "description": "The time in seconds since the current step began.",
-            "unit": 8
+            "unit": 8,
+            "is_default": true
         }
     },
     {
@@ -85,7 +94,8 @@
         "fields": {
             "name": "Impedence Magnitude",
             "description": "The magnitude of the impedence (EIS).",
-            "unit": 9
+            "unit": 9,
+            "is_default": true
         }
     },
     {
@@ -94,7 +104,8 @@
         "fields": {
             "name": "Impedence Phase",
             "description": "The phase of the impedence (EIS).",
-            "unit": 10
+            "unit": 10,
+            "is_default": true
         }
     },
     {
@@ -103,7 +114,8 @@
         "fields": {
             "name": "Frequency",
             "description": "The frequency of the input EIS voltage signal.",
-            "unit": 11
+            "unit": 11,
+            "is_default": true
         }
     }
 ]
