@@ -27,7 +27,7 @@ services:
     build:
       dockerfile: Dockerfile
       context: ./harvester
-    command: python init.py --name harvey --url http://app:5000/ --user_id 42 --run_foreground
+    command: python init.py --name "Harvester03" --url http://app:5000/ --user_id 42 --run_foreground
 #    command: tail -F anything
     depends_on:
       - app

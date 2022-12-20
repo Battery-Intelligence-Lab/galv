@@ -18,7 +18,7 @@ from rest_framework import serializers
 class HarvesterSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Harvester
-        fields = '__all__'
+        fields = ['url', 'name', 'api_key', 'last_check_in', 'sleep_time']
 
 
 class MonitoredPathSerializer(serializers.HyperlinkedModelSerializer):

@@ -3,7 +3,8 @@ import re
 import json
 import requests
 import subprocess
-from harvest import run_cycle
+import harvest
+import settings
 
 
 def query(url: str, data: object = None) -> object:
@@ -22,20 +23,20 @@ def get_name() -> str:
     return input("Enter a name for your harvester: ")
 
 
-def strip_slash(url: str) -> str:
-    if url[-1] == "/" and url != "/":
-        url = url[:-1]
+def append_slash(url: str) -> str:
+    if url[-1] != "/":
+        url = f"{url}"
     return url
 
 
 def get_url() -> str:
     click.echo("Enter the URL for the Galvanalyser server you wish to connect to.")
     url = input("API URL: ")
-    return strip_slash(url)
+    return append_slash(url)
 
 
 def get_users(url: str, page: int = 1) -> object:
-    result = query(f"{url}/users/?page={page}")
+    result = query(f"{url}users/?page={page}")
     return result
 
 
@@ -48,7 +49,7 @@ def register(url: str = None, name: str = None, user_id: int = None, run_foregro
     """
     # Check we can connect to the API
     if url is not None:
-        url = strip_slash(url)
+        url = append_slash(url)
         url_specified = True
     else:
         url_specified = False
@@ -56,7 +57,7 @@ def register(url: str = None, name: str = None, user_id: int = None, run_foregro
         if not url_specified:
             url = get_url()
         try:
-            query(f"{url}/")
+            query(f"{url}")
             break
         except BaseException as e:
             click.echo(f"Unable to connect to {url} -- {e}", err=True)
@@ -70,7 +71,7 @@ def register(url: str = None, name: str = None, user_id: int = None, run_foregro
     else:
         name_specified = True
     while True:
-        result = query(f"{url}/harvesters/by_name/?name={name}")
+        result = query(f"{url}harvesters/by_name/?name={name}")
 
         if len(result['results']) > 0:
             click.echo(f"There is already a harvester called {name}.", err=True)
@@ -126,7 +127,7 @@ def register(url: str = None, name: str = None, user_id: int = None, run_foregro
             user_name = result['results'][user_id]['username']
             user_url = result['results'][user_id]['url']
     else:
-        user_url = f"{url}/users/{user_id}/"
+        user_url = f"{url}users/{user_id}/"
         try:
             result = query(user_url)
         except BaseException:
@@ -136,11 +137,15 @@ def register(url: str = None, name: str = None, user_id: int = None, run_foregro
     # Register
     uid = re.search('/(\\d+)/$', user_url).groups()[0]
     click.echo(f"Registering new harvester {name}, administrated by {user_name}")
-    result = query(f"{url}/harvesters/", {'user': uid, 'name': name})
+    result = query(f"{url}harvesters/", {'user': uid, 'name': name})
 
     # Save credentials
-    with open('/harvester_files/.harvester.json', 'w+') as f:
+    file_name = settings.get_settings_file()
+    with open(file_name, 'w+') as f:
         json.dump(result, f)
+        click.echo("Details:")
+        click.echo(json.dumps(result))
+        click.echo(f"Saved to {f.name}")
 
     click.echo("Success.")
     click.echo("")
@@ -152,10 +157,10 @@ def register(url: str = None, name: str = None, user_id: int = None, run_foregro
     click.echo("The harvester will check for updates frequently until you change its polling rate when you update it.")
     click.echo("Launching harvester...")
     if run_foreground:
-        run_cycle()
+        harvest.run_cycle()
     else:
         subprocess.Popen(["python", "harvest.py"])
-        click.echo(f"Complete. Harvester is running and logging to /harvester_files/harvester.log")
+        click.echo(f"Complete. Harvester is running and logging to {settings.get_logfile()}")
 
 
 @click.command()
