@@ -4,7 +4,7 @@ import time
 import requests
 import logging
 import json
-from settings import get_logfile, get_setting, get_settings_file
+from settings import get_logfile, get_setting, get_settings, get_settings_file
 from parse.harvester import import_file
 
 
@@ -41,19 +41,30 @@ def update_config():
         result = requests.get(f"{url}config/", headers={'Authorization': f"Harvester {key}"})
         if result.status_code == 200:
             dirty = False
-            for setting, value in result.json().items():
-                old_value = get_setting(setting)
-                if old_value is None:
-                    old = "[not set]"
-                else:
-                    old = json.dumps(get_setting(setting))
-                new = json.dumps(value)
-                if new != old:
-                    logger.info(f"Updating value for setting '{setting}'")
-                    logger.info(f"Old value: {old}")
-                    logger.info(f"New value: {new}")
+            new = result.json()
+            old = get_settings()
+            if old is None:
+                old = {}
+            all_keys = [*new.keys(), *old.keys()]
+            for key in all_keys:
+                if key in old.keys() and key in new.keys():
+                    if json.dumps(old[key]) == json.dumps(new[key]):
+                        continue
+                    logger.info(f"Updating value for setting '{key}'")
+                    logger.info(f"Old value: {json.dumps(old[key])}")
+                    logger.info(f"New value: {json.dumps(new[key])}")
                     dirty = True
-            # TODO: handle removed values
+                if key in old.keys():
+                    logger.info(f"Updating value for setting '{key}'")
+                    logger.info(f"Old value: {json.dumps(old[key])}")
+                    logger.info(f"New value: [not set]")
+                    dirty = True
+                if key in new.keys():
+                    logger.info(f"Updating value for setting '{key}'")
+                    logger.info(f"Old value: [not set]")
+                    logger.info(f"New value: {json.dumps(new[key])}")
+                    dirty = True
+
             if dirty:
                 with open(get_settings_file(), 'w') as f:
                     json.dump(result.json(), f)
@@ -82,10 +93,10 @@ def harvest_path(path: str):
                 logger.info(f"Reporting stats for {filename}")
                 result = report_harvest_result(
                     path=path,
+                    file=filename,
                     content={
                         'task': 'file_size',
-                        'file': filename,
-                        'stat': os.stat(filename)
+                        'size': os.stat(filename).st_size
                     }
                 )
                 if result is not None:

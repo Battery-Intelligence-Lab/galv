@@ -175,10 +175,19 @@ def register(url: str = None, name: str = None, user_id: int = None, run_foregro
             "(will not close the thread, useful for Dockerized application)."
     )
 )
-def click_wrapper(url: str, name: str, user_id: int, run_foreground: bool):
-    register(url=url, name=name, user_id=user_id, run_foreground=run_foreground)
+@click.option(
+    '--restart',
+    is_flag=True,
+    help="Ignore other options and run harvester if config file already exists."
+)
+def click_wrapper(url: str, name: str, user_id: int, run_foreground: bool, restart: bool):
+    if click.option('restart') and settings.get_setting('url'):
+        harvest.run_cycle()
+    else:
+        register(url=url, name=name, user_id=user_id, run_foreground=run_foreground)
 
 
 if __name__ == "__main__":
+    # Check whether a config file already exists, if so, use it
     click.echo("Welcome to Harvester setup.")
     click_wrapper()
