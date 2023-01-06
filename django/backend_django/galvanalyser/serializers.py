@@ -19,23 +19,23 @@ class HarvesterSerializer(serializers.HyperlinkedModelSerializer):
     links = serializers.SerializerMethodField()
 
     def get_links(self, harvester):
-        return {
-            'monitored_paths': reverse_lazy(
-                'harvester-paths',
-                request=self.context.get('request'),
-                kwargs={'pk': harvester.id}
-            ),
-            'users': reverse_lazy(
-                'harvester-users',
-                request=self.context.get('request'),
-                kwargs={'pk': harvester.id}
-            ),
-            'admins': reverse_lazy(
-                'harvester-admins',
-                request=self.context.get('request'),
-                kwargs={'pk': harvester.id}
-            ),
-        }
+        return {}
+        #     'monitored_paths': reverse_lazy(
+        #         'harvester-paths',
+        #         request=self.context.get('request'),
+        #         kwargs={'pk': harvester.id}
+        #     ),
+        #     'users': reverse_lazy(
+        #         'harvester-users',
+        #         request=self.context.get('request'),
+        #         kwargs={'pk': harvester.id}
+        #     ),
+        #     'admins': reverse_lazy(
+        #         'harvester-admins',
+        #         request=self.context.get('request'),
+        #         kwargs={'pk': harvester.id}
+        #     ),
+        # }
 
     class Meta:
         model = Harvester

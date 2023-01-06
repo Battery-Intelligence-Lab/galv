@@ -59,11 +59,12 @@ class HarvesterViewSet(viewsets.ModelViewSet):
     serializer_class = HarvesterSerializer
     filterset_fields = ['name']
     search_fields = ['@name']
+    queryset = Harvester.objects.none().order_by('last_check_in', 'id')
 
     def get_queryset(self):
         return Harvester.objects.complex_filter(
-            Q(user_group__user_set__username__contains=self.request.user.username) |
-            Q(admin_group__user_set__username__contains=self.request.user.username)
+            Q(user_group__in=self.request.user.groups.all()) |
+            Q(admin_group__in=self.request.user.groups.all())
         ).order_by('last_check_in', 'id')
 
     def create(self, request, *args, **kwargs):
