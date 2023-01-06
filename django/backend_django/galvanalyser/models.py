@@ -26,13 +26,13 @@ class Harvester(models.Model):
         to=Group,
         on_delete=models.CASCADE,
         null=True,
-        related_name='harvester_admins'
+        related_name='editable_harvesters'
     )
     user_group = models.ForeignKey(
         to=Group,
         on_delete=models.CASCADE,
         null=True,
-        related_name='harvester_users'
+        related_name='readable_harvesters'
     )
 
     def save(self, *args, **kwargs):
@@ -59,20 +59,36 @@ class Harvester(models.Model):
 class MonitoredPath(models.Model):
     harvester = models.ForeignKey(to=Harvester, on_delete=models.CASCADE)
     path = models.TextField(unique=True)
+    stable_time = models.PositiveSmallIntegerField(default=60)  # seconds files must remain stable to be processed
+    admin_group = models.ForeignKey(
+        to=Group,
+        on_delete=models.CASCADE,
+        null=True,
+        related_name='editable_paths'
+    )
+    user_group = models.ForeignKey(
+        to=Group,
+        on_delete=models.CASCADE,
+        null=True,
+        related_name='readable_paths'
+    )
 
     class Meta:
         unique_together = [['harvester', 'path']]
 
 
-class MonitoredFor(models.Model):
-    path = models.ForeignKey(to=MonitoredPath, on_delete=models.CASCADE)
-    user = models.ForeignKey(to=User, on_delete=models.CASCADE)
+class HarvestError(models.Model):
+    harvester = models.ForeignKey(to=Harvester, related_name='paths', on_delete=models.CASCADE)
+    path = models.ForeignKey(to=MonitoredPath, on_delete=models.DO_NOTHING)
+    file = models.TextField(null=True)
+    error = models.TextField()
+    timestamp = models.DateTimeField(auto_created=True)
 
 
 class ObservedFile(models.Model):
-    monitored_path = models.ForeignKey(to=MonitoredPath, on_delete=models.DO_NOTHING)
+    monitored_path = models.ForeignKey(to=MonitoredPath, related_name='files', on_delete=models.DO_NOTHING)
     relative_path = models.TextField()
-    last_observed_size = models.PositiveBigIntegerField(null=False)
+    last_observed_size = models.PositiveBigIntegerField(null=False, default=0)
     last_observed_time = models.DateTimeField()
     state = models.SmallIntegerField(choices=FileState.choices, default=FileState.UNSTABLE, null=False)
 
@@ -89,19 +105,6 @@ class ObservedFile(models.Model):
                 self.state = FileState.UNSTABLE
 
         self.last_observed_time = timezone.now()
-
-    def import_content(self):
-        path = Path(os.path.join(self.monitored_path.path, self.relative_path))
-        self.state = FileState.IMPORTING
-        try:
-            if not os.path.isfile(path):
-                raise FileNotFoundError
-            print(f"Importing {path}")
-            parse(path, DataColumnType.objects.filter(is_default=True))
-            self.state = FileState.IMPORTED
-        except BaseException as e:
-            self.state = FileState.IMPORT_FAILED
-            raise e
 
     class Meta:
         unique_together = [['monitored_path', 'relative_path']]

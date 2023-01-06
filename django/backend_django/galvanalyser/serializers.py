@@ -1,6 +1,5 @@
 from .models import Harvester, \
     MonitoredPath, \
-    MonitoredFor, \
     ObservedFile, \
     CellData, \
     Dataset, \
@@ -13,24 +12,70 @@ from .models import Harvester, \
     TimeseriesRangeLabel
 from django.contrib.auth.models import User, Group
 from rest_framework import serializers
+from rest_framework.reverse import reverse_lazy
 
 
 class HarvesterSerializer(serializers.HyperlinkedModelSerializer):
+    links = serializers.SerializerMethodField()
+
+    def get_links(self, harvester):
+        return {
+            'monitored_paths': reverse_lazy(
+                'harvester-paths',
+                request=self.context.get('request'),
+                kwargs={'pk': harvester.id}
+            ),
+            'users': reverse_lazy(
+                'harvester-users',
+                request=self.context.get('request'),
+                kwargs={'pk': harvester.id}
+            ),
+            'admins': reverse_lazy(
+                'harvester-admins',
+                request=self.context.get('request'),
+                kwargs={'pk': harvester.id}
+            ),
+        }
+
     class Meta:
         model = Harvester
-        fields = ['url', 'name', 'api_key', 'last_check_in', 'sleep_time']
+        fields = ['url', 'id', 'name', 'sleep_time', 'last_check_in', 'links']
+        read_only_fields = ['url', 'id', 'last_check_in']
+
+
+class HarvesterConfigSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = Harvester
+        fields = ['url', 'id', 'api_key', 'name', 'last_check_in', 'sleep_time', 'paths']
+        depth = 10  # max depth
 
 
 class MonitoredPathSerializer(serializers.HyperlinkedModelSerializer):
+    links = serializers.SerializerMethodField()
+
+    def get_links(self, monitored_path):
+        return {
+            'files': reverse_lazy(
+                'monitored_path-files',
+                request=self.context.get('request'),
+                kwargs={'pk': monitored_path.id}
+            ),
+            'users': reverse_lazy(
+                'monitored_path-users',
+                request=self.context.get('request'),
+                kwargs={'pk': monitored_path.id}
+            ),
+            'admins': reverse_lazy(
+                'monitored_path-admins',
+                request=self.context.get('request'),
+                kwargs={'pk': monitored_path.id}
+            ),
+        }
+
     class Meta:
         model = MonitoredPath
         fields = '__all__'
-
-
-class MonitoredForSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta:
-        model = MonitoredFor
-        fields = '__all__'
+        read_only_fields = ['admin_group', 'user_group']
 
 
 class ObservedFileSerializer(serializers.HyperlinkedModelSerializer):
@@ -100,9 +145,6 @@ class GroupSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
-    groups = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
-    groups = GroupSerializer(groups, many=True)
-
     class Meta:
         model = User
         fields = [
@@ -114,3 +156,4 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
             'is_superuser',
             'groups',
         ]
+        depth = 1
