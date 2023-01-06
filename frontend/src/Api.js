@@ -1,5 +1,5 @@
 
-const url = 'http://localhost:5001/';
+export const url = 'http://localhost:5001/';
 const headers = {
       'Accept': 'application/json',
       'Content-Type': 'application/json'
@@ -49,7 +49,7 @@ export async function loggedIn(skip = true) {
   return  cookie !== undefined && user;
 }
 
-async function authFetch(url, options) {
+export async function authFetch(url, options) {
   const token = user?.token;
   let newOptions = {...options};
   newOptions.credentials = 'same-origin';
@@ -61,14 +61,21 @@ async function authFetch(url, options) {
   url = /\/$/.test(url) ? url : `${url}/`;
   return fetch(url, newOptions).then((response) => {
     if (response.status === 401) {
-      return logout().then(() => {
-        return response;
-      });
+        throw new Error(`Server said 'unauthorised'`)
+      // return logout().then(() => {
+      //   return response;
+      // });
     }
     return response;
   }).catch(e => {
-      console.error(e);
-      return null;
+      // console.error(e);
+      return {
+          count: 0,
+          previous: null,
+          next: null,
+          results: [],
+          error: "Unauthorised"
+      };
   });
 }
 

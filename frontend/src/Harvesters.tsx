@@ -13,13 +13,25 @@ import SaveIcon from '@mui/icons-material/Save';
 import TableHead from '@mui/material/TableHead';
 import DeleteIcon from '@mui/icons-material/Delete';
 import TableRow from '@mui/material/TableRow';
-import PaginatedTable from './PaginatedTable';
+import PaginatedTable, {RowFunProps} from './PaginatedTable';
 
 import HarvesterDetail from './HarvesterDetail';
 import { url,
   run_harvester, harvesters, add_harvester,
   update_harvester, delete_harvester, isAdmin
 } from './Api'
+import Connection from "./APIConnection";
+
+export type HarvesterWriteableFields = {
+  name: string;
+  sleep_time: number;
+}
+
+export type HarvesterFields = HarvesterWriteableFields & {
+  url: string;
+  id: number;
+  last_check_in: string | null;
+}
 
 const useStyles = makeStyles((theme) => ({
   container: {
@@ -39,21 +51,27 @@ const useStyles = makeStyles((theme) => ({
   iconButton: {
     padding: 10,
   },
+  paper: {}
 }));
 
 export default function Harvesters() {
   const classes = useStyles();
 
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
+
   const [selected, setSelected] = useState({id: null})
   const userIsAdmin = isAdmin()
 
-  const addNewHarvester = (data) => {
-    add_harvester({name: data.name, sleep_time: data.sleep_time});
+  const addNewHarvester = (data: HarvesterFields) => {
+    const insert_data: HarvesterWriteableFields = {name: data.name, sleep_time: data.sleep_time}
+    Connection.fetch('harvesters', {body: JSON.stringify(insert_data), method: 'POST'})
+      .then(() => setLastUpdated(new Date()))
   };
+
   const deleteHarvester= () => {
     delete_harvester(selected.id);
   };
-  const updateHarvester= (value) => {
+  const updateHarvester= (value: any) => {
     update_harvester(value.id, value);
   };
 
@@ -61,8 +79,8 @@ export default function Harvesters() {
     run_harvester(selected.id);
   };
 
-  function table_row_generator(row) {
-    return  (<MyTableRow
+  function table_row_generator(row: any) {
+    return (<MyTableRow
         key={row.id}
         savedRow={row}
         onRowSave={updateHarvester}
@@ -72,34 +90,38 @@ export default function Harvesters() {
     />)
   }
 
-  function MyTableRow({savedRow, onRowSave, selected, onSelectRow, disableSave, addIcon}) {
+  function MyTableRow(props: RowFunProps<HarvesterFields>) {
     const classes = useStyles();
-    const [row, setRow] = useState([])
-    const [dirty, setDirty] = useState(false)
+    const [row, setRow] = useState<HarvesterFields>({
+      id: -1,
+      url: "",
+      name: "",
+      last_check_in: null,
+      sleep_time: 3600
+    })
+    const [dirty, setDirty] = useState<boolean>(false)
 
     useEffect(() => {
-      if (!dirty) {
-        setRow(savedRow);
+      if (!dirty && props.savedRow) {
+        setRow(props.savedRow);
       }
-    }, [dirty, savedRow]);
-
+    }, [dirty, props.savedRow]);
 
     let useRow = row;
-    if (useRow.id === undefined) {
-      useRow = savedRow;
-    }
+    if (row.id === -1 && props.savedRow)
+      useRow = props.savedRow;
 
-    const Icon = addIcon ? <AddIcon/> : <SaveIcon/> ;
+    const Icon = props.addIcon ? <AddIcon/> : <SaveIcon/> ;
 
     return (
         <React.Fragment>
           <TableRow
-              onClick={() => {onSelectRow(savedRow);}}
+              onClick={() => {props.onSelectRow(props.savedRow);}}
               hover
-              selected={selected}
+              selected={props.selected}
           >
             <TableCell component="th" scope="row">
-              {savedRow.id}
+              {props.savedRow?.id || ""}
             </TableCell>
 
             <TableCell>
@@ -119,15 +141,10 @@ export default function Harvesters() {
               </TextField>
             </TableCell>
             <TableCell component="th" scope="row">
-              {(savedRow.is_running && (<Typography color='secondary'>Yes</Typography>)) ||
-                  (<Typography color='grey'>No</Typography>)
-              }
-            </TableCell>
-            <TableCell component="th" scope="row">
-              {(savedRow.last_successful_run &&
+              {(props.savedRow?.last_check_in &&
                   Intl.DateTimeFormat('en-GB',
                       { dateStyle: 'long', timeStyle: 'long' }).format(
-                      Date.parse(savedRow.last_successful_run)
+                      Date.parse(props.savedRow.last_check_in)
                   )) || (<Typography color='grey'>None</Typography>)}
             </TableCell>
             <TableCell>
@@ -141,18 +158,18 @@ export default function Harvesters() {
                   value={useRow.sleep_time ? useRow.sleep_time : ''}
                   onChange={(e) => {
                     setDirty(true);
-                    setRow({...row, sleep_time: e.target.value});
+                    setRow({...row, sleep_time: parseInt(e.target.value)});
                   }}
               >
               </TextField>
             </TableCell>
             <TableCell align="right">
-              <Tooltip title={addIcon? "Add new Harvester" : "Save changes to Harvester"}>
+              <Tooltip title={props.addIcon? "Add new Harvester" : "Save changes to Harvester"}>
         <span>
         <IconButton
-            disabled={disableSave || !dirty}
+            disabled={props.disableSave || !dirty}
             onClick={() => {
-              onRowSave(row);
+              props.onRowSave(row);
               setDirty(false);
             }}
         >
@@ -169,13 +186,6 @@ export default function Harvesters() {
   const new_row = (
       <MyTableRow
           key="new"
-          savedRow={{
-            id: null,
-            name: "",
-            last_successful_run: "",
-            is_running: false,
-            sleep_time: false
-          }}
           onRowSave={addNewHarvester}
           selected={false}
           onSelectRow={() => {}}
@@ -187,8 +197,7 @@ export default function Harvesters() {
   const column_headings = [
     {label: 'ID', help: 'Harvester id in database'},
     {label: 'Name', help: 'Harvester name'},
-    {label: 'Is Running', help: 'Displays "True" if harvester is currently running'},
-    {label: 'Last Completed Run', help: 'Datetime of last harvester run that successfully ran until completion'},
+    {label: 'Last Check In', help: 'Datetime of last harvester run that successfully contacted the database'},
     {label: 'Sleep Time (s)', help: 'If set, harvester is run every day on this hour'},
     {label: 'Save', help: 'Click to save edits to a row'},
   ]
@@ -205,16 +214,19 @@ export default function Harvesters() {
 
   const isSelected = selected.id !== null;
 
+  const paginated_table = (<PaginatedTable
+    header={(<TableHead>{table_head}</TableHead>)}
+    row_fun= {table_row_generator}
+    initial_url={`${url}harvesters/`}
+    new_entry_row={new_row}
+    styles={classes}
+    last_updated={lastUpdated}
+  />)
+
   return (
     <Container maxWidth="lg" className={classes.container}>
     <Paper className={classes.paper}>
-      <PaginatedTable data={{
-        header: (<TableHead>{table_head}</TableHead>),
-        row_fun: table_row_generator,
-        initial_url: `${url}harvesters/`,
-        new_entry_row: new_row,
-        styles: classes,
-      }}/>
+      {paginated_table}
     <Tooltip title="Delete selected harvester">
       <span>
     <IconButton 
@@ -229,7 +241,7 @@ export default function Harvesters() {
     <Tooltip title="Run the selected harvester">
       <span>
       <IconButton 
-        disabled={!userIsAdmin || !isSelected || selected.is_running} 
+        disabled={!userIsAdmin || !isSelected}
         onClick={runSelectedHarvester}
       >
       <PlayArrowIcon/>

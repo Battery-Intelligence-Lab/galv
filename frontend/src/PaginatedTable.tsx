@@ -2,24 +2,39 @@
  * Offer a table with previous/next links.
  */
 import classNames from 'classnames'
-import {TableHead, TableRow} from "@mui/material";
-import {Component} from "react";
+import {Component, ReactComponentElement} from "react";
 import TableContainer from "@mui/material/TableContainer";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
+import Button from '@mui/material/Button';
 import Connection, {APIResponse} from "./APIConnection";
 
-type RowFunOptions = {
-  savedRow: any,
-  onRowSave: (row: any) => void,
-  selected: boolean,
-  onSelectRow: (id: number) => void,
-  disabledSave: boolean,
-  addIcon?: boolean,
+export type RowFunProps<T> = {
+  savedRow?: T;
+  onRowSave: (row: any) => void;
+  selected: boolean;
+  onSelectRow: (id: any) => void;
+  disabledSave?: boolean;
+  addIcon?: boolean;
+  [key: string]: any;
+}
+
+type RowFun = (row: any) => ReactComponentElement<any>
+
+export type PaginatedTableProps = {
+  header: ReactComponentElement<any>,
+  row_fun: RowFun,
+  initial_url: string,
+  new_entry_row?: ReactComponentElement<any>,
+  styles?: any,
   [key: string]: any
 }
 
-type RowFun = (row: any) => (options: RowFunOptions) => typeof TableRow
+type PaginatedTableState = {
+  row_data: any[];
+  links: PaginationLinks;
+  last_updated: Date;
+}
 
 export type PaginationLinks = {
   previous?: string | null,
@@ -28,7 +43,10 @@ export type PaginationLinks = {
 
 type PaginationDataFun = (url?: string | null) => APIResponse
 
-type PaginationProps = PaginationLinks & { get_data_fun: PaginationDataFun; position: string }
+type PaginationProps = PaginationLinks & {
+  get_data_fun: PaginationDataFun;
+  position: string;
+}
 
 
 class Pagination extends Component<PaginationProps, {}> {
@@ -39,15 +57,15 @@ class Pagination extends Component<PaginationProps, {}> {
       'pagination-above': this.props.position === 'above',
       'pagination-below': this.props.position === 'below',
     })}>
-      <button
+      <Button
         disabled={!this.props.previous}
         onClick={(evt) => {
           evt.preventDefault();
           this.props.get_data_fun(this.props.previous)
         }}>
         Previous
-      </button>
-      <button
+      </Button>
+      <Button
         disabled={!this.props.next}
         onClick={(evt) => {
           evt.preventDefault();
@@ -55,53 +73,40 @@ class Pagination extends Component<PaginationProps, {}> {
         }}
       >
         Next
-      </button>
+      </Button>
     </div>
     )
   }
 }
 
-export type PaginatedTableProps = {
-  header: typeof TableHead,
-  row_fun: RowFun,
-  initial_url: string,
-  new_entry_row?: typeof TableRow,
-  styles?: any,
-  [key: string]: any
-}
-
-type PaginatedTableState = {
-  row_data: any[],
-  links: PaginationLinks
-}
-
 export default class PaginatedTable extends Component<PaginatedTableProps, PaginatedTableState> {
-  header: typeof TableHead;
-  row_fun: RowFun;
-  new_entry_row: typeof TableRow | undefined;
-  styles: any;
-  initial_url: string;
+  current_url: string = "";
 
   state = {
     row_data: [],
-    links: {previous: null, next: null}
+    links: {previous: null, next: null},
+    last_updated: new Date(0)
   }
 
   constructor(props: PaginatedTableProps) {
     super(props)
-    this.header = props.data.header
-    this.row_fun = props.data.row_fun
-    this.new_entry_row = props.data.new_entry_row
-    this.styles = props.data.styles
-    this.initial_url = props.data.initial_url
+    if (!this.current_url) this.current_url = props.initial_url
   }
 
   componentDidMount() {
-    this.get_data(this.initial_url)
+    this.get_data(this.props.initial_url)
+  }
+
+  componentDidUpdate(prevProps: PaginatedTableProps) {
+    // Typical usage (don't forget to compare props):
+    if (this.props.last_updated !== prevProps.last_updated) {
+      this.get_data(this.props.initial_url);
+    }
   }
 
   get_data: PaginationDataFun = async (url) => {
     if (!url) return;
+    this.current_url = url;
     await Connection.fetch(url)
       // @ts-ignore
       .then((res: APIResponse) => {
@@ -111,7 +116,7 @@ export default class PaginatedTable extends Component<PaginatedTableProps, Pagin
           links: {
             next: res.next,
             previous: res.previous
-          },
+          }
         })
       })
       .catch(e => {
@@ -131,13 +136,13 @@ export default class PaginatedTable extends Component<PaginatedTableProps, Pagin
         <TableContainer>
           {
             // @ts-ignore
-            <Table className={this.styles.table} size="small">
-              {this.header}
+            <Table className={this.props.styles.table} size="small">
+              {this.props.header}
               {
                 // @ts-ignore
                 <TableBody>
-                  {this.state.row_data.map(this.row_fun)}
-                  {this.new_entry_row}
+                  {this.state.row_data.map(this.props.row_fun)}
+                  {this.props.new_entry_row}
                 </TableBody>
               }
             </Table>
