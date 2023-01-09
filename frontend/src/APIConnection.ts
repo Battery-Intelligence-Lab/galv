@@ -5,11 +5,11 @@ export type User = {
   last_name: string,
   is_staff: boolean,
   is_superuser: boolean,
-  groups: {
-    url: string,
-    name: string,
-    permissions: []
-  }[],
+  // groups: {
+  //   url: string,
+  //   name: string,
+  //   permissions: []
+  // }[],
   token: string,
 }
 
@@ -70,6 +70,7 @@ export class APIConnection {
   async fetch(url: string, options?: any): Promise<APIResponse> {
     await this.get_is_logged_in();
     console.info(`Fetch ${url} for ${this.user?.username}`)
+    console.debug('fetch options', options)
     const token = this.user?.token;
     let newOptions = {...options};
     newOptions.credentials = 'same-origin';

@@ -59,24 +59,30 @@ export default function Harvesters() {
 
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
 
-  const [selected, setSelected] = useState({id: null})
+  const [selected, setSelected] = useState<HarvesterFields|null>(null)
   const userIsAdmin = isAdmin()
 
   const addNewHarvester = (data: HarvesterFields) => {
     const insert_data: HarvesterWriteableFields = {name: data.name, sleep_time: data.sleep_time}
-    Connection.fetch('harvesters', {body: JSON.stringify(insert_data), method: 'POST'})
+    Connection.fetch('harvesters/', {body: JSON.stringify(insert_data), method: 'POST'})
       .then(() => setLastUpdated(new Date()))
   };
 
-  const deleteHarvester= () => {
-    delete_harvester(selected.id);
-  };
-  const updateHarvester= (value: any) => {
-    update_harvester(value.id, value);
+  const updateHarvester = (data: any) => {
+    const insert_data: HarvesterWriteableFields & {id: number} = {
+      id: data.id,
+      name: data.name,
+      sleep_time: data.sleep_time
+    }
+    Connection.fetch(data.url, {body: JSON.stringify(insert_data), method: 'PATCH'})
+      .then(() => setLastUpdated(new Date()))
   };
 
-  const runSelectedHarvester = () => {
-    run_harvester(selected.id);
+  const deleteHarvester = () => {
+    if (isSelected)
+      Connection.fetch(selected.url, {method: 'DELETE'})
+        .then(() => setLastUpdated(new Date()))
+        .then(() => setSelected(null))
   };
 
   function table_row_generator(row: any) {
@@ -84,7 +90,7 @@ export default function Harvesters() {
         key={row.id}
         savedRow={row}
         onRowSave={updateHarvester}
-        selected={selected.id === row.id}
+        selected={selected !== null && selected.id === row.id}
         onSelectRow={setSelected}
         disableSave={!userIsAdmin}
     />)
@@ -150,6 +156,7 @@ export default function Harvesters() {
             <TableCell>
               <TextField
                   type="number"
+                  placeholder="60"
                   InputProps={{
                     classes: {
                       input: classes.resize,
@@ -183,17 +190,6 @@ export default function Harvesters() {
     )
   }
 
-  const new_row = (
-      <MyTableRow
-          key="new"
-          onRowSave={addNewHarvester}
-          selected={false}
-          onSelectRow={() => {}}
-          disableSave={false}
-          addIcon={true}
-      />
-  )
-
   const column_headings = [
     {label: 'ID', help: 'Harvester id in database'},
     {label: 'Name', help: 'Harvester name'},
@@ -212,13 +208,12 @@ export default function Harvesters() {
       </TableCell>
   ))
 
-  const isSelected = selected.id !== null;
+  const isSelected = selected !== null;
 
   const paginated_table = (<PaginatedTable
     header={(<TableHead>{table_head}</TableHead>)}
     row_fun= {table_row_generator}
-    initial_url={`${url}harvesters/`}
-    new_entry_row={new_row}
+    initial_url={`harvesters/`}
     styles={classes}
     last_updated={lastUpdated}
   />)
@@ -238,20 +233,8 @@ export default function Harvesters() {
     </IconButton>
       </span>
     </Tooltip>
-    <Tooltip title="Run the selected harvester">
-      <span>
-      <IconButton 
-        disabled={!userIsAdmin || !isSelected}
-        onClick={runSelectedHarvester}
-      >
-      <PlayArrowIcon/>
-    </IconButton>
-    </span>
-    </Tooltip>
     </Paper>
-    {isSelected &&
-      <HarvesterDetail harvester={selected} />
-    }
+    {isSelected && <HarvesterDetail harvester={selected} />}
     </Container>
   );
 }

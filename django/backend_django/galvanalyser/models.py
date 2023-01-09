@@ -57,7 +57,7 @@ class Harvester(models.Model):
 
 
 class MonitoredPath(models.Model):
-    harvester = models.ForeignKey(to=Harvester, on_delete=models.CASCADE)
+    harvester = models.ForeignKey(to=Harvester, related_name='monitored_paths', on_delete=models.CASCADE)
     path = models.TextField(unique=True)
     stable_time = models.PositiveSmallIntegerField(default=60)  # seconds files must remain stable to be processed
     admin_group = models.ForeignKey(

@@ -74,3 +74,22 @@ supported. An entity relationship diagram is shown below.
 
 <img src="https://github.com/Battery-Intelligence-Lab/galvanalyser/raw/main/docs/Galvanalyser_DB_ERD.png" width="600" />
 
+### Harvester permissions
+
+| Action           | User status   |
+|------------------|---------------|
+| View harvester   | Users, Admins |
+| View paths       | Users, Admins |
+| Add paths        | Users, Admins |
+| Edit harvester   | Admins        |
+| Delete harvester | Admins        |
+
+### Path permissions
+
+| Action      | User status   |
+|-------------|---------------|
+| View files  | Users, Admins |
+| Edit path   | Admins        |
+| Delete path | Admins        |
+
+All Harvester Admins are Admins on all paths on that Harvester.

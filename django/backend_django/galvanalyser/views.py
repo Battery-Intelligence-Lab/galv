@@ -42,6 +42,10 @@ import json
 from .tasks import get_env
 
 
+def error_response(error: str, status: int = 400) -> Response:
+    return Response({'error': error}, status=status)
+
+
 class LoginView(KnoxLoginView):
     permission_classes = [AllowAny]
     authentication_classes = [BasicAuthentication]
@@ -62,7 +66,7 @@ class HarvesterViewSet(viewsets.ModelViewSet):
     queryset = Harvester.objects.none().order_by('last_check_in', 'id')
 
     def get_queryset(self):
-        return Harvester.objects.complex_filter(
+        return Harvester.objects.filter(
             Q(user_group__in=self.request.user.groups.all()) |
             Q(admin_group__in=self.request.user.groups.all())
         ).order_by('last_check_in', 'id')
@@ -74,13 +78,13 @@ class HarvesterViewSet(viewsets.ModelViewSet):
 
         # Validate input
         if not request.data['name']:
-            return Response({'error': 'No name specified for Harvester.'}, status=400)
+            return error_response('No name specified for Harvester.')
         if not request.data['user']:
-            return Response({'error': 'No administrator id specified for Harvester.'}, status=400)
+            return error_response('No administrator id specified for Harvester.')
         if len(Harvester.objects.filter(name=request.data['name'])):
-            return Response({'error': 'Harvester with that name already exists'}, status=400)
+            return error_response('Harvester with that name already exists')
         if len(User.objects.filter(id=int(request.data['user']))) != 1:
-            return Response({'error': f'No user exists with id {request.data["user"]}'}, status=400)
+            return error_response('No user exists with id {request.data["user"]}')
 
         # Create Harvester
         harvester = Harvester.objects.create(name=request.data['name'])
@@ -93,6 +97,32 @@ class HarvesterViewSet(viewsets.ModelViewSet):
         user.groups.add(harvester.admin_group)
         user.save()
 
+        return Response(self.get_serializer(harvester).data)
+
+    def update(self, request, *args, **kwargs):
+        try:
+            harvester = Harvester.objects.get(id=kwargs.get('pk'))
+        except Harvester.DoesNotExist:
+            return error_response(f'Harvester with id {request.data["id"]} not found.')
+        if not request.user.groups.filter(id=harvester.admin_group_id).exists():
+            return error_response(f'Access denied.')
+
+        name = request.data.get('name')
+        if name != harvester.name:
+            if Harvester.objects.filter(name=name).exists():
+                return error_response(f'Another Harvester already has the name {name}')
+            harvester.name = name
+        sleep_time = request.data.get('sleep_time', None)
+        if sleep_time is not None:
+            try:
+                sleep_time = int(sleep_time)
+                assert sleep_time > 0
+            except (TypeError, ValueError, AssertionError):
+                return error_response('sleep_time must be an integer greater than 0')
+            if sleep_time != harvester.sleep_time:
+                harvester.sleep_time = sleep_time
+
+        harvester.save()
         return Response(self.get_serializer(harvester).data)
 
     @action(detail=True, methods=['GET'])
@@ -110,39 +140,6 @@ class HarvesterViewSet(viewsets.ModelViewSet):
         # TODO: Restrict access to Harvester or harvester user
         harvester = get_object_or_404(Harvester, id=pk)
         return Response(HarvesterConfigSerializer(harvester, context={'request': request}).data)
-
-    @action(detail=True, methods=['GET'])
-    def paths(self, request, pk: int = None):
-        """
-        MonitoredPaths for the Harvester.
-        """
-        # TODO: Restrict access to Harvester or harvester user
-        harvester = get_object_or_404(Harvester, id=pk)
-        paths = MonitoredPath.objects.filter(harvester=harvester).order_by('id')
-        paths = self.paginate_queryset(paths)
-        return self.get_paginated_response(MonitoredPathSerializer(paths, many=True).data)
-
-    @action(detail=True, methods=['GET'])
-    def users(self, request, pk: int = None):
-        """
-        Users able to access the Harvester. Users can create MonitoredPaths.
-        """
-        # TODO: Restrict access to Harvester or harvester user
-        harvester = get_object_or_404(Harvester, id=pk)
-        users = User.objects.filter(groups__in=[harvester.admin_group, harvester.user_group])
-        users = self.paginate_queryset(users)
-        return self.get_paginated_response(UserSerializer(users, context={'request': request}, many=True).data)
-
-    @action(detail=True, methods=['GET'])
-    def admins(self, request, pk: int = None):
-        """
-        Users able to edit the Harvester.
-        """
-        # TODO: Restrict access to Harvester or harvester user
-        harvester = get_object_or_404(Harvester, id=pk)
-        admins = User.objects.filter(groups__in=[harvester.admin_group])
-        admins = self.paginate_queryset(admins)
-        return self.get_paginated_response(UserSerializer(admins, context={'request': request}, many=True).data)
 
     @action(detail=True, methods=['POST'])
     def report(self, request, pk: int = None):
@@ -206,7 +203,17 @@ class MonitoredPathViewSet(viewsets.ModelViewSet):
     TODO: document
     """
     serializer_class = MonitoredPathSerializer
+    filterset_fields = ['path', 'harvester__id', 'harvester__name']
+    search_fields = ['@path']
     queryset = MonitoredPath.objects.all().order_by('id')
+
+    # Access restrictions
+    def get_queryset(self):
+        return MonitoredPath.objects.filter(
+            Q(user_group__in=self.request.user.groups.all()) |
+            Q(admin_group__in=self.request.user.groups.all()) |
+            Q(harvester__admin_group__in=self.request.user.groups.all())
+        ).order_by('id')
 
     def create(self, request, *args, **kwargs):
         """
@@ -224,11 +231,16 @@ class MonitoredPathViewSet(viewsets.ModelViewSet):
         if len(MonitoredPath.objects.filter(path=path, harvester=harvester)):
             return Response({'error': 'Path already exists on Harvester.'}, status=400)
         # Check user is authorised to create paths on Harvester
-        if harvester.user_group not in request.user.groups and harvester.admin_group not in request.user.groups:
+        if not request.user.groups.filter(id=harvester.user_group_id).exists() and \
+                not request.user.groups.filter(id=harvester.admin_group_id).exists():
             return Response({'error': f'Permission denied to {request.user.username} for {harvester.name}'})
 
         # Create Path
-        monitored_path = MonitoredPath.objects.create(path=path, harvester=harvester)
+        try:
+            stable_time = int(request.data['stable_time'])
+            monitored_path = MonitoredPath.objects.create(path=path, harvester=harvester, stable_time=stable_time)
+        except (TypeError, ValueError):
+            monitored_path = MonitoredPath.objects.create(path=path, harvester=harvester)
         # Create user/admin groups
         monitored_path.user_group = Group.objects.create(name=f"path_{harvester.id}_{monitored_path.id}_users")
         monitored_path.admin_group = Group.objects.create(name=f"path_{harvester.id}_{monitored_path.id}_admins")
@@ -238,6 +250,33 @@ class MonitoredPathViewSet(viewsets.ModelViewSet):
         request.user.save()
 
         return Response(self.get_serializer(monitored_path).data)
+
+    def update(self, request, *args, **kwargs):
+        try:
+            path = MonitoredPath.objects.get(id=kwargs.get('pk'))
+        except MonitoredPath.DoesNotExist:
+            return error_response(f'Path with id {request.data["id"]} not found.')
+        if not request.user.groups.filter(id=path.admin_group_id).exists():
+            if not request.user.groups.filter(id=path.harvester.admin_group_id).exists():
+                return error_response(f'Access denied.')
+
+        path_str = request.data.get('path')
+        if path_str != path.path:
+            if MonitoredPath.objects.filter(path=path_str, harvester=path.harvester).exists():
+                return error_response(f'Path {path_str} already exists on {path.harvester.name}')
+            path.path = path_str
+        stable_time = request.data.get('stable_time', None)
+        if stable_time is not None:
+            try:
+                stable_time = int(stable_time)
+                assert stable_time > 0
+            except (TypeError, ValueError, AssertionError):
+                return error_response('stable_time must be an integer greater than 0')
+            if stable_time != path.stable_time:
+                path.stable_time = stable_time
+
+        path.save()
+        return Response(self.get_serializer(path).data)
 
     @action(detail=True, methods=['GET'])
     def files(self, request, pk: int = None):

@@ -19,7 +19,9 @@ export type RowFunProps<T> = {
   [key: string]: any;
 }
 
-type RowFun = (row: any) => ReactComponentElement<any>
+type RowFun = ((row: any, i: number, array: any[]) => ReactComponentElement<any>) |
+  ((row: any, i: number) => ReactComponentElement<any>) |
+  ((row: any) => ReactComponentElement<any>)
 
 export type PaginatedTableProps = {
   header: ReactComponentElement<any>,
