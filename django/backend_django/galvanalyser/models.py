@@ -8,13 +8,13 @@ import os
 import random
 
 
-class FileState(models.IntegerChoices):
-    IMPORT_FAILED = -1
-    UNSTABLE = 0
-    GROWING = 1
-    STABLE = 2
-    IMPORTING = 3
-    IMPORTED = 4
+class FileState(models.Choices):
+    IMPORT_FAILED = "IMPORT FAILED"
+    UNSTABLE = "UNSTABLE"
+    GROWING = "GROWING"
+    STABLE = "STABLE"
+    IMPORTING = "IMPORTING"
+    IMPORTED = "IMPORTED"
 
 
 class Harvester(models.Model):
@@ -82,15 +82,15 @@ class HarvestError(models.Model):
     path = models.ForeignKey(to=MonitoredPath, on_delete=models.DO_NOTHING)
     file = models.TextField(null=True)
     error = models.TextField()
-    timestamp = models.DateTimeField(auto_created=True)
+    timestamp = models.DateTimeField(auto_now=True, null=True)
 
 
 class ObservedFile(models.Model):
     monitored_path = models.ForeignKey(to=MonitoredPath, related_name='files', on_delete=models.DO_NOTHING)
     relative_path = models.TextField()
     last_observed_size = models.PositiveBigIntegerField(null=False, default=0)
-    last_observed_time = models.DateTimeField()
-    state = models.SmallIntegerField(choices=FileState.choices, default=FileState.UNSTABLE, null=False)
+    last_observed_time = models.DateTimeField(null=True)
+    state = models.TextField(choices=FileState.choices, default=FileState.UNSTABLE, null=False)
 
     def inspect_size(self):
         path = Path(os.path.join(self.monitored_path.path, self.relative_path))

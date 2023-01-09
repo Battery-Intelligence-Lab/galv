@@ -39,7 +39,6 @@ from rest_framework.response import Response
 from knox.views import LoginView as KnoxLoginView
 from rest_framework.authentication import BasicAuthentication
 import json
-from .tasks import get_env
 
 
 def error_response(error: str, status: int = 400) -> Response:
@@ -125,11 +124,11 @@ class HarvesterViewSet(viewsets.ModelViewSet):
         harvester.save()
         return Response(self.get_serializer(harvester).data)
 
-    @action(detail=True, methods=['GET'])
-    def env(self, request, pk: int = None):
-        harvester = Harvester.objects.get(id=pk)
-        result = get_env.apply_async(queue=harvester.name)
-        return Response(result.get())
+    # @action(detail=True, methods=['GET'])
+    # def env(self, request, pk: int = None):
+    #     harvester = Harvester.objects.get(id=pk)
+    #     result = get_env.apply_async(queue=harvester.name)
+    #     return Response(result.get())
 
     @action(detail=True, methods=['GET'])
     def config(self, request, pk: int = None):
@@ -169,33 +168,51 @@ class HarvesterViewSet(viewsets.ModelViewSet):
                 path=path,
                 error=str(error)
             )
+            return Response({})
         elif request.data['status'] == 'success':
             # Figure out what we succeeded in doing!
             content = request.data['content']
             if content['task'] == 'file_size':
                 # Harvester is reporting the size of a file
                 # Update our database record and return a file status
-                file, _ = ObservedFile.objects.get_or_create(monitored_path=path)
+                file, _ = ObservedFile.objects.get_or_create(monitored_path=path, relative_path=request.data['file'])
+
                 size = content['size']
                 if size < file.last_observed_size:
                     file.state = FileState.UNSTABLE
                 elif size > file.last_observed_size:
                     file.state = FileState.GROWING
+
+                if size != file.last_observed_size:
+                    file.last_observed_size = size
+                    file.last_observed_time = timezone.now()
                 else:
                     # Recent changes
                     if file.last_observed_time + timezone.timedelta(seconds=path.stable_time) > timezone.now():
                         file.state = FileState.UNSTABLE
                     # Stable file -- already imported?
                     elif file.state not in [FileState.IMPORTED, FileState.IMPORT_FAILED]:
-                        file.state = FileState.UNSTABLE
-                file.last_observed_size = size
-                file.last_observed_time = timezone.now()
+                        file.state = FileState.STABLE
+
                 file.save()
-                return Response(ObservedFileSerializer(file).data)
+                return Response(ObservedFileSerializer(file, context={'request': self.request}).data)
+            elif content['task'] == 'import':
+                try:
+                    file = ObservedFile.objects.get(monitored_path=path, relative_path=request.data['file'])
+                except ObservedFile.DoesNotExist:
+                    return error_response("ObservedFile does not exist")
+                if content['status'] == 'begin':
+                    file.state = FileState.IMPORTING
+                elif content['status'] == 'failed':
+                    file.state = FileState.IMPORT_FAILED
+                elif content['status'] == 'complete':
+                    file.state = FileState.IMPORTED
+                file.save()
+                return Response(ObservedFileSerializer(file, context={'request': self.request}))
             else:
-                return Response({'error': 'Unrecognised task'}, status=400)
+                return error_response('Unrecognised task')
         else:
-            return Response({'error': 'Unrecognised status'}, status=400)
+            return error_response('Unrecognised status')
 
 
 class MonitoredPathViewSet(viewsets.ModelViewSet):

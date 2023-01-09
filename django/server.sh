@@ -25,14 +25,13 @@ python manage.py loaddata galvanalyser/fixtures/Users.json || \
   echo "admin:admin already exists; continuing"
 
 >&2 echo "Initialisation complete - starting server"
-#exec "$@"
 
-mkdir -p /var/run/celery /var/log/celery
-chown -R nobody:nogroup /var/run/celery /var/log/celery
+#mkdir -p /var/run/celery /var/log/celery
+#chown -R nobody:nogroup /var/run/celery /var/log/celery
 
-python manage.py runserver 0.0.0.0:5000 & \
-celery -A config.celery_settings beat \
-      --loglevel=DEBUG \
-      --logfile=/var/log/celery/scheduler.log \
-      -s /var/run/celery/celerybeat-schedule \
-      --uid=nobody --gid=nogroup
+python manage.py runserver 0.0.0.0:5000 # & \
+#celery -A config.celery_settings beat \
+#      --loglevel=DEBUG \
+#      --logfile=/var/log/celery/scheduler.log \
+#      -s django_celery_beat.schedulers:DatabaseScheduler \
+#      --uid=nobody --gid=nogroup

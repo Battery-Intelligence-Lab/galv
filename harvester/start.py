@@ -71,7 +71,7 @@ def register(url: str = None, name: str = None, user_id: int = None, run_foregro
     else:
         name_specified = True
     while True:
-        result = query(f"{url}harvesters/by_name/?name={name}")
+        result = query(f"{url}harvesters/?name={name}")
 
         if len(result['results']) > 0:
             click.echo(f"There is already a harvester called {name}.", err=True)
