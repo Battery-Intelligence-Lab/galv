@@ -3,6 +3,8 @@
 # of Oxford, and the 'Galvanalyser' Developers. All rights reserved.
 
 import os
+
+import json
 import psutil
 
 from .database.util.battery_exceptions import UnsupportedFileTypeError
@@ -16,6 +18,22 @@ from .maccor_input_file import (
     MaccorExcelInputFile,
     MaccorRawInputFile,
 )
+import sys
+import logging
+import requests
+sys.path.append(os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')))
+from settings import get_setting, get_logfile
+
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__file__)
+# stream_handler = logging.StreamHandler(sys.stdout)
+# stream_handler.setLevel(logging.INFO)
+# logger.addHandler(stream_handler)
+file_handler = logging.FileHandler(get_logfile())
+file_handler.setLevel(logging.INFO)
+logger.addHandler(file_handler)
+
 
 registered_input_files = [
     BiologicMprInputFile,
@@ -41,28 +59,55 @@ def has_handle(fpath):
     return False
 
 
-def import_file(base_path, file_path_row, harvester_name, conn):
+def report(
+        path: os.PathLike|str,
+        content=None,
+        file: os.PathLike|str = None,
+        error: BaseException = None
+):
+    try:
+        if error is not None:
+            data = {'status': 'error', 'error': ";".join(error.args)}
+        else:
+            data = {'status': 'success', 'content': content}
+        data['path'] = path
+        if file is not None:
+            data['file'] = file
+        logger.debug(f"{get_setting('url')}report/; {json.dumps(data)}")
+        return requests.post(
+            f"{get_setting('url')}report/",
+            headers={
+                'Authorization': f"Harvester {get_setting('api_key')}"
+            },
+            json=data
+        )
+    except BaseException as e:
+        logger.error(e)
+    return None
+
+
+def import_file(core_path: str, file_path: str):
     """
         Attempts to import a given file
     """
-    absolute_path = file_path_row.monitored_path
-    if not os.path.isabs(absolute_path) and base_path is not None:
-        absolute_path = os.path.join(base_path, absolute_path)
-
-    fullpath = os.path.join(
-        absolute_path, file_path_row.observed_path
-    )
+    full_file_path = os.sep.join([core_path, file_path])
     print("")
-    if not os.path.isfile(fullpath):
-        print("Is not a file, skipping: " + fullpath)
+    if not os.path.isfile(full_file_path):
+        print("Is not a file, skipping: " + full_file_path)
+        report(path=core_path, file=file_path, error=FileNotFoundError())
         return
-    print("Importing " + fullpath)
-    rows_updated = file_path_row.update_observed_file_state_if_state_is(
-        "IMPORTING", "STABLE", conn
+    print("Importing " + full_file_path)
+    report(
+        path=core_path,
+        file=file_path,
+        content={
+            'content': {
+                'task': 'import',
+                'status': 'begin'
+            }
+        }
     )
-    if rows_updated == 0:
-        print("File was not stable as expected, skipping import")
-        return
+
     try:
         # Attempt reading the file before updating the database to avoid
         # creating rows for a file we can't read.
@@ -73,7 +118,7 @@ def import_file(base_path, file_path_row, harvester_name, conn):
         for input_file_cls in registered_input_files:
             try:
                 print('Tried input reader {}'.format(input_file_cls))
-                input_file = input_file_cls(fullpath)
+                input_file = input_file_cls(full_file_path)
             except Exception as e:
                 print('...failed with: ', type(e), e)
             else:
@@ -84,8 +129,5 @@ def import_file(base_path, file_path_row, harvester_name, conn):
 
         print("File successfully imported")
     except Exception as e:
-        file_path_row.update_observed_file_state("IMPORT_FAILED", conn)
-        print("Import failed for " + fullpath)
-        # perhaps the exception should be saved to the database
-        # print it for now during development
-        traceback.print_exc()
+        logger.error(e)
+        # report(path=core_path, file=file_path, error=e)

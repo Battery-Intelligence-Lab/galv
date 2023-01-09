@@ -6,16 +6,11 @@ services:
       dockerfile: Dockerfile
       context: ./django
     depends_on:
-      - redis
-      - rabbitmq
       - postgres
     ports:
       - "5001:5000"
     volumes:
      - ./django:/usr/app
-     - "${GALVANALYSER_HARVESTER_TEST_PATH}:/usr/test_data"
-     - "${GALVANALYSER_HARVESTER_BASE_PATH}:/usr/data"
-     - "${CELERY_LOG_DIR}:/var/log/celery"
     restart: unless-stopped
     working_dir: /usr/app
     command: ./server.sh
@@ -23,19 +18,22 @@ services:
     env_file:
      - ./.env
      - ./django/.env.secret
-  worker:
+
+  harvester:
     build:
       dockerfile: Dockerfile
       context: ./harvester
-    command: python init.py --name "Harvester03" --url http://app:5000/ --user_id 42 --run_foreground --restart
+    command: python start.py --name "harvey" --url http://app:5000/ --user_id 42 --run_foreground --restart
 #    command: tail -F anything
     depends_on:
       - app
     volumes:
      - ./harvester:/usr/harvester
      - ./.harvester:/harvester_files
-
+     - "${GALVANALYSER_HARVESTER_TEST_PATH}:/usr/test_data"
+     - "${GALVANALYSER_HARVESTER_BASE_PATH}:/usr/data"
     working_dir: /usr/harvester
+
   frontend:
     image: frontend_dev
     build:
