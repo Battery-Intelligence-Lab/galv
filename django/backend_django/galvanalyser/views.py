@@ -191,7 +191,7 @@ class HarvesterViewSet(viewsets.ModelViewSet):
                     if file.last_observed_time + timezone.timedelta(seconds=path.stable_time) > timezone.now():
                         file.state = FileState.UNSTABLE
                     # Stable file -- already imported?
-                    elif file.state not in [FileState.IMPORTED, FileState.IMPORT_FAILED]:
+                    elif file.state not in [FileState.IMPORTED.value, FileState.IMPORT_FAILED.value]:
                         file.state = FileState.STABLE
 
                 file.save()
@@ -201,14 +201,60 @@ class HarvesterViewSet(viewsets.ModelViewSet):
                     file = ObservedFile.objects.get(monitored_path=path, relative_path=request.data['file'])
                 except ObservedFile.DoesNotExist:
                     return error_response("ObservedFile does not exist")
-                if content['status'] == 'begin':
-                    file.state = FileState.IMPORTING
-                elif content['status'] == 'failed':
+                if content['status'] in ['begin', 'in_progress', 'complete']:
+                    try:
+                        if content['status'] == 'begin':
+                            file.state = FileState.IMPORTING
+                            # TODO: process metadata under 'begin'?
+                            dataset, _ = Dataset.objects.get_or_create(
+                                defaults={'date': timezone.now()},
+                                file=file
+                            )
+                        elif content['status'] == 'complete':
+                            file.state = FileState.IMPORTED
+                        else:
+                            dataset = Dataset.objects.get(file=file)
+                            for column_data in content['data']:
+                                try:
+                                    column_type = DataColumnType.objects.get(id=column_data['column_id'])
+                                    column, _ = DataColumn.objects.get_or_create(
+                                        name=column_type.name,
+                                        type=column_type,
+                                        dataset=dataset
+                                    )
+                                except KeyError:
+                                    if 'unit_id' in column_data:
+                                        unit = DataUnit.objects.get(id=column_data['unit_id'])
+                                    else:
+                                        unit, _ = DataUnit.objects.get_or_create(symbol=column_data['unit_symbol'])
+                                    try:
+                                        column_type = DataColumnType.objects.get(unit=unit)
+                                    except DataColumnType.DoesNotExist:
+                                        column_type = DataColumnType.objects.create(
+                                            name=column_data['column_name'],
+                                            unit=unit
+                                        )
+                                    column, _ = DataColumn.objects.get_or_create(
+                                        name=column_data['column_name'],
+                                        type=column_type,
+                                        dataset=dataset
+                                    )
+                                TimeseriesData.objects.bulk_create([
+                                    TimeseriesData(sample=k, value=v, column_id=column.id)
+                                    for k, v in column_data['values'].items()
+                                ])
+
+                    except BaseException as e:
+                        file.state = FileState.IMPORT_FAILED
+                        HarvestError.objects.create(harvester=harvester, path=path, error=str(e))
+                        file.save()
+                        return error_response(f"Error importing data: {e.args}")
+                if content['status'] == 'failed':
                     file.state = FileState.IMPORT_FAILED
-                elif content['status'] == 'complete':
-                    file.state = FileState.IMPORTED
+
                 file.save()
-                return Response(ObservedFileSerializer(file, context={'request': self.request}))
+
+                return Response(ObservedFileSerializer(file, context={'request': self.request}).data)
             else:
                 return error_response('Unrecognised task')
         else:

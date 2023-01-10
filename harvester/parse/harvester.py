@@ -5,10 +5,12 @@
 import os
 
 import json
+import typing
+
 import psutil
 
 from .database.util.battery_exceptions import UnsupportedFileTypeError
-
+from .database.util.iter_file import IteratorFile
 import traceback
 
 from .ivium_input_file import IviumInputFile
@@ -24,6 +26,7 @@ import requests
 sys.path.append(os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')))
 from settings import get_setting, get_logfile
 
+from typing import TypedDict
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__file__)
@@ -42,6 +45,9 @@ registered_input_files = [
     MaccorExcelInputFile,
     MaccorRawInputFile,
 ]
+
+RECORD_NO_COLUMN_ID = 0
+UNIT_UNITLESS = 1
 
 
 def has_handle(fpath):
@@ -101,10 +107,8 @@ def import_file(core_path: str, file_path: str):
         path=core_path,
         file=file_path,
         content={
-            'content': {
-                'task': 'import',
-                'status': 'begin'
-            }
+            'task': 'import',
+            'status': 'begin'
         }
     )
 
@@ -127,7 +131,59 @@ def import_file(core_path: str, file_path: str):
         if input_file is None:
             raise UnsupportedFileTypeError
 
+        # TODO: Query server payload size limit
+        query_max_size = 2 * 1_000_000  # approx 2MB
+        # Figure out column data
+        column_data = {}
+        mapping = input_file.get_file_column_to_standard_column_mapping()
+        record_number_column = [k for k, v in mapping.items() if v == RECORD_NO_COLUMN_ID]
+        record_number_column = record_number_column[0] if len(record_number_column) else None
+        generator = input_file.load_data(input_file.file_path, input_file.column_info.keys())
+        for i, r in enumerate(generator):
+            record_number = int(r.get(record_number_column, i))
+            for k, v in r.items():
+                if k == record_number_column:
+                    continue
+                if k in column_data:
+                    column_data[k]['values'][record_number] = v
+                else:
+                    column_data[k] = {}
+                    if k in mapping:
+                        column_data[k]['column_id'] = mapping[k]
+                    else:
+                        column_data[k]['column_name'] = k
+                        if 'unit' in input_file.column_info[k]:
+                            column_data[k]['unit_symbol'] = input_file.column_info[k].get('unit')
+                        else:
+                            column_data[k]['unit_id'] = UNIT_UNITLESS
+                    column_data[k]['values'] = {}
+
+        # TODO: Resume/append where record already exists
+
+        # Send data
+        report(path=core_path, file=file_path, content={
+            'task': 'import',
+            'status': 'in_progress',
+            'data': [v for v in column_data.values()]
+        })
+
+        # Send metadata
+
         print("File successfully imported")
     except Exception as e:
         logger.error(e)
         # report(path=core_path, file=file_path, error=e)
+
+
+class DjangoColumn(TypedDict):
+    name: str
+    unit: typing.Optional[str | int]
+    values: list
+
+
+def column_to_django_column(col) -> DjangoColumn:
+    return {
+        'name': 'col',
+        'unit': None,
+        'values': []
+    }

@@ -181,7 +181,7 @@ def register(url: str = None, name: str = None, user_id: int = None, run_foregro
     help="Ignore other options and run harvester if config file already exists."
 )
 def click_wrapper(url: str, name: str, user_id: int, run_foreground: bool, restart: bool):
-    if click.option('restart') and settings.get_setting('url'):
+    if restart and settings.get_setting('url'):
         harvest.run_cycle()
     else:
         register(url=url, name=name, user_id=user_id, run_foreground=run_foreground)

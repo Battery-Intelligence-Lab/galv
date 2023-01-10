@@ -2,9 +2,6 @@ from django.utils import timezone
 from django.db import models
 from django.contrib.auth.models import User, Group
 
-from .parsers import *
-from pathlib import Path
-import os
 import random
 
 
@@ -92,20 +89,6 @@ class ObservedFile(models.Model):
     last_observed_time = models.DateTimeField(null=True)
     state = models.TextField(choices=FileState.choices, default=FileState.UNSTABLE, null=False)
 
-    def inspect_size(self):
-        path = Path(os.path.join(self.monitored_path.path, self.relative_path))
-        last_observed_size = path.stat().st_size
-        if last_observed_size > self.last_observed_size:
-            self.last_observed_size = last_observed_size
-            self.state = FileState.GROWING
-        elif last_observed_size == self.last_observed_size:
-            if self.last_observed_time + timezone.timedelta(minutes=5) < timezone.now():
-                self.state = FileState.STABLE
-            else:
-                self.state = FileState.UNSTABLE
-
-        self.last_observed_time = timezone.now()
-
     class Meta:
         unique_together = [['monitored_path', 'relative_path']]
 
@@ -123,16 +106,15 @@ class CellData(models.Model):
 
 class Dataset(models.Model):
     cell = models.ForeignKey(to=CellData, on_delete=models.SET_NULL, null=True)
-    owner = models.ForeignKey(to=User, on_delete=models.SET_NULL, null=True)
-    access_group = models.ForeignKey(to=Group, on_delete=models.CASCADE)
-    name = models.TextField(null=False)
+    file = models.ForeignKey(to=ObservedFile, on_delete=models.DO_NOTHING, related_name='dataset')
+    name = models.TextField(null=True)
     date = models.DateTimeField(null=False)
-    type = models.TextField(null=False)
+    type = models.TextField(null=True)
     purpose = models.TextField()
-    json_data = models.JSONField()
+    json_data = models.JSONField(null=True)
 
     class Meta:
-        unique_together = [['name', 'date']]
+        unique_together = [['file', 'date']]
 
 
 class Equipment(models.Model):
@@ -170,7 +152,7 @@ class DataColumnType(models.Model):
 
 
 class DataColumn(models.Model):
-    dataset = models.ForeignKey(to=Dataset, on_delete=models.CASCADE)
+    dataset = models.ForeignKey(to=Dataset, related_name='columns', on_delete=models.CASCADE)
     type = models.ForeignKey(to=DataColumnType, on_delete=models.RESTRICT)
     name = models.TextField(null=False)
 
@@ -180,7 +162,7 @@ class DataColumn(models.Model):
 
 class TimeseriesData(models.Model):
     sample = models.PositiveBigIntegerField(null=False)
-    column = models.ForeignKey(to=DataColumn, null=False, on_delete=models.RESTRICT)
+    column = models.ForeignKey(to=DataColumn, related_name='values', null=False, on_delete=models.RESTRICT)
     value = models.FloatField(null=False)
 
     class Meta:
@@ -188,7 +170,7 @@ class TimeseriesData(models.Model):
 
 
 class TimeseriesRangeLabel(models.Model):
-    dataset = models.ForeignKey(to=Dataset, null=False, on_delete=models.CASCADE)
+    dataset = models.ForeignKey(to=Dataset, related_name='range_labels', null=False, on_delete=models.CASCADE)
     label = models.TextField(null=False)
     range_start = models.PositiveBigIntegerField(null=False)
     range_end = models.PositiveBigIntegerField(null=False)

@@ -132,10 +132,14 @@ def harvest_path(path: os.PathLike):
                         if status == 'STABLE':
                             logger.info(f"Parsing STABLE file {file_path}")
                             result = import_file(core_path, file_path)
-                            report_harvest_result(path=core_path, file=file_path, content=result)
+                            report_harvest_result(
+                                path=core_path,
+                                file=file_path,
+                                content={'task': 'import', 'status': 'complete'}
+                            )
                 except BaseException as e:
                     logger.error(e)
-                    report_harvest_result(path=path, file=full_path, error=e)
+                    report_harvest_result(path=path, file=file_path, error=e)
         logger.info(f"Completed directory walking of {path}")
     except BaseException as e:
         logger.error(e)
