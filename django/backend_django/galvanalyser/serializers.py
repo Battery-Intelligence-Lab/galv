@@ -12,7 +12,6 @@ from .models import Harvester, \
     TimeseriesRangeLabel
 from django.contrib.auth.models import User, Group
 from rest_framework import serializers
-from rest_framework.reverse import reverse_lazy
 
 
 class HarvesterSerializer(serializers.HyperlinkedModelSerializer):
@@ -56,7 +55,7 @@ class MonitoredPathSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = MonitoredPath
-        fields = ['url', 'path', 'stable_time', 'harvester', 'users']
+        fields = ['url', 'id', 'path', 'stable_time', 'harvester', 'users']
         read_only_fields = ['users']
         depth = 1
 
@@ -64,7 +63,12 @@ class MonitoredPathSerializer(serializers.HyperlinkedModelSerializer):
 class ObservedFileSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = ObservedFile
-        fields = '__all__'
+        fields = [
+            'url', 'id',
+            'monitored_path', 'relative_path',
+            'state', 'last_observed_time', 'last_observed_size',
+            'datasets'
+        ]
 
 
 class CellDataSerializer(serializers.HyperlinkedModelSerializer):
@@ -94,13 +98,13 @@ class DatasetEquipmentSerializer(serializers.HyperlinkedModelSerializer):
 class DataUnitSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = DataUnit
-        fields = '__all__'
+        fields = ['url', 'id', 'name', 'symbol', 'description', 'is_default']
 
 
 class DataColumnTypeSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = DataColumnType
-        fields = '__all__'
+        fields = ['url', 'id', 'name', 'description', 'is_default', 'unit']
 
 
 class DataColumnSerializer(serializers.HyperlinkedModelSerializer):

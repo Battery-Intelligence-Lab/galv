@@ -25,7 +25,7 @@ class IviumInputFile(InputFile):
         self.validate_file(file_path)
         super().__init__(file_path)
 
-    def get_file_column_to_standard_column_mapping(self):
+    def get_file_column_to_standard_column_mapping(self, default_columns: dict) -> dict:
         print("Type is IVIUM")
         """
             Return a dict with a key of the column name in the file that maps to
@@ -33,7 +33,11 @@ class IviumInputFile(InputFile):
             mapping exists
         """
         print("get_ivium_column_to_standard_column_mapping")
-        return {"amps": 3, "volts": 2, "test_time": 1}
+        return {
+            "amps": default_columns['Amps'],
+            "volts": default_columns['Volts'],
+            "test_time": default_columns['Time']
+        }
 
     def load_data(self, file_path, columns):
         """

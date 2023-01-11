@@ -70,7 +70,7 @@ export class APIConnection {
   async fetch(url: string, options?: any): Promise<APIResponse> {
     await this.get_is_logged_in();
     console.info(`Fetch ${url} for ${this.user?.username}`)
-    console.debug('fetch options', options)
+    console.info('fetch options', options)
     const token = this.user?.token;
     let newOptions = {...options};
     newOptions.credentials = 'same-origin';

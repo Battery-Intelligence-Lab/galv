@@ -6,6 +6,7 @@ import random
 
 
 class FileState(models.Choices):
+    RETRY_IMPORT = "RETRY IMPORT"
     IMPORT_FAILED = "IMPORT FAILED"
     UNSTABLE = "UNSTABLE"
     GROWING = "GROWING"
@@ -55,7 +56,7 @@ class Harvester(models.Model):
 
 class MonitoredPath(models.Model):
     harvester = models.ForeignKey(to=Harvester, related_name='monitored_paths', on_delete=models.CASCADE)
-    path = models.TextField(unique=True)
+    path = models.TextField()
     stable_time = models.PositiveSmallIntegerField(default=60)  # seconds files must remain stable to be processed
     admin_group = models.ForeignKey(
         to=Group,
@@ -106,7 +107,7 @@ class CellData(models.Model):
 
 class Dataset(models.Model):
     cell = models.ForeignKey(to=CellData, on_delete=models.SET_NULL, null=True)
-    file = models.ForeignKey(to=ObservedFile, on_delete=models.DO_NOTHING, related_name='dataset')
+    file = models.ForeignKey(to=ObservedFile, on_delete=models.DO_NOTHING, related_name='datasets')
     name = models.TextField(null=True)
     date = models.DateTimeField(null=False)
     type = models.TextField(null=True)
@@ -134,6 +135,7 @@ class DataUnit(models.Model):
     name = models.TextField(null=False)
     symbol = models.TextField(null=False)
     description = models.TextField()
+    is_default = models.BooleanField(default=False)
 
     def __str__(self):
         if self.symbol:
@@ -153,16 +155,30 @@ class DataColumnType(models.Model):
 
 class DataColumn(models.Model):
     dataset = models.ForeignKey(to=Dataset, related_name='columns', on_delete=models.CASCADE)
-    type = models.ForeignKey(to=DataColumnType, on_delete=models.RESTRICT)
+    type = models.ForeignKey(to=DataColumnType, on_delete=models.CASCADE)
     name = models.TextField(null=False)
 
     class Meta:
         unique_together = [['dataset', 'name']]
 
 
+class DataColumnStringKeys(models.Model):
+    """
+    String values are not allowed in TimeseriesData,
+    so instead we store integer keys whose string values
+    can be looked up in this table.
+    """
+    column = models.ForeignKey(to=DataColumn, related_name='string_keys', on_delete=models.CASCADE)
+    key = models.PositiveBigIntegerField(null=False)
+    string = models.TextField(null=False)
+
+    class Meta:
+        unique_together = [['column', 'key', 'string']]
+
+
 class TimeseriesData(models.Model):
     sample = models.PositiveBigIntegerField(null=False)
-    column = models.ForeignKey(to=DataColumn, related_name='values', null=False, on_delete=models.RESTRICT)
+    column = models.ForeignKey(to=DataColumn, related_name='values', null=False, on_delete=models.CASCADE)
     value = models.FloatField(null=False)
 
     class Meta:

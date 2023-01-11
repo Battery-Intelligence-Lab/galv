@@ -36,22 +36,22 @@ class BiologicMprInputFile(InputFile):
         self.mpr_file = BioLogic.MPRfile(file_path)
         super().__init__(file_path)
 
-    def get_file_column_to_standard_column_mapping(self):
+    def get_file_column_to_standard_column_mapping(self, default_columns: dict) -> dict:
         """
         Return a dict with a key of the column name in the file that maps to
         the standard column name in the value. Only return values where a
         mapping exists
         """
         return {
-            "I/mA": AMPS_COLUMN_ID,
-            "Ewe/V": VOLTAGE_COLUMN_ID,
-            "time/s": TEST_TIME_COLUMN_ID,
-            "Energy/W.h": ENERGY_CAPACITY_COLUMN_ID,
-            "Q charge/discharge/mA.h": CHARGE_CAPACITY_COLUMN_ID,
-            "Aux": TEMPERATURE_COLUMN_ID,
-            "|Z|/Ohm": IMPEDENCE_MAG_COLUMN_ID,
-            "Phase(Z)/deg": IMPEDENCE_PHASE_COLUMN_ID,
-            "freq/Hz": FREQUENCY_COLUMN_ID,
+            "I/mA": default_columns['Amps'],
+            "Ewe/V": default_columns['Volts'],
+            "time/s": default_columns['Time'],
+            "Energy/W.h": default_columns['Energy Capacity'],
+            "Q charge/discharge/mA.h": default_columns['Charge Capacity'],
+            "Aux": default_columns['Temperature'],
+            "|Z|/Ohm": default_columns['Impedence Magnitude'],
+            "Phase(Z)/deg": default_columns['Impedence Phase'],
+            "freq/Hz": default_columns['Frequency'],
         }
 
     def load_data(self, file_path, columns):

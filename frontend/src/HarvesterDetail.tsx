@@ -19,11 +19,6 @@ import TableRow from '@mui/material/TableRow';
 import PaginatedTable, {RowFunProps} from './PaginatedTable';
 import Connection, {User} from "./APIConnection";
 import Files from './Files'
-
-import {
-  monitored_paths, add_monitored_path, users, env_harvester,
-  update_monitored_path, delete_monitored_path, isAdmin, url,
-} from './Api'
 import {HarvesterFields} from "./Harvesters";
 
 const useStyles = makeStyles((theme) => ({
@@ -63,6 +58,7 @@ type MonitoredPathUserGroups = {
 
 export type MonitoredPathFields = {
   url: string;
+  id: number;
   harvester: number;
   stable_time: number;
   path: string;
@@ -72,7 +68,7 @@ export type MonitoredPathFields = {
 function MyTableRow(props: RowFunProps<MonitoredPathFields>) {
   const classes = useStyles();
   const [row, setRow] = useState<MonitoredPathFields>({
-    url: "", harvester: -1, stable_time: -1, path: '', users: {harvester_admins: [], admins: [], users: []}
+    url: "", id: -1, harvester: -1, stable_time: -1, path: '', users: {harvester_admins: [], admins: [], users: []}
   })
   const [dirty, setDirty] = useState<boolean>(false)
 
@@ -245,7 +241,7 @@ export default function HarvesterDetail(props: HarvesterDetailProps) {
           <MyTableRow
             key={"new_path"}
             savedRow={{
-              url: "", harvester: harvester.id, path: "", stable_time: 60,
+              url: "", id: -1, harvester: harvester.id, path: "", stable_time: 60,
               users: {harvester_admins: [], admins: [], users: []}
             }}
             onRowSave={addNewPath}
@@ -274,9 +270,7 @@ export default function HarvesterDetail(props: HarvesterDetailProps) {
     </IconButton>
       </span>
       </Tooltip>
-      {isSelected &&
-          <Files path={selected}/>
-      }
+      {isSelected && <Files path={selected} lastUpdated={lastUpdated}/>}
     </Paper>
 
   );

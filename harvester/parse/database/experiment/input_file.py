@@ -137,7 +137,7 @@ class InputFile:
     def get_data_labels(self):
         raise UnsupportedFileTypeError
 
-    def get_file_column_to_standard_column_mapping(self):
+    def get_file_column_to_standard_column_mapping(self, default_columns: dict):
         """
             returns map of file column name strings to column id numbers
         """

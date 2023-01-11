@@ -29,6 +29,7 @@ UNIT_OHMS = 9
 UNIT_DEGREES = 10
 UNIT_HERTZ = 11
 
+
 class TimeseriesDataRow:
     def __init__(self, sample_no, column_id, value, column_type_id=None):
         self.sample_no = sample_no

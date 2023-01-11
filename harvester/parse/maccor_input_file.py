@@ -141,7 +141,7 @@ class MaccorInputFile(InputFile):
             print(metadata)
             return metadata, column_info
 
-    def get_file_column_to_standard_column_mapping(self):
+    def get_file_column_to_standard_column_mapping(self, default_columns: dict) -> dict:
         """
         Return a dict with a key of the column name in the file that maps to
         the standard column name in the value. Only return values where a
@@ -150,33 +150,18 @@ class MaccorInputFile(InputFile):
         """
         print("Type is MACCOR")
         print("get_maccor_column_to_standard_column_mapping")
-        all_values = {
-            "Amp-hr": 5,
-            "Amps": 3,
-            "Cyc#": None,
-            "DPt Time": None,
-            "Watt-hr": 4,
-            "State": None,
-            "Step": None,
-            "StepTime": 7,
-            "Step (Sec)": 7,
-            "Volts": 2,
-            "Capacity": None,
-            "Energy": None,
-            "Power": None,
-            "TestTime": 1,
-            "Test (Sec)": 1,
-            "Rec#": 0,
-            "Temp 1": 6,
+        return {
+            "Amp-hr": default_columns['Charge Capacity'],
+            "Amps": default_columns['Amps'],
+            "Watt-hr": default_columns['Energy Capacity'],
+            "StepTime": default_columns['Step Time'],
+            "Step (Sec)": default_columns['Step Time'],
+            "Volts": default_columns['Volts'],
+            "TestTime": default_columns['Time'],
+            "Test (Sec)": default_columns['Time'],
+            "Rec#": default_columns['Sample Number'],
+            "Temp 1": default_columns['Temperature']
         }
-        print("all_values: " + str(all_values))
-        filtered_values = {
-            file_col: std_col
-            for file_col, std_col in all_values.items()
-            if std_col is not None
-        }
-        print("filtered_values: " + str(filtered_values))
-        return (filtered_values)
 
     def load_data(self, file_path, columns):
         """

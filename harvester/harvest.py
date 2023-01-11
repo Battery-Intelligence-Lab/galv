@@ -113,9 +113,9 @@ def harvest_path(path: os.PathLike):
     try:
         for (dir_path, dir_names, filenames) in os.walk(path):
             for filename in filenames:
+                full_path = os.path.join(dir_path, filename)
+                core_path, file_path = split_path(path, full_path)
                 try:
-                    full_path = os.path.join(dir_path, filename)
-                    core_path, file_path = split_path(path, full_path)
                     logger.info(f"Reporting stats for {file_path}")
                     result = report_harvest_result(
                         path=core_path,
@@ -129,14 +129,14 @@ def harvest_path(path: os.PathLike):
                         result = result.json()
                         status = result['state']
                         logger.info(f"Server assigned status '{status}'")
-                        if status == 'STABLE':
-                            logger.info(f"Parsing STABLE file {file_path}")
-                            result = import_file(core_path, file_path)
-                            report_harvest_result(
-                                path=core_path,
-                                file=file_path,
-                                content={'task': 'import', 'status': 'complete'}
-                            )
+                        if status in ['STABLE', 'RETRY IMPORT']:
+                            logger.info(f"Parsing file {file_path}")
+                            if import_file(core_path, file_path):
+                                report_harvest_result(
+                                    path=core_path,
+                                    file=file_path,
+                                    content={'task': 'import', 'status': 'complete'}
+                                )
                 except BaseException as e:
                     logger.error(e)
                     report_harvest_result(path=path, file=file_path, error=e)

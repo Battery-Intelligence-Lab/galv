@@ -46,8 +46,37 @@ registered_input_files = [
     MaccorRawInputFile,
 ]
 
-RECORD_NO_COLUMN_ID = 0
-UNIT_UNITLESS = 1
+
+def get_api_ids(target: str) -> dict:
+    """
+    Fetch standard ids from the server and return a name-id dictionary
+    """
+    # TODO: abstract API URL (get_setting('url') returns Harvester not base URL)
+    url = f"http://app:5000/{target}/?default=True"
+    results = []
+    entries = None
+    while True:
+        response = requests.get(url)
+        logger.debug(url)
+        data = response.json()
+        if entries is None:
+            entries = data['count']
+        results = [*results, *data['results']]
+        if 'next' in data and data['next'] is not None:
+            url = data['next']
+        else:
+            break
+
+    assert entries is not None and len(results) == entries
+    return {r['name']: r['id'] for r in results}
+
+
+def get_api_unit_ids() -> dict:
+    return get_api_ids('units')
+
+
+def get_api_column_ids() -> dict:
+    return get_api_ids('columns')
 
 
 def has_handle(fpath):
@@ -92,7 +121,7 @@ def report(
     return None
 
 
-def import_file(core_path: str, file_path: str):
+def import_file(core_path: str, file_path: str) -> bool:
     """
         Attempts to import a given file
     """
@@ -101,7 +130,7 @@ def import_file(core_path: str, file_path: str):
     if not os.path.isfile(full_file_path):
         print("Is not a file, skipping: " + full_file_path)
         report(path=core_path, file=file_path, error=FileNotFoundError())
-        return
+        return False
     print("Importing " + full_file_path)
     report(
         path=core_path,
@@ -131,12 +160,21 @@ def import_file(core_path: str, file_path: str):
         if input_file is None:
             raise UnsupportedFileTypeError
 
+        # TODO Send metadata
+
+        # TODO: Resume/append where record already exists
+        # TODO: Including getting existing string-int mapping
+
         # TODO: Query server payload size limit
         query_max_size = 2 * 1_000_000  # approx 2MB
         # Figure out column data
         column_data = {}
-        mapping = input_file.get_file_column_to_standard_column_mapping()
-        record_number_column = [k for k, v in mapping.items() if v == RECORD_NO_COLUMN_ID]
+        default_column_ids = get_api_column_ids()
+        default_units = get_api_unit_ids()
+        mapping = input_file.get_file_column_to_standard_column_mapping(default_column_ids)
+        next_key = 0
+        # Find out if there's a Sample number column, otherwise we use the row number
+        record_number_column = [k for k, v in mapping.items() if v == default_column_ids['Sample Number']]
         record_number_column = record_number_column[0] if len(record_number_column) else None
         generator = input_file.load_data(input_file.file_path, input_file.column_info.keys())
         for i, r in enumerate(generator):
@@ -145,7 +183,23 @@ def import_file(core_path: str, file_path: str):
                 if k == record_number_column:
                     continue
                 if k in column_data:
-                    column_data[k]['values'][record_number] = v
+                    # Numeric data are stored directly
+                    try:
+                        column_data[k]['values'][record_number] = int(v)
+                    except ValueError:
+                        try:
+                            column_data[k]['values'][record_number] = float(v)
+                        # Strings are mapped to integer values using a value map which is also sent to the database
+                        except ValueError:
+                            if 'value_map' in column_data[k] and v in column_data[k]['value_map']:
+                                column_data[k]['values'][record_number] = column_data[k]['value_map'][v]
+                            else:
+                                if 'value_map' in column_data[k]:
+                                    column_data[k]['value_map'][v] = next_key
+                                else:
+                                    column_data[k]['value_map'] = {v: next_key}
+                                column_data[k]['values'][record_number] = next_key
+                                next_key += 1
                 else:
                     column_data[k] = {}
                     if k in mapping:
@@ -155,10 +209,8 @@ def import_file(core_path: str, file_path: str):
                         if 'unit' in input_file.column_info[k]:
                             column_data[k]['unit_symbol'] = input_file.column_info[k].get('unit')
                         else:
-                            column_data[k]['unit_id'] = UNIT_UNITLESS
+                            column_data[k]['unit_id'] = default_units['Unitless']
                     column_data[k]['values'] = {}
-
-        # TODO: Resume/append where record already exists
 
         # Send data
         report(path=core_path, file=file_path, content={
@@ -167,23 +219,9 @@ def import_file(core_path: str, file_path: str):
             'data': [v for v in column_data.values()]
         })
 
-        # Send metadata
-
         print("File successfully imported")
     except Exception as e:
         logger.error(e)
         # report(path=core_path, file=file_path, error=e)
-
-
-class DjangoColumn(TypedDict):
-    name: str
-    unit: typing.Optional[str | int]
-    values: list
-
-
-def column_to_django_column(col) -> DjangoColumn:
-    return {
-        'name': 'col',
-        'unit': None,
-        'values': []
-    }
+        return False
+    return True

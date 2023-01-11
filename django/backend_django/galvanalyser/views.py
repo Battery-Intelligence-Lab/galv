@@ -25,6 +25,7 @@ from .models import Harvester, \
     DatasetEquipment, \
     DataUnit, \
     DataColumnType, \
+    DataColumnStringKeys, \
     DataColumn, \
     TimeseriesData, \
     TimeseriesRangeLabel, \
@@ -239,8 +240,16 @@ class HarvesterViewSet(viewsets.ModelViewSet):
                                         type=column_type,
                                         dataset=dataset
                                     )
+                                # Create a value map for string data
+                                if 'value_map' in column_data:
+                                    DataColumnStringKeys.objects.bulk_create(
+                                        DataColumnStringKeys(string=k, key=v, column=column)
+                                        for k, v in column_data['value_map'].items()
+                                    )
+
+                                # Enter data en masse to avoid numerous expensive database calls
                                 TimeseriesData.objects.bulk_create([
-                                    TimeseriesData(sample=k, value=v, column_id=column.id)
+                                    TimeseriesData(sample=k, value=v, column=column)
                                     for k, v in column_data['values'].items()
                                 ])
 
@@ -341,46 +350,33 @@ class MonitoredPathViewSet(viewsets.ModelViewSet):
         path.save()
         return Response(self.get_serializer(path).data)
 
-    @action(detail=True, methods=['GET'])
-    def files(self, request, pk: int = None):
-        """
-        ObservedFiles for the MonitoredPath.
-        """
-        # TODO: Restrict access to Harvester or harvester user
-        monitored_path = get_object_or_404(MonitoredPath, id=pk)
-        paths = ObservedFile.objects.filter(monitored_path=monitored_path).order_by('id')
-        paths = self.paginate_queryset(paths)
-        return self.get_paginated_response(ObservedFileSerializer(paths, many=True).data)
-
-    @action(detail=True, methods=['GET'])
-    def users(self, request, pk: int = None):
-        """
-        Users able to access the Harvester. Users can create MonitoredPaths.
-        """
-        # TODO: Restrict access to Harvester or harvester user
-        monitored_path = get_object_or_404(Harvester, id=pk)
-        users = User.objects.filter(groups__in=[monitored_path.admin_group, monitored_path.user_group])
-        users = self.paginate_queryset(users)
-        return self.get_paginated_response(UserSerializer(users, context={'request': request}, many=True).data)
-
-    @action(detail=True, methods=['GET'])
-    def admins(self, request, pk: int = None):
-        """
-        Users able to edit the Harvester.
-        """
-        # TODO: Restrict access to Harvester or harvester user
-        monitored_path = get_object_or_404(Harvester, id=pk)
-        admins = User.objects.filter(groups__in=[monitored_path.admin_group])
-        admins = self.paginate_queryset(admins)
-        return self.get_paginated_response(UserSerializer(admins, context={'request': request}, many=True).data)
-
 
 class ObservedFileViewSet(viewsets.ModelViewSet):
     """
     TODO: document
     """
     serializer_class = ObservedFileSerializer
-    queryset = ObservedFile.objects.all()
+    filterset_fields = ['monitored_path__id', 'relative_path', 'state']
+    search_fields = ['@monitored_path__path', '@relative_path', 'state']
+    queryset = ObservedFile.objects.all().order_by('last_observed_time', 'id')
+
+    # Access restrictions
+    def get_queryset(self):
+        return ObservedFile.objects.filter(
+            Q(monitored_path__user_group__in=self.request.user.groups.all()) |
+            Q(monitored_path__admin_group__in=self.request.user.groups.all()) |
+            Q(monitored_path__harvester__admin_group__in=self.request.user.groups.all())
+        ).order_by('last_observed_time', 'id')
+
+    @action(detail=True, methods=['GET'])
+    def reimport(self, request, pk: int = None):
+        try:
+            file = self.get_queryset().get(id=pk)
+        except ObservedFile.DoesNotExist:
+            return error_response('Requested file not found')
+        file.state = FileState.RETRY_IMPORT
+        file.save()
+        return Response(self.get_serializer(file, context={'request': request}).data)
 
 
 class CellDataViewSet(viewsets.ModelViewSet):
@@ -420,7 +416,9 @@ class DataUnitViewSet(viewsets.ModelViewSet):
     TODO: document
     """
     serializer_class = DataUnitSerializer
-    queryset = DataUnit.objects.all()
+    filterset_fields = ['name', 'symbol', 'is_default']
+    search_fields = ['@name', '@symbol', '@description']
+    queryset = DataUnit.objects.all().order_by('id')
 
 
 class DataColumnTypeViewSet(viewsets.ModelViewSet):
@@ -428,7 +426,9 @@ class DataColumnTypeViewSet(viewsets.ModelViewSet):
     TODO: document
     """
     serializer_class = DataColumnTypeSerializer
-    queryset = DataColumnType.objects.all()
+    filterset_fields = ['name', 'unit__symbol', 'unit__name', 'is_default']
+    search_fields = ['@name', '@description']
+    queryset = DataColumnType.objects.all().order_by('id')
 
 
 class DataColumnViewSet(viewsets.ModelViewSet):

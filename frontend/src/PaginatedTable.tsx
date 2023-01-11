@@ -138,7 +138,7 @@ export default class PaginatedTable extends Component<PaginatedTableProps, Pagin
         <TableContainer>
           {
             // @ts-ignore
-            <Table className={this.props.styles.table} size="small">
+            <Table className={this.props.styles?.table} size="small">
               {this.props.header}
               {
                 // @ts-ignore

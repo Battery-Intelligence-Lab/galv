@@ -5,7 +5,8 @@
         "fields": {
             "name": "Unitless",
             "symbol": "",
-            "description": "A value with no units"
+            "description": "A value with no units",
+            "is_default": true
         }
     },
     {
@@ -14,7 +15,8 @@
         "fields": {
             "name": "Time",
             "symbol": "s",
-            "description": "Time in seconds"
+            "description": "Time in seconds",
+            "is_default": true
         }
     },
     {
@@ -23,7 +25,8 @@
         "fields": {
             "name": "Volts",
             "symbol": "V",
-            "description": "Voltage"
+            "description": "Voltage",
+            "is_default": true
         }
     },
     {
@@ -32,7 +35,8 @@
         "fields": {
             "name": "Amps",
             "symbol": "A",
-            "description": "Current"
+            "description": "Current",
+            "is_default": true
         }
     },
     {
@@ -41,7 +45,8 @@
         "fields": {
             "name": "Energy",
             "symbol": "Wh",
-            "description": "Energy in Watt-Hours"
+            "description": "Energy in Watt-Hours",
+            "is_default": true
         }
     },
     {
@@ -50,7 +55,8 @@
         "fields": {
             "name": "Charge",
             "symbol": "Ah",
-            "description": "Charge in Amp-Hours"
+            "description": "Charge in Amp-Hours",
+            "is_default": true
         }
     },
     {
@@ -59,7 +65,8 @@
         "fields": {
             "name": "Temperature",
             "symbol": "°c",
-            "description": "Temperature in Centigrade"
+            "description": "Temperature in Centigrade",
+            "is_default": true
         }
     },
     {
@@ -68,7 +75,8 @@
         "fields": {
             "name": "Power",
             "symbol": "W",
-            "description": "Power in Watts"
+            "description": "Power in Watts",
+            "is_default": true
         }
     },
     {
@@ -77,7 +85,8 @@
         "fields": {
             "name": "Ohm",
             "symbol": "Ω",
-            "description": "Resistance or impediance in Ohms"
+            "description": "Resistance or impediance in Ohms",
+            "is_default": true
         }
     },
     {
@@ -86,7 +95,8 @@
         "fields": {
             "name": "Degrees",
             "symbol": "°",
-            "description": "Angle in degrees"
+            "description": "Angle in degrees",
+            "is_default": true
         }
     },
     {
@@ -95,7 +105,8 @@
         "fields": {
             "name": "Frequency",
             "symbol": "Hz",
-            "description": "Frequency in Hz"
+            "description": "Frequency in Hz",
+            "is_default": true
         }
     }
 ]
