@@ -4,25 +4,9 @@
 
 import os
 import ntpath
-import copy
 from galvani import BioLogic
-from galvani.BioLogic import VMPdata_colID_dtype_map, VMPdata_colID_flag_map
-from .database.util.battery_exceptions import UnsupportedFileTypeError
-from .database.experiment.input_file import InputFile
-from .database.experiment.timeseries_data_row import (
-    RECORD_NO_COLUMN_ID,
-    TEST_TIME_COLUMN_ID,
-    VOLTAGE_COLUMN_ID,
-    AMPS_COLUMN_ID,
-    ENERGY_CAPACITY_COLUMN_ID,
-    CHARGE_CAPACITY_COLUMN_ID,
-    TEMPERATURE_COLUMN_ID,
-    STEP_TIME_COLUMN_ID,
-    IMPEDENCE_MAG_COLUMN_ID,
-    IMPEDENCE_PHASE_COLUMN_ID,
-    FREQUENCY_COLUMN_ID,
-)
-from .database.experiment.unit import Unit
+from .exceptions import UnsupportedFileTypeError
+from .input_file import InputFile
 
 
 class BiologicMprInputFile(InputFile):
@@ -30,28 +14,28 @@ class BiologicMprInputFile(InputFile):
         A class for handling input files
     """
 
-    def __init__(self, file_path):
+    def __init__(self, file_path, **kwargs):
         if not file_path.endswith(".mpr"):
             raise UnsupportedFileTypeError
         self.mpr_file = BioLogic.MPRfile(file_path)
-        super().__init__(file_path)
+        super().__init__(file_path, **kwargs)
 
-    def get_file_column_to_standard_column_mapping(self, default_columns: dict) -> dict:
+    def get_file_column_to_standard_column_mapping(self) -> dict:
         """
         Return a dict with a key of the column name in the file that maps to
         the standard column name in the value. Only return values where a
         mapping exists
         """
         return {
-            "I/mA": default_columns['Amps'],
-            "Ewe/V": default_columns['Volts'],
-            "time/s": default_columns['Time'],
-            "Energy/W.h": default_columns['Energy Capacity'],
-            "Q charge/discharge/mA.h": default_columns['Charge Capacity'],
-            "Aux": default_columns['Temperature'],
-            "|Z|/Ohm": default_columns['Impedence Magnitude'],
-            "Phase(Z)/deg": default_columns['Impedence Phase'],
-            "freq/Hz": default_columns['Frequency'],
+            "I/mA": self.standard_columns['Amps'],
+            "Ewe/V": self.standard_columns['Volts'],
+            "time/s": self.standard_columns['Time'],
+            "Energy/W.h": self.standard_columns['Energy Capacity'],
+            "Q charge/discharge/mA.h": self.standard_columns['Charge Capacity'],
+            "Aux": self.standard_columns['Temperature'],
+            "|Z|/Ohm": self.standard_columns['Impedence Magnitude'],
+            "Phase(Z)/deg": self.standard_columns['Impedence Phase'],
+            "freq/Hz": self.standard_columns['Frequency'],
         }
 
     def load_data(self, file_path, columns):
@@ -110,7 +94,7 @@ class BiologicMprInputFile(InputFile):
             for name in self.mpr_file.data.dtype.names
         }
         for name, data in columns_with_data.items():
-            for unit in Unit.get_all_units():
+            for unit in self.standard_units:
                 if name[-len(unit):] == unit:
                     data['unit'] = unit
 

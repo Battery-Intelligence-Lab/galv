@@ -1,20 +1,5 @@
-from ..util.battery_exceptions import UnsupportedFileTypeError
-from itertools import accumulate
+from .exceptions import UnsupportedFileTypeError
 import traceback
-from .timeseries_data_row import (
-    RECORD_NO_COLUMN_ID,
-    TEST_TIME_COLUMN_ID,
-    VOLTAGE_COLUMN_ID,
-    AMPS_COLUMN_ID,
-    ENERGY_CAPACITY_COLUMN_ID,
-    CHARGE_CAPACITY_COLUMN_ID,
-    TEMPERATURE_COLUMN_ID,
-    STEP_TIME_COLUMN_ID,
-    IMPEDENCE_MAG_COLUMN_ID,
-    IMPEDENCE_PHASE_COLUMN_ID,
-    FREQUENCY_COLUMN_ID,
-)
-from .unit import Unit
 
 # see https://gist.github.com/jsheedy/ed81cdf18190183b3b7d
 # https://stackoverflow.com/a/30721460
@@ -24,9 +9,15 @@ class InputFile:
     """
         A class for handling input files
     """
+    unit_conversion_multipliers = {
+        'mA': 1e-3,
+        'mA.h': 1e-3
+    }
 
-    def __init__(self, file_path):
+    def __init__(self, file_path, standard_columns: dict, standard_units: dict):
         self.file_path = file_path
+        self.standard_columns = standard_columns
+        self.standard_units = standard_units
         self.metadata, self.column_info = self.load_metadata()
 
     def get_columns(self):
@@ -42,7 +33,7 @@ class InputFile:
                     "file_column_to_standard_column is {}: {}\n"
                     "column_info is {}\n"
                 ).format(col, std, self.column_info[col]))
-            if self.column_info[col]['unit'] not in Unit.get_all_units():
+            if self.column_info[col]['unit'] not in self.standard_units:
                 raise RuntimeError(
                     "Unknown unit {} provided for standard column mapping"
                     .format(self.column_info[col]['unit'])
@@ -60,9 +51,8 @@ class InputFile:
         return self.metadata["Date of Test"]
 
     def convert_unit(self, name, value):
-        if 'unit' in self.column_info[name]:
-            unit = self.column_info[name]['unit']
-            value = Unit.convert(unit, value)
+        if 'unit' in self.column_info[name] and self.column_info[name]['unit'] in self.unit_conversion_multipliers:
+            return value * self.unit_conversion_multipliers[self.column_info[name]['unit']]
         return value
 
     def get_data_row_generator(
@@ -79,7 +69,7 @@ class InputFile:
             for name, col_id in column_name_to_id.items()
         }
 
-        sample_col_id = type_id_to_col_id.get(RECORD_NO_COLUMN_ID, None)
+        sample_col_id = type_id_to_col_id.get(self.standard_columns['Sample Number'], None)
 
         # reconstruct previous row mapping col ids to values
         if last_values is not None:
@@ -137,7 +127,7 @@ class InputFile:
     def get_data_labels(self):
         raise UnsupportedFileTypeError
 
-    def get_file_column_to_standard_column_mapping(self, default_columns: dict):
+    def get_file_column_to_standard_column_mapping(self):
         """
             returns map of file column name strings to column id numbers
         """

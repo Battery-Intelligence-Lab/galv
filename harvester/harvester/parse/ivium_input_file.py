@@ -3,12 +3,11 @@
 # of Oxford, and the 'Galvanalyser' Developers. All rights reserved.
 
 import os
-import csv
 import ntpath
 import re
 from datetime import datetime
-from .database.experiment.input_file import InputFile
-from .database.util.battery_exceptions import (
+from .input_file import InputFile
+from .exceptions import (
     UnsupportedFileTypeError,
     InvalidDataInFileError,
 )
@@ -21,11 +20,11 @@ class IviumInputFile(InputFile):
         A class for handling input files
     """
 
-    def __init__(self, file_path):
+    def __init__(self, file_path, **kwargs):
         self.validate_file(file_path)
-        super().__init__(file_path)
+        super().__init__(file_path, **kwargs)
 
-    def get_file_column_to_standard_column_mapping(self, default_columns: dict) -> dict:
+    def get_file_column_to_standard_column_mapping(self) -> dict:
         print("Type is IVIUM")
         """
             Return a dict with a key of the column name in the file that maps to
@@ -34,9 +33,9 @@ class IviumInputFile(InputFile):
         """
         print("get_ivium_column_to_standard_column_mapping")
         return {
-            "amps": default_columns['Amps'],
-            "volts": default_columns['Volts'],
-            "test_time": default_columns['Time']
+            "amps": self.standard_columns['Amps'],
+            "volts": self.standard_columns['Volts'],
+            "test_time": self.standard_columns['Time']
         }
 
     def load_data(self, file_path, columns):

@@ -11,6 +11,7 @@ from .models import Harvester, \
     TimeseriesData, \
     TimeseriesRangeLabel
 from django.contrib.auth.models import User, Group
+from django.conf.global_settings import DATA_UPLOAD_MAX_MEMORY_SIZE
 from rest_framework import serializers
 
 
@@ -22,9 +23,33 @@ class HarvesterSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class HarvesterConfigSerializer(serializers.HyperlinkedModelSerializer):
+    standard_units = serializers.SerializerMethodField()
+    standard_columns = serializers.SerializerMethodField()
+    max_upload_bytes = serializers.SerializerMethodField()
+
+    def get_standard_units(self, instance):
+        return DataUnitSerializer(
+            DataUnit.objects.filter(is_default=True),
+            many=True,
+            context={'request': self.context['request']}
+        ).data
+
+    def get_standard_columns(self, instance):
+        return DataColumnTypeSerializer(
+            DataColumnType.objects.filter(is_default=True),
+            many=True,
+            context={'request': self.context['request']}
+        ).data
+
+    def get_max_upload_bytes(self, instance):
+        return DATA_UPLOAD_MAX_MEMORY_SIZE
+
     class Meta:
         model = Harvester
-        fields = ['url', 'id', 'api_key', 'name', 'last_check_in', 'sleep_time', 'monitored_paths']
+        fields = [
+            'url', 'id', 'api_key', 'name', 'last_check_in', 'sleep_time', 'monitored_paths',
+            'standard_units', 'standard_columns', 'max_upload_bytes'
+        ]
         depth = 1  # max depth
 
 

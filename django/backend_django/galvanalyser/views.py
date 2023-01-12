@@ -206,15 +206,34 @@ class HarvesterViewSet(viewsets.ModelViewSet):
                     try:
                         if content['status'] == 'begin':
                             file.state = FileState.IMPORTING
-                            # TODO: process metadata under 'begin'?
+                            date = timezone.datetime.fromisoformat(content['test_date']).date()
+                            # process metadata under 'begin'
+                            core_metadata = content['core_metadata']
+                            extra_metadata = content['extra_metadata']
+                            defaults = {}
+                            if 'Machine Type' in core_metadata:
+                                defaults['type'] = core_metadata['Machine Type']
+                            if 'Dataset Name' in core_metadata:
+                                defaults['name'] = core_metadata['Dataset Name']
+                            defaults['json_data'] = {}
+                            if 'num_rows' in core_metadata:
+                                defaults['json_data']['num_rows'] = core_metadata['num_rows']
+                            if 'first_sample_no' in core_metadata:
+                                defaults['json_data']['first_sample_no'] = core_metadata['first_sample_no']
+                            if 'last_sample_no' in core_metadata:
+                                defaults['json_data']['last_sample_no'] = core_metadata['last_sample_no']
+                            defaults['json_data'] = {**defaults['json_data'], **extra_metadata}
+
                             dataset, _ = Dataset.objects.get_or_create(
-                                defaults={'date': timezone.now()},
-                                file=file
+                                defaults=defaults,
+                                file=file,
+                                date=date
                             )
                         elif content['status'] == 'complete':
                             file.state = FileState.IMPORTED
                         else:
-                            dataset = Dataset.objects.get(file=file)
+                            date = timezone.datetime.fromisoformat(content['test_date']).date()
+                            dataset = Dataset.objects.get(file=file, date=date)
                             for column_data in content['data']:
                                 try:
                                     column_type = DataColumnType.objects.get(id=column_data['column_id'])

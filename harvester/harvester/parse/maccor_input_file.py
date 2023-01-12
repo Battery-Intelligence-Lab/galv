@@ -9,10 +9,11 @@ import re
 from datetime import datetime
 import xlrd
 import maya
-from .database.experiment.input_file import InputFile
-from .database.util.battery_exceptions import (
+from .input_file import InputFile
+from .exceptions import (
     UnsupportedFileTypeError,
     EmptyFileError,
+    InvalidDataInFileError
 )
 
 
@@ -21,9 +22,9 @@ class MaccorInputFile(InputFile):
         A class for handling input files
     """
 
-    def __init__(self, file_path):
+    def __init__(self, file_path, **kwargs):
         self.validate_file(file_path)
-        super().__init__(file_path)
+        super().__init__(file_path, **kwargs)
 
     def identify_columns(self, reader):
         """
@@ -141,7 +142,7 @@ class MaccorInputFile(InputFile):
             print(metadata)
             return metadata, column_info
 
-    def get_file_column_to_standard_column_mapping(self, default_columns: dict) -> dict:
+    def get_file_column_to_standard_column_mapping(self) -> dict:
         """
         Return a dict with a key of the column name in the file that maps to
         the standard column name in the value. Only return values where a
@@ -151,16 +152,16 @@ class MaccorInputFile(InputFile):
         print("Type is MACCOR")
         print("get_maccor_column_to_standard_column_mapping")
         return {
-            "Amp-hr": default_columns['Charge Capacity'],
-            "Amps": default_columns['Amps'],
-            "Watt-hr": default_columns['Energy Capacity'],
-            "StepTime": default_columns['Step Time'],
-            "Step (Sec)": default_columns['Step Time'],
-            "Volts": default_columns['Volts'],
-            "TestTime": default_columns['Time'],
-            "Test (Sec)": default_columns['Time'],
-            "Rec#": default_columns['Sample Number'],
-            "Temp 1": default_columns['Temperature']
+            "Amp-hr": self.standard_columns['Charge Capacity'],
+            "Amps": self.standard_columns['Amps'],
+            "Watt-hr": self.standard_columns['Energy Capacity'],
+            "StepTime": self.standard_columns['Step Time'],
+            "Step (Sec)": self.standard_columns['Step Time'],
+            "Volts": self.standard_columns['Volts'],
+            "TestTime": self.standard_columns['Time'],
+            "Test (Sec)": self.standard_columns['Time'],
+            "Rec#": self.standard_columns['Sample Number'],
+            "Temp 1": self.standard_columns['Temperature']
         }
 
     def load_data(self, file_path, columns):

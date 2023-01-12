@@ -1,6 +1,9 @@
 import json
 import os
 import pathlib
+import logging
+
+logging.basicConfig(level=logging.INFO)
 
 
 def get_settings_file() -> pathlib.Path:
@@ -34,3 +37,22 @@ def get_setting(*args):
     if len(args) == 1:
         return settings.get(args[0])
     return [settings.get(arg) for arg in args]
+
+
+def get_standard_units():
+    return {u['name']: u['id'] for u in get_setting('standard_units')}
+
+
+def get_standard_columns():
+    return {u['name']: u['id'] for u in get_setting('standard_columns')}
+
+
+def get_logger(name):
+    logger = logging.getLogger(name)
+    # stream_handler = logging.StreamHandler(sys.stdout)
+    # stream_handler.setLevel(logging.INFO)
+    # logger.addHandler(stream_handler)
+    file_handler = logging.FileHandler(get_logfile())
+    file_handler.setLevel(logging.INFO)
+    logger.addHandler(file_handler)
+    return logger

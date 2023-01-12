@@ -3,8 +3,8 @@ import re
 import json
 import requests
 import subprocess
-import harvest
-import settings
+import harvester.run
+import harvester.settings
 
 
 def query(url: str, data: object = None) -> object:
@@ -140,7 +140,7 @@ def register(url: str = None, name: str = None, user_id: int = None, run_foregro
     result = query(f"{url}harvesters/", {'user': uid, 'name': name})
 
     # Save credentials
-    file_name = settings.get_settings_file()
+    file_name = harvester.settings.get_settings_file()
     with open(file_name, 'w+') as f:
         json.dump(result, f)
         click.echo("Details:")
@@ -157,10 +157,10 @@ def register(url: str = None, name: str = None, user_id: int = None, run_foregro
     click.echo("The harvester will check for updates frequently until you change its polling rate when you update it.")
     click.echo("Launching harvester...")
     if run_foreground:
-        harvest.run_cycle()
+        harvester.run.run_cycle()
     else:
         subprocess.Popen(["python", "harvest.py"])
-        click.echo(f"Complete. Harvester is running and logging to {settings.get_logfile()}")
+        click.echo(f"Complete. Harvester is running and logging to {harvester.settings.get_logfile()}")
 
 
 @click.command()
@@ -181,8 +181,8 @@ def register(url: str = None, name: str = None, user_id: int = None, run_foregro
     help="Ignore other options and run harvester if config file already exists."
 )
 def click_wrapper(url: str, name: str, user_id: int, run_foreground: bool, restart: bool):
-    if restart and settings.get_setting('url'):
-        harvest.run_cycle()
+    if restart and harvester.settings.get_setting('url'):
+        harvester.run.run_cycle()
     else:
         register(url=url, name=name, user_id=user_id, run_foreground=run_foreground)
 
