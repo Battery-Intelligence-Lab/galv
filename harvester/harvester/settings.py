@@ -2,8 +2,13 @@ import json
 import os
 import pathlib
 import logging
+import logging.handlers
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    format='%(asctime)s %(levelname)s %(message)s [%(name)s]',
+    level=logging.INFO,
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
 
 
 def get_settings_file() -> pathlib.Path:
@@ -52,7 +57,7 @@ def get_logger(name):
     # stream_handler = logging.StreamHandler(sys.stdout)
     # stream_handler.setLevel(logging.INFO)
     # logger.addHandler(stream_handler)
-    file_handler = logging.FileHandler(get_logfile())
+    file_handler = logging.handlers.RotatingFileHandler(get_logfile(), maxBytes=5_000_000, backupCount=5)
     file_handler.setLevel(logging.INFO)
     logger.addHandler(file_handler)
     return logger

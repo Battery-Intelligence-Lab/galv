@@ -54,12 +54,11 @@ def import_file(core_path: str, file_path: str) -> bool:
     default_units = get_standard_units()
     max_upload_size = get_setting('max_upload_bytes')
     full_file_path = os.sep.join([core_path, file_path])
-    print("")
     if not os.path.isfile(full_file_path):
-        print("Is not a file, skipping: " + full_file_path)
+        logger.warn(f"{full_file_path} is not a file, skipping")
         report_harvest_result(path=core_path, file=file_path, error=FileNotFoundError())
         return False
-    print("Importing " + full_file_path)
+    logger.info("Importing " + full_file_path)
 
     try:
         # Attempt reading the file before updating the database to avoid
@@ -70,23 +69,23 @@ def import_file(core_path: str, file_path: str) -> bool:
         input_file = None
         for input_file_cls in registered_input_files:
             try:
-                print('Tried input reader {}'.format(input_file_cls))
+                logger.debug('Tried input reader {}'.format(input_file_cls))
                 input_file = input_file_cls(
                     file_path=full_file_path,
                     standard_units=default_units,
                     standard_columns=default_column_ids
                 )
             except Exception as e:
-                print('...failed with: ', type(e), e)
+                logger.debug('...failed with: ', type(e), e)
             else:
-                print('...succeeded...')
+                logger.debug('...succeeded...')
                 break
         if input_file is None:
             raise UnsupportedFileTypeError
 
         # Send metadata
         core_metadata, extra_metadata = input_file.load_metadata()
-        report_harvest_result(
+        report = report_harvest_result(
             path=core_path,
             file=file_path,
             content={
@@ -97,9 +96,14 @@ def import_file(core_path: str, file_path: str) -> bool:
                 'test_date': serialize_datetime(core_metadata['Date of Test'])
             }
         )
-
-        # TODO: Resume/append where record already exists
-        # TODO: Including getting existing string-int mapping
+        if report is None:
+            return False
+        if not report.ok:
+            try:
+                logger.error(f"API responded with Error: {report.json()['error']}")
+            except BaseException:
+                logger.error(f"API Error: {report.status_code}")
+            return False
 
         # Figure out column data
         column_data = {}
@@ -159,16 +163,24 @@ def import_file(core_path: str, file_path: str) -> bool:
                     column_data[k]['values'] = {}
 
         # Send data
-        report_harvest_result(path=core_path, file=file_path, content={
+        report = report_harvest_result(path=core_path, file=file_path, content={
             'task': 'import',
             'status': 'in_progress',
             'data': [v for v in column_data.values()],
             'test_date': serialize_datetime(core_metadata['Date of Test'])
         })
+        if report is None:
+            return False
+        if not report.ok:
+            try:
+                logger.error(f"API responded with Error: {report.json()['error']}")
+            except BaseException:
+                logger.error(f"API Error: {report.status_code}")
+            return False
 
-        print("File successfully imported")
+        logger.info("File successfully imported")
     except Exception as e:
         logger.error(e)
-        # report(path=core_path, file=file_path, error=e)
+        report_harvest_result(path=core_path, file=file_path, error=e)
         return False
     return True

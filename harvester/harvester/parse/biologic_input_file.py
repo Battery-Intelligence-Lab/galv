@@ -19,6 +19,7 @@ class BiologicMprInputFile(InputFile):
             raise UnsupportedFileTypeError
         self.mpr_file = BioLogic.MPRfile(file_path)
         super().__init__(file_path, **kwargs)
+        self.logger.info("Type is BioLogic")
 
     def get_file_column_to_standard_column_mapping(self) -> dict:
         """
@@ -102,5 +103,5 @@ class BiologicMprInputFile(InputFile):
         # if sample number not provided by file then we count from 0
         metadata["first_sample_no"] = 0
         metadata["last_sample_no"] = metadata["num_rows"] - 1
-        print(metadata, columns_with_data)
+        self.logger.debug(metadata, columns_with_data)
         return metadata, columns_with_data

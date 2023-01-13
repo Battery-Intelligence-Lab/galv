@@ -46,6 +46,14 @@ def error_response(error: str, status: int = 400) -> Response:
     return Response({'error': error}, status=status)
 
 
+def deserialize_datetime(serialized_value: str | float) -> timezone.datetime:
+    if isinstance(serialized_value, str):
+        return timezone.make_aware(timezone.datetime.fromisoformat(serialized_value))
+    if isinstance(serialized_value, float):
+        return timezone.make_aware(timezone.datetime.fromtimestamp(serialized_value))
+    raise TypeError
+
+
 class LoginView(KnoxLoginView):
     permission_classes = [AllowAny]
     authentication_classes = [BasicAuthentication]
@@ -164,11 +172,18 @@ class HarvesterViewSet(viewsets.ModelViewSet):
                     error = json.dumps(error)
                 except json.JSONDecodeError:
                     error = str(error)
-            HarvestError.objects.create(
+            err = HarvestError.objects.create(
                 harvester=harvester,
                 path=path,
                 error=str(error)
             )
+            if request.data.get('file'):
+                try:
+                    file = ObservedFile.objects.get(monitored_path=path, relative_path=request.data['file'])
+                    err.file = file
+                    err.save()
+                except ObservedFile.DoesNotExist:
+                    pass
             return Response({})
         elif request.data['status'] == 'success':
             # Figure out what we succeeded in doing!
@@ -206,7 +221,7 @@ class HarvesterViewSet(viewsets.ModelViewSet):
                     try:
                         if content['status'] == 'begin':
                             file.state = FileState.IMPORTING
-                            date = timezone.datetime.fromisoformat(content['test_date']).date()
+                            date = deserialize_datetime(content['test_date'])
                             # process metadata under 'begin'
                             core_metadata = content['core_metadata']
                             extra_metadata = content['extra_metadata']
@@ -230,9 +245,10 @@ class HarvesterViewSet(viewsets.ModelViewSet):
                                 date=date
                             )
                         elif content['status'] == 'complete':
-                            file.state = FileState.IMPORTED
+                            if file.state == FileState.IMPORTING.value:
+                                file.state = FileState.IMPORTED
                         else:
-                            date = timezone.datetime.fromisoformat(content['test_date']).date()
+                            date = deserialize_datetime(content['test_date'])
                             dataset = Dataset.objects.get(file=file, date=date)
                             for column_data in content['data']:
                                 try:
@@ -261,20 +277,22 @@ class HarvesterViewSet(viewsets.ModelViewSet):
                                     )
                                 # Create a value map for string data
                                 if 'value_map' in column_data:
+                                    DataColumnStringKeys.objects.filter(column=column).delete()
                                     DataColumnStringKeys.objects.bulk_create(
-                                        DataColumnStringKeys(string=k, key=v, column=column)
-                                        for k, v in column_data['value_map'].items()
+                                        [DataColumnStringKeys(string=k, key=v, column=column)
+                                         for k, v in column_data['value_map'].items()]
                                     )
 
                                 # Enter data en masse to avoid numerous expensive database calls
-                                TimeseriesData.objects.bulk_create([
-                                    TimeseriesData(sample=k, value=v, column=column)
-                                    for k, v in column_data['values'].items()
-                                ])
+                                TimeseriesData.objects.filter(column=column).delete()
+                                TimeseriesData.objects.bulk_create(
+                                    [TimeseriesData(sample=k, value=v, column=column)
+                                     for k, v in column_data['values'].items()]
+                                )
 
                     except BaseException as e:
                         file.state = FileState.IMPORT_FAILED
-                        HarvestError.objects.create(harvester=harvester, path=path, error=str(e))
+                        HarvestError.objects.create(harvester=harvester, path=path, file=file, error=str(e))
                         file.save()
                         return error_response(f"Error importing data: {e.args}")
                 if content['status'] == 'failed':
@@ -488,4 +506,3 @@ class GroupViewSet(viewsets.ModelViewSet):
     """
     serializer_class = GroupSerializer
     queryset = Group.objects.all()
-

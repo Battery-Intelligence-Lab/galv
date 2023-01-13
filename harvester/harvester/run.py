@@ -58,6 +58,9 @@ def harvest_path(path: os.PathLike):
                                     file=file_path,
                                     content={'task': 'import', 'status': 'complete'}
                                 )
+                                logger.info(f"Successfully parsed file {file_path}")
+                            else:
+                                logger.warn(f"FAILED parsing file {file_path}")
                 except BaseException as e:
                     logger.error(e)
                     report_harvest_result(path=path, file=file_path, error=e)

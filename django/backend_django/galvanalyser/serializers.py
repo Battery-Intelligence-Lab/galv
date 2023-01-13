@@ -94,6 +94,7 @@ class ObservedFileSerializer(serializers.HyperlinkedModelSerializer):
             'state', 'last_observed_time', 'last_observed_size',
             'datasets'
         ]
+        depth = 1
 
 
 class CellDataSerializer(serializers.HyperlinkedModelSerializer):
@@ -103,9 +104,10 @@ class CellDataSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class DatasetSerializer(serializers.HyperlinkedModelSerializer):
+
     class Meta:
         model = Dataset
-        fields = '__all__'
+        fields = ['url', 'id', 'name', 'date', 'type', 'purpose', 'cell', 'file']
 
 
 class EquipmentSerializer(serializers.HyperlinkedModelSerializer):

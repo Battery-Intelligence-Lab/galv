@@ -25,6 +25,7 @@ class MaccorInputFile(InputFile):
     def __init__(self, file_path, **kwargs):
         self.validate_file(file_path)
         super().__init__(file_path, **kwargs)
+        self.logger.info("Type is MACCOR")
 
     def identify_columns(self, reader):
         """
@@ -43,7 +44,7 @@ class MaccorInputFile(InputFile):
             first_data, correct_number_of_columns, recno_col, row_idx
         )
         column_is_numeric = [isfloat(column) for column in first_data]
-        print(column_is_numeric)
+        self.logger.debug(column_is_numeric)
         numeric_columns = []
         for i in range(0, len(column_is_numeric)):
             if column_is_numeric[i]:
@@ -64,7 +65,7 @@ class MaccorInputFile(InputFile):
                 if data_detected:
                     column_has_data[col] = True
                     numeric_columns.remove(col)
-                    print(
+                    self.logger.debug(
                         "Found data in col {} ( {} ) : {}{} on row {}".format(
                             col,
                             headers[col],
@@ -112,8 +113,8 @@ class MaccorInputFile(InputFile):
         else:
             first_rec = int(first_data[recno_col])
             last_rec = int(row[recno_col])
-        print(column_info)
-        print("Num rows {}".format(total_rows))
+        self.logger.debug(column_info)
+        self.logger.debug("Num rows {}".format(total_rows))
         return column_info, total_rows, first_rec, last_rec
 
     def load_metadata(self):
@@ -139,7 +140,7 @@ class MaccorInputFile(InputFile):
             metadata["num_rows"] = total_rows
             metadata["first_sample_no"] = first_rec
             metadata["last_sample_no"] = last_rec
-            print(metadata)
+            self.logger.debug(metadata)
             return metadata, column_info
 
     def get_file_column_to_standard_column_mapping(self) -> dict:
@@ -149,8 +150,7 @@ class MaccorInputFile(InputFile):
         mapping exists
 
         """
-        print("Type is MACCOR")
-        print("get_maccor_column_to_standard_column_mapping")
+        self.logger.debug("get_maccor_column_to_standard_column_mapping")
         return {
             "Amp-hr": self.standard_columns['Charge Capacity'],
             "Amps": self.standard_columns['Amps'],
@@ -396,8 +396,8 @@ class MaccorExcelInputFile(MaccorInputFile):
                 numeric_columns.append(col)
             else:
                 column_has_data[col] = True
-        print("headers: {}".format(headers))
-        print("numeric_columns: {}".format(numeric_columns))
+        self.logger.debug("headers: {}".format(headers))
+        self.logger.debug("numeric_columns: {}".format(numeric_columns))
         try:
             recno_col = headers.index("Rec#")
             first_rec = sheet.cell_value(headers_row+1, recno_col)
@@ -406,7 +406,7 @@ class MaccorExcelInputFile(MaccorInputFile):
             first_rec = 1
         total_rows = 0
         for sheet_id in range(0, wbook.nsheets):
-            print("Loading sheet... " + str(sheet_id))
+            self.logger.debug("Loading sheet... " + str(sheet_id))
             sheet = wbook.sheet_by_index(sheet_id)
             total_rows += sheet.nrows - 1 - int(self._has_metadata_row)
             for row in range(headers_row+1, sheet.nrows):
@@ -414,7 +414,7 @@ class MaccorExcelInputFile(MaccorInputFile):
                     if float(sheet.cell_value(row, column)) != 0.0:
                         column_has_data[column] = True
                         numeric_columns.remove(column)
-                        print(
+                        self.logger.debug(
                             "Found data in col {} ( {} ) : {}".format(
                                 column,
                                 headers[column],
@@ -430,7 +430,7 @@ class MaccorExcelInputFile(MaccorInputFile):
                 except ValueError:
                     # Don't have record numbers, make them up
                     last_rec = total_rows
-            print("Unloading sheet " + str(sheet_id))
+            self.logger.debug("Unloading sheet " + str(sheet_id))
             wbook.unload_sheet(sheet_id)
 
         column_info = {
@@ -440,8 +440,8 @@ class MaccorExcelInputFile(MaccorInputFile):
             }
             for i in range(0, len(headers))
         }
-        print(column_info)
-        print("Num rows {}".format(total_rows))
+        self.logger.debug(column_info)
+        self.logger.debug("Num rows {}".format(total_rows))
         return column_info, total_rows, first_rec, last_rec
 
     def load_data(self, file_path,
@@ -455,7 +455,7 @@ class MaccorExcelInputFile(MaccorInputFile):
             headers_row = 0
 
         with xlrd.open_workbook(
-            file_path, on_demand=True, logfile=LogFilter()
+            file_path, on_demand=True, logfile=LogFilter(self.logger)
         ) as wbook:
             sheet = wbook.sheet_by_index(0)
             columns_of_interest = []
@@ -471,7 +471,7 @@ class MaccorExcelInputFile(MaccorInputFile):
                     column_name = column_renames[column_name]
                 column_names.append(column_name)
             for sheet_id in range(0, wbook.nsheets):
-                print("Loading sheet..." + str(sheet_id))
+                self.logger.debug("Loading sheet..." + str(sheet_id))
                 sheet = wbook.sheet_by_index(sheet_id)
                 for row in range(headers_row+1, sheet.nrows):
                     yield {
@@ -482,7 +482,7 @@ class MaccorExcelInputFile(MaccorInputFile):
                         )
                         for col_idx in columns_of_interest
                     }
-                print("Unloading sheet " + str(sheet_id))
+                self.logger.debug("Unloading sheet " + str(sheet_id))
                 wbook.unload_sheet(sheet_id)
 
     def load_metadata(self):
@@ -492,7 +492,7 @@ class MaccorExcelInputFile(MaccorInputFile):
         metadata = {}
         metadata['Filename'] = self.file_path
         with xlrd.open_workbook(
-            self.file_path, on_demand=True, logfile=LogFilter()
+            self.file_path, on_demand=True, logfile=LogFilter(self.logger)
         ) as wbook:
             sheet = wbook.sheet_by_index(0)
             col = 0
@@ -511,7 +511,7 @@ class MaccorExcelInputFile(MaccorInputFile):
                         metadata[key] = xlrd.xldate.xldate_as_datetime(
                             sheet.cell_value(0, col + 1), wbook.datemode
                         )
-                        print(
+                        self.logger.debug(
                             "key "
                             + key
                             + " value: "
@@ -546,7 +546,7 @@ class MaccorExcelInputFile(MaccorInputFile):
             metadata["num_rows"] = total_rows
             metadata["first_sample_no"] = first_rec
             metadata["last_sample_no"] = last_rec
-            print(metadata)
+            self.logger.debug(metadata)
             return metadata, column_info
 
     def validate_file(self, file_path):
@@ -598,16 +598,16 @@ class MaccorRawInputFile(MaccorInputFile):
             metadata["num_rows"] = total_rows
             metadata["first_sample_no"] = first_rec
             metadata["last_sample_no"] = last_rec
-            print(metadata)
+            self.logger.debug(metadata)
 
         return metadata, column_info
 
     def validate_file(self, file_path):
-        print('is_maccor_raw_file')
+        self.logger.debug('is_maccor_raw_file')
         with open(file_path, "r") as f:
-            print('got line')
+            self.logger.debug('got line')
             line = f.readline()
-            print('got line', line)
+            self.logger.debug('got line', line)
             line_start = "Today's Date"
             if not line.startswith(line_start):
                 raise UnsupportedFileTypeError
@@ -634,13 +634,16 @@ class MaccorRawInputFile(MaccorInputFile):
 
 
 class LogFilter(object):
+    def __init__(self, logger):
+        self.logger = logger
+
     def write(self, *args):
         if len(args) != 1 or not (
             args[0] == "\n"
             or args[0]
             == "WARNING *** OLE2 inconsistency: SSCS size is 0 but SSAT size is non-zero"
         ):
-            print("".join(args))
+            self.logger.debug("".join(args))
 
     def writelines(self, *args):
         pass

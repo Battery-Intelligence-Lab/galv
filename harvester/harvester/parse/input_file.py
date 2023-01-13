@@ -1,5 +1,6 @@
 from .exceptions import UnsupportedFileTypeError
 import traceback
+from ..settings import get_logger
 
 # see https://gist.github.com/jsheedy/ed81cdf18190183b3b7d
 # https://stackoverflow.com/a/30721460
@@ -18,6 +19,7 @@ class InputFile:
         self.file_path = file_path
         self.standard_columns = standard_columns
         self.standard_units = standard_units
+        self.logger = get_logger(f"InputFile({self.file_path})")
         self.metadata, self.column_info = self.load_metadata()
 
     def get_columns(self):

@@ -23,15 +23,15 @@ class IviumInputFile(InputFile):
     def __init__(self, file_path, **kwargs):
         self.validate_file(file_path)
         super().__init__(file_path, **kwargs)
+        self.logger.info("Type is IVIUM")
 
     def get_file_column_to_standard_column_mapping(self) -> dict:
-        print("Type is IVIUM")
         """
             Return a dict with a key of the column name in the file that maps to
             the standard column name in the value. Only return values where a
             mapping exists
         """
-        print("get_ivium_column_to_standard_column_mapping")
+        self.logger.debug("get_ivium_column_to_standard_column_mapping")
         return {
             "amps": self.standard_columns['Amps'],
             "volts": self.standard_columns['Volts'],
@@ -60,7 +60,7 @@ class IviumInputFile(InputFile):
                 line = line.decode('ascii')
 
                 if len(line) != 40:
-                    print(line)
+                    self.logger.debug(line)
                     raise InvalidDataInFileError(
                         (
                             "Incorrect line length on line {} was {} expected {}"
@@ -286,7 +286,7 @@ class IviumInputFile(InputFile):
         metadata["first_sample_no"] = 1
         # if sample number not provided by file then we count from 0
         metadata["last_sample_no"] = len(self._sample_rows) - 1
-        print(metadata)
+        self.logger.debug(metadata)
         # put in all the ivium metadata
         metadata["misc_file_data"] = dict(self._file_metadata)
         return metadata, columns_with_data
