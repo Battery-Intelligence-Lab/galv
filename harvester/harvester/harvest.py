@@ -2,6 +2,7 @@
 # Copyright  (c) 2020, The Chancellor, Masters and Scholars of the University
 # of Oxford, and the 'Galvanalyser' Developers. All rights reserved.
 import datetime
+import json
 import os
 import dateutil
 import sys
@@ -109,46 +110,74 @@ def import_file(core_path: str, file_path: str) -> bool:
         column_data = {}
         mapping = input_file.get_file_column_to_standard_column_mapping()
         next_key = 0
+        # limit size of requests. 1kb/column is an arbitrary buffer size.
+        size = 0
+        max_size = (max_upload_size / 1) - (1000 * len(extra_metadata))
+        nth_part = 0
+        start_row = 0
         # Find out if there's a Sample number column, otherwise we use the row number
         record_number_column = [k for k, v in mapping.items() if v == default_column_ids['Sample Number']]
         record_number_column = record_number_column[0] if len(record_number_column) else None
         generator = input_file.load_data(input_file.file_path, input_file.column_info.keys())
         for i, r in enumerate(generator):
-            # limit size of requests. 100b/column is an arbitrary buffer size.
-            if sys.getsizeof(column_data) > max_upload_size - 100 * len(column_data):
-                report_harvest_result(path=core_path, file=file_path, content={
+            # Data are stored up in rows and shipped out when
+            # adding the current row would exceed the server data
+            # size limit.
+            # If sent, sent data are wiped from column_data.
+            # New row data are added to column_data below.
+            size = sys.getsizeof(json.dumps(column_data))
+            if size > max_size:
+                logger.info(f"Upload part {nth_part} (rows {start_row}-{i - 1}; {size}bytes)")
+                nth_part += 1
+                start_row = i
+                report = report_harvest_result(path=core_path, file=file_path, content={
                     'task': 'import',
                     'status': 'in_progress',
-                    'data': [v for v in column_data.values()]
+                    'data': [v for v in column_data.values()],
+                    'test_date': serialize_datetime(core_metadata['Date of Test'])
                 })
+                if report is None:
+                    return False
+                if not report.ok:
+                    try:
+                        logger.error(f"API responded with Error: {report.json()['error']}")
+                    except BaseException:
+                        logger.error(f"API Error: {report.status_code}")
+                    return False
                 for k in column_data.keys():
                     column_data[k]['values'] = {}
 
+            if i > 0:
+                for k, v in new_row.items():
+                    column_data[k]['values'][record_number] = v
+
             record_number = int(r.get(record_number_column, i))
+            new_row = {}
+
             for k, v in r.items():
                 if k == record_number_column:
                     continue
                 if k in column_data:
                     # Numeric data are stored directly
                     try:
-                        column_data[k]['values'][record_number] = int(v)
+                        new_row[k] = int(v)
                     except ValueError:
                         try:
-                            column_data[k]['values'][record_number] = float(v)
+                            new_row[k] = float(v)
                         # Timestamps are stored using float conversion
                         except ValueError:
                             try:
-                                column_data[k]['values'][record_number] = dateutil.parser.parse(v).timestamp()
+                                new_row[k] = dateutil.parser.parse(v).timestamp()
                             # Strings are mapped to integer values using a value map which is also sent to the database
                             except ValueError:
                                 if 'value_map' in column_data[k] and v in column_data[k]['value_map']:
-                                    column_data[k]['values'][record_number] = column_data[k]['value_map'][v]
+                                    new_row[k] = column_data[k]['value_map'][v]
                                 else:
                                     if 'value_map' in column_data[k]:
                                         column_data[k]['value_map'][v] = next_key
                                     else:
                                         column_data[k]['value_map'] = {v: next_key}
-                                    column_data[k]['values'][record_number] = next_key
+                                    new_row[k] = next_key
                                     next_key += 1
                 else:
                     column_data[k] = {}

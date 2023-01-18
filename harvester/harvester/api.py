@@ -26,7 +26,8 @@ def report_harvest_result(
             headers={
                 'Authorization': f"Harvester {get_setting('api_key')}"
             },
-            json=data
+            json=data,
+            timeout=120
         )
     except BaseException as e:
         logger.error(e)

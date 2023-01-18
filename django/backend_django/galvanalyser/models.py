@@ -124,8 +124,8 @@ class Equipment(models.Model):
 
 
 class DatasetEquipment(models.Model):
-    dataset = models.ForeignKey(to=Dataset, on_delete=models.CASCADE)
-    equipment = models.ForeignKey(to=Equipment, on_delete=models.CASCADE)
+    dataset = models.ForeignKey(to=Dataset, related_name='equipment', on_delete=models.CASCADE)
+    equipment = models.ForeignKey(to=Equipment, related_name='datasets', on_delete=models.CASCADE)
 
     class Meta:
         unique_together = [['dataset', 'equipment']]

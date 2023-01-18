@@ -71,13 +71,13 @@ class HarvesterViewSet(viewsets.ModelViewSet):
     serializer_class = HarvesterSerializer
     filterset_fields = ['name']
     search_fields = ['@name']
-    queryset = Harvester.objects.none().order_by('last_check_in', 'id')
+    queryset = Harvester.objects.none().order_by('-last_check_in', '-id')
 
     def get_queryset(self):
         return Harvester.objects.filter(
             Q(user_group__in=self.request.user.groups.all()) |
             Q(admin_group__in=self.request.user.groups.all())
-        ).order_by('last_check_in', 'id')
+        ).order_by('-last_check_in', '-id')
 
     def create(self, request, *args, **kwargs):
         """
@@ -284,7 +284,10 @@ class HarvesterViewSet(viewsets.ModelViewSet):
                                     )
 
                                 # Enter data en masse to avoid numerous expensive database calls
-                                TimeseriesData.objects.filter(column=column).delete()
+                                TimeseriesData.objects.filter(
+                                    column=column,
+                                    sample__in=column_data['values'].keys()
+                                ).delete()
                                 TimeseriesData.objects.bulk_create(
                                     [TimeseriesData(sample=k, value=v, column=column)
                                      for k, v in column_data['values'].items()]
@@ -314,7 +317,7 @@ class MonitoredPathViewSet(viewsets.ModelViewSet):
     serializer_class = MonitoredPathSerializer
     filterset_fields = ['path', 'harvester__id', 'harvester__name']
     search_fields = ['@path']
-    queryset = MonitoredPath.objects.all().order_by('id')
+    queryset = MonitoredPath.objects.none().order_by('-id')
 
     # Access restrictions
     def get_queryset(self):
@@ -322,7 +325,7 @@ class MonitoredPathViewSet(viewsets.ModelViewSet):
             Q(user_group__in=self.request.user.groups.all()) |
             Q(admin_group__in=self.request.user.groups.all()) |
             Q(harvester__admin_group__in=self.request.user.groups.all())
-        ).order_by('id')
+        ).order_by('-id')
 
     def create(self, request, *args, **kwargs):
         """
@@ -395,7 +398,7 @@ class ObservedFileViewSet(viewsets.ModelViewSet):
     serializer_class = ObservedFileSerializer
     filterset_fields = ['monitored_path__id', 'relative_path', 'state']
     search_fields = ['@monitored_path__path', '@relative_path', 'state']
-    queryset = ObservedFile.objects.all().order_by('last_observed_time', 'id')
+    queryset = ObservedFile.objects.none().order_by('-last_observed_time', '-id')
 
     # Access restrictions
     def get_queryset(self):
@@ -403,7 +406,7 @@ class ObservedFileViewSet(viewsets.ModelViewSet):
             Q(monitored_path__user_group__in=self.request.user.groups.all()) |
             Q(monitored_path__admin_group__in=self.request.user.groups.all()) |
             Q(monitored_path__harvester__admin_group__in=self.request.user.groups.all())
-        ).order_by('last_observed_time', 'id')
+        ).order_by('-last_observed_time', '-id')
 
     @action(detail=True, methods=['GET'])
     def reimport(self, request, pk: int = None):
