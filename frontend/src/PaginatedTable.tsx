@@ -36,6 +36,7 @@ type PaginatedTableState = {
   row_data: any[];
   links: PaginationLinks;
   last_updated: Date;
+  loading: boolean;
 }
 
 export type PaginationLinks = {
@@ -87,7 +88,8 @@ export default class PaginatedTable extends Component<PaginatedTableProps, Pagin
   state = {
     row_data: [],
     links: {previous: null, next: null},
-    last_updated: new Date(0)
+    last_updated: new Date(0),
+    loading: true
   }
 
   constructor(props: PaginatedTableProps) {
@@ -107,6 +109,7 @@ export default class PaginatedTable extends Component<PaginatedTableProps, Pagin
   }
 
   get_data: PaginationDataFun = async (url) => {
+    this.setState({loading: true})
     if (!url) return;
     this.current_url = url;
     await Connection.fetch(url)
@@ -118,11 +121,13 @@ export default class PaginatedTable extends Component<PaginatedTableProps, Pagin
           links: {
             next: res.next,
             previous: res.previous
-          }
+          },
+          loading: false
         })
       })
       .catch(e => {
         console.error('Paginated Table error', e)
+        this.setState({loading: false})
       })
   }
 
@@ -138,7 +143,7 @@ export default class PaginatedTable extends Component<PaginatedTableProps, Pagin
         <TableContainer>
           {
             // @ts-ignore
-            <Table className={this.props.styles?.table} size="small">
+            <Table className={this.props.styles?.table} size="small" loading={this.state.loading}>
               {this.props.header}
               {
                 // @ts-ignore

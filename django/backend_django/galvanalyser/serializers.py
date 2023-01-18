@@ -16,10 +16,40 @@ from rest_framework import serializers
 
 
 class HarvesterSerializer(serializers.HyperlinkedModelSerializer):
+    user_sets = serializers.SerializerMethodField()
+
+    def get_user_sets(self, instance):
+        return [
+            UserSetSerializer(
+                instance.admin_group,
+                context={
+                    'request': self.context.get('request'),
+                    'name': 'Admins',
+                    'description': (
+                        'Administrators can change harvester properties, '
+                        'as well as any of the harvester\'s paths or datasets.'
+                    ),
+                    'is_admin': True
+                }
+            ).data,
+            UserSetSerializer(
+                instance.user_group,
+                context={
+                    'request': self.context.get('request'),
+                    'name': 'Users',
+                    'description': (
+                        'Users can view harvester properties. '
+                        'They can also add monitored paths.'
+                    )
+                }
+            ).data,
+        ]
+
     class Meta:
         model = Harvester
-        fields = ['url', 'id', 'name', 'sleep_time', 'last_check_in']
-        read_only_fields = ['url', 'id', 'last_check_in']
+        fields = ['url', 'id', 'name', 'sleep_time', 'last_check_in', 'user_sets']
+        read_only_fields = ['url', 'id', 'last_check_in', 'user_sets']
+        depth = 1
 
 
 class HarvesterConfigSerializer(serializers.HyperlinkedModelSerializer):
@@ -50,38 +80,53 @@ class HarvesterConfigSerializer(serializers.HyperlinkedModelSerializer):
             'url', 'id', 'api_key', 'name', 'last_check_in', 'sleep_time', 'monitored_paths',
             'standard_units', 'standard_columns', 'max_upload_bytes'
         ]
+        read_only_fields = fields
         depth = 1  # max depth
 
 
 class MonitoredPathSerializer(serializers.HyperlinkedModelSerializer):
-    users = serializers.SerializerMethodField()
+    user_sets = serializers.SerializerMethodField()
 
-    def get_users(self, instance):
-        harvester_admins = instance.harvester.admin_group.user_set.all()
-        admins = instance.admin_group.user_set.all()
-        users = instance.user_group.user_set.all()
-        return {
-            'harvester_admins': UserSerializer(
-                harvester_admins,
-                many=True,
-                context={'request': self.context['request']}
+    def get_user_sets(self, instance):
+        return [
+            UserSetSerializer(
+                instance.harvester.admin_group,
+                context={
+                    'request': self.context.get('request'),
+                    'name': 'Harvester admins',
+                    'description': (
+                        'Harvester administrators can alter any of the harvester\'s paths or datasets.'
+                    ),
+                    'is_admin': True
+                }
             ).data,
-            'admins': UserSerializer(
-                admins,
-                many=True,
-                context={'request': self.context['request']}
+            UserSetSerializer(
+                instance.admin_group,
+                context={
+                    'request': self.context.get('request'),
+                    'name': 'Admins',
+                    'description': (
+                        'Administrators can change paths and their datasets.'
+                    ),
+                    'is_admin': True
+                }
             ).data,
-            'users': UserSerializer(
-                users,
-                many=True,
-                context={'request': self.context['request']}
+            UserSetSerializer(
+                instance.user_group,
+                context={
+                    'request': self.context.get('request'),
+                    'name': 'Users',
+                    'description': (
+                        'Users can monitored paths and their datasets.'
+                    )
+                }
             ).data,
-        }
+        ]
 
     class Meta:
         model = MonitoredPath
-        fields = ['url', 'id', 'path', 'stable_time', 'harvester', 'users']
-        read_only_fields = ['users']
+        fields = ['url', 'id', 'path', 'stable_time', 'harvester', 'user_sets']
+        read_only_fields = ['url', 'id', 'harvester', 'user_sets']
         depth = 1
 
 
@@ -94,26 +139,50 @@ class ObservedFileSerializer(serializers.HyperlinkedModelSerializer):
             'state', 'last_observed_time', 'last_observed_size',
             'datasets'
         ]
+        read_only_fields = [
+            'url', 'id', 'monitored_path', 'relative_path',
+            'last_observed_time', 'last_observed_size', 'datasets'
+        ]
         depth = 1
 
 
 class CellDataSerializer(serializers.HyperlinkedModelSerializer):
+    in_use = serializers.SerializerMethodField()
+
+    def get_in_use(self, instance):
+        return Dataset.objects.filter(cell=instance).exists()
+
     class Meta:
         model = CellData
-        fields = '__all__'
+        fields = [
+            'url', 'id', 'name',
+            'form_factor', 'link_to_datasheet',
+            'anode_chemistry', 'cathode_chemistry',
+            'nominal_capacity', 'nominal_cell_weight', 'manufacturer',
+            'in_use'
+        ]
+        read_only_fields = ['id', 'url', 'in_use']
 
 
 class DatasetSerializer(serializers.HyperlinkedModelSerializer):
+    user_sets = serializers.SerializerMethodField()
+
+    def get_user_sets(self, instance):
+        return MonitoredPathSerializer(
+            instance.file.monitored_path, context={'request': self.context.get('request')}
+        ).data.get('user_sets')
 
     class Meta:
         model = Dataset
-        fields = ['url', 'id', 'name', 'date', 'type', 'purpose', 'cell', 'file']
+        fields = ['url', 'id', 'name', 'date', 'type', 'purpose', 'cell', 'file', 'user_sets']
+        read_only_fields = ['date', 'file', 'id', 'url', 'user_sets']
 
 
 class EquipmentSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Equipment
-        fields = '__all__'
+        fields = ['url', 'id', 'name', 'type', 'datasets']
+        depth = 1
 
 
 class DatasetEquipmentSerializer(serializers.HyperlinkedModelSerializer):
@@ -160,8 +229,38 @@ class GroupSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Group
-        fields = ['url', 'name', 'users']
+        fields = [
+            'url', 'name', 'users',
+            'readable_paths', 'editable_paths', 'readable_harvesters', 'editable_harvesters'
+        ]
         depth = 1
+
+
+class UserSetSerializer(serializers.HyperlinkedModelSerializer):
+    description = serializers.SerializerMethodField()
+    users = serializers.SerializerMethodField()
+    name = serializers.SerializerMethodField()
+    is_admin = serializers.SerializerMethodField()
+
+    def get_description(self, instance):
+        return self.context.get('description')
+
+    def get_users(self, instance):
+        return UserSerializer(instance.user_set.all(), many=True, context={'request': self.context['request']}).data
+
+    def get_name(self, instance):
+        return self.context.get('name', instance.name)
+
+    def get_is_admin(self, instance):
+        """
+        Admin groups can control their own members, as well as members in groups
+        lower down the list of UserSets[]
+        """
+        return self.context.get('is_admin', False)
+
+    class Meta:
+        model = Group
+        fields = ['url', 'id', 'name', 'description', 'is_admin', 'users']
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
@@ -169,6 +268,7 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
         model = User
         fields = [
             'url',
+            'id',
             'username',
             'first_name',
             'last_name',

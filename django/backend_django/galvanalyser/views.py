@@ -416,20 +416,30 @@ class ObservedFileViewSet(viewsets.ModelViewSet):
         return Response(self.get_serializer(file, context={'request': request}).data)
 
 
+class DatasetViewSet(viewsets.ModelViewSet):
+    """
+    TODO: document
+    """
+    serializer_class = DatasetSerializer
+    filterset_fields = ['name', 'type', 'cell__name']
+    search_fields = ['@name', 'type']
+    queryset = Dataset.objects.none().order_by('-date', '-id')
+
+    # Access restrictions
+    def get_queryset(self):
+        return Dataset.objects.filter(
+            Q(file__monitored_path__user_group__in=self.request.user.groups.all()) |
+            Q(file__monitored_path__admin_group__in=self.request.user.groups.all()) |
+            Q(file__monitored_path__harvester__admin_group__in=self.request.user.groups.all())
+        ).order_by('-date', '-id')
+
+
 class CellDataViewSet(viewsets.ModelViewSet):
     """
     TODO: document
     """
     serializer_class = CellDataSerializer
     queryset = CellData.objects.all()
-
-
-class DatasetViewSet(viewsets.ModelViewSet):
-    """
-    TODO: document
-    """
-    serializer_class = DatasetSerializer
-    queryset = Dataset.objects.all()
 
 
 class EquipmentViewSet(viewsets.ModelViewSet):
@@ -505,4 +515,109 @@ class GroupViewSet(viewsets.ModelViewSet):
     TODO: document
     """
     serializer_class = GroupSerializer
-    queryset = Group.objects.all()
+    queryset = Group.objects.none().order_by('-id')
+
+    def get_queryset(self):
+        return self.request.user.groups.all().order_by('-id')
+
+    @action(detail=True, methods=['POST'])
+    def remove(self, request, pk: int = None):
+        # A user can be removed from a group if:
+        # 1. The user removing them is an admin on that group or a senior group, AND
+        # 2. The harvester's admin group will not be left without any members
+
+        # Determine what kind of group we're in
+        try:
+            group = Group.objects.get(id=pk)
+        except Group.DoesNotExist:
+            return error_response(f"Group {pk} not found")
+
+        def drop_user(target_group: Group, request):
+            try:
+                user = User.objects.get(id=request.data.get('user'))
+            except User.DoesNotExist:
+                return error_response(f"Could not find user {request.data.get('user')}")
+            if not target_group.user_set.contains(user):
+                return error_response(f"That user is not in that group")
+            target_group.user_set.remove(user)
+            target_group.save()
+            return Response(GroupSerializer(target_group, context={'request': request}).data)
+
+        if group.editable_harvesters.first() is not None:
+            if not group.user_set.contains(self.request.user).exists():
+                return error_response(f"You are not authorised to edit this group")
+            if len(group.user_set.all()) <= 1:
+                return error_response(f"Removing that user would leave the group empty")
+            return drop_user(group, self.request)
+
+        if group.readable_harvesters.first() is not None:
+            harvester = group.readable_harvesters.first()
+            if not group.user_set.contains(self.request.user) \
+                    and not harvester.admin_group.user_set.contains(self.request.user):
+                return error_response(f"You are not authorised to edit this group")
+            return drop_user(group, self.request)
+
+        if group.editable_paths.first() is not None:
+            path = group.editable_paths.first()
+            if not group.user_set.contains(self.request.user) \
+                    and not path.harvester.admin_group.user_set.contains(self.request.user):
+                return error_response(f"You are not authorised to edit this group")
+            return drop_user(group, self.request)
+
+        if group.readable_paths.first() is not None:
+            path = group.readable_paths.first()
+            if not group.user_set.contains(self.request.user) \
+                    and not path.admin_group.user_set.contains(self.request.user) \
+                    and not path.harvester.admin_group.user_set.contains(self.request.user):
+                return error_response(f"You are not authorised to edit this group")
+            return drop_user(group, self.request)
+
+        return error_response(f"Not a valid group for editing")
+
+    @action(detail=True, methods=['POST'])
+    def add(self, request, pk: int = None):
+        # Determine what kind of group we're in
+        try:
+            group = Group.objects.get(id=pk)
+        except Group.DoesNotExist:
+            return error_response(f"Group {pk} not found")
+
+        def add_user(target_group: Group, request):
+            try:
+                user = User.objects.get(id=request.data.get('user'))
+            except User.DoesNotExist:
+                return error_response(f"Could not find user {request.data.get('user')}")
+            if target_group.user_set.contains(user):
+                return error_response(f"That user is already in that group")
+            target_group.user_set.add(user)
+            target_group.save()
+            return Response(GroupSerializer(target_group, context={'request': request}).data)
+
+        if group.editable_harvesters.first() is not None:
+            if not group.user_set.contains(self.request.user).exists():
+                return error_response(f"You are not authorised to edit this group")
+            return add_user(group, self.request)
+
+        if group.readable_harvesters.first() is not None:
+            harvester = group.readable_harvesters.first()
+            if not group.user_set.contains(self.request.user) \
+                    and not harvester.admin_group.user_set.contains(self.request.user):
+                return error_response(f"You are not authorised to edit this group")
+            return add_user(group, self.request)
+
+        if group.editable_paths.first() is not None:
+            path = group.editable_paths.first()
+            if not group.user_set.contains(self.request.user) \
+                    and not path.harvester.admin_group.user_set.contains(self.request.user):
+                return error_response(f"You are not authorised to edit this group")
+            return add_user(group, self.request)
+
+        if group.readable_paths.first() is not None:
+            path = group.readable_paths.first()
+            if not group.user_set.contains(self.request.user) \
+                    and not path.admin_group.user_set.contains(self.request.user) \
+                    and not path.harvester.admin_group.user_set.contains(self.request.user):
+                return error_response(f"You are not authorised to edit this group")
+            return add_user(group, self.request)
+
+        return error_response(f"Not a valid group for editing")

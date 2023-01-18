@@ -3,7 +3,6 @@ import TextField from '@mui/material/TextField';
 import { makeStyles } from '@mui/styles'
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
-import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import Tooltip from '@mui/material/Tooltip';
 import AddIcon from '@mui/icons-material/Add';
 import IconButton from '@mui/material/IconButton';
@@ -16,11 +15,8 @@ import TableRow from '@mui/material/TableRow';
 import PaginatedTable, {RowFunProps} from './PaginatedTable';
 
 import HarvesterDetail from './HarvesterDetail';
-import { url,
-  run_harvester, harvesters, add_harvester,
-  update_harvester, delete_harvester, isAdmin
-} from './Api'
 import Connection from "./APIConnection";
+import {isAdmin} from "./Api";
 
 export type HarvesterWriteableFields = {
   name: string;
@@ -62,15 +58,8 @@ export default function Harvesters() {
   const [selected, setSelected] = useState<HarvesterFields|null>(null)
   const userIsAdmin = isAdmin()
 
-  const addNewHarvester = (data: HarvesterFields) => {
-    const insert_data: HarvesterWriteableFields = {name: data.name, sleep_time: data.sleep_time}
-    Connection.fetch('harvesters/', {body: JSON.stringify(insert_data), method: 'POST'})
-      .then(() => setLastUpdated(new Date()))
-  };
-
   const updateHarvester = (data: any) => {
-    const insert_data: HarvesterWriteableFields & {id: number} = {
-      id: data.id,
+    const insert_data: HarvesterWriteableFields = {
       name: data.name,
       sleep_time: data.sleep_time
     }
@@ -79,7 +68,7 @@ export default function Harvesters() {
   };
 
   const deleteHarvester = () => {
-    if (isSelected)
+    if (selected !== null)
       Connection.fetch(selected.url, {method: 'DELETE'})
         .then(() => setLastUpdated(new Date()))
         .then(() => setSelected(null))
@@ -208,8 +197,6 @@ export default function Harvesters() {
       </TableCell>
   ))
 
-  const isSelected = selected !== null;
-
   const paginated_table = (<PaginatedTable
     header={(<TableHead>{table_head}</TableHead>)}
     row_fun= {table_row_generator}
@@ -225,7 +212,7 @@ export default function Harvesters() {
     <Tooltip title="Delete selected harvester">
       <span>
     <IconButton 
-      disabled={!userIsAdmin || !isSelected} 
+      disabled={!userIsAdmin || selected === null}
       aria-label="delete" 
       onClick={deleteHarvester}
     >
@@ -234,7 +221,7 @@ export default function Harvesters() {
       </span>
     </Tooltip>
     </Paper>
-    {isSelected && <HarvesterDetail harvester={selected} />}
+    {selected !== null && <HarvesterDetail harvester={selected} />}
     </Container>
   );
 }

@@ -1,17 +1,12 @@
-import React, {useEffect, useState, useCallback, ChangeEvent} from 'react';
+import React, {useEffect, useState} from 'react';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
-import Input from '@mui/material/Input';
-import InputAdornment from '@mui/material/InputAdornment';
 import { makeStyles } from '@mui/styles'
 import Paper from '@mui/material/Paper';
 import Tooltip from '@mui/material/Tooltip';
 import AddIcon from '@mui/icons-material/Add';
 import IconButton from '@mui/material/IconButton';
 import TableCell from '@mui/material/TableCell';
-import MenuItem from '@mui/material/MenuItem';
-import Select from '@mui/material/Select';
-import Chip from '@mui/material/Chip';
 import SaveIcon from '@mui/icons-material/Save';
 import TableHead from '@mui/material/TableHead';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -20,6 +15,7 @@ import PaginatedTable, {RowFunProps} from './PaginatedTable';
 import Connection, {User} from "./APIConnection";
 import Files from './Files'
 import {HarvesterFields} from "./Harvesters";
+import UserRoleSet, {UserSet} from "./UserRoleSet";
 
 const useStyles = makeStyles((theme) => ({
   paper: {
@@ -50,119 +46,14 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-type MonitoredPathUserGroups = {
-  harvester_admins: User[];
-  admins: User[];
-  users: User[];
-}
-
 export type MonitoredPathFields = {
   url: string;
   id: number;
   harvester: number;
   stable_time: number;
   path: string;
-  users: MonitoredPathUserGroups;
+  user_sets: UserSet[];
 }
-
-function MyTableRow(props: RowFunProps<MonitoredPathFields>) {
-  const classes = useStyles();
-  const [row, setRow] = useState<MonitoredPathFields>({
-    url: "", id: -1, harvester: -1, stable_time: -1, path: '', users: {harvester_admins: [], admins: [], users: []}
-  })
-  const [dirty, setDirty] = useState<boolean>(false)
-
-  const rowUnchanged = Object.keys(row).reduce((a, k) => {
-    //@ts-ignore
-    return a && row[k] === props.savedRow[k];
-  }, true);
-
-  useEffect(() => {
-    if (!dirty && props.savedRow) {
-      setRow(props.savedRow);
-    }
-  }, [dirty, props.savedRow]);
-
-  let useRow = row;
-  if (row.harvester === -1 && props.savedRow)
-    useRow = props.savedRow;
-
-  const setValue = (key: string) => (e: any) => {
-    setDirty(true);
-    setRow({...useRow, [key]: e.target?.value});
-  };
-
-  const Icon = props.addIcon ? <AddIcon/> : <SaveIcon/> ;
-
-  return (
-    <React.Fragment>
-      <TableRow
-        onClick={() => {props.onSelectRow(props.savedRow);}}
-        hover
-        selected={props.selected}
-      >
-        <TableCell align="right" key={"Path"}>
-          <TextField
-            InputProps={{
-              classes: {
-                input: classes.resize,
-              },
-              placeholder: "New Monitored Path",
-              // TODO: Handle harvester base paths
-              // startAdornment: <InputAdornment
-              //                   className={classes.inputAdornment}
-              //                   position="start">
-              //                   {env.GALVANALYSER_HARVESTER_BASE_PATH}/
-              //                 </InputAdornment>,
-            }}
-            value={useRow.path}
-            onChange={setValue('path')} />
-        </TableCell>
-        <TableCell>
-          <TextField
-            type="number"
-            placeholder="60"
-            InputProps={{
-              classes: {
-                input: classes.resize,
-              },
-            }}
-            value={useRow.stable_time ? useRow.stable_time : ''}
-            onChange={(e) => {
-              setDirty(true);
-              setRow({...row, stable_time: parseInt(e.target.value)});
-            }}
-          >
-          </TextField>
-        </TableCell>
-        <TableCell align="right" key={"Users"}>
-          Harvester Admins:<br/>
-          {useRow.users.harvester_admins.map(u => (<span className="harvester_admin">{u.username}</span>))}
-          Admins:<br/>
-          {useRow.users.admins.map(u => (<span className="admin">{u.username}</span>))}
-          Users:<br/>
-          {useRow.users.users.map(u => (<span className="user">{u.username}</span>))}
-        </TableCell>
-        <TableCell align="right" key={"Save"}>
-          <Tooltip title={props.addIcon? "Add new Path" : "Save changes to Path"}>
-        <span>
-        <IconButton
-          disabled={props.disableSave || rowUnchanged}
-          onClick={() => {
-            setDirty(false);
-            props.onRowSave(row);
-          }}
-        >
-          {Icon}
-        </IconButton>
-        </span>
-          </Tooltip>
-        </TableCell>
-      </TableRow>
-    </React.Fragment>
-  )
-}
-
 type HarvesterDetailProps = {
   harvester: HarvesterFields,
   [key: string]: any
@@ -177,13 +68,112 @@ export default function HarvesterDetail(props: HarvesterDetailProps) {
 
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
 
+  function MyTableRow(props: RowFunProps<MonitoredPathFields>) {
+    const classes = useStyles();
+    const [row, setRow] = useState<MonitoredPathFields>({
+      url: "", id: -1, harvester: -1, stable_time: -1, path: '', user_sets: []
+    })
+    const [dirty, setDirty] = useState<boolean>(false)
+
+    const rowUnchanged = Object.keys(row).reduce((a, k) => {
+      //@ts-ignore
+      return a && row[k] === props.savedRow[k];
+    }, true);
+
+    useEffect(() => {
+      if (!dirty && props.savedRow) {
+        setRow(props.savedRow);
+      }
+    }, [dirty, props.savedRow]);
+
+    let useRow = row;
+    if (row.harvester === -1 && props.savedRow)
+      useRow = props.savedRow;
+
+    const setValue = (key: string) => (e: any) => {
+      setDirty(true);
+      setRow({...useRow, [key]: e.target?.value});
+    };
+
+    const Icon = props.addIcon ? <AddIcon/> : <SaveIcon/> ;
+
+    return (
+      <React.Fragment>
+        <TableRow
+          onClick={() => {props.onSelectRow(props.savedRow);}}
+          hover
+          selected={props.selected}
+        >
+          <TableCell align="right" key={"Path"}>
+            <TextField
+              InputProps={{
+                classes: {
+                  input: classes.resize,
+                },
+                placeholder: "New Monitored Path",
+                // TODO: Handle harvester base paths
+                // startAdornment: <InputAdornment
+                //                   className={classes.inputAdornment}
+                //                   position="start">
+                //                   {env.GALVANALYSER_HARVESTER_BASE_PATH}/
+                //                 </InputAdornment>,
+              }}
+              value={useRow.path}
+              onChange={setValue('path')} />
+          </TableCell>
+          <TableCell>
+            <TextField
+              type="number"
+              placeholder="60"
+              InputProps={{
+                classes: {
+                  input: classes.resize,
+                },
+              }}
+              value={useRow.stable_time ? useRow.stable_time : ''}
+              onChange={(e) => {
+                setDirty(true);
+                setRow({...row, stable_time: parseInt(e.target.value)});
+              }}
+            >
+            </TextField>
+          </TableCell>
+          <TableCell align="right" key={"Users"}>
+            <UserRoleSet
+              key={`userroleset-${useRow.id}`}
+              user_sets={useRow.user_sets}
+              last_updated={lastUpdated}
+              set_last_updated={setLastUpdated}
+            />
+          </TableCell>
+          <TableCell align="right" key={"Save"}>
+            <Tooltip title={props.addIcon? "Add new Path" : "Save changes to Path"}>
+        <span>
+        <IconButton
+          disabled={props.disableSave || rowUnchanged}
+          onClick={() => {
+            setDirty(false);
+            props.onRowSave(row);
+          }}
+        >
+          {Icon}
+        </IconButton>
+        </span>
+            </Tooltip>
+          </TableCell>
+        </TableRow>
+      </React.Fragment>
+    )
+  }
+
+
   const addNewPath = (data: MonitoredPathFields) => {
     const insert_data = {harvester: harvester.id, path: data.path, stable_time: data.stable_time}
     Connection.fetch('monitored_paths/', {body: JSON.stringify(insert_data), method: 'POST'})
       .then(() => setLastUpdated(new Date()))
   };
   const deletePath = () => {
-    if (isSelected)
+    if (selected !== null)
       Connection.fetch(selected.url, {method: 'DELETE'})
         .then(() => setLastUpdated(new Date()))
   };
@@ -192,8 +182,6 @@ export default function HarvesterDetail(props: HarvesterDetailProps) {
     Connection.fetch(data.url, {body: JSON.stringify(insert_data), method: 'PATCH'})
       .then(() => setLastUpdated(new Date()))
   };
-
-  const isSelected = selected !== null;
 
   const column_headings = [
     {label: 'Path', help: 'Directory to watch'},
@@ -225,14 +213,12 @@ export default function HarvesterDetail(props: HarvesterDetailProps) {
             key={row.path}
             savedRow={row}
             onRowSave={updatePath}
-            selected={isSelected && selected.path === row.path}
+            selected={selected !== null && selected.path === row.path}
             onSelectRow={setSelected}
             disableSave={
-              Connection.user === null || !(
-                row.users.harvester_admins.map((u: User) => u.username).includes(Connection.user.username) ||
-                row.users.admins.map((u: User) => u.username).includes(Connection.user.username) ||
-                row.users.users.map((u: User) => u.username).includes(Connection.user.username)
-              )
+              Connection.user === null || !row.user_sets.reduce((prev, u) => {
+                return prev || (Connection.user !== null && u.users.map(usr => usr.id).includes(Connection.user.id))
+              }, false)
             }
           />
         )}
@@ -240,10 +226,7 @@ export default function HarvesterDetail(props: HarvesterDetailProps) {
         new_entry_row={(
           <MyTableRow
             key={"new_path"}
-            savedRow={{
-              url: "", id: -1, harvester: harvester.id, path: "", stable_time: 60,
-              users: {harvester_admins: [], admins: [], users: []}
-            }}
+            savedRow={{url: "", id: -1, harvester: harvester.id, path: "", stable_time: 60, user_sets: []}}
             onRowSave={addNewPath}
             selected={false}
             onSelectRow={() => {
@@ -258,9 +241,9 @@ export default function HarvesterDetail(props: HarvesterDetailProps) {
       <span>
     <IconButton
       disabled={
-        !isSelected || Connection.user === null || !(
-          selected.users.harvester_admins.map((u: User) => u.username).includes(Connection.user.username) ||
-          selected.users.admins.map((u: User) => u.username).includes(Connection.user.username)
+        selected === null || Connection.user === null || !(
+          selected.user_sets.find(u => u.name.toLowerCase() === "harvester admins")?.users.map((u: User) => u.username).includes(Connection.user.username) ||
+          selected.user_sets.find(u => u.name.toLowerCase() === "admins")?.users.map((u: User) => u.username).includes(Connection.user.username)
         )
       }
       aria-label="delete"
@@ -270,7 +253,7 @@ export default function HarvesterDetail(props: HarvesterDetailProps) {
     </IconButton>
       </span>
       </Tooltip>
-      {isSelected && <Files path={selected} lastUpdated={lastUpdated}/>}
+      {selected !== null && <Files path={selected} lastUpdated={lastUpdated}/>}
     </Paper>
 
   );
