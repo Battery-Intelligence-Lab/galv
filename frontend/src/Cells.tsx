@@ -41,7 +41,7 @@ const useStyles = makeStyles((theme) => ({
     fontSize: '10pt',
   },
   input: {
-    marginLeft: theme.spacing(1),
+    marginLeft: theme.spacing(0),
     flex: 1,
   },
   iconButton: {
@@ -163,8 +163,8 @@ export default function Cells() {
           {
             string_fields.map(n => (<TableCell >
               {
-                useRow.in_use ? useRow[n] : (<TextField
-                  value={useRow[n]}
+                row.in_use ? row[n] : (<TextField
+                  value={row[n]}
                   InputProps={{
                     classes: {
                       input: classes.resize,
@@ -177,8 +177,8 @@ export default function Cells() {
           {
             number_fields.map(n => (<TableCell >
               {
-                useRow.in_use ? useRow[n] : (<TextField
-                  value={useRow[n]}
+                row.in_use ? row[n] : (<TextField
+                  value={row[n]}
                   style={{width: 60}}
                   type={"number"}
                   InputProps={{
@@ -194,7 +194,7 @@ export default function Cells() {
             <Tooltip title="Save changes to cell">
               <span>
                 <IconButton
-                  disabled={!dirty || useRow.in_use}
+                  disabled={!dirty || row.in_use}
                   onClick={() => {props.onRowSave(row);}}
                 >
                   {Icon}
@@ -206,8 +206,8 @@ export default function Cells() {
             <Tooltip title="Delete cell">
               <span>
                 <IconButton
-                  disabled={useRow.in_use}
-                  onClick={() => deleteCell(useRow)}
+                  disabled={row.in_use}
+                  onClick={() => deleteCell(row)}
                 >
                   <DeleteIcon />
                 </IconButton>
@@ -242,9 +242,9 @@ export default function Cells() {
         }}
         onRowSave={addNewCell}
         selected={false}
-        onSelectRow={() => {
-        }}
+        onSelectRow={() => {}}
         disableSave={false}
+        addIcon={true}
       />
     )}
     initial_url={`cells/`}

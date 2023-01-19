@@ -10,6 +10,7 @@ import Divider from "@mui/material/Divider";
 import Avatar from "@mui/material/Avatar";
 import Popover from "@mui/material/Popover";
 import Chip from "@mui/material/Chip";
+import Stack from "@mui/material/Stack";
 
 export type UserSet = {
   id: number;
@@ -143,52 +144,55 @@ export default class UserRoleSet extends Component<UserSetProps, UserSetState> {
 
   get user_sets() {
     return this.props.user_sets.map(u => <div>
-      <Tooltip title={u.description || ""} key={`divider-${u.id}`}>
+      <Tooltip title={u.description || ""} key={`divider-${u.id}`} placement={'left'}>
         <Divider>
           {u.name}
         </Divider>
       </Tooltip>
-      {u.users.map(usr => {
-        const editability = this.is_set_editable.find(s => s.id === u.id)
-        const editable = editability?.editable
-          || (Connection.user && usr.id === Connection.user.id)
-        const undeleteable = u.is_admin && u.users.length + (editability?.parent?.users.length || 0) <= 1
-        if (editable && undeleteable)
-          return <Tooltip
-            title={"Cannot be deleted because at least one administrator must be present."}
-            key={`user_set-${u.id}_${usr.id}`}
-          >
-            <Chip
+      <Stack direction="row" spacing={1} justifyContent="flex-end" alignItems="center">
+        {u.users.map(usr => {
+          const editability = this.is_set_editable.find(s => s.id === u.id)
+          const editable = editability?.editable
+            || (Connection.user && usr.id === Connection.user.id)
+          const undeleteable = u.is_admin && u.users.length + (editability?.parent?.users.length || 0) <= 1
+          if (editable && undeleteable)
+            return <Tooltip
+              title={"Cannot be deleted because at least one administrator must be present."}
+              key={`user_set-${u.id}_${usr.id}`}
+              placement="left"
+            >
+              <Chip
+                avatar={<Avatar alt={usr.username}/>}
+                label={<Typography noWrap>{usr.username}</Typography>}
+                size={'small'}
+              />
+            </Tooltip>
+          else if (editable)
+            return <Chip
+              key={`user_set-${u.id}_${usr.id}`}
+              onDelete={() => this.handleDelete(usr.id, u.url)}
               avatar={<Avatar alt={usr.username}/>}
               label={<Typography noWrap>{usr.username}</Typography>}
               size={'small'}
             />
-          </Tooltip>
-        else if (editable)
-          return <Chip
-            key={`user_set-${u.id}_${usr.id}`}
-            onDelete={() => this.handleDelete(usr.id, u.url)}
-            avatar={<Avatar alt={usr.username}/>}
-            label={<Typography noWrap>{usr.username}</Typography>}
-            size={'small'}
-          />
-        else
-          return <Chip
-            key={`user_set-${u.id}_${usr.id}`}
-            avatar={<Avatar alt={usr.username}/>}
-            label={<Typography noWrap>{usr.username}</Typography>}
-            size={'small'}
-          />
-      })}
-      {
-        this.is_set_editable.find(s => s.id === u.id)?.editable &&
-          <AddUserButton
-              key={`user_set-add-${u.id}`}
-              user_set={u}
-              all_users={this.state.all_users}
-              set_last_updated={this.props.set_last_updated}
-          />
-      }
+          else
+            return <Chip
+              key={`user_set-${u.id}_${usr.id}`}
+              avatar={<Avatar alt={usr.username}/>}
+              label={<Typography noWrap>{usr.username}</Typography>}
+              size={'small'}
+            />
+        })}
+        {
+          this.is_set_editable.find(s => s.id === u.id)?.editable &&
+            <AddUserButton
+                key={`user_set-add-${u.id}`}
+                user_set={u}
+                all_users={this.state.all_users}
+                set_last_updated={this.props.set_last_updated}
+            />
+        }
+      </Stack>
     </div>)
   }
 

@@ -47,7 +47,8 @@ const useStyles = makeStyles((theme) => ({
 const column_headings = [
   {label: 'Name', help: 'Equipment Name'},
   {label: 'Type', help: 'Equipment Type'},
-  {label: 'Save', help: 'Click to save edits to a row'},
+  {label: 'Save', help: 'Click to save edits to a row. Edits are disabled for equipment that is in use'},
+  {label: 'Delete', help: 'Delete equipment that is not in use'},
 ]
 
 const table_head = column_headings.map(heading => (
@@ -131,14 +132,15 @@ export default function Equipment() {
           {
             string_fields.map(n => (<TableCell >
               {
-                useRow.in_use ? useRow[n] : (<TextField
-                  value={useRow[n]}
+                row.in_use ? row[n] : <TextField
+                  value={row[n]}
                   InputProps={{
                     classes: {
                       input: classes.resize,
                     },
                   }}
-                  onChange={setValue(n)} />)
+                  onChange={setValue(n)}
+                />
               }
             </TableCell>))
           }
@@ -146,7 +148,7 @@ export default function Equipment() {
             <Tooltip title="Save changes to equipment">
               <span>
                 <IconButton
-                  disabled={!dirty || useRow.in_use}
+                  disabled={!dirty || row.in_use}
                   onClick={() => {props.onRowSave(row);}}
                 >
                   {Icon}
@@ -158,7 +160,7 @@ export default function Equipment() {
             <Tooltip title="Delete equipment">
               <span>
                 <IconButton
-                  disabled={useRow.in_use}
+                  disabled={row.in_use}
                   onClick={() => deleteEquipment(useRow)}
                 >
                   <DeleteIcon />
@@ -187,14 +189,12 @@ export default function Equipment() {
     new_entry_row={(
       <MyTableRow
         key={"new_cell"}
-        savedRow={{
-          url: "", id: -1, name: "", type: "", in_use: false,
-        }}
+        savedRow={{url: "", id: -1, name: "", type: "", in_use: false}}
         onRowSave={addNewEquipment}
         selected={false}
-        onSelectRow={() => {
-        }}
+        onSelectRow={() => {}}
         disableSave={false}
+        addIcon={true}
       />
     )}
     initial_url={`equipment/`}
