@@ -1,3 +1,6 @@
+import io
+import sys
+
 from django.db.models import Q
 
 from .serializers import HarvesterSerializer, \
@@ -7,14 +10,14 @@ from .serializers import HarvesterSerializer, \
     CellDataSerializer, \
     DatasetSerializer, \
     EquipmentSerializer, \
-    DatasetEquipmentSerializer, \
     DataUnitSerializer, \
     DataColumnTypeSerializer, \
     DataColumnSerializer, \
     TimeseriesDataSerializer, \
     TimeseriesRangeLabelSerializer, \
     UserSerializer, \
-    GroupSerializer
+    GroupSerializer, \
+    HarvestErrorSerializer
 from .models import Harvester, \
     HarvestError, \
     MonitoredPath, \
@@ -22,7 +25,6 @@ from .models import Harvester, \
     CellData, \
     Dataset, \
     Equipment, \
-    DatasetEquipment, \
     DataUnit, \
     DataColumnType, \
     DataColumnStringKeys, \
@@ -40,6 +42,17 @@ from rest_framework.response import Response
 from knox.views import LoginView as KnoxLoginView
 from rest_framework.authentication import BasicAuthentication
 import json
+import time
+import logging
+
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.StreamHandler())
+
+
+def checkpoint(msg: str, t: float, log_fun=logger.warning) -> float:
+    t2 = time.time()
+    log_fun(f"{msg} (in {round(t2 - t, 2)}s)")
+    return t2
 
 
 def error_response(error: str, status: int = 400) -> Response:
@@ -159,6 +172,8 @@ class HarvesterViewSet(viewsets.ModelViewSet):
         """
         # TODO access class Harvester
         harvester = Harvester.objects.get(id=pk)
+        harvester.last_check_in = timezone.now()
+        harvester.save()
         if request.data.get('status') is None:
             return Response({'error': 'Badly formatted request'}, status=400)
         try:
@@ -172,11 +187,24 @@ class HarvesterViewSet(viewsets.ModelViewSet):
                     error = json.dumps(error)
                 except json.JSONDecodeError:
                     error = str(error)
-            err = HarvestError.objects.create(
-                harvester=harvester,
-                path=path,
-                error=str(error)
-            )
+            file_rel_path = request.data.get('file')
+            if file_rel_path:
+                err = HarvestError.objects.create(
+                    harvester=harvester,
+                    path=path,
+                    file=ObservedFile.objects.get_or_create(
+                        monitored_path=path,
+                        relative_path=file_rel_path,
+                        defaults={'state': FileState.IMPORT_FAILED}
+                    ),
+                    error=str(error)
+                )
+            else:
+                err = HarvestError.objects.create(
+                    harvester=harvester,
+                    path=path,
+                    error=str(error)
+                )
             if request.data.get('file'):
                 try:
                     file = ObservedFile.objects.get(monitored_path=path, relative_path=request.data['file'])
@@ -248,9 +276,12 @@ class HarvesterViewSet(viewsets.ModelViewSet):
                             if file.state == FileState.IMPORTING.value:
                                 file.state = FileState.IMPORTED
                         else:
+                            time_start = time.time()
                             date = deserialize_datetime(content['test_date'])
                             dataset = Dataset.objects.get(file=file, date=date)
                             for column_data in content['data']:
+                                time_col_start = time.time()
+                                logger.warning(f"Column {column_data.get('column_name', column_data.get('column_id'))}")
                                 try:
                                     column_type = DataColumnType.objects.get(id=column_data['column_id'])
                                     column, _ = DataColumn.objects.get_or_create(
@@ -277,22 +308,136 @@ class HarvesterViewSet(viewsets.ModelViewSet):
                                     )
                                 # Create a value map for string data
                                 if 'value_map' in column_data:
+                                    time_value_rm = time.time()
                                     DataColumnStringKeys.objects.filter(column=column).delete()
+                                    time_value_add = checkpoint('deleted existing value map', time_value_rm)
                                     DataColumnStringKeys.objects.bulk_create(
                                         [DataColumnStringKeys(string=k, key=v, column=column)
                                          for k, v in column_data['value_map'].items()]
                                     )
+                                    checkpoint('created value map', time_value_add)
 
-                                # Enter data en masse to avoid numerous expensive database calls
+                                # # Enter data en masse to avoid numerous expensive database calls
+                                # time_ts_rm = time.time()
+                                # TimeseriesData.objects.filter(
+                                #     column=column,
+                                #     sample__in=column_data['values'].keys()
+                                # ).delete()
+                                # time_ts_prep = checkpoint('deleted existing timeseries data', time_ts_rm)
+                                # ts = [
+                                #     TimeseriesData(sample=k, value=v, column=column)
+                                #     for k, v in column_data['values'].items()
+                                # ]
+                                # time_ts_add = checkpoint('prepared ts objects', time_ts_prep)
+                                # TimeseriesData.objects.bulk_create(
+                                #     [TimeseriesData(sample=k, value=v, column=column)
+                                #      for k, v in column_data['values'].items()]
+                                # )
+                                # checkpoint('created timeseries data', time_ts_add)
+                                # checkpoint('column complete', time_col_start)
+
+                                # time_ts_rm = time.time()
+                                # TimeseriesData.objects.filter(
+                                #     column=column,
+                                #     sample__in=column_data['values'].keys()
+                                # ).delete()
+                                # time_ts_prep = checkpoint('deleted existing timeseries data', time_ts_rm)
+                                # rows = []
+                                # for s, v in column_data['values'].items():
+                                #     rows.append((int(s), int(v), column.id))
+                                # time_ts_add = checkpoint('prepared ts objects', time_ts_prep)
+                                # from django.db import connection
+                                # with connection.cursor() as cursor:
+                                #     query = cursor.executemany(
+                                #         "INSERT INTO galvanalyser_timeseriesdata (sample, value, column_id) VALUES(%s, %s, %s)",
+                                #         rows)
+                                # checkpoint('created timeseries data', time_ts_add)
+                                # checkpoint('column complete', time_col_start)
+
+                                time_ts_rm = time.time()
                                 TimeseriesData.objects.filter(
                                     column=column,
                                     sample__in=column_data['values'].keys()
                                 ).delete()
-                                TimeseriesData.objects.bulk_create(
-                                    [TimeseriesData(sample=k, value=v, column=column)
-                                     for k, v in column_data['values'].items()]
-                                )
+                                time_ts_prep = checkpoint('deleted existing timeseries data', time_ts_rm)
 
+                                class IteratorFile(io.TextIOBase):
+                                    """ given an iterator which yields strings,
+                                    return a file like object for reading those strings """
+
+                                    def __init__(self, it):
+                                        self._it = it
+                                        self._f = io.StringIO()
+                                        self.buffered_chars = 0
+
+                                    def read(self, length=sys.maxsize):
+
+                                        try:
+                                            while self.buffered_chars < length:
+                                                self.buffered_chars += self._f.write(next(self._it) + "\n")
+
+                                        except StopIteration as e:
+                                            # soak up StopIteration. this block is not necessary because
+                                            # of finally, but just to be explicit
+                                            pass
+
+                                        except:  # Exception as e:
+                                            raise
+                                        #            print("uncaught exception: {}".format(e))
+
+                                        finally:
+                                            self._f.seek(0)
+                                            data = self._f.read(length)
+
+                                            # save the remainder for next read
+                                            remainder = self._f.read()
+                                            self._f.seek(0)
+                                            self._f.truncate(0)
+                                            self.buffered_chars = self._f.write(remainder)
+                                            return data
+
+                                    def readline(self):
+                                        try:
+                                            # load up a line to make sure that there is one to read
+                                            self._f.write(next(self._it) + "\n")
+                                        except StopIteration as e:
+                                            # soak up StopIteration. this block is not necessary because
+                                            # of finally, but just to be explicit
+                                            pass
+
+                                        except:  # Exception as e:
+                                            raise
+                                        #            print("uncaught exception: {}".format(e))
+
+                                        finally:
+                                            self._f.seek(0)
+                                            data = self._f.readline()
+
+                                            # save the remainder for next read
+                                            remainder = self._f.read()
+                                            self._f.seek(0)
+                                            self._f.truncate(0)
+                                            # store size of data in buffer for the read method
+                                            self.buffered_chars = self._f.write(remainder)
+                                            return data
+                                rows = []
+                                i = TimeseriesData.objects.last().id
+                                for s, v in column_data['values'].items():
+                                    i += 1
+                                    rows.append(f"{i}\t{int(s)}\t{int(v)}\t{column.id}")
+
+                                iter_file = IteratorFile(rows.__iter__())
+                                time_ts_add = checkpoint('prepared ts objects', time_ts_prep)
+                                from django.db import connection
+                                with connection.cursor() as cursor:
+                                    cursor.copy_expert(
+                                        'COPY galvanalyser_timeseriesdata FROM STDIN',
+                                        iter_file
+                                    )
+                                checkpoint('created timeseries data', time_ts_add)
+                                checkpoint('column complete', time_col_start)
+
+                            checkpoint('complete', time_start)
                     except BaseException as e:
                         file.state = FileState.IMPORT_FAILED
                         HarvestError.objects.create(harvester=harvester, path=path, file=file, error=str(e))
@@ -359,7 +504,6 @@ class MonitoredPathViewSet(viewsets.ModelViewSet):
         monitored_path.save()
         # Add user as admin
         request.user.groups.add(monitored_path.admin_group)
-        request.user.save()
 
         return Response(self.get_serializer(monitored_path).data)
 
@@ -437,12 +581,30 @@ class DatasetViewSet(viewsets.ModelViewSet):
         ).order_by('-date', '-id')
 
 
+class HarvestErrorViewSet(viewsets.ModelViewSet):
+    """
+    TODO: document
+    """
+    serializer_class = HarvestErrorSerializer
+    filterset_fields = ['file', 'path', 'harvester']
+    search_fields = ['@error']
+    queryset = HarvestError.objects.none().order_by('-timestamp')
+
+    # Access restrictions
+    def get_queryset(self):
+        return HarvestError.objects.filter(
+            Q(path__user_group__in=self.request.user.groups.all()) |
+            Q(path__admin_group__in=self.request.user.groups.all()) |
+            Q(harvester__admin_group__in=self.request.user.groups.all())
+        ).order_by('-timestamp')
+
+
 class CellDataViewSet(viewsets.ModelViewSet):
     """
     TODO: document
     """
     serializer_class = CellDataSerializer
-    queryset = CellData.objects.all()
+    queryset = CellData.objects.all().order_by('-id')
 
 
 class EquipmentViewSet(viewsets.ModelViewSet):
@@ -451,14 +613,6 @@ class EquipmentViewSet(viewsets.ModelViewSet):
     """
     serializer_class = EquipmentSerializer
     queryset = Equipment.objects.all()
-
-
-class DatasetEquipmentViewSet(viewsets.ModelViewSet):
-    """
-    TODO: document
-    """
-    serializer_class = DatasetEquipmentSerializer
-    queryset = DatasetEquipment.objects.all()
 
 
 class DataUnitViewSet(viewsets.ModelViewSet):
@@ -543,7 +697,6 @@ class GroupViewSet(viewsets.ModelViewSet):
             if not target_group.user_set.contains(user):
                 return error_response(f"That user is not in that group")
             target_group.user_set.remove(user)
-            target_group.save()
             return Response(GroupSerializer(target_group, context={'request': request}).data)
 
         if group.editable_harvesters.first() is not None:
@@ -593,7 +746,6 @@ class GroupViewSet(viewsets.ModelViewSet):
             if target_group.user_set.contains(user):
                 return error_response(f"That user is already in that group")
             target_group.user_set.add(user)
-            target_group.save()
             return Response(GroupSerializer(target_group, context={'request': request}).data)
 
         if group.editable_harvesters.first() is not None:

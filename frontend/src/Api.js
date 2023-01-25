@@ -1,5 +1,5 @@
 
-export const url = 'http://localhost:5001/';
+export const url = 'http://localhost:5000/';
 const headers = {
       'Accept': 'application/json',
       'Content-Type': 'application/json'
@@ -15,10 +15,10 @@ export function getUser() {return user;}
 
 export function isAdmin() {
     return user !== null;
-  if (!user) {
-    return false;
-  }
-  return user.groups.find(g => g.groupname === 'admin')
+  // if (!user) {
+  //   return false;
+  // }
+  // return user.groups.find(g => g.groupname === 'admin')
 }
 
 export async function login(username, password) {

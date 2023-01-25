@@ -1,16 +1,12 @@
-import React, { useState } from 'react';
+import React, { Fragment } from 'react';
 import { makeStyles } from '@mui/styles'
 import Container from '@mui/material/Container';
-import TableCell from '@mui/material/TableCell';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
-import Paper from '@mui/material/Paper';
-import PaginatedTable from './PaginatedTable';
-import Connection from "./APIConnection";
-import {MonitoredPathFields} from "./HarvesterDetail";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import DatasetIcon from '@mui/icons-material/Dataset';
+import Paper from '@mui/material/Paper';
+import AsyncTable from './AsyncTable';
+import Connection from "./APIConnection";
+import {MonitoredPathFields} from "./HarvesterDetail";
 import IconButton from "@mui/material/IconButton";
 import RefreshIcon from "@mui/icons-material/Refresh";
 
@@ -33,36 +29,34 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 export type FileFields = {
-  url: string,
-  id: number,
-  monitored_path: string,
-  relative_path: string,
-  state: string,
-  last_observed_time: string,
-  last_observed_size: number,
-  datasets: string[]
+  url: string;
+  id: number;
+  monitored_path: string;
+  relative_path: string;
+  state: string;
+  last_observed_time: string;
+  last_observed_size: number;
+  errors: {
+    error: string;
+    timestamp: string;
+    [key: string]: any;
+  }
+  datasets: string[];
 }
 
-export type FilesProps = {
-  path: MonitoredPathFields,
-  lastUpdated: Date
-}
+export type FilesProps = { path: MonitoredPathFields }
 
 export default function Files(props: FilesProps) {
   const classes = useStyles();
-  const [lastUpdated, setLastUpdated] = useState<Date>(props.lastUpdated)
 
-  const forceReimport = (file: FileFields) => {
-    Connection.fetch(`${file.url}reimport/`)
-      .then(() => setLastUpdated(new Date()))
-  }
+  const forceReimport = (file: FileFields) => Connection.fetch(`${file.url}reimport/`)
 
   const datetimeOptions: Intl.DateTimeFormatOptions = {
     year: 'numeric', month: 'numeric', day: 'numeric',
     hour: 'numeric', minute: 'numeric', second: 'numeric',
   };
 
-  const column_headings = [
+  const columns = [
     {label: props.path.path, help: 'File path'},
     {label: 'Last Observed Size', help: 'Size of the file in bytes'},
     {label: 'Last Observed Time', help: 'Time file was last scanned'},
@@ -71,48 +65,38 @@ export default function Files(props: FilesProps) {
     {label: 'Force Re-import', help: 'Retry the import operation next time the file is scanned'}
   ]
 
-  const table_head = column_headings.map(heading => (
-    <TableCell key={heading.label} className={classes.headCell}>
-      <Tooltip title={heading.help}>
-        <Typography>
-          {heading.label}
-        </Typography>
-      </Tooltip>
-    </TableCell>
-  ))
-
-  function row_fun(file: FileFields) {
-    return (
-      <React.Fragment>
-        <TableRow>
-          <TableCell align="right" key={"Path"}>{file.relative_path}</TableCell>
-          <TableCell key={"Size"}>{file.last_observed_size}</TableCell>
-          <TableCell align="right">
-            {
-              Intl.DateTimeFormat('en-GB', datetimeOptions).format(
-                Date.parse(file.last_observed_time)
-              )
-            }
-          </TableCell>
-          <TableCell>{file.state}</TableCell>
-          <TableCell>{file.datasets.map(d => (<IconButton><DatasetIcon /></IconButton>))}</TableCell>
-          <TableCell><IconButton onClick={() => forceReimport(file)}><RefreshIcon /></IconButton></TableCell>
-        </TableRow>
-      </React.Fragment>
-    )
+  const file_state = (file: FileFields) => {
+    let state = file.state === 'IMPORT FAILED' ?
+      <Typography color='error'>{file.state}</Typography> : <Typography>{file.state}</Typography>
+    if (file.errors.length)
+      state = <Tooltip title={file.errors[0].error} placement="right">{state}</Tooltip>
+    return state
   }
 
   return (
     <Container maxWidth="lg" className={classes.container} key={`files_for_path${props.path.id}`}>
-    <Paper className={classes.paper}>
-      <PaginatedTable
-        header={(<TableHead>{table_head}</TableHead>)}
-        row_fun={row_fun}
-        initial_url={`files/?monitored_path__id=${props.path.id}`}
-        styles={classes}
-        last_updated={lastUpdated}
-      />
-    </Paper>
+      <Paper className={classes.paper}>
+        <AsyncTable
+          key="files"
+          columns={columns}
+          rows={[
+            (file: any) => <Fragment>{file.relative_path}</Fragment>,
+            (file: any) => <Fragment>{file.last_observed_size}</Fragment>,
+            (file: any) => <Fragment>{
+              Intl.DateTimeFormat('en-GB', datetimeOptions).format(
+                Date.parse(file.last_observed_time)
+              )}
+            </Fragment>,
+            (file: any) => <Fragment>{file_state(file)}</Fragment>,
+            (file: any) => <Fragment>{file.datasets.length}</Fragment>,
+            (file: any, context) => <Fragment>
+              <IconButton onClick={() => forceReimport(file).then(context.refresh)}><RefreshIcon /></IconButton>
+            </Fragment>
+          ]}
+          initial_url={`files/?monitored_path__id=${props.path.id}&all=true`}
+          styles={classes}
+        />
+      </Paper>
     </Container>
   );
 }

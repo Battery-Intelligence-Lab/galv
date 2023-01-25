@@ -1,3 +1,4 @@
+from django.db.models import F
 from django.utils import timezone
 from django.db import models
 from django.contrib.auth.models import User, Group
@@ -55,7 +56,7 @@ class Harvester(models.Model):
 
 
 class MonitoredPath(models.Model):
-    harvester = models.ForeignKey(to=Harvester, related_name='monitored_paths', on_delete=models.CASCADE)
+    harvester = models.ForeignKey(to=Harvester, related_name='monitored_paths', on_delete=models.DO_NOTHING)
     path = models.TextField()
     stable_time = models.PositiveSmallIntegerField(default=60)  # seconds files must remain stable to be processed
     admin_group = models.ForeignKey(
@@ -75,16 +76,8 @@ class MonitoredPath(models.Model):
         unique_together = [['harvester', 'path']]
 
 
-class HarvestError(models.Model):
-    harvester = models.ForeignKey(to=Harvester, related_name='paths', on_delete=models.CASCADE)
-    path = models.ForeignKey(to=MonitoredPath, on_delete=models.DO_NOTHING)
-    file = models.TextField(null=True)
-    error = models.TextField()
-    timestamp = models.DateTimeField(auto_now=True, null=True)
-
-
 class ObservedFile(models.Model):
-    monitored_path = models.ForeignKey(to=MonitoredPath, related_name='files', on_delete=models.DO_NOTHING)
+    monitored_path = models.ForeignKey(to=MonitoredPath, related_name='files', on_delete=models.CASCADE)
     relative_path = models.TextField()
     last_observed_size = models.PositiveBigIntegerField(null=False, default=0)
     last_observed_time = models.DateTimeField(null=True)
@@ -92,6 +85,14 @@ class ObservedFile(models.Model):
 
     class Meta:
         unique_together = [['monitored_path', 'relative_path']]
+
+
+class HarvestError(models.Model):
+    harvester = models.ForeignKey(to=Harvester, related_name='paths', on_delete=models.CASCADE)
+    path = models.ForeignKey(to=MonitoredPath, on_delete=models.DO_NOTHING)
+    file = models.ForeignKey(to=ObservedFile, related_name='errors', on_delete=models.DO_NOTHING)
+    error = models.TextField()
+    timestamp = models.DateTimeField(auto_now=True, null=True)
 
 
 class CellData(models.Model):
@@ -121,14 +122,7 @@ class Dataset(models.Model):
 class Equipment(models.Model):
     name = models.TextField(null=False, unique=True)
     type = models.TextField()
-
-
-class DatasetEquipment(models.Model):
-    dataset = models.ForeignKey(to=Dataset, related_name='equipment', on_delete=models.CASCADE)
-    equipment = models.ForeignKey(to=Equipment, related_name='datasets', on_delete=models.CASCADE)
-
-    class Meta:
-        unique_together = [['dataset', 'equipment']]
+    datasets = models.ManyToManyField(to=Dataset, related_name='equipment')
 
 
 class DataUnit(models.Model):
@@ -182,6 +176,9 @@ class TimeseriesData(models.Model):
     value = models.FloatField(null=False)
 
     class Meta:
+        indexes = [
+            models.Index('sample', 'column_id', name='sc_ref')
+        ]
         unique_together = [['sample', 'column']]
 
 

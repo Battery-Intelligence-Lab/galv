@@ -1,15 +1,16 @@
 from .models import Harvester, \
+    HarvestError, \
     MonitoredPath, \
     ObservedFile, \
     CellData, \
     Dataset, \
     Equipment, \
-    DatasetEquipment, \
     DataUnit, \
     DataColumnType, \
     DataColumn, \
     TimeseriesData, \
-    TimeseriesRangeLabel
+    TimeseriesRangeLabel, \
+    FileState
 from django.contrib.auth.models import User, Group
 from django.conf.global_settings import DATA_UPLOAD_MAX_MEMORY_SIZE
 from rest_framework import serializers
@@ -136,14 +137,21 @@ class ObservedFileSerializer(serializers.HyperlinkedModelSerializer):
         fields = [
             'url', 'id',
             'monitored_path', 'relative_path',
-            'state', 'last_observed_time', 'last_observed_size',
+            'state', 'last_observed_time', 'last_observed_size', 'errors',
             'datasets'
         ]
         read_only_fields = [
             'url', 'id', 'monitored_path', 'relative_path',
-            'last_observed_time', 'last_observed_size', 'datasets'
+            'last_observed_time', 'last_observed_size', 'datasets',
+            'errors'
         ]
         depth = 1
+
+
+class HarvestErrorSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = HarvestError
+        fields = ['url', 'id', 'harvester', 'path', 'file', 'error', 'timestamp']
 
 
 class CellDataSerializer(serializers.HyperlinkedModelSerializer):
@@ -174,8 +182,9 @@ class DatasetSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Dataset
-        fields = ['url', 'id', 'name', 'date', 'type', 'purpose', 'cell', 'file', 'user_sets']
+        fields = ['url', 'id', 'name', 'date', 'type', 'purpose', 'cell', 'equipment', 'file', 'user_sets']
         read_only_fields = ['date', 'file', 'id', 'url', 'user_sets']
+        depth = 1
 
 
 class EquipmentSerializer(serializers.HyperlinkedModelSerializer):
@@ -183,12 +192,6 @@ class EquipmentSerializer(serializers.HyperlinkedModelSerializer):
         model = Equipment
         fields = ['url', 'id', 'name', 'type', 'datasets']
         depth = 1
-
-
-class DatasetEquipmentSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta:
-        model = DatasetEquipment
-        fields = '__all__'
 
 
 class DataUnitSerializer(serializers.HyperlinkedModelSerializer):

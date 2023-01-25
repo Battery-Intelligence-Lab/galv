@@ -18,7 +18,7 @@ export type UserSet = {
   name: string;
   description?: string;
   is_admin?: boolean;
-  users: User[]
+  users: User[];
 }
 
 export type UserSetProps = {
@@ -143,17 +143,16 @@ export default class UserRoleSet extends Component<UserSetProps, UserSetState> {
   })
 
   get user_sets() {
-    return this.props.user_sets.map(u => <div>
+    return this.props.user_sets.map(u => <div key={`div-${u.id}`}>
       <Tooltip title={u.description || ""} key={`divider-${u.id}`} placement={'left'}>
         <Divider>
           {u.name}
         </Divider>
       </Tooltip>
-      <Stack direction="row" spacing={1} justifyContent="flex-end" alignItems="center">
+      <Stack key={`stack-${u.id}`}  direction="row" spacing={1} justifyContent="flex-end" alignItems="center">
         {u.users.map(usr => {
           const editability = this.is_set_editable.find(s => s.id === u.id)
           const editable = editability?.editable
-            || (Connection.user && usr.id === Connection.user.id)
           const undeleteable = u.is_admin && u.users.length + (editability?.parent?.users.length || 0) <= 1
           if (editable && undeleteable)
             return <Tooltip

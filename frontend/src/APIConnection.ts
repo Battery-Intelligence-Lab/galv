@@ -15,20 +15,26 @@ export type User = {
 }
 
 export type SingleAPIResponse = any
+export type MultipleAPIResponse = SingleAPIResponse[]
 export type PaginatedAPIResponse = {
   count: number, previous?: string, next?: string, results: SingleAPIResponse[]
 }
+export type ErrorCode = number
 
-export type APIResponse = SingleAPIResponse | PaginatedAPIResponse
-
+export type APIResponse = SingleAPIResponse |
+  MultipleAPIResponse |
+  PaginatedAPIResponse |
+  ErrorCode
 
 export class APIConnection {
-  url: string = 'http://localhost:5001/'.toLowerCase()
+  url: string = 'http://localhost:5000/'.toLowerCase()
   user: User | null = null
+  results: { [result_name: string]: APIResponse }
 
   constructor() {
     console.info("Spawn API connection")
     this.login('admin', 'admin');
+    this.results = {}
   }
 
   login(username: string, password: string) {
@@ -68,7 +74,7 @@ export class APIConnection {
     return cookie !== undefined && this.user !== null;
   }
 
-  async fetch(url: string, options?: any): Promise<APIResponse> {
+  async fetch(url: string, options?: any, cache_name: string = ""): Promise<APIResponse> {
     await this.get_is_logged_in();
     console.info(`Fetch ${url} for ${this.user?.username}`)
     console.info('fetch options', options)
@@ -91,8 +97,11 @@ export class APIConnection {
           //   return response;
           // });
         }
+        if (response.status === 404)
+          return 404;
         return response.json();
-      }).catch(e => {
+      })
+      .catch(e => {
         console.error(e);
         return {
           count: 0,
@@ -102,6 +111,14 @@ export class APIConnection {
           error: true
         };
       });
+  }
+
+  static get_result_array: (r: APIResponse) => MultipleAPIResponse = r => {
+    if (r instanceof Array)
+      return r;
+    if (r.results !== undefined)
+      return r.results;
+    return r;
   }
 }
 
