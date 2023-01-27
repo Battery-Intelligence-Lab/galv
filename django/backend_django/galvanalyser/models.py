@@ -172,14 +172,15 @@ class DataColumnStringKeys(models.Model):
 
 class TimeseriesData(models.Model):
     sample = models.PositiveBigIntegerField(null=False)
-    column = models.ForeignKey(to=DataColumn, related_name='values', null=False, on_delete=models.CASCADE)
+    column_id = models.PositiveIntegerField(null=False)
     value = models.FloatField(null=False)
 
     class Meta:
-        indexes = [
-            models.Index('sample', 'column_id', name='sc_ref')
-        ]
-        unique_together = [['sample', 'column']]
+        managed = False
+        db_table = "timeseriesdata"
+
+    def __str__(self):
+        return f"{self.column_id}[{self.sample}]: {self.value}"
 
 
 class TimeseriesRangeLabel(models.Model):

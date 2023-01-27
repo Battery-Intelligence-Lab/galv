@@ -2,7 +2,6 @@ import io
 import sys
 
 from django.db.models import Q
-
 from .serializers import HarvesterSerializer, \
     HarvesterConfigSerializer, \
     MonitoredPathSerializer, \
@@ -317,48 +316,10 @@ class HarvesterViewSet(viewsets.ModelViewSet):
                                     )
                                     checkpoint('created value map', time_value_add)
 
-                                # # Enter data en masse to avoid numerous expensive database calls
-                                # time_ts_rm = time.time()
-                                # TimeseriesData.objects.filter(
-                                #     column=column,
-                                #     sample__in=column_data['values'].keys()
-                                # ).delete()
-                                # time_ts_prep = checkpoint('deleted existing timeseries data', time_ts_rm)
-                                # ts = [
-                                #     TimeseriesData(sample=k, value=v, column=column)
-                                #     for k, v in column_data['values'].items()
-                                # ]
-                                # time_ts_add = checkpoint('prepared ts objects', time_ts_prep)
-                                # TimeseriesData.objects.bulk_create(
-                                #     [TimeseriesData(sample=k, value=v, column=column)
-                                #      for k, v in column_data['values'].items()]
-                                # )
-                                # checkpoint('created timeseries data', time_ts_add)
-                                # checkpoint('column complete', time_col_start)
-
-                                # time_ts_rm = time.time()
-                                # TimeseriesData.objects.filter(
-                                #     column=column,
-                                #     sample__in=column_data['values'].keys()
-                                # ).delete()
-                                # time_ts_prep = checkpoint('deleted existing timeseries data', time_ts_rm)
-                                # rows = []
-                                # for s, v in column_data['values'].items():
-                                #     rows.append((int(s), int(v), column.id))
-                                # time_ts_add = checkpoint('prepared ts objects', time_ts_prep)
-                                # from django.db import connection
-                                # with connection.cursor() as cursor:
-                                #     query = cursor.executemany(
-                                #         "INSERT INTO galvanalyser_timeseriesdata (sample, value, column_id) VALUES(%s, %s, %s)",
-                                #         rows)
-                                # checkpoint('created timeseries data', time_ts_add)
-                                # checkpoint('column complete', time_col_start)
-
                                 time_ts_rm = time.time()
-                                TimeseriesData.objects.filter(
-                                    column=column,
-                                    sample__in=column_data['values'].keys()
-                                ).delete()
+                                from django.db import connection
+                                with connection.cursor() as cursor:
+                                    cursor.execute(f"DELETE FROM timeseries_data WHERE column_id='{column.id}' AND sample IN ({','.join(column_data['values'].keys())})")
                                 time_ts_prep = checkpoint('deleted existing timeseries data', time_ts_rm)
 
                                 class IteratorFile(io.TextIOBase):
@@ -421,17 +382,14 @@ class HarvesterViewSet(viewsets.ModelViewSet):
                                             self.buffered_chars = self._f.write(remainder)
                                             return data
                                 rows = []
-                                i = TimeseriesData.objects.last().id
                                 for s, v in column_data['values'].items():
-                                    i += 1
-                                    rows.append(f"{i}\t{int(s)}\t{int(v)}\t{column.id}")
+                                    rows.append(f"{int(s)}\t{column.id}\t{int(v)}")
 
                                 iter_file = IteratorFile(rows.__iter__())
                                 time_ts_add = checkpoint('prepared ts objects', time_ts_prep)
-                                from django.db import connection
                                 with connection.cursor() as cursor:
                                     cursor.copy_expert(
-                                        'COPY galvanalyser_timeseriesdata FROM STDIN',
+                                        'COPY timeseries_data FROM STDIN',
                                         iter_file
                                     )
                                 checkpoint('created timeseries data', time_ts_add)

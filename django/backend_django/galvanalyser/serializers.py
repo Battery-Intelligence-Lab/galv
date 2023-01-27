@@ -50,7 +50,6 @@ class HarvesterSerializer(serializers.HyperlinkedModelSerializer):
         model = Harvester
         fields = ['url', 'id', 'name', 'sleep_time', 'last_check_in', 'user_sets']
         read_only_fields = ['url', 'id', 'last_check_in', 'user_sets']
-        depth = 1
 
 
 class HarvesterConfigSerializer(serializers.HyperlinkedModelSerializer):
@@ -82,7 +81,6 @@ class HarvesterConfigSerializer(serializers.HyperlinkedModelSerializer):
             'standard_units', 'standard_columns', 'max_upload_bytes'
         ]
         read_only_fields = fields
-        depth = 1  # max depth
 
 
 class MonitoredPathSerializer(serializers.HyperlinkedModelSerializer):
@@ -145,7 +143,6 @@ class ObservedFileSerializer(serializers.HyperlinkedModelSerializer):
             'last_observed_time', 'last_observed_size', 'datasets',
             'errors'
         ]
-        depth = 1
 
 
 class HarvestErrorSerializer(serializers.HyperlinkedModelSerializer):
@@ -180,18 +177,19 @@ class DatasetSerializer(serializers.HyperlinkedModelSerializer):
             instance.file.monitored_path, context={'request': self.context.get('request')}
         ).data.get('user_sets')
 
+    def update(self, instance, validated_data):
+        pass
+
     class Meta:
         model = Dataset
         fields = ['url', 'id', 'name', 'date', 'type', 'purpose', 'cell', 'equipment', 'file', 'user_sets']
         read_only_fields = ['date', 'file', 'id', 'url', 'user_sets']
-        depth = 1
 
 
 class EquipmentSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Equipment
         fields = ['url', 'id', 'name', 'type', 'datasets']
-        depth = 1
 
 
 class DataUnitSerializer(serializers.HyperlinkedModelSerializer):
@@ -236,7 +234,6 @@ class GroupSerializer(serializers.HyperlinkedModelSerializer):
             'url', 'name', 'users',
             'readable_paths', 'editable_paths', 'readable_harvesters', 'editable_harvesters'
         ]
-        depth = 1
 
 
 class UserSetSerializer(serializers.HyperlinkedModelSerializer):

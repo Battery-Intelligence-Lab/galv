@@ -17,6 +17,7 @@ done
 cd backend_django || exit 1
 python manage.py makemigrations
 python manage.py migrate
+python manage.py init_db
 
 >&2 echo "... populating database"
 python manage.py loaddata galvanalyser/fixtures/DataUnit.json
