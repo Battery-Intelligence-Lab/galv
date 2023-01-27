@@ -1,4 +1,4 @@
-import Connection, {User} from './APIConnection'
+import Connection, {APIConnection, User} from './APIConnection'
 import React, {Component} from "react";
 import IconButton from "@mui/material/IconButton";
 import Autocomplete from "@mui/material/Autocomplete";
@@ -117,6 +117,14 @@ export default class UserRoleSet extends Component<UserSetProps, UserSetState> {
 
   async componentDidMount() {
     Connection.fetch('users/?all=true')
+      .then(r => {
+        r = APIConnection.get_result_array(r)
+        if (typeof r === 'number') {
+          throw new Error(`users/?all=true -> ${r}`)
+        }
+        return r
+      })
+      // @ts-ignore
       .then(r => this.setState({all_users: r}))
   }
 

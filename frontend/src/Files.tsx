@@ -76,20 +76,20 @@ export default function Files(props: FilesProps) {
   return (
     <Container maxWidth="lg" className={classes.container} key={`files_for_path${props.path.id}`}>
       <Paper className={classes.paper}>
-        <AsyncTable
+        <AsyncTable<FileFields>
           key="files"
           columns={columns}
-          rows={[
-            (file: any) => <Fragment>{file.relative_path}</Fragment>,
-            (file: any) => <Fragment>{file.last_observed_size}</Fragment>,
-            (file: any) => <Fragment>{
+          row_generator={(file, context) => [
+            <Fragment>{file.relative_path}</Fragment>,
+            <Fragment>{file.last_observed_size}</Fragment>,
+            <Fragment>{
               Intl.DateTimeFormat('en-GB', datetimeOptions).format(
                 Date.parse(file.last_observed_time)
               )}
             </Fragment>,
-            (file: any) => <Fragment>{file_state(file)}</Fragment>,
-            (file: any) => <Fragment>{file.datasets.length}</Fragment>,
-            (file: any, context) => <Fragment>
+            <Fragment>{file_state(file)}</Fragment>,
+            <Fragment>{file.datasets.length}</Fragment>,
+            <Fragment>
               <IconButton onClick={() => forceReimport(file).then(context.refresh)}><RefreshIcon /></IconButton>
             </Fragment>
           ]}

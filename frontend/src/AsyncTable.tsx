@@ -1,8 +1,8 @@
-import React, {Component, ReactElement, Fragment, BaseSyntheticEvent, ReactEventHandler} from "react";
+import React, {Component, ReactElement, BaseSyntheticEvent, ReactEventHandler} from "react";
 import TableContainer from "@mui/material/TableContainer";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
-import Connection, {APIConnection, APIResponse, SingleAPIResponse} from "./APIConnection";
+import Connection, {APIConnection, APIObject} from "./APIConnection";
 import TableRow from "@mui/material/TableRow";
 import TableCell, {TableCellProps} from "@mui/material/TableCell";
 import CircularProgress from "@mui/material/CircularProgress";
@@ -19,16 +19,19 @@ export type Column = {
   contentTableCellProps?: Partial<TableCellProps>;
 }
 
-export type CellContext = {
-  column_properties: Column;
+export type RowGeneratorContext<T> = {
+  columns: Column[];
   update: ReactEventHandler;
+  update_direct: <K extends keyof T>(field_name: K, new_value: T[K]) => void;
   refresh: () => void;
   refresh_all_rows: () => void;
+  is_new_row: boolean;
+  value_changed: boolean;
 }
 
-export type Cell = ReactElement |
-  ((row_data: any) => ReactElement) |
-  ((row_data: any, context: CellContext) => ReactElement)
+export type RowGenerator<T extends APIObject> =
+  ((row_data: T) => ReactElement[]) |
+  ((row_data: T, context: RowGeneratorContext<T>) => ReactElement[])
 
 type CompleteHeading = {
   label: string;
@@ -38,37 +41,39 @@ type CompleteHeading = {
   typographyProps: Partial<TypographyProps>;
 }
 
-export type AsyncTableProps = {
+export type AsyncTableProps<T extends APIObject> = {
   columns: Column[];
-  rows: Cell[];
+  row_generator: RowGenerator<T>;
   initial_url: string;
-  new_entry_row?: Cell[];
-  new_row_values?: any;
+  new_row_values?: Partial<T>;
   styles?: any;
-  [key: string]: any;
 }
 
 type AsyncTableState = {
   row_data: any[];
   new_row: any;
-  last_updated: Date;
   loading: boolean;
   loading_rows: number[];
+  changed_rows: number[];
 }
+
+export const NEW_ROW_ID = -1
 
 /**
  * AsyncTable is designed to present data fetched from an API and allow
  * individual entries (rows) to be updated in isolation.
  *
  * AsyncTable takes an array of columns that define the headers and the
- * common row properties, and an array of elements or functions that
- * resolve into the contents of the TableCell elements in each TableRow
- * in the body.
+ * common row properties, and a functions that resolve into the an array of
+ * contents of the TableCell elements in each TableRow in the body.
  *
- * The functions that generate cell contents are passed the row data
+ * The function that generates cell contents is passed the row data
  * and the context. `context` is a CellContext object that exposes
  * the column properties, and functions for updating local content
  * and for refreshing local content from the remote API.
+ *
+ * If `new_row_values` is specified, the row generator will be called
+ * with those values to generate an extra row for adding new items.
  *
  * Data fetching is the responsibility of the AsyncTable via the
  * APIConnection class. It determines where to fetch data from
@@ -79,25 +84,21 @@ type AsyncTableState = {
  *
  * This class abstracts away a lot of repetitive table-building code.
  */
-export default class AsyncTable extends Component<AsyncTableProps, AsyncTableState> {
+export default class AsyncTable<T extends APIObject> extends Component<AsyncTableProps<T>, AsyncTableState> {
   current_url: string = "";
 
   state: AsyncTableState = {
     row_data: [],
     new_row: null,
-    last_updated: new Date(0),
     loading: true,
-    loading_rows: []
+    loading_rows: [],
+    changed_rows: []
   }
 
-  constructor(props: AsyncTableProps) {
-    if (props.columns.length !== props.rows.length)
-      throw new Error(`Length of rows (${props.rows.length}) must match number of columns (${props.columns.length})`)
-    if (props.new_entry_row !== undefined && props.columns.length !== props.new_entry_row?.length)
-      throw new Error(`Length of new_entry_row (${props.new_entry_row.length}) must match number of columns (${props.columns.length})`)
+  constructor(props: AsyncTableProps<T>) {
     super(props)
     if (!this.current_url) this.current_url = props.initial_url
-    if (props.new_entry_row?.length)
+    if (props.new_row_values !== undefined)
       this.state.new_row = this.new_row_template
   }
 
@@ -110,13 +111,13 @@ export default class AsyncTable extends Component<AsyncTableProps, AsyncTableSta
     console.log("Mounted AsyncTable", this)
   }
 
-  componentDidUpdate(prevProps: AsyncTableProps) {
+  componentDidUpdate(prevProps: AsyncTableProps<T>) {
     console.log("Updated AsyncTable", this, prevProps)
     // Typical usage (don't forget to compare props):
-    if (this.props.initial_url !== prevProps.initial_url)
+    if (this.props.initial_url !== prevProps.initial_url) {
       this.setState({row_data: []})
-    if (this.props.initial_url !== prevProps.initial_url || this.props.last_updated !== prevProps.last_updated)
       this.get_data(this.props.initial_url)
+    }
   }
 
   reset_new_row = () => this.setState({new_row: this.props.new_row_values? this.new_row_template : null})
@@ -126,13 +127,16 @@ export default class AsyncTable extends Component<AsyncTableProps, AsyncTableSta
     if (!url) return;
     this.current_url = url;
     await Connection.fetch(url)
-      .then(res => APIConnection.get_result_array(res))
+      .then(APIConnection.get_result_array)
       .then((res) => {
+        if (typeof(res) === 'number')
+          throw new Error(res.toString())
         console.log(res)
         this.setState({
-          row_data: res.map(r => ({...r, _changed: false})),
+          row_data: res,
           loading: false,
-          loading_rows: []
+          loading_rows: [],
+          changed_rows: []
         })
       })
       .catch(e => {
@@ -146,13 +150,24 @@ export default class AsyncTable extends Component<AsyncTableProps, AsyncTableSta
     loading_rows.push(row.id)
     this.setState({loading_rows: loading_rows})
     await Connection.fetch(row.url)
-      .then((res: SingleAPIResponse) => {
+      .then(APIConnection.get_result_array)
+      .then((res) => {
         // If we deleted the row, delete it in state
-        if (res === 404)
+        if (typeof res === 'number') {
+          console.info(`${row.url} -> ${res}`)
           this.setState({row_data: this.state.row_data.filter(r => r.id !== row.id)})
-        // otherwise, update
-        else
-          this.setState({row_data: this.state.row_data.map(r => r.id === row.id ? {...res, _changed: false} : r)})
+        } else {
+          // otherwise, update
+          const row_data = res.pop()
+          if (row_data === undefined) {
+            console.error(res)
+            throw new Error(`refresh_row expected 1 API result, got ${res.length}`)
+          }
+          this.setState({
+            row_data: this.state.row_data.map(r => r.id === row.id ? row_data : r),
+            changed_rows: this.state.changed_rows.filter(i => i !== row_data.id)
+          })
+        }
       })
       .catch(e => console.error('AsyncTable.update_single_row error', e, row))
       .finally(
@@ -202,52 +217,48 @@ export default class AsyncTable extends Component<AsyncTableProps, AsyncTableSta
     </TableRow>
   }
 
-  row_conversion_context = (row: any, i: number) => ({
-    column: this.props.columns[i],
-    update: (event: BaseSyntheticEvent) => this.setState({
+  row_conversion_context = (row: any, is_new_row: boolean) => {
+    let update_fun: RowGeneratorContext<T>["update_direct"] = (name, value) => this.setState({
       // Amend row_data to include new value for [name]
       row_data: this.state.row_data.map(
-        r => r.id === row.id ?
-          {...row, [event.target.name]: event.target.value, _changed: true} : r
-      )
-    }),
-    refresh: () => this.refresh_row(row),
-    refresh_all_rows: this.update_all
-  })
+        r => r.id === row.id ? {...row, [name]: value} : r
+      ),
+      changed_rows: [...this.state.changed_rows, row.id]
+    })
+    if (is_new_row)
+      update_fun = (name, value) => this.setState({
+        new_row: {...this.state.new_row, [name]: value, _changed: true},
+        changed_rows: [...this.state.changed_rows, row.id]
+      })
 
-  wrap_cells_in_row = (contents: any, row_index: number) => {
+    return {
+      columns: this.props.columns,
+      update: (event: BaseSyntheticEvent) => update_fun(event.target.name, event.target.value),
+      update_direct: update_fun,
+      refresh: () => this.refresh_row(row),
+      refresh_all_rows: this.update_all,
+      is_new_row,
+      value_changed: this.state.changed_rows.includes(row.id)
+    }
+  }
+
+  wrap_cells_in_row = (contents: ReactElement[], row_index: number) => {
     const cells = contents.map((cell: any, i: number) =>
       <TableCell {...this.props.columns[i].contentTableCellProps} key={`cell-${i}`}>{cell}</TableCell>
     )
     return <TableRow key={`row-${row_index}`}>{cells}</TableRow>
   }
 
-  row_data_to_tablerow = (row: any, row_index: number) => {
+  row_data_to_tablerow = (row: T, row_index: number) => {
+    const is_new_row = row_index === NEW_ROW_ID
+    if (is_new_row)
+      row_index = -1
+
     if (this.state.loading_rows.includes(row.id))
       return this.loading_row(row.id)
 
-    const row_contents = this.props.rows.map((cell: any, i: number) => {
-      if (typeof cell === 'function')
-        return cell(row, this.row_conversion_context(row, i))
-      return cell
-    })
+    const row_contents = this.props.row_generator(row, this.row_conversion_context(row, is_new_row))
     return this.wrap_cells_in_row(row_contents, row_index)
-  }
-
-  new_row_to_tablerow = () => {
-    if (!this.props.new_entry_row?.length)
-      return <Fragment key="new_blank"/>
-    const row_contents = this.props.new_entry_row.map((cell: any, i: number) => {
-      if (typeof cell === 'function')
-        return cell(this.state.new_row, {
-          ...this.row_conversion_context(this.state.new_row, i),
-          update: (event: BaseSyntheticEvent) => this.setState({
-            new_row: {...this.state.new_row, [event.target.name]: event.target.value, _changed: true}
-          })
-        })
-      return cell
-    })
-    return this.wrap_cells_in_row(row_contents, -1)
   }
 
   render() {
@@ -261,8 +272,8 @@ export default class AsyncTable extends Component<AsyncTableProps, AsyncTableSta
               {!this.state.loading && this.state.row_data.map(this.row_data_to_tablerow)}
               {
                 !this.state.loading &&
-                this.props.new_entry_row?.length &&
-                this.new_row_to_tablerow()
+                this.props.new_row_values !== undefined &&
+                this.row_data_to_tablerow(this.state.new_row, NEW_ROW_ID)
               }
             </TableBody>
           }

@@ -81,11 +81,11 @@ export default function Harvesters() {
   return (
     <Container maxWidth="lg" className={classes.container}>
       <Paper className={classes.paper}>
-        {<AsyncTable
+        {<AsyncTable<HarvesterFields>
           columns={columns}
-          rows={[
-            (row: any) => <Fragment key="id"><Typography>{row.id}</Typography></Fragment>,
-            (row: any, context) => <Fragment key="name">
+          row_generator={(row, context) => [
+            <Fragment key="id"><Typography>{row.id}</Typography></Fragment>,
+            <Fragment key="name">
               <TextField
                 InputProps={{classes: {input: classes.resize}}}
                 value={row.name}
@@ -94,7 +94,7 @@ export default function Harvesters() {
               >
               </TextField>
             </Fragment>,
-            (row: any) => <Fragment key="last_check_in">
+            <Fragment key="last_check_in">
               {
                 (row.last_check_in &&
                   Intl.DateTimeFormat(
@@ -104,7 +104,7 @@ export default function Harvesters() {
                 ) || (<Typography color='grey'>None</Typography>)
               }
             </Fragment>,
-            (row: any, context) => <Fragment key="sleep_time">
+            <Fragment key="sleep_time">
               <TextField
                 type="number"
                 placeholder="60"
@@ -119,20 +119,20 @@ export default function Harvesters() {
               >
               </TextField>
             </Fragment>,
-            (row: any) => <Fragment key="select">
+            <Fragment key="select">
               <IconButton onClick={() => selected?.id === row.id? setSelected(null) : setSelected(row)}>
                 <SearchIcon color={selected?.id === row.id? 'info' : undefined} />
               </IconButton>
             </Fragment>,
-            (row: any, context) => <Fragment key="save">
+            <Fragment key="save">
               <IconButton
-                disabled={!userIsAdmin(row) || !row._changed}
+                disabled={!userIsAdmin(row) || !context.value_changed}
                 onClick={() => updateHarvester(row).then(context.refresh)}
               >
                 <SaveIcon />
               </IconButton>
             </Fragment>,
-            (row: any, context) => <Fragment key="delete">
+            <Fragment key="delete">
               <IconButton
                 disabled={!userIsAdmin(row)}
                 aria-label="delete"

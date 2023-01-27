@@ -1,5 +1,5 @@
 
-import React, {useEffect, useState, Fragment} from "react";
+import React, {useEffect, useState, Fragment, ReactElement} from "react";
 import Container from '@mui/material/Container';
 import { makeStyles } from '@mui/styles'
 import Button from '@mui/material/Button';
@@ -10,14 +10,19 @@ import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
-import Connection from "./APIConnection"
-import AsyncTable, {CellContext} from "./AsyncTable"
-import { Paper } from "@mui/material";
+import Connection, {APIConnection} from "./APIConnection"
+import AsyncTable from "./AsyncTable"
+import Paper from "@mui/material/Paper";
+import Select from "@mui/material/Select";
 import SaveIcon from "@mui/icons-material/Save";
 import TextField from "@mui/material/TextField";
 import IconButton from "@mui/material/IconButton";
 import {UserSet} from "./UserRoleSet";
 import SettingsIcon from "@mui/icons-material/Settings";
+import {CellFields} from "./Cells";
+import MenuItem from "@mui/material/MenuItem";
+import CircularProgress from "@mui/material/CircularProgress";
+import {EquipmentFields} from "./Equipment";
 
 export type DatasetFields = {
   url: string;
@@ -25,7 +30,8 @@ export type DatasetFields = {
   name: string;
   type: string;
   date: string;
-  cell: string;
+  cell: CellFields | null;
+  equipment: EquipmentFields[];
   purpose: string;
   user_sets: UserSet[];
 }
@@ -57,9 +63,29 @@ const useStyles = makeStyles((theme) => ({
 export default function Datasets() {
   const classes = useStyles();
   const [selected, setSelected] = useState<DatasetFields|null>(null)
+  const [cellListLoading, setCellListLoading] = useState<boolean>(true)
+  const [cellList, setCellList] = useState<CellFields[]>([])
+
+  useEffect(() => {
+    Connection.fetch('cells/?all=true')
+      .then(APIConnection.get_result_array)
+      .then(r => {
+        if (typeof r === 'number')
+          throw new Error(`cells/?all=true -> ${r}`)
+        // @ts-ignore
+        setCellList(r)
+        setCellListLoading(false)
+      })
+  }, [])
 
   const updateRow = (data: DatasetFields) => {
-    const insert_data = {name: data.name, type: data.type, purpose: data.purpose}
+    const insert_data = {
+      name: data.name,
+      type: data.type,
+      purpose: data.purpose,
+      cell: data.cell || null,
+      equipment: data.equipment.map(e => e.id)
+    }
     return Connection.fetch(data.url, {body: JSON.stringify(insert_data), method: 'PATCH'})
   }
 
@@ -96,18 +122,35 @@ export default function Datasets() {
     setMatlabCodeOpen(false);
   };
 
+  const get_items = (dataset: DatasetFields) => {
+    const menuItem = (cell: CellFields) => <MenuItem key={cell.id} value={cell.id}>{cell.name}</MenuItem>
+    const items: ReactElement[] = []
+    if (dataset?.cell) {
+      items.push(menuItem(dataset.cell))
+      if (!cellListLoading)
+        items.push(<MenuItem key="none" value={-1}><em>None</em></MenuItem>)
+    }
+    if (cellListLoading)
+      items.push(<MenuItem key="loading" value={-1} disabled={true}><CircularProgress/></MenuItem>)
+    if (cellList.length)
+      items.push(...cellList.filter(c => c.id !== dataset.cell?.id).map(menuItem))
+    if (!items.length)
+      items.push(<MenuItem key="empty" disabled={true}><em>No cells defined</em></MenuItem>)
+    return items
+  }
+
   return (
     <Container maxWidth="lg" className={classes.container}>
       <Paper className={classes.paper}>
-        <AsyncTable
+        <AsyncTable<DatasetFields>
           columns={columns}
-          rows={[
-            (dataset: DatasetFields) => <Fragment>{dataset.id}</Fragment>,
-            (dataset: DatasetFields) => <Fragment>{dataset.date}</Fragment>,
+          row_generator={(dataset, context) => [
+            <Fragment>{dataset.id}</Fragment>,
+            <Fragment>{dataset.date}</Fragment>,
             // these fields have the same shape, so condense the code.
             // as const stops TypeScript from complaining about strings assigned to keyof DatasetFields
             ...(['name', 'type', 'purpose'] as const).map(
-              (n) => ((dataset: DatasetFields, context: CellContext) => <Fragment>
+              (n) => <Fragment>
                 <TextField
                   InputProps={{
                     classes: {
@@ -117,17 +160,28 @@ export default function Datasets() {
                   name={n}
                   value={dataset[n]}
                   onChange={context.update} />
-              </Fragment>)
+              </Fragment>
             ),
-            (dataset: DatasetFields) => <Fragment>{dataset.cell}</Fragment>,
-            (dataset: any) => <Fragment key="select">
+            <Fragment>
+              <Select
+                id={`cell-select-${dataset.id}`}
+                name={'cell'}
+                value={dataset.cell?.id || ''}
+                onChange={
+                  (e) => context.update_direct('cell', cellList?.find(c => c.id === e.target.value) || null)
+                }
+              >
+                {get_items(dataset)}
+              </Select>
+            </Fragment>,
+            <Fragment key="select">
               <IconButton onClick={() => selected?.id === dataset.id? setSelected(null) : setSelected(dataset)}>
                 <SettingsIcon color={selected?.id === dataset.id? 'info' : undefined} />
               </IconButton>
             </Fragment>,
-            (dataset: any, context) => <Fragment key="save">
+            <Fragment key="save">
               <IconButton
-                disabled={!dataset._changed}
+                disabled={!context.value_changed}
                 onClick={() => updateRow(dataset).then(context.refresh)}
               >
                 <SaveIcon />

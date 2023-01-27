@@ -8,7 +8,7 @@ import IconButton from '@mui/material/IconButton';
 import Container from '@mui/material/Container';
 import SaveIcon from '@mui/icons-material/Save';
 import DeleteIcon from '@mui/icons-material/Delete';
-import AsyncTable, {CellContext} from './AsyncTable';
+import AsyncTable from './AsyncTable';
 import Connection from "./APIConnection";
 
 export type EquipmentFields = {
@@ -47,7 +47,7 @@ const columns = [
   {label: 'Delete', help: 'Delete equipment that is not in use'},
 ]
 
-const string_fields: (keyof EquipmentFields)[] = ['name', 'type']
+const string_fields = ['name', 'type'] as const
 
 export default function Equipment() {
   const classes = useStyles();
@@ -71,10 +71,10 @@ export default function Equipment() {
   return (
     <Container maxWidth="lg" className={classes.container}>
       <Paper className={classes.paper}>
-        <AsyncTable
+        <AsyncTable<EquipmentFields>
           columns={columns}
-          rows={[
-            ...string_fields.map(n => (equipment: EquipmentFields, context: CellContext) => <Fragment>
+          row_generator={(equipment, context) => [
+            ...string_fields.map(n => <Fragment>
               {
                 equipment.in_use ? equipment[n] : <TextField
                   name={n}
@@ -88,19 +88,23 @@ export default function Equipment() {
                 />
               }
             </Fragment>),
-            (equipment, context) => <Fragment>
+            <Fragment>
               <Tooltip title="Save changes to equipment">
               <span>
                 <IconButton
-                  disabled={!equipment._changed || equipment.in_use}
-                  onClick={() => updateEquipment(equipment).then(context.refresh)}
+                  disabled={!context.value_changed || equipment.in_use}
+                  onClick={
+                    context.is_new_row?
+                      () => addNewEquipment(equipment).then(context.refresh_all_rows) :
+                      () => updateEquipment(equipment).then(context.refresh)
+                  }
                 >
-                  <SaveIcon />
+                  {context.is_new_row? <AddIcon/> : <SaveIcon/>}
                 </IconButton>
               </span>
               </Tooltip>
             </Fragment>,
-            (equipment, context) => <Fragment>
+            context.is_new_row? <Fragment key="delete"/> : <Fragment>
               <Tooltip title="Delete equipment">
               <span>
                 <IconButton
@@ -112,35 +116,6 @@ export default function Equipment() {
               </span>
               </Tooltip>
             </Fragment>
-          ]}
-          new_entry_row={[
-            ...string_fields.map(n => (equipment: EquipmentFields, context: CellContext) => <Fragment>
-              {
-                equipment.in_use ? equipment[n] : <TextField
-                  name={n}
-                  value={equipment[n]}
-                  InputProps={{
-                    classes: {
-                      input: classes.resize,
-                    },
-                  }}
-                  onChange={context.update}
-                />
-              }
-            </Fragment>),
-            (equipment, context) => <Fragment>
-              <Tooltip title="Save changes to equipment">
-              <span>
-                <IconButton
-                  disabled={!equipment._changed}
-                  onClick={() => addNewEquipment(equipment).then(context.refresh_all_rows)}
-                >
-                  <AddIcon />
-                </IconButton>
-              </span>
-              </Tooltip>
-            </Fragment>,
-            <Fragment key="delete"/>
           ]}
           new_row_values={{name: '', type: ''}}
           initial_url={`equipment/?all=true`}

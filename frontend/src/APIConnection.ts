@@ -14,7 +14,11 @@ export type User = {
   token: string,
 }
 
-export type SingleAPIResponse = any
+export interface APIObject {
+  id: number;
+  url: string;
+}
+export type SingleAPIResponse = APIObject & {[prop: string]: any}
 export type MultipleAPIResponse = SingleAPIResponse[]
 export type PaginatedAPIResponse = {
   count: number, previous?: string, next?: string, results: SingleAPIResponse[]
@@ -74,7 +78,7 @@ export class APIConnection {
     return cookie !== undefined && this.user !== null;
   }
 
-  async fetch(url: string, options?: any, cache_name: string = ""): Promise<APIResponse> {
+  async fetch(url: string, options?: any, depth: number = 1): Promise<APIResponse> {
     await this.get_is_logged_in();
     console.info(`Fetch ${url} for ${this.user?.username}`)
     console.info('fetch options', options)
@@ -101,6 +105,24 @@ export class APIConnection {
           return 404;
         return response.json();
       })
+      .then(async json => {
+        if (typeof json === 'number' || !depth)
+          return json
+        // Recursively fetch objects by links
+        if (json instanceof Array)
+          return await Promise.all(
+            json.map(r => this.fetch_children(r, options, depth - 1))
+          )
+        if (json.results !== undefined) {
+          json.results = await Promise.all(
+            json.results.map(async (r: SingleAPIResponse) => await this.fetch_children(r, options, depth - 1))
+          )
+          return json
+        }
+      })
+      .then(r => {
+        console.log(url, options, depth, r); return r
+      })
       .catch(e => {
         console.error(e);
         return {
@@ -113,12 +135,27 @@ export class APIConnection {
       });
   }
 
-  static get_result_array: (r: APIResponse) => MultipleAPIResponse = r => {
+  fetch_children: (r: SingleAPIResponse, options: any, depth: number) => Promise<SingleAPIResponse> =
+    async (r: SingleAPIResponse, options: any, depth: number) => {
+      for (const k in r) {
+        if (k === 'url')
+          continue
+        if (typeof r[k] === "string" && r[k].startsWith(this.url)) {
+          r[k] = await this.fetch(r[k], options, depth)
+          console.log(r, k, r[k])
+        }
+      }
+      return r
+    }
+
+  static get_result_array: ((r: APIResponse) => MultipleAPIResponse|ErrorCode) = r => {
     if (r instanceof Array)
+      return r;
+    if (typeof r === 'number')
       return r;
     if (r.results !== undefined)
       return r.results;
-    return r;
+    return [r];
   }
 }
 

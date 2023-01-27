@@ -9,7 +9,7 @@ import Container from '@mui/material/Container';
 import SaveIcon from '@mui/icons-material/Save';
 import DeleteIcon from '@mui/icons-material/Delete';
 import Connection from "./APIConnection";
-import AsyncTable, {CellContext} from "./AsyncTable";
+import AsyncTable from "./AsyncTable";
 
 export type CellFields = {
   url: string;
@@ -60,10 +60,10 @@ const columns = [
   {label: 'Delete', help: 'Delete a cell that is not in use'},
 ]
 
-const string_fields: (keyof CellFields)[] = [
+const string_fields = [
   'name', 'manufacturer', 'form_factor', 'link_to_datasheet', 'anode_chemistry', 'cathode_chemistry'
-]
-const number_fields: (keyof CellFields)[] = ['nominal_capacity', 'nominal_cell_weight']
+] as const
+const number_fields = ['nominal_capacity', 'nominal_cell_weight'] as const
 
 export default function Cells() {
   const classes = useStyles();
@@ -96,10 +96,10 @@ export default function Cells() {
   return (
     <Container maxWidth="lg" className={classes.container}>
       <Paper className={classes.paper}>
-        <AsyncTable
+        <AsyncTable<CellFields>
           columns={columns}
-          rows={[
-            ...string_fields.map(n => (cell: CellFields, context: CellContext) => <Fragment>
+          row_generator={(cell, context) => [
+            ...string_fields.map(n => <Fragment>
               <TextField
                 name={n}
                 value={cell[n]}
@@ -111,7 +111,7 @@ export default function Cells() {
                 onChange={context.update}
               />
             </Fragment>),
-            ...number_fields.map(n => (cell: CellFields, context: CellContext) => <Fragment>
+            ...number_fields.map(n => <Fragment>
               <TextField
                 name={n}
                 style={{width: 60}}
@@ -125,19 +125,22 @@ export default function Cells() {
                 onChange={context.update}
               />
             </Fragment>),
-            (cell, context) => <Fragment>
+            <Fragment>
               <Tooltip title="Save changes to cell">
               <span>
                 <IconButton
-                  disabled={!cell._changed || cell.in_use}
-                  onClick={() => updateCell(cell).then(context.refresh)}
+                  disabled={!context.value_changed || cell.in_use}
+                  onClick={
+                  context.is_new_row?
+                    () => addNewCell(cell).then(context.refresh_all_rows) :
+                    () => updateCell(cell).then(context.refresh)}
                 >
-                  <SaveIcon />
+                  {context.is_new_row? <AddIcon/> : <SaveIcon/>}
                 </IconButton>
               </span>
               </Tooltip>
             </Fragment>,
-            (cell, context) => <Fragment>
+            context.is_new_row? <Fragment key="delete"/> : <Fragment>
               <Tooltip title="Delete cell">
               <span>
                 <IconButton
@@ -149,47 +152,6 @@ export default function Cells() {
               </span>
               </Tooltip>
             </Fragment>
-          ]}
-          new_entry_row={[
-            ...string_fields.map(n => (cell: CellFields, context: CellContext) => <Fragment>
-              <TextField
-                name={n}
-                value={cell[n]}
-                InputProps={{
-                  classes: {
-                    input: classes.resize,
-                  },
-                }}
-                onChange={context.update}
-              />
-            </Fragment>),
-            ...number_fields.map(n => (cell: CellFields, context: CellContext) => <Fragment>
-              <TextField
-                name={n}
-                style={{width: 60}}
-                type={"number"}
-                value={cell[n]}
-                InputProps={{
-                  classes: {
-                    input: classes.resize,
-                  },
-                }}
-                onChange={context.update}
-              />
-            </Fragment>),
-            (cell, context) => <Fragment>
-              <Tooltip title="Save changes to cell">
-              <span>
-                <IconButton
-                  disabled={!cell._changed || cell.in_use}
-                  onClick={() => addNewCell(cell).then(context.refresh_all_rows)}
-                >
-                  <AddIcon />
-                </IconButton>
-              </span>
-              </Tooltip>
-            </Fragment>,
-            <Fragment key="delete"/>
           ]}
           new_row_values={{
             name: '', manufacturer: '', form_factor: '', link_to_datasheet: '', anode_chemistry: '', cathode_chemistry: '',

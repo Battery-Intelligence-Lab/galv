@@ -63,8 +63,6 @@ export default function HarvesterDetail(props: HarvesterDetailProps) {
 
   const [selected, setSelected] = useState<MonitoredPathFields|null>(null)
 
-  const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
-
   const addNewPath = (data: MonitoredPathFields) => {
     const insert_data = {harvester: harvester.id, path: data.path, stable_time: data.stable_time}
     return Connection.fetch('monitored_paths/', {body: JSON.stringify(insert_data), method: 'POST'})
@@ -90,23 +88,24 @@ export default function HarvesterDetail(props: HarvesterDetailProps) {
       <Typography variant='h5'>
         {harvester.name} - monitored paths
       </Typography>
-      <AsyncTable
+      <AsyncTable<MonitoredPathFields>
         key={`${harvester.id}_paths`}
         columns={columns}
-        rows={[
-          (row: any, context) => <Fragment>
+        row_generator={(row, context) => [
+          <Fragment>
             <TextField
               InputProps={{
                 classes: {
                   input: classes.resize,
                 }
               }}
+              placeholder="/new/directory/path"
               value={row.path}
               name="path"
               onChange={context.update}
             />
           </Fragment>,
-          (row: any, context) => <Fragment>
+          <Fragment>
             <TextField
               type="number"
               InputProps={{
@@ -120,7 +119,7 @@ export default function HarvesterDetail(props: HarvesterDetailProps) {
             >
             </TextField>
           </Fragment>,
-          (row: any, context) => <Fragment>
+          context.is_new_row? <Fragment key="users" /> : <Fragment>
             <UserRoleSet
               key={`userroleset-${row.id}`}
               user_sets={row.user_sets}
@@ -128,20 +127,24 @@ export default function HarvesterDetail(props: HarvesterDetailProps) {
               set_last_updated={context.refresh}
             />
           </Fragment>,
-          (row: any) => <Fragment key="select">
+          context.is_new_row? <Fragment key="select"/> : <Fragment key="select">
             <IconButton onClick={() => selected?.id === row.id? setSelected(null) : setSelected(row)}>
               <SearchIcon color={selected?.id === row.id? 'info' : undefined} />
             </IconButton>
           </Fragment>,
-          (row: any, context) => <Fragment key="save">
+          <Fragment key="save">
             <IconButton
-              disabled={!row._changed}
-              onClick={() => updatePath(row).then(context.refresh)}
+              disabled={!context.value_changed}
+              onClick={
+                context.is_new_row?
+                  () => addNewPath(row).then(context.refresh_all_rows) :
+                  () => updatePath(row).then(context.refresh)
+              }
             >
-              <SaveIcon />
+              {context.is_new_row? <AddIcon/> : <SaveIcon/>}
             </IconButton>
           </Fragment>,
-          (row: any, context) => <Fragment key="delete">
+          context.is_new_row? <Fragment key="delete"/> : <Fragment key="delete">
             <IconButton
               aria-label="delete"
               onClick={() => deletePath(row).then(context.refresh)}
@@ -151,49 +154,8 @@ export default function HarvesterDetail(props: HarvesterDetailProps) {
           </Fragment>,
         ]}
         initial_url={`monitored_paths/?harvester__id=${harvester.id}&all=true`}
-        new_entry_row={[
-          (new_row: any, context) => <Fragment>
-            <TextField
-              InputProps={{
-                classes: {
-                  input: classes.resize,
-                }
-              }}
-              placeholder="/path/to/directory"
-              value={new_row?.path}
-              name="path"
-              onChange={context.update}
-            />
-          </Fragment>,
-          (new_row: any, context) => <Fragment>
-            <TextField
-              type="number"
-              InputProps={{
-                classes: {
-                  input: classes.resize,
-                },
-              }}
-              value={new_row?.stable_time}
-              name="stable_time"
-              onChange={context.update}
-            >
-            </TextField>
-          </Fragment>,
-          <Fragment key="users" />,
-          <Fragment key="select" />,
-          (new_row: any, context) => <Fragment key="save">
-            <IconButton
-              disabled={!new_row?._changed}
-              onClick={() => addNewPath(new_row).then(context.refresh_all_rows)}
-            >
-              <AddIcon />
-            </IconButton>
-          </Fragment>,
-          <Fragment key="delete" />,
-        ]}
         new_row_values={{path: "", stable_time: 60}}
         styles={classes}
-        last_updated={lastUpdated}
       />
       {selected !== null && <Files path={selected} />}
     </Paper>
