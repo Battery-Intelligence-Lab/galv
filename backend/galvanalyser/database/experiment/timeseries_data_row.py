@@ -1,6 +1,7 @@
 import psycopg2
 from galvanalyser.database.util.iter_file import IteratorFile
 from timeit import default_timer as timer
+import time
 
 from galvanalyser.database.experiment import ColumnRow
 
@@ -71,6 +72,8 @@ class TimeseriesDataRow:
         column_name_to_id = {}
         # create mapping from col id to col name, creating new columns as
         # appropriate
+        print(f"Getting column data")
+        start = time.time()
         columns = input_file.get_columns()
         has_record_column = False
         for name, type_id in columns:
@@ -91,12 +94,20 @@ class TimeseriesDataRow:
                 )
                 col.insert(conn)
             column_name_to_id[name] = col.id
+        print(f"Got column data ({time.time() - start})")
+        checkpoint = time.time()
 
         print("Getting data")
         row_generator = input_file.get_data_row_generator(
             column_name_to_id,
             last_values,
         )
+        print(f"Got data ({time.time() - checkpoint})")
+        checkpoint = time.time()
+        print(f"Creating iter_file")
+        iter_file = IteratorFile(row_generator)
+        with open(f"/usr/data/{input_file.metadata['Machine Type']}.itr", "w+") as f:
+            f.writelines(iter_file)
         iter_file = IteratorFile(row_generator)
         num_value_columns = len(columns)
         if has_record_column:
@@ -104,13 +115,15 @@ class TimeseriesDataRow:
         start_row = 0 if last_values is None else last_values[0].sample_no
         num_rows_to_insert = input_file.metadata["num_rows"] - start_row
         expected_insert_count = num_rows_to_insert * num_value_columns
+        print(f"Created iter_file ({time.time() - checkpoint})")
+        checkpoint = time.time()
         with conn.cursor() as cursor:
             print("Copying data to table")
-            start = timer()
             cursor.copy_expert(
                 'COPY experiment.timeseries_data FROM STDIN', iter_file
             )
-            end = timer()
+            print(f"Copied data ({time.time() - checkpoint})")
+            checkpoint = time.time()
             if cursor.rowcount != expected_insert_count:
                 raise battery_exceptions.InsertError(
                     "Insert failed. Inserted {} of {} values ({} rows * {} columns) before failure".format(
@@ -123,7 +136,7 @@ class TimeseriesDataRow:
             print("Done copying data to table")
             print(
                 "Inserted {} rows ({} sample sets) in {:.2f} seconds".format(
-                    cursor.rowcount, num_rows_to_insert, end - start
+                    cursor.rowcount, num_rows_to_insert, time.time() - start
                 )
             )
 

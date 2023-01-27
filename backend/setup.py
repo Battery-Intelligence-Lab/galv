@@ -19,7 +19,7 @@ setuptools.setup(
     ],
     python_requires='>=3.5',
     install_requires=[
-        'sqlalchemy',
+        'sqlalchemy==1.4.46',
         'sqlalchemy_utils',
         'marshmallow',
         'intervals',
@@ -33,6 +33,6 @@ setuptools.setup(
         'psutil',
         'maya',
         'xlrd==1.2.0',
-        'openpyxl',
+        'openpyxl'
     ]
 )
