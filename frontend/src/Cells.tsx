@@ -9,7 +9,8 @@ import Container from '@mui/material/Container';
 import SaveIcon from '@mui/icons-material/Save';
 import DeleteIcon from '@mui/icons-material/Delete';
 import Connection from "./APIConnection";
-import AsyncTable from "./AsyncTable";
+import AsyncTable, {RowGeneratorContext} from "./AsyncTable";
+import Typography from "@mui/material/Typography";
 
 export type CellFields = {
   url: string;
@@ -81,12 +82,14 @@ export default function Cells() {
     }
   }
 
-  const addNewCell = (data: CellFields) => {
+  const addNewCell = (data: CellFields, context: RowGeneratorContext<CellFields>) => {
+    context.mark_loading(true)
     const insert_data = get_write_data(data)
     return Connection.fetch('cells/', {body: JSON.stringify(insert_data), method: 'POST'})
   };
 
-  const updateCell = (data: CellFields) => {
+  const updateCell = (data: CellFields, context: RowGeneratorContext<CellFields>) => {
+    context.mark_loading(true)
     const insert_data = get_write_data(data)
     return Connection.fetch(data.url, {body: JSON.stringify(insert_data), method: 'PATCH'})
   };
@@ -103,6 +106,7 @@ export default function Cells() {
               <TextField
                 name={n}
                 value={cell[n]}
+                disabled={cell.in_use}
                 InputProps={{
                   classes: {
                     input: classes.resize,
@@ -117,6 +121,7 @@ export default function Cells() {
                 style={{width: 60}}
                 type={"number"}
                 value={cell[n]}
+                disabled={cell.in_use}
                 InputProps={{
                   classes: {
                     input: classes.resize,
@@ -125,28 +130,28 @@ export default function Cells() {
                 onChange={context.update}
               />
             </Fragment>),
-            <Fragment>
-              <Tooltip title="Save changes to cell">
+            cell.in_use? <Fragment key="save"/> : <Fragment>
+              <Tooltip title={
+                cell.in_use? "Cannot update a cell that is used by datasets." :
+                  "Save changes to cell"
+              }>
               <span>
                 <IconButton
                   disabled={!context.value_changed || cell.in_use}
                   onClick={
-                  context.is_new_row?
-                    () => addNewCell(cell).then(context.refresh_all_rows) :
-                    () => updateCell(cell).then(context.refresh)}
+                    context.is_new_row?
+                      () => addNewCell(cell, context).then(context.refresh_all_rows) :
+                      () => updateCell(cell, context).then(context.refresh)}
                 >
                   {context.is_new_row? <AddIcon/> : <SaveIcon/>}
                 </IconButton>
               </span>
               </Tooltip>
             </Fragment>,
-            context.is_new_row? <Fragment key="delete"/> : <Fragment>
+            context.is_new_row || cell.in_use? <Fragment key="delete"/> : <Fragment>
               <Tooltip title="Delete cell">
               <span>
-                <IconButton
-                  disabled={cell.in_use}
-                  onClick={() => deleteCell(cell).then(context.refresh)}
-                >
+                <IconButton onClick={() => deleteCell(cell).then(context.refresh)}>
                   <DeleteIcon />
                 </IconButton>
               </span>
@@ -157,8 +162,11 @@ export default function Cells() {
             name: '', manufacturer: '', form_factor: '', link_to_datasheet: '', anode_chemistry: '', cathode_chemistry: '',
             nominal_capacity: 0, nominal_cell_weight: 0
           }}
-          initial_url="cells/?all=true"
+          url="cells/?all=true"
         />
+        <Typography p={2} fontSize="small">
+          Note: Cells assigned to existing datasets cannot be changed.
+        </Typography>
       </Paper>
     </Container>
   );

@@ -57,7 +57,9 @@ def get_logger(name):
     # stream_handler = logging.StreamHandler(sys.stdout)
     # stream_handler.setLevel(logging.INFO)
     # logger.addHandler(stream_handler)
+    formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s [%(name)s]', datefmt='%Y-%m-%d %H:%M:%S')
     file_handler = logging.handlers.RotatingFileHandler(get_logfile(), maxBytes=5_000_000, backupCount=5)
     file_handler.setLevel(logging.INFO)
+    file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
     return logger

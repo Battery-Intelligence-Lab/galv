@@ -93,7 +93,7 @@ export default function Files(props: FilesProps) {
               <IconButton onClick={() => forceReimport(file).then(context.refresh)}><RefreshIcon /></IconButton>
             </Fragment>
           ]}
-          initial_url={`files/?monitored_path__id=${props.path.id}&all=true`}
+          url={`files/?monitored_path__id=${props.path.id}&all=true`}
           styles={classes}
         />
       </Paper>

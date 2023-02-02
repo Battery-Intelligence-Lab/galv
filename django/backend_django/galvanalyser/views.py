@@ -195,7 +195,7 @@ class HarvesterViewSet(viewsets.ModelViewSet):
                         monitored_path=path,
                         relative_path=file_rel_path,
                         defaults={'state': FileState.IMPORT_FAILED}
-                    ),
+                    )[0],
                     error=str(error)
                 )
             else:
@@ -316,11 +316,8 @@ class HarvesterViewSet(viewsets.ModelViewSet):
                                     )
                                     checkpoint('created value map', time_value_add)
 
-                                time_ts_rm = time.time()
+                                time_ts_prep = time.time()
                                 from django.db import connection
-                                with connection.cursor() as cursor:
-                                    cursor.execute(f"DELETE FROM timeseries_data WHERE column_id='{column.id}' AND sample IN ({','.join(column_data['values'].keys())})")
-                                time_ts_prep = checkpoint('deleted existing timeseries data', time_ts_rm)
 
                                 class IteratorFile(io.TextIOBase):
                                     """ given an iterator which yields strings,
@@ -406,7 +403,10 @@ class HarvesterViewSet(viewsets.ModelViewSet):
 
                 file.save()
 
-                return Response(ObservedFileSerializer(file, context={'request': self.request}).data)
+                return Response(ObservedFileSerializer(file, context={
+                    'request': self.request,
+                    'with_upload_info': content['status'] == 'begin'
+                }).data)
             else:
                 return error_response('Unrecognised task')
         else:

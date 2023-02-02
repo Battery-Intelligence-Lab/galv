@@ -11,7 +11,7 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 import Connection, {APIConnection} from "./APIConnection"
-import AsyncTable from "./AsyncTable"
+import AsyncTable, {RowGeneratorContext} from "./AsyncTable"
 import Paper from "@mui/material/Paper";
 import Select from "@mui/material/Select";
 import SaveIcon from "@mui/icons-material/Save";
@@ -23,6 +23,9 @@ import {CellFields} from "./Cells";
 import MenuItem from "@mui/material/MenuItem";
 import CircularProgress from "@mui/material/CircularProgress";
 import {EquipmentFields} from "./Equipment";
+import OutlinedInput from "@mui/material/OutlinedInput";
+import Box from "@mui/material/Box";
+import Chip from "@mui/material/Chip";
 
 export type DatasetFields = {
   url: string;
@@ -65,9 +68,11 @@ export default function Datasets() {
   const [selected, setSelected] = useState<DatasetFields|null>(null)
   const [cellListLoading, setCellListLoading] = useState<boolean>(true)
   const [cellList, setCellList] = useState<CellFields[]>([])
+  const [equipmentListLoading, setEquipmentListLoading] = useState<boolean>(true)
+  const [equipmentList, setEquipmentList] = useState<EquipmentFields[]>([])
 
   useEffect(() => {
-    Connection.fetch('cells/?all=true')
+    Connection.fetch('cells/?all=true', {}, 0)
       .then(APIConnection.get_result_array)
       .then(r => {
         if (typeof r === 'number')
@@ -78,14 +83,27 @@ export default function Datasets() {
       })
   }, [])
 
-  const updateRow = (data: DatasetFields) => {
-    const insert_data = {
+  useEffect(() => {
+    Connection.fetch('equipment/?all=true', {}, 0)
+      .then(APIConnection.get_result_array)
+      .then(r => {
+        if (typeof r === 'number')
+          throw new Error(`equipment/?all=true -> ${r}`)
+        // @ts-ignore
+        setEquipmentList(r)
+        setEquipmentListLoading(false)
+      })
+  }, [])
+
+  const updateRow = (data: DatasetFields, context: RowGeneratorContext<DatasetFields>) => {
+    context.mark_loading(true)
+    const insert_data: any = {
       name: data.name,
       type: data.type,
-      purpose: data.purpose,
-      cell: data.cell || null,
-      equipment: data.equipment.map(e => e.id)
+      cell: data.cell?.url || null,
+      equipment: data.equipment.map(e => e.url)
     }
+    if (data.purpose) insert_data.purpose = data.purpose
     return Connection.fetch(data.url, {body: JSON.stringify(insert_data), method: 'PATCH'})
   }
 
@@ -96,6 +114,7 @@ export default function Datasets() {
     {label: 'Type', help: 'File type determined by Harvester'},
     {label: 'Purpose', help: 'Short description of dataset purpose'},
     {label: 'Cell', help: 'Cell that generated the dataset'},
+    {label: 'Equipment', help: 'Equipment used to generate the dataset'},
     {label: 'Details', help: 'Advanced dataset properties'},
     {label: 'Save', help: 'Save changes'},
   ]
@@ -122,7 +141,7 @@ export default function Datasets() {
     setMatlabCodeOpen(false);
   };
 
-  const get_items = (dataset: DatasetFields) => {
+  const get_cell_items = (dataset: DatasetFields) => {
     const menuItem = (cell: CellFields) => <MenuItem key={cell.id} value={cell.id}>{cell.name}</MenuItem>
     const items: ReactElement[] = []
     if (dataset?.cell) {
@@ -136,6 +155,26 @@ export default function Datasets() {
       items.push(...cellList.filter(c => c.id !== dataset.cell?.id).map(menuItem))
     if (!items.length)
       items.push(<MenuItem key="empty" disabled={true}><em>No cells defined</em></MenuItem>)
+    return items
+  }
+
+  const get_equipment_items = (dataset: DatasetFields) => {
+    const menuItem = (equipment: EquipmentFields) =>
+      <MenuItem key={equipment.id} value={equipment.id}>{equipment.name}</MenuItem>
+    const items: ReactElement[] = []
+    const current_equipment_ids: number[] = []
+    if (dataset?.equipment) {
+      items.push(...dataset.equipment.map(e => menuItem(e)))
+      current_equipment_ids.push(...dataset.equipment.map(e => e.id))
+      if (!equipmentListLoading)
+        items.push(<MenuItem key="none" value={-1}><em>None</em></MenuItem>)
+    }
+    if (equipmentListLoading)
+      items.push(<MenuItem key="loading" value={-1} disabled={true}><CircularProgress/></MenuItem>)
+    if (equipmentList.length)
+      items.push(...equipmentList.filter(e => !current_equipment_ids.includes(e.id)).map(menuItem))
+    if (!items.length)
+      items.push(<MenuItem key="empty" disabled={true}><em>No equipment defined</em></MenuItem>)
     return items
   }
 
@@ -171,7 +210,35 @@ export default function Datasets() {
                   (e) => context.update_direct('cell', cellList?.find(c => c.id === e.target.value) || null)
                 }
               >
-                {get_items(dataset)}
+                {get_cell_items(dataset)}
+              </Select>
+            </Fragment>,
+            <Fragment>
+              <Select
+                id={`equipment-select-${dataset.id}`}
+                input={<OutlinedInput id="select-multiple-chip" label="Chip" />}
+                renderValue={(selected) => (
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                    {selected.map((value) => (
+                      <Chip key={value} label={dataset.equipment.find(e => e.id === value)?.name || '???'} />
+                    ))}
+                  </Box>
+                )}
+                name={'equipment'}
+                multiple
+                value={dataset?.equipment?.map(e => e.id) || []}
+                onChange={
+                  (e) => {
+                    const value: number[] = typeof e.target.value === 'string' ?
+                      e.target.value.split(',').map(i => parseInt(i)) : e.target.value
+                    context.update_direct(
+                      'equipment',
+                      equipmentList?.filter(eq => value.includes(eq.id))
+                    )
+                  }
+                }
+              >
+                {get_equipment_items(dataset)}
               </Select>
             </Fragment>,
             <Fragment key="select">
@@ -182,13 +249,13 @@ export default function Datasets() {
             <Fragment key="save">
               <IconButton
                 disabled={!context.value_changed}
-                onClick={() => updateRow(dataset).then(context.refresh)}
+                onClick={() => updateRow(dataset, context).then(context.refresh)}
               >
                 <SaveIcon />
               </IconButton>
             </Fragment>
           ]}
-          initial_url={`datasets/?all=true`}
+          url={`datasets/?all=true`}
           styles={classes}
         />
       </Paper>

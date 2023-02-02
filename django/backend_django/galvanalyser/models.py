@@ -177,10 +177,13 @@ class TimeseriesData(models.Model):
 
     class Meta:
         managed = False
-        db_table = "timeseriesdata"
+        db_table = "timeseries_data"
 
     def __str__(self):
         return f"{self.column_id}[{self.sample}]: {self.value}"
+
+    def __repr__(self):
+        return str(self)
 
 
 class TimeseriesRangeLabel(models.Model):

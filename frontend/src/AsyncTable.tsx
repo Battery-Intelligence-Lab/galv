@@ -2,7 +2,7 @@ import React, {Component, ReactElement, BaseSyntheticEvent, ReactEventHandler} f
 import TableContainer from "@mui/material/TableContainer";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
-import Connection, {APIConnection, APIObject} from "./APIConnection";
+import Connection, {APIConnection, APIObject, SingleAPIResponse} from "./APIConnection";
 import TableRow from "@mui/material/TableRow";
 import TableCell, {TableCellProps} from "@mui/material/TableCell";
 import CircularProgress from "@mui/material/CircularProgress";
@@ -23,7 +23,9 @@ export type RowGeneratorContext<T> = {
   columns: Column[];
   update: ReactEventHandler;
   update_direct: <K extends keyof T>(field_name: K, new_value: T[K]) => void;
-  refresh: () => void;
+  mark_loading: (state?: boolean) => void;
+  refresh: (row_data: any) => void;
+  refresh_from_api: () => void;
   refresh_all_rows: () => void;
   is_new_row: boolean;
   value_changed: boolean;
@@ -44,7 +46,7 @@ type CompleteHeading = {
 export type AsyncTableProps<T extends APIObject> = {
   columns: Column[];
   row_generator: RowGenerator<T>;
-  initial_url: string;
+  url: string;
   new_row_values?: Partial<T>;
   styles?: any;
 }
@@ -85,8 +87,6 @@ export const NEW_ROW_ID = -1
  * This class abstracts away a lot of repetitive table-building code.
  */
 export default class AsyncTable<T extends APIObject> extends Component<AsyncTableProps<T>, AsyncTableState> {
-  current_url: string = "";
-
   state: AsyncTableState = {
     row_data: [],
     new_row: null,
@@ -97,7 +97,6 @@ export default class AsyncTable<T extends APIObject> extends Component<AsyncTabl
 
   constructor(props: AsyncTableProps<T>) {
     super(props)
-    if (!this.current_url) this.current_url = props.initial_url
     if (props.new_row_values !== undefined)
       this.state.new_row = this.new_row_template
   }
@@ -107,25 +106,40 @@ export default class AsyncTable<T extends APIObject> extends Component<AsyncTabl
   }
 
   componentDidMount() {
-    this.get_data(this.props.initial_url)
+    this.get_data(this.props.url)
     console.log("Mounted AsyncTable", this)
   }
 
   componentDidUpdate(prevProps: AsyncTableProps<T>) {
-    console.log("Updated AsyncTable", this, prevProps)
+    console.log("Updating AsyncTable...", this, prevProps)
     // Typical usage (don't forget to compare props):
-    if (this.props.initial_url !== prevProps.initial_url) {
+    if (this.props.url !== prevProps.url) {
       this.setState({row_data: []})
-      this.get_data(this.props.initial_url)
+      this.get_data(this.props.url)
     }
+    console.log("Updated AsyncTable", this)
   }
 
   reset_new_row = () => this.setState({new_row: this.props.new_row_values? this.new_row_template : null})
 
-  get_data: (url: string) => void = async (url) => {
+  mark_row_loading = (row_id: number, status: boolean = true) => {
+    const rows = this.state.loading_rows.filter(i => i !== row_id)
+    if (status)
+      rows.push(row_id)
+    this.setState({loading_rows: rows})
+  }
+
+  mark_row_changed = (row_id: number, status: boolean = true) => {
+    const rows = this.state.changed_rows.filter(i => i !== row_id)
+    if (status)
+      rows.push(row_id)
+    this.setState({changed_rows: rows})
+  }
+
+  get_data: (url?: string) => void = async (url) => {
     this.setState({loading: true})
-    if (!url) return;
-    this.current_url = url;
+    if (!url)
+      url = this.props.url;
     await Connection.fetch(url)
       .then(APIConnection.get_result_array)
       .then((res) => {
@@ -145,10 +159,20 @@ export default class AsyncTable<T extends APIObject> extends Component<AsyncTabl
       })
   }
 
-  refresh_row = async (row: {id: number, url: string, [key: string]: any}) => {
-    const loading_rows = this.state.loading_rows.filter(i => i !== row.id)
-    loading_rows.push(row.id)
-    this.setState({loading_rows: loading_rows})
+  refresh_row = async (row: SingleAPIResponse, is_result: boolean = true) => {
+    this.mark_row_loading(row.id)
+
+    const _update = (row_data: SingleAPIResponse) => {
+      this.setState({
+        row_data: this.state.row_data.map(r => r.id === row.id ? row_data : r)
+      })
+      this.mark_row_changed(row.id, false)
+      this.mark_row_loading(row.id, false)
+    }
+
+    if (is_result)
+      return _update(row)
+
     await Connection.fetch(row.url)
       .then(APIConnection.get_result_array)
       .then((res) => {
@@ -163,21 +187,18 @@ export default class AsyncTable<T extends APIObject> extends Component<AsyncTabl
             console.error(res)
             throw new Error(`refresh_row expected 1 API result, got ${res.length}`)
           }
-          this.setState({
-            row_data: this.state.row_data.map(r => r.id === row.id ? row_data : r),
-            changed_rows: this.state.changed_rows.filter(i => i !== row_data.id)
-          })
+          _update(row_data)
         }
       })
       .catch(e => console.error('AsyncTable.update_single_row error', e, row))
       .finally(
-        () => this.setState({loading_rows: this.state.loading_rows.filter(i => i !== row.id)})
+        () => this.mark_row_loading(row.id, false)
       )
   }
 
   update_all = async () => {
     this.reset_new_row()
-    return this.get_data(this.current_url)
+    return this.get_data()
   }
 
   get header_row() {
@@ -218,24 +239,27 @@ export default class AsyncTable<T extends APIObject> extends Component<AsyncTabl
   }
 
   row_conversion_context = (row: any, is_new_row: boolean) => {
-    let update_fun: RowGeneratorContext<T>["update_direct"] = (name, value) => this.setState({
-      // Amend row_data to include new value for [name]
-      row_data: this.state.row_data.map(
-        r => r.id === row.id ? {...row, [name]: value} : r
-      ),
-      changed_rows: [...this.state.changed_rows, row.id]
-    })
-    if (is_new_row)
-      update_fun = (name, value) => this.setState({
-        new_row: {...this.state.new_row, [name]: value, _changed: true},
-        changed_rows: [...this.state.changed_rows, row.id]
+    let update_fun: RowGeneratorContext<T>["update_direct"] = (name, value) => {
+      this.setState({
+        // Amend row_data to include new value for [name]
+        row_data: this.state.row_data.map(r => r.id === row.id ? {...row, [name]: value} : r)
       })
+      this.mark_row_changed(row.id)
+    }
+    if (is_new_row) {
+      update_fun = (name, value) => {
+        this.setState({new_row: {...this.state.new_row, [name]: value}})
+        this.mark_row_changed(row.id)
+      }
+    }
 
     return {
       columns: this.props.columns,
       update: (event: BaseSyntheticEvent) => update_fun(event.target.name, event.target.value),
       update_direct: update_fun,
-      refresh: () => this.refresh_row(row),
+      mark_loading: (state: boolean = true) => this.mark_row_loading(row.id, state),
+      refresh: (r: any) => this.refresh_row(r, true),
+      refresh_from_api: () => this.refresh_row(row, false),
       refresh_all_rows: this.update_all,
       is_new_row,
       value_changed: this.state.changed_rows.includes(row.id)
@@ -250,6 +274,8 @@ export default class AsyncTable<T extends APIObject> extends Component<AsyncTabl
   }
 
   row_data_to_tablerow = (row: T, row_index: number) => {
+    if (!row)
+      return null
     const is_new_row = row_index === NEW_ROW_ID
     if (is_new_row)
       row_index = -1

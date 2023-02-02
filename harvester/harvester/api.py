@@ -2,6 +2,7 @@ import os
 import json
 import requests
 from .settings import get_setting, get_settings, get_settings_file, get_logger
+import time
 
 logger = get_logger(__file__)
 
@@ -12,6 +13,7 @@ def report_harvest_result(
         file: os.PathLike|str = None,
         error: BaseException = None
 ):
+    start = time.time()
     try:
         if error is not None:
             data = {'status': 'error', 'error': ";".join(error.args)}
@@ -21,17 +23,19 @@ def report_harvest_result(
         if file is not None:
             data['file'] = file
         logger.debug(f"{get_setting('url')}report/; {json.dumps(data)}")
-        return requests.post(
+        out = requests.post(
             f"{get_setting('url')}report/",
             headers={
                 'Authorization': f"Harvester {get_setting('api_key')}"
             },
             json=data,
-            timeout=120
+            timeout=600
         )
     except BaseException as e:
         logger.error(e)
-    return None
+        out = None
+    logger.info(f"API call finished in {time.time() - start}")
+    return out
 
 
 def update_config():

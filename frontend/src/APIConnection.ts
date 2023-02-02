@@ -117,8 +117,8 @@ export class APIConnection {
           json.results = await Promise.all(
             json.results.map(async (r: SingleAPIResponse) => await this.fetch_children(r, options, depth - 1))
           )
-          return json
         }
+        return await this.fetch_children(json, options, depth - 1)
       })
       .then(r => {
         console.log(url, options, depth, r); return r
@@ -137,12 +137,27 @@ export class APIConnection {
 
   fetch_children: (r: SingleAPIResponse, options: any, depth: number) => Promise<SingleAPIResponse> =
     async (r: SingleAPIResponse, options: any, depth: number) => {
-      for (const k in r) {
-        if (k === 'url')
-          continue
-        if (typeof r[k] === "string" && r[k].startsWith(this.url)) {
-          r[k] = await this.fetch(r[k], options, depth)
-          console.log(r, k, r[k])
+      if (depth >= 0) {
+        // Children are always GET requests because we don't want to PATCH/etc them
+        const _fetch = async (x: any) => {
+          if (typeof x === "string" && x.startsWith(this.url)) {
+            console.log("fetch child for", r.url, x)
+            return await this.fetch(x, options, depth)
+          }
+          return x
+        }
+
+        if (options?.method) {
+          options.method = "GET"
+          delete options.body
+        }
+        for (const k in r) {
+          if (k === 'url')
+            continue
+          if (r[k] instanceof Array)
+            r[k] = await Promise.all(r[k].map((x: any) => _fetch(x)))
+          else
+            r[k] = await _fetch(r[k])
         }
       }
       return r

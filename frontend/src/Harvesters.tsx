@@ -142,7 +142,7 @@ export default function Harvesters() {
               </IconButton>
             </Fragment>,
           ]}
-          initial_url="harvesters/?all=true"
+          url="harvesters/?all=true"
         />}
       </Paper>
       {selected !== null && <HarvesterDetail harvester={selected} />}

@@ -10,7 +10,8 @@ from .models import Harvester, \
     DataColumn, \
     TimeseriesData, \
     TimeseriesRangeLabel, \
-    FileState
+    FileState, DataColumnStringKeys
+from django.db import connection
 from django.contrib.auth.models import User, Group
 from django.conf.global_settings import DATA_UPLOAD_MAX_MEMORY_SIZE
 from rest_framework import serializers
@@ -77,10 +78,11 @@ class HarvesterConfigSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Harvester
         fields = [
-            'url', 'id', 'api_key', 'name', 'last_check_in', 'sleep_time', 'monitored_paths',
+            'url', 'id', 'api_key', 'name', 'sleep_time', 'monitored_paths',
             'standard_units', 'standard_columns', 'max_upload_bytes'
         ]
         read_only_fields = fields
+        depth = 1
 
 
 class MonitoredPathSerializer(serializers.HyperlinkedModelSerializer):
@@ -126,17 +128,41 @@ class MonitoredPathSerializer(serializers.HyperlinkedModelSerializer):
         model = MonitoredPath
         fields = ['url', 'id', 'path', 'stable_time', 'harvester', 'user_sets']
         read_only_fields = ['url', 'id', 'harvester', 'user_sets']
-        depth = 1
 
 
 class ObservedFileSerializer(serializers.HyperlinkedModelSerializer):
+    upload_info = serializers.SerializerMethodField()
+
+    def get_upload_info(self, instance):
+        if not self.context.get('with_upload_info'):
+            return None
+        try:
+            columns = DataColumn.objects.filter(dataset__file=instance)
+            column_data = []
+            for c in columns:
+                keys = DataColumnStringKeys.objects.filter(column=c).order_by('key')
+                column_data.append({
+                    'name': c.name,
+                    'id': c.id,
+                    'keymap': [{'key': k.key, 'value': k.string} for k in keys]
+                })
+            with connection.cursor() as cur:
+                cur.execute(f"SELECT sample FROM timeseries_data WHERE column_id={columns.first().id} ORDER BY sample DESC LIMIT 1")
+                last_record = cur.fetchone()[0]
+            return {
+                'columns': column_data,
+                'last_record_number': last_record
+            }
+        except BaseException as e:
+            return {'columns': [], 'last_record_number': None, 'error': str(e)}
+
     class Meta:
         model = ObservedFile
         fields = [
             'url', 'id',
             'monitored_path', 'relative_path',
             'state', 'last_observed_time', 'last_observed_size', 'errors',
-            'datasets'
+            'datasets', 'upload_info'
         ]
         read_only_fields = [
             'url', 'id', 'monitored_path', 'relative_path',
@@ -169,6 +195,13 @@ class CellDataSerializer(serializers.HyperlinkedModelSerializer):
         read_only_fields = ['id', 'url', 'in_use']
 
 
+class EquipmentSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = Equipment
+        fields = ['url', 'id', 'name', 'type', 'datasets']
+        read_only_fields = ['url', 'id', 'datasets']
+
+
 class DatasetSerializer(serializers.HyperlinkedModelSerializer):
     user_sets = serializers.SerializerMethodField()
 
@@ -177,19 +210,10 @@ class DatasetSerializer(serializers.HyperlinkedModelSerializer):
             instance.file.monitored_path, context={'request': self.context.get('request')}
         ).data.get('user_sets')
 
-    def update(self, instance, validated_data):
-        pass
-
     class Meta:
         model = Dataset
         fields = ['url', 'id', 'name', 'date', 'type', 'purpose', 'cell', 'equipment', 'file', 'user_sets']
         read_only_fields = ['date', 'file', 'id', 'url', 'user_sets']
-
-
-class EquipmentSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta:
-        model = Equipment
-        fields = ['url', 'id', 'name', 'type', 'datasets']
 
 
 class DataUnitSerializer(serializers.HyperlinkedModelSerializer):

@@ -118,7 +118,7 @@ export default function Equipment() {
             </Fragment>
           ]}
           new_row_values={{name: '', type: ''}}
-          initial_url={`equipment/?all=true`}
+          url={`equipment/?all=true`}
           styles={classes}
         />
       </Paper>

@@ -2,7 +2,7 @@ import os.path
 import time
 from .settings import get_logger, get_setting
 from .api import report_harvest_result, update_config
-from .harvest import import_file
+from .harvest import import_file, import_file_direct
 
 logger = get_logger(__file__)
 
