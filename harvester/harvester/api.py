@@ -28,8 +28,7 @@ def report_harvest_result(
             headers={
                 'Authorization': f"Harvester {get_setting('api_key')}"
             },
-            json=data,
-            timeout=600
+            json=data
         )
     except BaseException as e:
         logger.error(e)
@@ -71,7 +70,7 @@ def update_config():
                     dirty = True
 
             if dirty:
-                with open(get_settings_file(), 'w') as f:
+                with open(get_settings_file(), 'w+') as f:
                     json.dump(result.json(), f)
         else:
             logger.error(f"Unable to fetch {url}config/ -- received HTTP {result.status_code}")
