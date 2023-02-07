@@ -1,6 +1,3 @@
-import io
-import sys
-
 from django.db.models import Q
 from .serializers import HarvesterSerializer, \
     HarvesterConfigSerializer, \
@@ -40,6 +37,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from knox.views import LoginView as KnoxLoginView
 from rest_framework.authentication import BasicAuthentication
+from .utils import IteratorFile
 import json
 import time
 import logging
@@ -319,65 +317,6 @@ class HarvesterViewSet(viewsets.ModelViewSet):
                                 time_ts_prep = time.time()
                                 from django.db import connection
 
-                                class IteratorFile(io.TextIOBase):
-                                    """ given an iterator which yields strings,
-                                    return a file like object for reading those strings """
-
-                                    def __init__(self, it):
-                                        self._it = it
-                                        self._f = io.StringIO()
-                                        self.buffered_chars = 0
-
-                                    def read(self, length=sys.maxsize):
-
-                                        try:
-                                            while self.buffered_chars < length:
-                                                self.buffered_chars += self._f.write(next(self._it) + "\n")
-
-                                        except StopIteration as e:
-                                            # soak up StopIteration. this block is not necessary because
-                                            # of finally, but just to be explicit
-                                            pass
-
-                                        except:  # Exception as e:
-                                            raise
-                                        #            print("uncaught exception: {}".format(e))
-
-                                        finally:
-                                            self._f.seek(0)
-                                            data = self._f.read(length)
-
-                                            # save the remainder for next read
-                                            remainder = self._f.read()
-                                            self._f.seek(0)
-                                            self._f.truncate(0)
-                                            self.buffered_chars = self._f.write(remainder)
-                                            return data
-
-                                    def readline(self):
-                                        try:
-                                            # load up a line to make sure that there is one to read
-                                            self._f.write(next(self._it) + "\n")
-                                        except StopIteration as e:
-                                            # soak up StopIteration. this block is not necessary because
-                                            # of finally, but just to be explicit
-                                            pass
-
-                                        except:  # Exception as e:
-                                            raise
-                                        #            print("uncaught exception: {}".format(e))
-
-                                        finally:
-                                            self._f.seek(0)
-                                            data = self._f.readline()
-
-                                            # save the remainder for next read
-                                            remainder = self._f.read()
-                                            self._f.seek(0)
-                                            self._f.truncate(0)
-                                            # store size of data in buffer for the read method
-                                            self.buffered_chars = self._f.write(remainder)
-                                            return data
                                 rows = []
                                 for s, v in column_data['values'].items():
                                     rows.append(f"{int(s)}\t{column.id}\t{int(v)}")
