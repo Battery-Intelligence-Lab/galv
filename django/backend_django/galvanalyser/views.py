@@ -3,7 +3,8 @@ from .serializers import HarvesterSerializer, \
     HarvesterConfigSerializer, \
     MonitoredPathSerializer, \
     ObservedFileSerializer, \
-    CellDataSerializer, \
+    CellSerializer, \
+    CellFamilySerializer, \
     DatasetSerializer, \
     EquipmentSerializer, \
     DataUnitSerializer, \
@@ -18,7 +19,8 @@ from .models import Harvester, \
     HarvestError, \
     MonitoredPath, \
     ObservedFile, \
-    CellData, \
+    Cell, \
+    CellFamily, \
     Dataset, \
     Equipment, \
     DataUnit, \
@@ -77,6 +79,8 @@ class HarvesterViewSet(viewsets.ModelViewSet):
 
     When Harvesters communicate with the API they do so using special Harvester API Keys.
     These provide access to the report and configuration endpoints.
+
+    Harvesters are created by a separate software package available within Galvanalyser.
     """
     serializer_class = HarvesterSerializer
     filterset_fields = ['name']
@@ -93,7 +97,7 @@ class HarvesterViewSet(viewsets.ModelViewSet):
         """
         Create a Harvester and the user Groups required to control it.
         """
-
+        # TODO: move to serializer?
         # Validate input
         if not request.data['name']:
             return error_response('No name specified for Harvester.')
@@ -115,7 +119,7 @@ class HarvesterViewSet(viewsets.ModelViewSet):
         user.groups.add(harvester.admin_group)
         user.save()
 
-        return Response(self.get_serializer(harvester).data)
+        return Response(HarvesterConfigSerializer(harvester, context={'request': request}).data)
 
     def update(self, request, *args, **kwargs):
         try:
@@ -143,11 +147,7 @@ class HarvesterViewSet(viewsets.ModelViewSet):
         harvester.save()
         return Response(self.get_serializer(harvester).data)
 
-    # @action(detail=True, methods=['GET'])
-    # def env(self, request, pk: int = None):
-    #     harvester = Harvester.objects.get(id=pk)
-    #     result = get_env.apply_async(queue=harvester.name)
-    #     return Response(result.get())
+    # TODO: handle harvester envvars?
 
     @action(detail=True, methods=['GET'])
     def config(self, request, pk: int = None):
@@ -155,17 +155,22 @@ class HarvesterViewSet(viewsets.ModelViewSet):
         Return a full configuration file including MonitoredPaths under paths.
         Used by the API for updating the Harvester.
         """
-        # TODO: Restrict access to Harvester or harvester user
         harvester = get_object_or_404(Harvester, id=pk)
-        return Response(HarvesterConfigSerializer(harvester, context={'request': request}).data)
+        try:
+            key = request.META.get('HTTP_AUTHORIZATION', '')
+            key = key[len('Harvester '):]
+            assert key == harvester.api_key
+            return Response(HarvesterConfigSerializer(harvester, context={'request': request}).data)
+        except AssertionError:
+            return error_response("Invalid AUTHORIZATION header. Required 'Harvester [api_key]'.")
 
     @action(detail=True, methods=['POST'])
     def report(self, request, pk: int = None):
         """
-        Process a harvester's report on its activity.
+        Process a Harvester's report on its activity.
         This will spawn various other database updates depending on payload content.
 
-        Only harvesters are authorised to issue reports.
+        Only Harvesters are authorised to issue reports.
         """
         # TODO access class Harvester
         harvester = Harvester.objects.get(id=pk)
@@ -354,7 +359,12 @@ class HarvesterViewSet(viewsets.ModelViewSet):
 
 class MonitoredPathViewSet(viewsets.ModelViewSet):
     """
-    TODO: document
+    A MonitoredPath refers to a directory accessible by a Harvester in which
+    data files will reside. Those files will be scanned periodically by the Harvester,
+    becoming ObservedFiles once they are reported to Galvanalyser by the Harvester.
+
+    MonitoredPaths can be created or updated by a Harvester's admins and users, as
+    well as any users who have been given explicit permissions to edit the MonitoredPath.
     """
     serializer_class = MonitoredPathSerializer
     filterset_fields = ['path', 'harvester__id', 'harvester__name']
@@ -434,7 +444,13 @@ class MonitoredPathViewSet(viewsets.ModelViewSet):
 
 class ObservedFileViewSet(viewsets.ModelViewSet):
     """
-    TODO: document
+    ObservedFiles are files that exist (or have existed) in a MonitoredPath and have
+    been reported to Galvanalyser by the Harvester.
+
+    An ObservedFile instance will have file metadata (size, modification time), and a
+    status representing its import state. It may be linked to HarvestErrors
+    encountered while importing the file, and/or to Datasets representing the content
+    of imported files.
     """
     serializer_class = ObservedFileSerializer
     filterset_fields = ['monitored_path__id', 'relative_path', 'state']
@@ -462,10 +478,13 @@ class ObservedFileViewSet(viewsets.ModelViewSet):
 
 class DatasetViewSet(viewsets.ModelViewSet):
     """
-    TODO: document
+    A Dataset contains structured data from an ObservedFile.
+
+    Datasets are decomposed within Galvanalyser into columns and datapoints,
+    providing an ability flexibly handle any kind of tabular data.
     """
     serializer_class = DatasetSerializer
-    filterset_fields = ['name', 'type', 'cell__name']
+    filterset_fields = ['name', 'type', 'cell__family__name']
     search_fields = ['@name', 'type']
     queryset = Dataset.objects.none().order_by('-date', '-id')
 
@@ -480,7 +499,8 @@ class DatasetViewSet(viewsets.ModelViewSet):
 
 class HarvestErrorViewSet(viewsets.ModelViewSet):
     """
-    TODO: document
+    HarvestErrors are problems encountered by Harvesters during the crawling of
+    MonitoredPaths or the importing or inspection of ObservedFiles.
     """
     serializer_class = HarvestErrorSerializer
     filterset_fields = ['file', 'path', 'harvester']
@@ -496,17 +516,33 @@ class HarvestErrorViewSet(viewsets.ModelViewSet):
         ).order_by('-timestamp')
 
 
-class CellDataViewSet(viewsets.ModelViewSet):
+class CellFamilyViewSet(viewsets.ModelViewSet):
     """
-    TODO: document
+    CellFamilies describe types of Cell.
     """
-    serializer_class = CellDataSerializer
-    queryset = CellData.objects.all().order_by('-id')
+    serializer_class = CellFamilySerializer
+    filterset_fields = [
+        'name', 'form_factor', 'anode_chemistry', 'cathode_chemistry', 'nominal_capacity',
+        'nominal_cell_weight', 'manufacturer'
+    ]
+    search_fields = ['@name', '@manufacturer', 'form_factor']
+    queryset = CellFamily.objects.all().order_by('-id')
+
+
+class CellViewSet(viewsets.ModelViewSet):
+    """
+    Cells are specific cells which have generated data stored in Datasets/ObservedFiles.
+    """
+    serializer_class = CellSerializer
+    filterset_fields = ['display_name', 'family__id']
+    search_fields = ['@display_name']
+    queryset = Cell.objects.all().order_by('-id')
 
 
 class EquipmentViewSet(viewsets.ModelViewSet):
     """
-    TODO: document
+    Equipment can be attached to Datasets and used to view Datasets which
+    have used similar equipment.
     """
     serializer_class = EquipmentSerializer
     queryset = Equipment.objects.all()
@@ -514,7 +550,7 @@ class EquipmentViewSet(viewsets.ModelViewSet):
 
 class DataUnitViewSet(viewsets.ModelViewSet):
     """
-    TODO: document
+    DataUnits are units used to characterise data in a DataColumn.
     """
     serializer_class = DataUnitSerializer
     filterset_fields = ['name', 'symbol', 'is_default']
@@ -524,7 +560,8 @@ class DataUnitViewSet(viewsets.ModelViewSet):
 
 class DataColumnTypeViewSet(viewsets.ModelViewSet):
     """
-    TODO: document
+    DataColumnTypes support reuse of DataColumns over multiple DataSets
+    by abstracting their information.
     """
     serializer_class = DataColumnTypeSerializer
     filterset_fields = ['name', 'unit__symbol', 'unit__name', 'is_default']
@@ -534,7 +571,7 @@ class DataColumnTypeViewSet(viewsets.ModelViewSet):
 
 class DataColumnViewSet(viewsets.ModelViewSet):
     """
-    TODO: document
+    DataColumns describe which columns are in a Dataset's data.
     """
     serializer_class = DataColumnSerializer
     queryset = DataColumn.objects.all()
@@ -542,7 +579,8 @@ class DataColumnViewSet(viewsets.ModelViewSet):
 
 class TimeseriesDataViewSet(viewsets.ModelViewSet):
     """
-    TODO: document
+    TimeseriesData link observation identifiers (rows) with DataColumns,
+    and therefore hold the actual values in the cells of a dataset.
     """
     serializer_class = TimeseriesDataSerializer
     queryset = TimeseriesData.objects.all()
@@ -550,7 +588,7 @@ class TimeseriesDataViewSet(viewsets.ModelViewSet):
 
 class TimeseriesRangeLabelViewSet(viewsets.ModelViewSet):
     """
-    TODO: document
+    TimeseriesRangeLabels mark contiguous observations using start and endpoints.
     """
     serializer_class = TimeseriesRangeLabelSerializer
     queryset = TimeseriesRangeLabel.objects.all()
@@ -558,7 +596,7 @@ class TimeseriesRangeLabelViewSet(viewsets.ModelViewSet):
 
 class UserViewSet(viewsets.ModelViewSet):
     """
-    TODO: document
+    Users are Django User instances custom-serialized for convenience.
     """
     serializer_class = UserSerializer
     queryset = User.objects.all()
@@ -566,7 +604,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
 class GroupViewSet(viewsets.ModelViewSet):
     """
-    TODO: document
+    Groups are Django Group instances custom-serialized for convenience.
     """
     serializer_class = GroupSerializer
     queryset = Group.objects.none().order_by('-id')

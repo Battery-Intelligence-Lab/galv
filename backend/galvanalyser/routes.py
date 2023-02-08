@@ -345,8 +345,8 @@ def equipment(id_=None):
             return jsonify({'success': True}), 200
 
 
-@ app.route('/CellData', methods=['GET', 'POST'])
-@ app.route('/CellData/<int:id_>', methods=['GET', 'PUT', 'DELETE'])
+@ app.route('/CellFamily', methods=['GET', 'POST'])
+@ app.route('/CellFamily/<int:id_>', methods=['GET', 'PUT', 'DELETE'])
 @ cross_origin()
 @ jwt_required()
 def cell(id_=None):

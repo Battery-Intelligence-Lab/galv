@@ -2,7 +2,8 @@ from .models import Harvester, \
     HarvestError, \
     MonitoredPath, \
     ObservedFile, \
-    CellData, \
+    Cell, \
+    CellFamily, \
     Dataset, \
     Equipment, \
     DataUnit, \
@@ -10,7 +11,7 @@ from .models import Harvester, \
     DataColumn, \
     TimeseriesData, \
     TimeseriesRangeLabel, \
-    FileState, DataColumnStringKeys
+    DataColumnStringKeys
 from django.db import connection
 from django.contrib.auth.models import User, Group
 from django.conf.global_settings import DATA_UPLOAD_MAX_MEMORY_SIZE
@@ -177,22 +178,44 @@ class HarvestErrorSerializer(serializers.HyperlinkedModelSerializer):
         fields = ['url', 'id', 'harvester', 'path', 'file', 'error', 'timestamp']
 
 
-class CellDataSerializer(serializers.HyperlinkedModelSerializer):
-    in_use = serializers.SerializerMethodField()
-
-    def get_in_use(self, instance):
-        return Dataset.objects.filter(cell=instance).exists()
+class CellFamilySerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
-        model = CellData
+        model = CellFamily
         fields = [
             'url', 'id', 'name',
             'form_factor', 'link_to_datasheet',
             'anode_chemistry', 'cathode_chemistry',
             'nominal_capacity', 'nominal_cell_weight', 'manufacturer',
-            'in_use'
+            'cells'
         ]
-        read_only_fields = ['id', 'url', 'in_use']
+        read_only_fields = ['id', 'url', 'cells']
+
+
+class CellSerializer(serializers.HyperlinkedModelSerializer):
+
+    class Meta:
+        model = Cell
+        fields = ['url', 'id', 'display_name', 'family', 'datasets']
+        read_only_fields = ['id', 'url', 'datasets']
+        extra_kwargs = {'display_name': {'allow_blank': True, 'allow_null': True}}
+
+    def validate_display_name(self, value):
+        if isinstance(value, str):
+            return value
+        return ""
+
+    def validate_family(self, value):
+        if not isinstance(value, CellFamily):
+            raise serializers.ValidationError("family property must be a CellFamily instance")
+        return value
+
+    def create(self, validated_data):
+        display_name = validated_data.pop('display_name')
+        family = validated_data.pop('family')
+        if display_name is '':
+            display_name = f"{family.name}_{family.cells.count()}"
+        return Cell.objects.create(family=family, display_name=display_name)
 
 
 class EquipmentSerializer(serializers.HyperlinkedModelSerializer):

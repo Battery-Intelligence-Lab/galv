@@ -47,6 +47,7 @@ export type AsyncTableProps<T extends APIObject> = {
   columns: Column[];
   row_generator: RowGenerator<T>;
   url: string;
+  fetch_depth?: number;
   new_row_values?: Partial<T>;
   styles?: any;
 }
@@ -94,11 +95,13 @@ export default class AsyncTable<T extends APIObject> extends Component<AsyncTabl
     loading_rows: [],
     changed_rows: []
   }
+  private fetch_depth: number;
 
   constructor(props: AsyncTableProps<T>) {
     super(props)
     if (props.new_row_values !== undefined)
       this.state.new_row = this.new_row_template
+    this.fetch_depth = props.fetch_depth === undefined? 1 : props.fetch_depth
   }
 
   get new_row_template() {
@@ -140,7 +143,7 @@ export default class AsyncTable<T extends APIObject> extends Component<AsyncTabl
     this.setState({loading: true})
     if (!url)
       url = this.props.url;
-    await Connection.fetch(url)
+    await Connection.fetch(url, {}, this.fetch_depth)
       .then(APIConnection.get_result_array)
       .then((res) => {
         if (typeof(res) === 'number')
@@ -173,7 +176,7 @@ export default class AsyncTable<T extends APIObject> extends Component<AsyncTabl
     if (is_result)
       return _update(row)
 
-    await Connection.fetch(row.url)
+    await Connection.fetch(row.url, {}, this.fetch_depth)
       .then(APIConnection.get_result_array)
       .then((res) => {
         // If we deleted the row, delete it in state

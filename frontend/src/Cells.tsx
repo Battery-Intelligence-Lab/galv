@@ -1,4 +1,4 @@
-import React, { Fragment } from 'react';
+import React, {Fragment, useState} from 'react';
 import TextField from '@mui/material/TextField';
 import { makeStyles } from '@mui/styles'
 import Paper from '@mui/material/Paper';
@@ -11,8 +11,10 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import Connection from "./APIConnection";
 import AsyncTable, {RowGeneratorContext} from "./AsyncTable";
 import Typography from "@mui/material/Typography";
+import SearchIcon from "@mui/icons-material/Search";
+import CellList, {CellFields} from "./CellList";
 
-export type CellFields = {
+export type CellFamilyFields = {
   url: string;
   id: number;
   name: string;
@@ -23,7 +25,7 @@ export type CellFields = {
   nominal_capacity: number;
   nominal_cell_weight: number;
   manufacturer: string;
-  in_use: boolean;
+  cells: CellFields[];
 }
 
 const useStyles = makeStyles((theme) => ({
@@ -48,17 +50,17 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const columns = [
-  // {label: 'ID', help: 'Id in database'},
   {label: 'Name', help: ''},
-  {label: 'Manufacturer', help: 'Manufacturer of the cell'},
-  {label: 'Form Factor', help: 'Form factor of the cell'},
-  {label: 'Datasheet', help: 'Link to the cell\'s datasheet'},
-  {label: 'Anode Chemistry', help: 'Chemistry of the cell\'s anode'},
-  {label: 'Cathode Chemistry', help: 'Chemistry of the cell\'s cathode'},
-  {label: 'Nominal Capacity', help: 'Nominal cell capacity'},
-  {label: 'Nominal Weight', help: 'Nominal cell weight'},
-  {label: 'Save', help: 'Click to save edits to a row. Edits are disabled for cells that are in use'},
-  {label: 'Delete', help: 'Delete a cell that is not in use'},
+  {label: 'Manufacturer', help: 'Manufacturer of the cell family'},
+  {label: 'Form Factor', help: 'Form factor of the cell family'},
+  {label: 'Datasheet', help: 'Link to the cell family\'s datasheet'},
+  {label: 'Anode Chemistry', help: 'Chemistry of the cell family\'s anode'},
+  {label: 'Cathode Chemistry', help: 'Chemistry of the cell family\'s cathode'},
+  {label: 'Nominal Capacity', help: 'Nominal cell family capacity'},
+  {label: 'Nominal Weight', help: 'Nominal cell family weight'},
+  {label: 'Details', help: 'View cells in this family'},
+  {label: 'Save', help: 'Click to save edits to a row. Edits are disabled for cell families that are in use'},
+  {label: 'Delete', help: 'Delete a cell family that is not in use'},
 ]
 
 const string_fields = [
@@ -68,8 +70,9 @@ const number_fields = ['nominal_capacity', 'nominal_cell_weight'] as const
 
 export default function Cells() {
   const classes = useStyles();
+  const [selected, setSelected] = useState<CellFamilyFields|null>(null)
 
-  const get_write_data: (data: CellFields) => Partial<CellFields> = (data) => {
+  const get_write_data: (data: CellFamilyFields) => Partial<CellFamilyFields> = (data) => {
     return {
       name: data.name,
       form_factor: data.form_factor,
@@ -82,31 +85,31 @@ export default function Cells() {
     }
   }
 
-  const addNewCell = (data: CellFields, context: RowGeneratorContext<CellFields>) => {
+  const addNewCell = (data: CellFamilyFields, context: RowGeneratorContext<CellFamilyFields>) => {
     context.mark_loading(true)
     const insert_data = get_write_data(data)
-    return Connection.fetch('cells/', {body: JSON.stringify(insert_data), method: 'POST'})
+    return Connection.fetch('cell_families/', {body: JSON.stringify(insert_data), method: 'POST'})
   };
 
-  const updateCell = (data: CellFields, context: RowGeneratorContext<CellFields>) => {
+  const updateCell = (data: CellFamilyFields, context: RowGeneratorContext<CellFamilyFields>) => {
     context.mark_loading(true)
     const insert_data = get_write_data(data)
     return Connection.fetch(data.url, {body: JSON.stringify(insert_data), method: 'PATCH'})
   };
 
-  const deleteCell = (data: CellFields) => Connection.fetch(data.url, {method: 'DELETE'})
+  const deleteCell = (data: CellFamilyFields) => Connection.fetch(data.url, {method: 'DELETE'})
 
   return (
     <Container maxWidth="lg" className={classes.container}>
       <Paper className={classes.paper}>
-        <AsyncTable<CellFields>
+        <AsyncTable<CellFamilyFields>
           columns={columns}
-          row_generator={(cell, context) => [
+          row_generator={(family, context) => [
             ...string_fields.map(n => <Fragment>
               <TextField
                 name={n}
-                value={cell[n]}
-                disabled={cell.in_use}
+                value={family[n]}
+                disabled={family.cells.length > 0}
                 InputProps={{
                   classes: {
                     input: classes.resize,
@@ -120,8 +123,8 @@ export default function Cells() {
                 name={n}
                 style={{width: 60}}
                 type={"number"}
-                value={cell[n]}
-                disabled={cell.in_use}
+                value={family[n]}
+                disabled={family.cells.length > 0}
                 InputProps={{
                   classes: {
                     input: classes.resize,
@@ -130,28 +133,33 @@ export default function Cells() {
                 onChange={context.update}
               />
             </Fragment>),
-            cell.in_use? <Fragment key="save"/> : <Fragment>
+            context.is_new_row? <Fragment key="select"/> : <Fragment key="select">
+              <IconButton onClick={() => selected?.id === family.id? setSelected(null) : setSelected(family)}>
+                <SearchIcon color={selected?.id === family.id? 'info' : undefined} />
+              </IconButton>
+            </Fragment>,
+            family.cells.length > 0? <Fragment key="save"/> : <Fragment>
               <Tooltip title={
-                cell.in_use? "Cannot update a cell that is used by datasets." :
-                  "Save changes to cell"
+                family.cells.length > 0? "Cannot update a cell family that is used by cells." :
+                  context.is_new_row? "Add cell family" : "Save changes to cell family"
               }>
               <span>
                 <IconButton
-                  disabled={!context.value_changed || cell.in_use}
+                  disabled={!context.value_changed || family.cells.length > 0}
                   onClick={
                     context.is_new_row?
-                      () => addNewCell(cell, context).then(context.refresh_all_rows) :
-                      () => updateCell(cell, context).then(context.refresh)}
+                      () => addNewCell(family, context).then(context.refresh_all_rows) :
+                      () => updateCell(family, context).then(context.refresh)}
                 >
                   {context.is_new_row? <AddIcon/> : <SaveIcon/>}
                 </IconButton>
               </span>
               </Tooltip>
             </Fragment>,
-            context.is_new_row || cell.in_use? <Fragment key="delete"/> : <Fragment>
-              <Tooltip title="Delete cell">
+            context.is_new_row || family.cells.length > 0? <Fragment key="delete"/> : <Fragment>
+              <Tooltip title="Delete cell family">
               <span>
-                <IconButton onClick={() => deleteCell(cell).then(context.refresh)}>
+                <IconButton onClick={() => deleteCell(family).then(context.refresh)}>
                   <DeleteIcon />
                 </IconButton>
               </span>
@@ -160,14 +168,16 @@ export default function Cells() {
           ]}
           new_row_values={{
             name: '', manufacturer: '', form_factor: '', link_to_datasheet: '', anode_chemistry: '', cathode_chemistry: '',
-            nominal_capacity: 0, nominal_cell_weight: 0
+            nominal_capacity: 0, nominal_cell_weight: 0, cells: []
           }}
-          url="cells/?all=true"
+          url="cell_families/?all=true"
+          fetch_depth={0}
         />
         <Typography p={2} fontSize="small">
-          Note: Cells assigned to existing datasets cannot be changed.
+          Note: Cell families with cells cannot be changed.
         </Typography>
       </Paper>
+      {selected !== null && <CellList family={selected} />}
     </Container>
   );
 }

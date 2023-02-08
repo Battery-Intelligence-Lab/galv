@@ -27,6 +27,7 @@ services:
 #    command: tail -F anything
     depends_on:
       - app
+    restart: unless-stopped
     volumes:
      - ./harvester:/usr/harvester
      - ./.harvester:/harvester_files
@@ -42,6 +43,7 @@ services:
     ports:
       - "3000:3000"
     command: yarn start
+    restart: unless-stopped
 
 #  old_worker:
 #      build:

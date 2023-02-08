@@ -132,7 +132,7 @@ export default function DatasetDetail() {
   const { id } = useParams();
   const classes = useStyles();
 
-  const [cellData, setCellData] = useState([])
+  const [cellData, setCellFamily] = useState([])
   const [equipmentData, setEquipmentData] = useState(null)
   const [dataset, setDataset] = useState(null)
   const [userData, setUserData] = useState([])
@@ -146,7 +146,7 @@ export default function DatasetDetail() {
     });
     cells().then((response) => {
       if (response.ok) {
-        return response.json().then(setCellData);
+        return response.json().then(setCellFamily);
       }
     });
     datasets(id).then((response) => {

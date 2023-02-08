@@ -44,19 +44,9 @@ class Harvester(models.Model):
             self.api_key = f"galv_hrv_{''.join(random.choices(text, k=60))}"
         super(Harvester, self).save(*args, **kwargs)
 
-    # Perform harvesting
-    def run(self):
-        paths = MonitoredPath.objects.filter(harvester=self)
-        for path in paths:
-            files = ObservedFile.objects.filter(monitored_path=path)
-            for file in files:
-                if file.state == FileState.STABLE:
-                    file.import_content()
-        self.last_successful_run = timezone.now()
-
 
 class MonitoredPath(models.Model):
-    harvester = models.ForeignKey(to=Harvester, related_name='monitored_paths', on_delete=models.DO_NOTHING)
+    harvester = models.ForeignKey(to=Harvester, related_name='monitored_paths', on_delete=models.SET_NULL, null=True)
     path = models.TextField()
     stable_time = models.PositiveSmallIntegerField(default=60)  # seconds files must remain stable to be processed
     admin_group = models.ForeignKey(
@@ -95,7 +85,7 @@ class HarvestError(models.Model):
     timestamp = models.DateTimeField(auto_now=True, null=True)
 
 
-class CellData(models.Model):
+class CellFamily(models.Model):
     name = models.TextField(null=False, unique=True)
     form_factor = models.TextField()
     link_to_datasheet = models.TextField()
@@ -106,8 +96,13 @@ class CellData(models.Model):
     manufacturer = models.TextField()
 
 
+class Cell(models.Model):
+    display_name = models.TextField(null=True, unique=True)
+    family = models.ForeignKey(to=CellFamily, related_name='cells', on_delete=models.SET_NULL, null=True)
+
+
 class Dataset(models.Model):
-    cell = models.ForeignKey(to=CellData, on_delete=models.SET_NULL, null=True)
+    cell = models.ForeignKey(to=Cell, related_name='datasets', on_delete=models.SET_NULL, null=True)
     file = models.ForeignKey(to=ObservedFile, on_delete=models.DO_NOTHING, related_name='datasets')
     name = models.TextField(null=True)
     date = models.DateTimeField(null=False)

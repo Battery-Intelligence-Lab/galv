@@ -19,7 +19,7 @@ import TextField from "@mui/material/TextField";
 import IconButton from "@mui/material/IconButton";
 import {UserSet} from "./UserRoleSet";
 import SettingsIcon from "@mui/icons-material/Settings";
-import {CellFields} from "./Cells";
+import {CellFields} from "./CellList";
 import MenuItem from "@mui/material/MenuItem";
 import CircularProgress from "@mui/material/CircularProgress";
 import {EquipmentFields} from "./Equipment";
@@ -142,7 +142,7 @@ export default function Datasets() {
   };
 
   const get_cell_items = (dataset: DatasetFields) => {
-    const menuItem = (cell: CellFields) => <MenuItem key={cell.id} value={cell.id}>{cell.name}</MenuItem>
+    const menuItem = (cell: CellFields) => <MenuItem key={cell.id} value={cell.id}>{cell.display_name}</MenuItem>
     const items: ReactElement[] = []
     if (dataset?.cell) {
       items.push(menuItem(dataset.cell))
@@ -185,7 +185,14 @@ export default function Datasets() {
           columns={columns}
           row_generator={(dataset, context) => [
             <Fragment>{dataset.id}</Fragment>,
-            <Fragment>{dataset.date}</Fragment>,
+            <Fragment>
+              {
+                Intl.DateTimeFormat(
+                  'en-GB',
+                  {dateStyle: 'long', timeStyle: 'long'})
+                  .format(Date.parse(dataset.date))
+              }
+            </Fragment>,
             // these fields have the same shape, so condense the code.
             // as const stops TypeScript from complaining about strings assigned to keyof DatasetFields
             ...(['name', 'type', 'purpose'] as const).map(
