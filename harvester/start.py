@@ -15,7 +15,10 @@ def query(url: str, data: object = None) -> object:
         click.echo(f"POST {url}; {json.dumps(data)}")
         result = requests.post(url, data=data)
     if result.status_code != 200:
-        raise ConnectionError(f"Unable to connect to {url}")
+        try:
+            raise ConnectionError(result.json()['error'])
+        except (json.JSONDecodeError, AttributeError, KeyError):
+            raise ConnectionError(f"Unable to connect to {url}")
     return result.json()
 
 
