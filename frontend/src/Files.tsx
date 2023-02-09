@@ -9,24 +9,7 @@ import Connection from "./APIConnection";
 import {MonitoredPathFields} from "./HarvesterDetail";
 import IconButton from "@mui/material/IconButton";
 import RefreshIcon from "@mui/icons-material/Refresh";
-
-
-const useStyles = makeStyles((theme) => ({
-  head: {
-    backgroundColor: theme.palette.primary.light,
-  },
-  headCell: {
-    color: theme.palette.common.black,
-  },
-  container: {
-    paddingTop: theme.spacing(4),
-    paddingBottom: theme.spacing(4),
-  },
-  table: {
-    minWidth: 650,
-  },
-  paper: {}
-}));
+import useStyles from "./UseStyles";
 
 export type FileFields = {
   url: string;
@@ -90,7 +73,9 @@ export default function Files(props: FilesProps) {
             <Fragment>{file_state(file)}</Fragment>,
             <Fragment>{file.datasets.length}</Fragment>,
             <Fragment>
-              <IconButton onClick={() => forceReimport(file).then(context.refresh)}><RefreshIcon /></IconButton>
+              <IconButton onClick={() => forceReimport(file).then(context.refresh)}>
+                <RefreshIcon className={classes.refreshIcon} />
+              </IconButton>
             </Fragment>
           ]}
           url={`files/?monitored_path__id=${props.path.id}&all=true`}

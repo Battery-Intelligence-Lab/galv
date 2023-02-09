@@ -6,11 +6,6 @@ export type User = {
   last_name: string,
   is_staff: boolean,
   is_superuser: boolean,
-  // groups: {
-  //   url: string,
-  //   name: string,
-  //   permissions: []
-  // }[],
   token: string,
 }
 
@@ -78,7 +73,7 @@ export class APIConnection {
     return cookie !== undefined && this.user !== null;
   }
 
-  async fetch(url: string, options?: any, depth: number = 1): Promise<APIResponse> {
+  async fetch(url: string, options?: any, depth: number = 0): Promise<APIResponse> {
     await this.get_is_logged_in();
     console.info(`Fetch ${url} for ${this.user?.username}`)
     console.info('fetch options', options)

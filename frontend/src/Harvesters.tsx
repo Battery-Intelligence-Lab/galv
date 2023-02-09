@@ -1,18 +1,14 @@
 import React, { useState, Fragment } from 'react';
 import TextField from '@mui/material/TextField';
-import { makeStyles } from '@mui/styles'
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
-import IconButton from '@mui/material/IconButton';
 import Container from '@mui/material/Container';
-import SaveIcon from '@mui/icons-material/Save';
-import SearchIcon from '@mui/icons-material/Search';
-import DeleteIcon from '@mui/icons-material/Delete';
-
 import HarvesterDetail from './HarvesterDetail';
 import Connection from "./APIConnection";
 import {UserSet} from "./UserRoleSet";
 import AsyncTable, {Column} from "./AsyncTable";
+import useStyles from "./UseStyles";
+import ActionButtons from "./ActionButtons";
 
 export type HarvesterWriteableFields = {
   name: string;
@@ -25,27 +21,6 @@ export type HarvesterFields = HarvesterWriteableFields & {
   last_check_in: string | null;
   user_sets: UserSet[];
 }
-
-const useStyles = makeStyles((theme) => ({
-  container: {
-    paddingTop: theme.spacing(4),
-    paddingBottom: theme.spacing(4),
-  },
-  table: {
-    minWidth: 650,
-  },
-  resize: {
-    fontSize: '11pt',
-  },
-  input: {
-    marginLeft: theme.spacing(1),
-    flex: 1,
-  },
-  iconButton: {
-    padding: 10,
-  },
-  paper: {}
-}));
 
 export default function Harvesters() {
   const classes = useStyles();
@@ -73,9 +48,7 @@ export default function Harvesters() {
     {label: 'Name', help: 'Harvester name'},
     {label: 'Last Check In', help: 'Datetime of last harvester run that successfully contacted the database'},
     {label: 'Sleep Time (s)', help: 'Time harvester waits after completing a cycle before beginning the next'},
-    {label: 'Details', help: 'View harvester path information'},
-    {label: 'Save', help: 'Click to save edits to a row'},
-    {label: 'Delete', help: 'Delete a harvester'},
+    {label: 'Actions', help: 'Inspect / Add / Save / Delete harvester path information'}
   ]
 
   return (
@@ -119,27 +92,16 @@ export default function Harvesters() {
               >
               </TextField>
             </Fragment>,
-            <Fragment key="select">
-              <IconButton onClick={() => selected?.id === row.id? setSelected(null) : setSelected(row)}>
-                <SearchIcon color={selected?.id === row.id? 'info' : undefined} />
-              </IconButton>
-            </Fragment>,
-            <Fragment key="save">
-              <IconButton
-                disabled={!userIsAdmin(row) || !context.value_changed}
-                onClick={() => updateHarvester(row).then(context.refresh)}
-              >
-                <SaveIcon />
-              </IconButton>
-            </Fragment>,
-            <Fragment key="delete">
-              <IconButton
-                disabled={!userIsAdmin(row)}
-                aria-label="delete"
-                onClick={() => deleteHarvester(row).then(context.refresh)}
-              >
-                <DeleteIcon/>
-              </IconButton>
+            <Fragment key="actions">
+              <ActionButtons
+                classes={classes}
+                onInspect={() => selected?.id === row.id? setSelected(null) : setSelected(row)}
+                inspectIconProps={selected?.id === row.id ? {color: 'info'} : {}}
+                onSave={() => updateHarvester(row).then(context.refresh)}
+                saveButtonProps={{disabled: !userIsAdmin(row) || !context.value_changed}}
+                onDelete={() => window.confirm(`Delete ${row.name}?`) && deleteHarvester(row).then(context.refresh)}
+                deleteButtonProps={{disabled: !userIsAdmin(row)}}
+              />
             </Fragment>,
           ]}
           url="harvesters/?all=true"

@@ -1,15 +1,13 @@
 import React, { Fragment } from 'react';
 import TextField from '@mui/material/TextField';
-import { makeStyles } from '@mui/styles'
 import Paper from '@mui/material/Paper';
-import Tooltip from '@mui/material/Tooltip';
 import AddIcon from '@mui/icons-material/Add';
-import IconButton from '@mui/material/IconButton';
 import Container from '@mui/material/Container';
 import SaveIcon from '@mui/icons-material/Save';
-import DeleteIcon from '@mui/icons-material/Delete';
 import AsyncTable from './AsyncTable';
 import Connection from "./APIConnection";
+import ActionButtons from "./ActionButtons";
+import useStyles from "./UseStyles";
 
 export type EquipmentFields = {
   url: string;
@@ -19,32 +17,10 @@ export type EquipmentFields = {
   in_use: boolean;
 }
 
-const useStyles = makeStyles((theme) => ({
-  container: {
-    paddingTop: theme.spacing(4),
-    paddingBottom: theme.spacing(4),
-  },
-  table: {
-    minWidth: 650,
-  },
-  resize: {
-    fontSize: '10pt',
-  },
-  input: {
-    marginLeft: theme.spacing(1),
-    flex: 1,
-  },
-  iconButton: {
-    padding: 10,
-  },
-  paper: {}
-}));
-
 const columns = [
   {label: 'Name', help: 'Equipment Name'},
   {label: 'Type', help: 'Equipment Type'},
-  {label: 'Save', help: 'Click to save edits to a row. Edits are disabled for equipment that is in use'},
-  {label: 'Delete', help: 'Delete equipment that is not in use'},
+  {label: 'Save', help: 'Save / Delete equipment. Edits are disabled for equipment that is in use'},
 ]
 
 const string_fields = ['name', 'type'] as const
@@ -88,33 +64,23 @@ export default function Equipment() {
                 />
               }
             </Fragment>),
-            <Fragment>
-              <Tooltip title="Save changes to equipment">
-              <span>
-                <IconButton
-                  disabled={!context.value_changed || equipment.in_use}
-                  onClick={
-                    context.is_new_row?
-                      () => addNewEquipment(equipment).then(context.refresh_all_rows) :
-                      () => updateEquipment(equipment).then(context.refresh)
-                  }
-                >
-                  {context.is_new_row? <AddIcon/> : <SaveIcon/>}
-                </IconButton>
-              </span>
-              </Tooltip>
-            </Fragment>,
-            context.is_new_row? <Fragment key="delete"/> : <Fragment>
-              <Tooltip title="Delete equipment">
-              <span>
-                <IconButton
-                  disabled={equipment.in_use}
-                  onClick={() => deleteEquipment(equipment).then(context.refresh)}
-                >
-                  <DeleteIcon />
-                </IconButton>
-              </span>
-              </Tooltip>
+            <Fragment key="actions">
+              <ActionButtons
+                classes={classes}
+                onSave={
+                  context.is_new_row?
+                    () => addNewEquipment(equipment).then(context.refresh_all_rows) :
+                    () => updateEquipment(equipment).then(context.refresh)
+                }
+                saveButtonProps={{disabled: !context.value_changed || equipment.in_use}}
+                saveIconProps={{component: context.is_new_row? AddIcon : SaveIcon}}
+                onDelete={
+                  () =>
+                    window.confirm(`Delete equipment ${equipment.name}?`) &&
+                    deleteEquipment(equipment).then(context.refresh)
+                }
+                deleteButtonProps={{disabled: context.is_new_row || equipment.in_use}}
+              />
             </Fragment>
           ]}
           new_row_values={{name: '', type: ''}}

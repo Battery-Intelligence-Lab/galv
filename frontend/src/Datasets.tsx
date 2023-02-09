@@ -1,7 +1,5 @@
-
 import React, {useEffect, useState, Fragment, ReactElement} from "react";
 import Container from '@mui/material/Container';
-import { makeStyles } from '@mui/styles'
 import Button from '@mui/material/Button';
 import { useNavigate } from "react-router-dom";
 import GetDatasetPython from "./GetDatasetPython"
@@ -13,12 +11,10 @@ import DialogTitle from '@mui/material/DialogTitle';
 import Connection, {APIConnection} from "./APIConnection"
 import AsyncTable, {RowGeneratorContext} from "./AsyncTable"
 import Paper from "@mui/material/Paper";
+import FormControl from "@mui/material/FormControl";
 import Select from "@mui/material/Select";
-import SaveIcon from "@mui/icons-material/Save";
 import TextField from "@mui/material/TextField";
-import IconButton from "@mui/material/IconButton";
 import {UserSet} from "./UserRoleSet";
-import SettingsIcon from "@mui/icons-material/Settings";
 import {CellFields} from "./CellList";
 import MenuItem from "@mui/material/MenuItem";
 import CircularProgress from "@mui/material/CircularProgress";
@@ -26,6 +22,11 @@ import {EquipmentFields} from "./Equipment";
 import OutlinedInput from "@mui/material/OutlinedInput";
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
+import Tooltip from "@mui/material/Tooltip";
+import Grid from "@mui/material/Grid";
+import InputLabel from "@mui/material/InputLabel";
+import useStyles from "./UseStyles";
+import ActionButtons from "./ActionButtons";
 
 export type DatasetFields = {
   url: string;
@@ -38,30 +39,6 @@ export type DatasetFields = {
   purpose: string;
   user_sets: UserSet[];
 }
-
-const useStyles = makeStyles((theme) => ({
-  button: {
-    margin: theme.spacing(1),
-  },
-  container: {
-    paddingTop: theme.spacing(4),
-    paddingBottom: theme.spacing(4),
-  },
-  table: {
-    minWidth: 650,
-  },
-  resize: {
-    fontSize: '11pt',
-  },
-  input: {
-    marginLeft: theme.spacing(1),
-    flex: 1,
-  },
-  iconButton: {
-    padding: 10,
-  },
-  paper: {}
-}));
 
 export default function Datasets() {
   const classes = useStyles();
@@ -108,15 +85,10 @@ export default function Datasets() {
   }
 
   const columns = [
-    {label: 'ID', help: 'Unique ID in database'},
     {label: 'Date', help: 'Date of Test'},
-    {label: 'Name', help: ''},
-    {label: 'Type', help: 'File type determined by Harvester'},
-    {label: 'Purpose', help: 'Short description of dataset purpose'},
-    {label: 'Cell', help: 'Cell that generated the dataset'},
+    {label: 'Properties', help: ''},
     {label: 'Equipment', help: 'Equipment used to generate the dataset'},
-    {label: 'Details', help: 'Advanced dataset properties'},
-    {label: 'Save', help: 'Save changes'},
+    {label: 'Actions', help: 'Inspect / Save dataset'}
   ]
 
   const navigate = useNavigate();
@@ -146,11 +118,11 @@ export default function Datasets() {
     const items: ReactElement[] = []
     if (dataset?.cell) {
       items.push(menuItem(dataset.cell))
-      if (!cellListLoading)
-        items.push(<MenuItem key="none" value={-1}><em>None</em></MenuItem>)
     }
     if (cellListLoading)
-      items.push(<MenuItem key="loading" value={-1} disabled={true}><CircularProgress/></MenuItem>)
+      items.push(<MenuItem key="loading" value="" disabled={true}><CircularProgress/></MenuItem>)
+    else
+      items.push(<MenuItem key="na" value=""><em>None</em></MenuItem>)
     if (cellList.length)
       items.push(...cellList.filter(c => c.id !== dataset.cell?.id).map(menuItem))
     if (!items.length)
@@ -166,11 +138,11 @@ export default function Datasets() {
     if (dataset?.equipment) {
       items.push(...dataset.equipment.map(e => menuItem(e)))
       current_equipment_ids.push(...dataset.equipment.map(e => e.id))
-      if (!equipmentListLoading)
-        items.push(<MenuItem key="none" value={-1}><em>None</em></MenuItem>)
     }
     if (equipmentListLoading)
-      items.push(<MenuItem key="loading" value={-1} disabled={true}><CircularProgress/></MenuItem>)
+      items.push(<MenuItem key="loading" value="" disabled={true}><CircularProgress/></MenuItem>)
+    else
+      items.push(<MenuItem key="none" value=""><em>None</em></MenuItem>)
     if (equipmentList.length)
       items.push(...equipmentList.filter(e => !current_equipment_ids.includes(e.id)).map(menuItem))
     if (!items.length)
@@ -184,41 +156,74 @@ export default function Datasets() {
         <AsyncTable<DatasetFields>
           columns={columns}
           row_generator={(dataset, context) => [
-            <Fragment>{dataset.id}</Fragment>,
             <Fragment>
               {
                 Intl.DateTimeFormat(
                   'en-GB',
-                  {dateStyle: 'long', timeStyle: 'long'})
+                  {dateStyle: 'short'})
                   .format(Date.parse(dataset.date))
               }
             </Fragment>,
-            // these fields have the same shape, so condense the code.
-            // as const stops TypeScript from complaining about strings assigned to keyof DatasetFields
-            ...(['name', 'type', 'purpose'] as const).map(
-              (n) => <Fragment>
-                <TextField
-                  InputProps={{
-                    classes: {
-                      input: classes.resize,
-                    }
-                  }}
-                  name={n}
-                  value={dataset[n]}
-                  onChange={context.update} />
-              </Fragment>
-            ),
             <Fragment>
-              <Select
-                id={`cell-select-${dataset.id}`}
-                name={'cell'}
-                value={dataset.cell?.id || ''}
-                onChange={
-                  (e) => context.update_direct('cell', cellList?.find(c => c.id === e.target.value) || null)
-                }
-              >
-                {get_cell_items(dataset)}
-              </Select>
+              <Box>
+                <Grid container spacing={1}>
+                  <Grid item>
+                    <Tooltip title="File from which dataset was extracted" placement="right">
+                      <TextField
+                        InputProps={{classes: {input: classes.resize}}}
+                        name="name"
+                        label="Name"
+                        fullWidth
+                        value={dataset.name}
+                        onChange={context.update}
+                      />
+                    </Tooltip>
+                  </Grid>
+                  <Grid item>
+                    <Tooltip title="Type of parser used to process the file" placement="right">
+                      <TextField
+                        InputProps={{classes: {input: classes.resize}}}
+                        name="type"
+                        label="Type"
+                        fullWidth
+                        value={dataset.type}
+                        onChange={context.update}
+                      />
+                    </Tooltip>
+                  </Grid>
+                </Grid>
+                <Grid container spacing={1} pt={1}>
+                  <Grid item>
+                    <Tooltip title="Purpose for which data were collected" placement="right">
+                      <TextField
+                        InputProps={{classes: {input: classes.resize}}}
+                        name="purpose"
+                        label="Purpose"
+                        fullWidth
+                        value={dataset.purpose}
+                        onChange={context.update}
+                      />
+                    </Tooltip>
+                  </Grid>
+                  <Grid item>
+                    <FormControl>
+                      <InputLabel key='label' id={`cell-select-label-${dataset.id}`}>Cell</InputLabel>
+                      <Select
+                        key='select'
+                        id={`cell-select-${dataset.id}`}
+                        name="cell"
+                        value={dataset.cell?.id || ''}
+                        sx={{minWidth: 100}}
+                        onChange={
+                          (e) => context.update_direct('cell', cellList?.find(c => c.id === e.target.value) || null)
+                        }
+                      >
+                        {get_cell_items(dataset)}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                </Grid>
+              </Box>
             </Fragment>,
             <Fragment>
               <Select
@@ -232,6 +237,7 @@ export default function Datasets() {
                   </Box>
                 )}
                 name={'equipment'}
+                sx={{minWidth: 100}}
                 multiple
                 value={dataset?.equipment?.map(e => e.id) || []}
                 onChange={
@@ -248,18 +254,14 @@ export default function Datasets() {
                 {get_equipment_items(dataset)}
               </Select>
             </Fragment>,
-            <Fragment key="select">
-              <IconButton onClick={() => selected?.id === dataset.id? setSelected(null) : setSelected(dataset)}>
-                <SettingsIcon color={selected?.id === dataset.id? 'info' : undefined} />
-              </IconButton>
-            </Fragment>,
-            <Fragment key="save">
-              <IconButton
-                disabled={!context.value_changed}
-                onClick={() => updateRow(dataset, context).then(context.refresh)}
-              >
-                <SaveIcon />
-              </IconButton>
+            <Fragment key="actions">
+              <ActionButtons
+                classes={classes}
+                onInspect={() => selected?.id === dataset.id? setSelected(null) : setSelected(dataset)}
+                inspectIconProps={selected?.id === dataset.id ? {color: 'info'} : {}}
+                onSave={() => updateRow(dataset, context).then(context.refresh)}
+                saveButtonProps={{disabled: !context.value_changed}}
+              />
             </Fragment>
           ]}
           url={`datasets/?all=true`}

@@ -1,7 +1,6 @@
 import React, {useState, Fragment} from 'react';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
-import { makeStyles } from '@mui/styles'
 import Paper from '@mui/material/Paper';
 import AddIcon from '@mui/icons-material/Add';
 import IconButton from '@mui/material/IconButton';
@@ -13,35 +12,8 @@ import {HarvesterFields} from "./Harvesters";
 import UserRoleSet, {UserSet} from "./UserRoleSet";
 import AsyncTable from "./AsyncTable";
 import SearchIcon from "@mui/icons-material/Search";
-
-const useStyles = makeStyles((theme) => ({
-  paper: {
-    marginTop: theme.spacing(4),
-  },
-  table: {
-    minWidth: 650,
-  },
-  resize: {
-    fontSize: '11pt',
-  },
-  input: {
-    marginLeft: theme.spacing(1),
-    flex: 1,
-  },
-  inputAdornment: {
-    color: theme.palette.text.disabled,
-  },
-  iconButton: {
-    padding: 10,
-  },
-  chips: {
-    display: 'flex',
-    flexWrap: 'wrap',
-  },
-  chip: {
-    margin: 2,
-  },
-}));
+import useStyles from "./UseStyles";
+import ActionButtons from "./ActionButtons";
 
 export type MonitoredPathFields = {
   url: string;
@@ -78,14 +50,12 @@ export default function HarvesterDetail(props: HarvesterDetailProps) {
     {label: 'Path', help: 'Directory to watch'},
     {label: 'Stable Time (s)', help: 'Seconds files must remain unchanged to be considered stable and imported'},
     {label: 'Users', help: 'Users with access to this path\'s datasets'},
-    {label: 'Files', help: 'View files in this directory'},
-    {label: 'Save', help: 'Save changes'},
-    {label: 'Delete', help: 'Delete monitored path (imported datasets will remain)'},
+    {label: 'Actions', help: 'Inspect / Save / Delete monitored path (imported datasets will remain)'},
   ]
 
   return (
     <Paper className={classes.paper} key={`${harvester.id}_paths`}>
-      <Typography variant='h5'>
+      <Typography variant='h5' p={1}>
         {harvester.name} - monitored paths
       </Typography>
       <AsyncTable<MonitoredPathFields>
@@ -127,31 +97,23 @@ export default function HarvesterDetail(props: HarvesterDetailProps) {
               set_last_updated={context.refresh}
             />
           </Fragment>,
-          context.is_new_row? <Fragment key="select"/> : <Fragment key="select">
-            <IconButton onClick={() => selected?.id === row.id? setSelected(null) : setSelected(row)}>
-              <SearchIcon color={selected?.id === row.id? 'info' : undefined} />
-            </IconButton>
-          </Fragment>,
-          <Fragment key="save">
-            <IconButton
-              disabled={!context.value_changed}
-              onClick={
+          <Fragment key="actions">
+            <ActionButtons
+              classes={classes}
+              onInspect={() => selected?.id === row.id? setSelected(null) : setSelected(row)}
+              inspectButtonProps={{disabled: context.is_new_row}}
+              inspectIconProps={selected?.id === row.id ? {color: 'info'} : {}}
+              onSave={
                 context.is_new_row?
                   () => addNewPath(row).then(context.refresh_all_rows) :
                   () => updatePath(row).then(context.refresh)
               }
-            >
-              {context.is_new_row? <AddIcon/> : <SaveIcon/>}
-            </IconButton>
-          </Fragment>,
-          context.is_new_row? <Fragment key="delete"/> : <Fragment key="delete">
-            <IconButton
-              aria-label="delete"
-              onClick={() => deletePath(row).then(context.refresh)}
-            >
-              <DeleteIcon/>
-            </IconButton>
-          </Fragment>,
+              saveButtonProps={{disabled: !context.value_changed}}
+              saveIconProps={{component: context.is_new_row? AddIcon : SaveIcon}}
+              onDelete={() => window.confirm(`Delete ${row.path}?`) && deletePath(row).then(context.refresh)}
+              deleteButtonProps={{disabled: context.is_new_row}}
+            />
+          </Fragment>
         ]}
         url={`monitored_paths/?harvester__id=${harvester.id}&all=true`}
         new_row_values={{path: "", stable_time: 60}}
