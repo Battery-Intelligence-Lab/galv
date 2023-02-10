@@ -57,7 +57,7 @@ export default class ActionButtons extends Component<ActionButtonsProps, {}> {
         {
           this.props.onSave !== undefined &&
             <IconButton
-                onClick={this.props.onInspect}
+                onClick={this.props.onSave}
                 {...this.props.saveButtonProps}
             >
                 <Icon
@@ -70,7 +70,7 @@ export default class ActionButtons extends Component<ActionButtonsProps, {}> {
         {
           this.props.onDelete !== undefined &&
             <IconButton
-                onClick={this.props.onInspect}
+                onClick={this.props.onDelete}
                 sx={{marginLeft: 2}}
                 {...this.props.deleteButtonProps}
             >

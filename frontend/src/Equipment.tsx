@@ -48,6 +48,7 @@ export default function Equipment() {
     <Container maxWidth="lg" className={classes.container}>
       <Paper className={classes.paper}>
         <AsyncTable<EquipmentFields>
+          classes={classes}
           columns={columns}
           row_generator={(equipment, context) => [
             ...string_fields.map(n => <Fragment>

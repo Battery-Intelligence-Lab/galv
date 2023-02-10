@@ -1,5 +1,4 @@
 import React, { Fragment } from 'react';
-import { makeStyles } from '@mui/styles'
 import Container from '@mui/material/Container';
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
@@ -60,6 +59,7 @@ export default function Files(props: FilesProps) {
     <Container maxWidth="lg" className={classes.container} key={`files_for_path${props.path.id}`}>
       <Paper className={classes.paper}>
         <AsyncTable<FileFields>
+          classes={classes}
           key="files"
           columns={columns}
           row_generator={(file, context) => [

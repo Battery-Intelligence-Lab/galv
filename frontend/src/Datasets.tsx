@@ -52,11 +52,13 @@ export default function Datasets() {
     Connection.fetch('cells/?all=true', {}, 0)
       .then(APIConnection.get_result_array)
       .then(r => {
-        if (typeof r === 'number')
-          throw new Error(`cells/?all=true -> ${r}`)
+        setCellListLoading(false)
+        if (typeof r === 'number') {
+          console.error(`cells/?all=true -> ${r}`)
+          setCellList([])
+        }
         // @ts-ignore
         setCellList(r)
-        setCellListLoading(false)
       })
   }, [])
 
@@ -64,11 +66,13 @@ export default function Datasets() {
     Connection.fetch('equipment/?all=true', {}, 0)
       .then(APIConnection.get_result_array)
       .then(r => {
-        if (typeof r === 'number')
-          throw new Error(`equipment/?all=true -> ${r}`)
+        setEquipmentListLoading(false)
+        if (typeof r === 'number') {
+          console.error(`equipment/?all=true -> ${r}`)
+          setEquipmentList([])
+        }
         // @ts-ignore
         setEquipmentList(r)
-        setEquipmentListLoading(false)
       })
   }, [])
 
@@ -150,10 +154,24 @@ export default function Datasets() {
     return items
   }
 
+  const purposeOptions = [
+    'Ageing',
+    'Real world/drive cycling',
+    'Characterisation/check-up',
+    'Thermal performance',
+    'Pulse',
+    'Charge',
+    'Discharge',
+    'EIS',
+    'GITT',
+    'Pseudo-OCV',
+  ]
+
   return (
     <Container maxWidth="lg" className={classes.container}>
       <Paper className={classes.paper}>
         <AsyncTable<DatasetFields>
+          classes={classes}
           columns={columns}
           row_generator={(dataset, context) => [
             <Fragment>
@@ -180,6 +198,24 @@ export default function Datasets() {
                     </Tooltip>
                   </Grid>
                   <Grid item>
+                    <FormControl fullWidth>
+                      <InputLabel key='label' id={`purpose-select-label-${dataset.id}`}>Purpose</InputLabel>
+                      <Select
+                        key='select'
+                        id={`purpose-select-${dataset.id}`}
+                        name="purpose"
+                        value={dataset.purpose || ''}
+                        sx={{minWidth: 100}}
+                        onChange={(e) => context.update_direct('purpose', e.target.value)}
+                      >
+                        <MenuItem key="none" value=""><em>None</em></MenuItem>
+                        {purposeOptions.map(p => <MenuItem key={p} value={p}>{p}</MenuItem>)}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                </Grid>
+                <Grid container spacing={1} pt={1}>
+                  <Grid item>
                     <Tooltip title="Type of parser used to process the file" placement="right">
                       <TextField
                         InputProps={{classes: {input: classes.resize}}}
@@ -191,22 +227,8 @@ export default function Datasets() {
                       />
                     </Tooltip>
                   </Grid>
-                </Grid>
-                <Grid container spacing={1} pt={1}>
                   <Grid item>
-                    <Tooltip title="Purpose for which data were collected" placement="right">
-                      <TextField
-                        InputProps={{classes: {input: classes.resize}}}
-                        name="purpose"
-                        label="Purpose"
-                        fullWidth
-                        value={dataset.purpose}
-                        onChange={context.update}
-                      />
-                    </Tooltip>
-                  </Grid>
-                  <Grid item>
-                    <FormControl>
+                    <FormControl fullWidth>
                       <InputLabel key='label' id={`cell-select-label-${dataset.id}`}>Cell</InputLabel>
                       <Select
                         key='select'

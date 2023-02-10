@@ -39,6 +39,8 @@ export default makeStyles((theme) => ({
   inputAdornment: {
     color: theme.palette.text.disabled,
   },
+  newTableCell: {paddingTop: theme.spacing(4)},
+  newTableRow: {},
   paper: {},
   refreshIcon: {
     "&:hover": {color: theme.palette.warning.light},

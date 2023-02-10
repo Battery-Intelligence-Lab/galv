@@ -3,15 +3,12 @@ import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import Paper from '@mui/material/Paper';
 import AddIcon from '@mui/icons-material/Add';
-import IconButton from '@mui/material/IconButton';
 import SaveIcon from '@mui/icons-material/Save';
-import DeleteIcon from '@mui/icons-material/Delete';
 import Connection from "./APIConnection";
 import Files from './Files'
 import {HarvesterFields} from "./Harvesters";
 import UserRoleSet, {UserSet} from "./UserRoleSet";
 import AsyncTable from "./AsyncTable";
-import SearchIcon from "@mui/icons-material/Search";
 import useStyles from "./UseStyles";
 import ActionButtons from "./ActionButtons";
 
@@ -28,7 +25,6 @@ type HarvesterDetailProps = {
   [key: string]: any
 }
 
-// TODO: Figure out why we get unique key errors
 export default function HarvesterDetail(props: HarvesterDetailProps) {
   const harvester = props.harvester
   const classes = useStyles();
@@ -59,6 +55,7 @@ export default function HarvesterDetail(props: HarvesterDetailProps) {
         {harvester.name} - monitored paths
       </Typography>
       <AsyncTable<MonitoredPathFields>
+        classes={classes}
         key={`${harvester.id}_paths`}
         columns={columns}
         row_generator={(row, context) => [

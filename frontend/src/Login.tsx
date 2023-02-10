@@ -1,6 +1,5 @@
-import {login} from "./Api"
 import { makeStyles } from '@mui/styles'
-import React, { useState, useRef } from "react";
+import React, {useState, useRef, FormEvent} from "react";
 import Button from '@mui/material/Button';
 import CssBaseline from '@mui/material/CssBaseline';
 import Alert from '@mui/lab/Alert';
@@ -9,6 +8,7 @@ import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
 import { useNavigate } from "react-router-dom";
 import { ReactComponent as GalvanalyserIcon} from './Galvanalyser-icon.svg';
+import Connection from "./APIConnection";
 
 const useStyles = makeStyles((theme) => ({
   paper: {
@@ -32,7 +32,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 
-export default function Login({ onLogin }) {
+export default function Login() {
   const classes = useStyles();
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -40,43 +40,40 @@ export default function Login({ onLogin }) {
 
   const navigate = useNavigate();
 
-  const submit = useRef(null);
-  const username_input = useRef(null);
-  const password_input = useRef(null);
+  const submit = useRef<HTMLButtonElement>(null);
+  const username_input = useRef<HTMLDivElement>(null);
+  const password_input = useRef<HTMLDivElement>(null);
 
-  const handleEnterKey = (e) => {
+  const handleEnterKey = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if(e.key === "Enter") {
-      if (username === "") username_input.current.focus();
-      else if (password === "") password_input.current.focus();
-      else submit.current.click();
+      if (username === "") username_input.current?.focus();
+      else if (password === "") password_input.current?.focus();
+      else submit.current?.click();
     }
   }
 
-  const onSubmitClick = (e)=>{
+  const onSubmitClick = (e: FormEvent)=>{
     e.preventDefault()
     console.log("You pressed login")
-    if (username === "") username_input.current.focus();
-    else if (password === "") password_input.current.focus();
+    if (username === "") username_input.current?.focus();
+    else if (password === "") password_input.current?.focus();
     else {
-      login(username, password).then(r => {
-        if (!r.ok) {
-          console.log(r, r.data)
-          return r.json().then(data=>setError(data.message));
-        }
-        return r.json().then(data => {
+      Connection.login(username, password).then(ok => {
+        if (!ok) {
+          setError('Unable to log in');
+        } else {
           setError('')
-          onLogin(data)
           navigate('/');
-        })
+        }
       });
     }
   }
 
-  const handleUsernameChange = (e) => {
+  const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setUsername(e.target.value)
   }
 
-  const handlePasswordChange = (e) => {
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPassword(e.target.value)
   }
 

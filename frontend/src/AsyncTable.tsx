@@ -9,6 +9,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import Tooltip, {TooltipProps} from "@mui/material/Tooltip";
 import Typography, {TypographyProps} from "@mui/material/Typography";
 import TableHead from "@mui/material/TableHead";
+import useStyles from "./UseStyles";
 
 export type Column = {
   label: string;
@@ -44,6 +45,7 @@ type CompleteHeading = {
 }
 
 export type AsyncTableProps<T extends APIObject> = {
+  classes: ReturnType<typeof useStyles>;
   columns: Column[];
   row_generator: RowGenerator<T>;
   url: string;
@@ -116,10 +118,10 @@ export default class AsyncTable<T extends APIObject> extends Component<AsyncTabl
   componentDidUpdate(prevProps: AsyncTableProps<T>) {
     console.log("Updating AsyncTable...", this, prevProps)
     // Typical usage (don't forget to compare props):
-    if (this.props.url !== prevProps.url) {
-      this.setState({row_data: []})
+    if (this.props.url !== prevProps.url)
       this.get_data(this.props.url)
-    }
+    if (this.props.new_row_values !== prevProps.new_row_values)
+      this.reset_new_row()
     console.log("Updated AsyncTable", this)
   }
 
@@ -139,11 +141,11 @@ export default class AsyncTable<T extends APIObject> extends Component<AsyncTabl
     this.setState({changed_rows: rows})
   }
 
-  get_data: (url?: string) => void = async (url) => {
-    this.setState({loading: true})
+  get_data: (url?: string) => void = (url) => {
+    this.setState({loading: true, row_data: []})
     if (!url)
       url = this.props.url;
-    await Connection.fetch(url, {}, this.fetch_depth)
+    Connection.fetch(url, {}, this.fetch_depth)
       .then(APIConnection.get_result_array)
       .then((res) => {
         if (typeof(res) === 'number')
@@ -162,7 +164,7 @@ export default class AsyncTable<T extends APIObject> extends Component<AsyncTabl
       })
   }
 
-  refresh_row = async (row: SingleAPIResponse, is_result: boolean = true) => {
+  refresh_row = (row: SingleAPIResponse, is_result: boolean = true) => {
     this.mark_row_loading(row.id)
 
     const _update = (row_data: SingleAPIResponse) => {
@@ -176,7 +178,7 @@ export default class AsyncTable<T extends APIObject> extends Component<AsyncTabl
     if (is_result)
       return _update(row)
 
-    await Connection.fetch(row.url, {}, this.fetch_depth)
+    Connection.fetch(row.url, {}, this.fetch_depth)
       .then(APIConnection.get_result_array)
       .then((res) => {
         // If we deleted the row, delete it in state
@@ -271,23 +273,38 @@ export default class AsyncTable<T extends APIObject> extends Component<AsyncTabl
 
   wrap_cells_in_row = (contents: ReactElement[], row_index: number) => {
     const cells = contents.map((cell: any, i: number) =>
-      <TableCell {...this.props.columns[i].contentTableCellProps} key={`cell-${i}`}>{cell}</TableCell>
+      <TableCell
+        {...this.props.columns[i].contentTableCellProps}
+        className={[
+          this.props.columns[i].contentTableCellProps?.className,
+          row_index === NEW_ROW_ID? this.props.classes.newTableCell : undefined
+        ].filter(n => n !== undefined).join(' ')}
+        key={`cell-${i}`}
+      >{cell}</TableCell>
     )
-    return <TableRow key={`row-${row_index}`}>{cells}</TableRow>
+    return <TableRow
+      key={`row-${row_index}`}
+      className={row_index === NEW_ROW_ID? this.props.classes.newTableRow : undefined}
+    >{cells}</TableRow>
   }
 
   row_data_to_tablerow = (row: T, row_index: number) => {
-    if (!row)
+    try {
+      if (!row)
+        return null
+      const is_new_row = row_index === NEW_ROW_ID
+      if (is_new_row)
+        row_index = -1
+
+      if (this.state.loading_rows.includes(row.id))
+        return this.loading_row(row.id)
+
+      const row_contents = this.props.row_generator(row, this.row_conversion_context(row, is_new_row))
+      return this.wrap_cells_in_row(row_contents, row_index)
+    } catch(e) {
+      console.info('Error constructing table row:', e)
       return null
-    const is_new_row = row_index === NEW_ROW_ID
-    if (is_new_row)
-      row_index = -1
-
-    if (this.state.loading_rows.includes(row.id))
-      return this.loading_row(row.id)
-
-    const row_contents = this.props.row_generator(row, this.row_conversion_context(row, is_new_row))
-    return this.wrap_cells_in_row(row_contents, row_index)
+    }
   }
 
   render() {

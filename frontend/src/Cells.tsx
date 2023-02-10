@@ -70,6 +70,7 @@ export default function Cells() {
     <Container maxWidth="lg" className={classes.container}>
       <Paper className={classes.paper}>
         <AsyncTable<CellFamilyFields>
+          classes={classes}
           columns={columns}
           row_generator={(family, context) => [
             <Fragment>

@@ -88,9 +88,10 @@ class HarvesterViewSet(viewsets.ModelViewSet):
     queryset = Harvester.objects.none().order_by('-last_check_in', '-id')
 
     def get_queryset(self):
+        user_groups = self.request.user.groups.all()
         return Harvester.objects.filter(
-            Q(user_group__in=self.request.user.groups.all()) |
-            Q(admin_group__in=self.request.user.groups.all())
+            Q(user_group__in=user_groups) |
+            Q(admin_group__in=user_groups)
         ).order_by('-last_check_in', '-id')
 
     def create(self, request, *args, **kwargs):

@@ -55,6 +55,7 @@ export default function Harvesters() {
     <Container maxWidth="lg" className={classes.container}>
       <Paper className={classes.paper}>
         {<AsyncTable<HarvesterFields>
+          classes={classes}
           columns={columns}
           row_generator={(row, context) => [
             <Fragment key="id"><Typography>{row.id}</Typography></Fragment>,

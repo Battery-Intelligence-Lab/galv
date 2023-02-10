@@ -24,7 +24,6 @@ import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 import BatteryUnknownIcon from '@mui/icons-material/BatteryUnknown';
 import BackupIcon from '@mui/icons-material/Backup';
-import {loggedIn, handleLogin, logout, getToken, getUser, isAdmin} from "./Api"
 import { makeStyles} from "@mui/styles";
 import CssBaseline from '@mui/material/CssBaseline';
 
@@ -44,9 +43,10 @@ import ListItem from '@mui/material/ListItem';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import { ReactComponent as GalvanalyserLogo } from './Galvanalyser-logo.svg';
+import Connection from "./APIConnection";
 
-const PrivateRoute = (component) => {
-  const logged = loggedIn();
+const PrivateRoute = (component: JSX.Element) => {
+  const logged = Connection.is_logged_in;
 
   return logged? component : <Navigate to='/login' />;
 }
@@ -136,33 +136,20 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-
-
 export default function Core() {
   const { pathname } = useLocation();
   const classes = useStyles();
 
-  const user = getUser()
-
-  const userIsAdmin = isAdmin()
-
-  let userDisplayName = ''
-  if (user) {
-    userDisplayName = userIsAdmin ? 
-      user.username + " (Admin)" :
-      user.username
-  }
+  const userDisplayName = Connection.is_logged_in?  Connection.user?.username : ''
 
   const datasetsPath = "/"
-  const isDatasetPath = matchPath({path: datasetsPath, exact:true}, pathname) !== null
+  const isDatasetPath = matchPath({path: datasetsPath, end: true}, pathname) !== null
   const harvestersPath = "/harvesters"
-  const isHarvestersPath = matchPath({path: harvestersPath, exact:true}, pathname) !== null
+  const isHarvestersPath = matchPath({path: harvestersPath, end: true}, pathname) !== null
   const cellsPath = "/cells"
-  const isCellsPath = matchPath({path: cellsPath, exact:true}, pathname) !== null
+  const isCellsPath = matchPath({path: cellsPath, end: true}, pathname) !== null
   const equipmentPath = "/equipment"
-  const isEquipmentPath = matchPath({path: equipmentPath, exact:true}, pathname) !== null
-  console.log('paths:', isDatasetPath, isHarvestersPath)
-
+  const isEquipmentPath = matchPath({path: equipmentPath, end: true}, pathname) !== null
 
   const [open, setOpen] = React.useState(false);
   const handleDrawerOpen = () => {
@@ -173,13 +160,11 @@ export default function Core() {
   };
 
   const [tokenOpen, setTokenOpen] = React.useState(false);
-  const [token, setToken] = React.useState();
+  const [token, setToken] = React.useState<string|undefined>();
 
   const handleTokenOpen = () => {
-    getToken().then(response => response.json()).then(data => {
-      setToken(data.access_token)
-      setTokenOpen(true);
-    });
+    setToken(Connection.user?.token)
+    setTokenOpen(true);
   };
 
   const handleTokenClose = () => {
@@ -189,7 +174,7 @@ export default function Core() {
   const tokenGenerator = (
     <React.Fragment>
     <Button color="inherit" onClick={handleTokenOpen}>
-      Generate API token
+      API token
     </Button>
     <Dialog
         open={tokenOpen}
@@ -274,7 +259,7 @@ export default function Core() {
         </Button>
         {tokenGenerator}
         <Button color="inherit" onClick={() => {
-          logout().then(()=> {navigate('/login');});
+          Connection.logout().then(()=> {navigate('/login');});
         }}>
           Logout
         </Button>
@@ -305,7 +290,7 @@ export default function Core() {
   /* A <Routes> looks through its children <Route>s and renders the first one that matches the current URL. */
   return (
       <Routes>
-        <Route path="/login" element={<Login onLogin={handleLogin}/>}/>
+        <Route path="/login" element={<Login />}/>
         <Route path="/" element={PrivateRoute(Layout)}>
           <Route path="/cells" element={Cells()} />
           <Route path="/equipment" element={Equipment()} />

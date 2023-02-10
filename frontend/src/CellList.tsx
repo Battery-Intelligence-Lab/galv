@@ -50,6 +50,7 @@ export default function CellList(props: CellDetailProps) {
     <Container maxWidth="lg" className={classes.container}>
       <Paper className={classes.paper}>
         <AsyncTable<CellFields>
+          classes={classes}
           columns={columns}
           row_generator={(cell, context) => [
             <Fragment>

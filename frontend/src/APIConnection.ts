@@ -48,8 +48,12 @@ export class APIConnection {
           token: r.token
         }
         console.info(`Logged in as ${this.user?.username}`)
+        return true
       })
-      .catch(e => console.error("Login failure", e))
+      .catch(e => {
+        console.error("Login failure", e)
+        return false
+      })
   }
 
   logout() {
@@ -64,6 +68,10 @@ export class APIConnection {
     return null
   }
 
+  get is_logged_in() {
+    return this.user !== null
+  }
+
   async get_is_logged_in(skip: boolean = true): Promise<boolean> {
     await this.login('admin', 'admin')
     const cookie = this.get_cookie('csrf_access_token');
@@ -74,9 +82,10 @@ export class APIConnection {
   }
 
   async fetch(url: string, options?: any, depth: number = 0): Promise<APIResponse> {
-    await this.get_is_logged_in();
-    console.info(`Fetch ${url} for ${this.user?.username}`)
-    console.info('fetch options', options)
+    if (!this.is_logged_in)
+      return -1
+    console.info(`Fetch ${url} for ${this.user?.username}`, options)
+    // console.info('fetch options', options)
     const token = this.user?.token;
     let newOptions = {...options};
     newOptions.credentials = 'same-origin';
@@ -115,18 +124,12 @@ export class APIConnection {
         }
         return await this.fetch_children(json, options, depth - 1)
       })
-      .then(r => {
-        console.log(url, options, depth, r); return r
-      })
+      // .then(r => {
+      //   console.log(url, options, depth, r); return r
+      // })
       .catch(e => {
         console.error(e);
-        return {
-          count: 0,
-          previous: null,
-          next: null,
-          results: [],
-          error: true
-        };
+        return -1;
       });
   }
 
