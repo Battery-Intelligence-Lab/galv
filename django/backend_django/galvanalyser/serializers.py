@@ -213,7 +213,7 @@ class CellSerializer(serializers.HyperlinkedModelSerializer):
     def create(self, validated_data):
         display_name = validated_data.pop('display_name')
         family = validated_data.pop('family')
-        if display_name is '':
+        if display_name == '':
             display_name = f"{family.name}_{family.cells.count()}"
         return Cell.objects.create(family=family, display_name=display_name)
 

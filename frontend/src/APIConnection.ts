@@ -25,15 +25,67 @@ export type APIResponse = SingleAPIResponse |
   PaginatedAPIResponse |
   ErrorCode
 
+export type CachedAPIResponse<T extends SingleAPIResponse> = {
+  url: string;
+  time: Date;
+  content: T;
+  loading: boolean;
+  parents: string[];
+}
+
+class ResponseCache {
+  results: CachedAPIResponse<any>[]
+
+  constructor() {
+    this.results = []
+  }
+
+  add<T extends SingleAPIResponse>(item: T | T[], parent: string = "") {
+    if (item instanceof Array)
+      item.forEach(i => this.add(i, parent))
+    else
+      try {
+        const i = this.results.find(i => i.url === item.url)
+        const parents = i? i.parents.filter(p => p !== parent) : []
+        this.results = [
+          ...this.results.filter(i => i.url !== item.url),
+          {
+            url: item.url,
+            time: new Date(),
+            content: item,
+            loading: false,
+            parents: [...parents, parent]
+          }
+        ]
+      } catch (e) {
+        console.error(e)
+      }
+  }
+
+  remove(url: string) {
+    this.results = this.results.filter(i => i.url !== url)
+  }
+
+  get<T extends SingleAPIResponse>(url: string, include_children: boolean = true): CachedAPIResponse<T>[] {
+    return this.results.filter(i => i.url === url || (include_children && !i.parents.includes(url)))
+  }
+
+  get_contents<T extends SingleAPIResponse>(url: string, include_children: boolean = true) {
+    return this.get<T>(url, include_children).map(r => r.content)
+  }
+}
+
 export class APIConnection {
   url: string = 'http://localhost:5000/'.toLowerCase()
   user: User | null = null
-  results: { [result_name: string]: APIResponse }
+  cache_expiry_time = 60_000 // 1 minute
+  results: ResponseCache
 
   constructor() {
     console.info("Spawn API connection")
     this.login('admin', 'admin');
-    this.results = {}
+    console.log(document.cookie)
+    this.results = new ResponseCache()
   }
 
   login(username: string, password: string) {
@@ -81,9 +133,15 @@ export class APIConnection {
     return cookie !== undefined && this.user !== null;
   }
 
-  async fetch(url: string, options?: any, depth: number = 0): Promise<APIResponse> {
+  _prepare_fetch_url(url: string) {
+    url = url.toLowerCase();
+    if (!url.startsWith(this.url))
+      url = `${this.url}${url}`
+    return url
+  }
+  _prepare_fetch_headers(url: string, options?: any) {
     if (!this.is_logged_in)
-      return -1
+      throw new Error(`Cannot fetch ${url}: not logged on.`)
     console.info(`Fetch ${url} for ${this.user?.username}`, options)
     // console.info('fetch options', options)
     const token = this.user?.token;
@@ -94,81 +152,60 @@ export class APIConnection {
     newOptions.headers['Accept'] = "application/json";
     newOptions.headers['Authorization'] = `Token ${token}`;
     newOptions.headers['X-CSRF-TOKEN'] = this.get_cookie('csrf_access_token');
-    url = url.toLowerCase();
-    if (!url.startsWith(this.url))
-      url = `${this.url}${url}`;
-    return fetch(url, newOptions)
-      .then((response) => {
-        if (response.status === 401) {
-          throw new Error(`Authorisation failed while fetching ${url}`)
-          // return logout().then(() => {
-          //   return response;
-          // });
-        }
-        if (response.status === 404)
-          return 404;
-        return response.json();
-      })
-      .then(async json => {
-        if (typeof json === 'number' || !depth)
-          return json
-        // Recursively fetch objects by links
-        if (json instanceof Array)
-          return await Promise.all(
-            json.map(r => this.fetch_children(r, options, depth - 1))
-          )
-        if (json.results !== undefined) {
-          json.results = await Promise.all(
-            json.results.map(async (r: SingleAPIResponse) => await this.fetch_children(r, options, depth - 1))
-          )
-        }
-        return await this.fetch_children(json, options, depth - 1)
-      })
-      // .then(r => {
-      //   console.log(url, options, depth, r); return r
-      // })
-      .catch(e => {
-        console.error(e);
-        return -1;
-      });
+    return newOptions;
   }
 
-  fetch_children: (r: SingleAPIResponse, options: any, depth: number) => Promise<SingleAPIResponse> =
-    async (r: SingleAPIResponse, options: any, depth: number) => {
-      if (depth >= 0) {
-        // Children are always GET requests because we don't want to PATCH/etc them
-        const _fetch = async (x: any) => {
-          if (typeof x === "string" && x.startsWith(this.url)) {
-            console.log("fetch child for", r.url, x)
-            return await this.fetch(x, options, depth)
-          }
-          return x
+  _fetch<T extends SingleAPIResponse>(url: string, options: object): Promise<void> {
+    return fetch(url, options)
+      .then((response) => {
+        if (response.status >= 400) {
+          console.error(response)
+          if (response.status === 404)
+            this.results.remove(url)
+          throw new Error(`Fetch failed for ${url}: ${response.status}`)
         }
+        return response.json() as Promise<T|T[]>;
+      })
+      .then(json => this.results.add<T>(json))
+  }
 
-        if (options?.method) {
-          options.method = "GET"
-          delete options.body
-        }
-        for (const k in r) {
-          if (k === 'url')
-            continue
-          if (r[k] instanceof Array)
-            r[k] = await Promise.all(r[k].map((x: any) => _fetch(x)))
-          else
-            r[k] = await _fetch(r[k])
-        }
-      }
-      return r
+  async fetchMany<T extends SingleAPIResponse>(url: string, options?: any, ignore_cache: boolean = true): Promise<CachedAPIResponse<T>[]> {
+    url = this._prepare_fetch_url(url)
+    const newOptions = this._prepare_fetch_headers(url, options);
+    if (newOptions.method && newOptions.method.toLowerCase() !== 'get')
+      ignore_cache = true;
+    // Check cache
+    if (!ignore_cache) {
+      const results = this.results.get(url)
+      if (!results.length)
+        return this.fetchMany(url, options, true)
+      const now = new Date()
+      let fetch = results.filter(r => now.valueOf() - r.time.valueOf() > this.cache_expiry_time)
+      fetch.forEach(r => r.loading = true)
+      await Promise.all(fetch.map(r => this.fetch(r.url, options, ignore_cache = true)))
+      return this.results.get(url)
     }
+    return this._fetch<T>(url, newOptions)
+      .then(() => this.results.get<T>(url))
+  }
 
-  static get_result_array: ((r: APIResponse) => MultipleAPIResponse|ErrorCode) = r => {
-    if (r instanceof Array)
-      return r;
-    if (typeof r === 'number')
-      return r;
-    if (r.results !== undefined)
-      return r.results;
-    return [r];
+  async fetch<T extends SingleAPIResponse>(url: string, options?: any, ignore_cache = false): Promise<CachedAPIResponse<T>> {
+    url = this._prepare_fetch_url(url)
+    const newOptions = this._prepare_fetch_headers(url, options);
+    if (newOptions.method && newOptions.method.toLowerCase() !== 'get')
+      ignore_cache = true;
+    // Check cache
+    if (!ignore_cache) {
+      const results = this.results.get<T>(url)
+      if (!results.length || new Date().valueOf() - results[0].time.valueOf() > this.cache_expiry_time) {
+        if (results.length)
+          results[0].loading = true
+        return this.fetch(url, options, true)
+      }
+      return results[0]
+    }
+    return this._fetch<T>(url, newOptions)
+      .then(() => this.results.get<T>(url)[0])
   }
 }
 

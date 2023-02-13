@@ -2,7 +2,7 @@ import React, {Component, ReactElement, BaseSyntheticEvent, ReactEventHandler} f
 import TableContainer from "@mui/material/TableContainer";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
-import Connection, {APIConnection, APIObject, SingleAPIResponse} from "./APIConnection";
+import Connection, {APIObject, SingleAPIResponse} from "./APIConnection";
 import TableRow from "@mui/material/TableRow";
 import TableCell, {TableCellProps} from "@mui/material/TableCell";
 import CircularProgress from "@mui/material/CircularProgress";
@@ -49,7 +49,6 @@ export type AsyncTableProps<T extends APIObject> = {
   columns: Column[];
   row_generator: RowGenerator<T>;
   url: string;
-  fetch_depth?: number;
   new_row_values?: Partial<T>;
   styles?: any;
 }
@@ -97,13 +96,11 @@ export default class AsyncTable<T extends APIObject> extends Component<AsyncTabl
     loading_rows: [],
     changed_rows: []
   }
-  private fetch_depth: number;
 
   constructor(props: AsyncTableProps<T>) {
     super(props)
     if (props.new_row_values !== undefined)
       this.state.new_row = this.new_row_template
-    this.fetch_depth = props.fetch_depth === undefined? 1 : props.fetch_depth
   }
 
   get new_row_template() {
@@ -145,14 +142,11 @@ export default class AsyncTable<T extends APIObject> extends Component<AsyncTabl
     this.setState({loading: true, row_data: []})
     if (!url)
       url = this.props.url;
-    Connection.fetch(url, {}, this.fetch_depth)
-      .then(APIConnection.get_result_array)
+    Connection.fetchMany(url)
       .then((res) => {
-        if (typeof(res) === 'number')
-          throw new Error(res.toString())
         console.log(res)
         this.setState({
-          row_data: res,
+          row_data: res.map(r => r.content),
           loading: false,
           loading_rows: [],
           changed_rows: []
@@ -178,24 +172,15 @@ export default class AsyncTable<T extends APIObject> extends Component<AsyncTabl
     if (is_result)
       return _update(row)
 
-    Connection.fetch(row.url, {}, this.fetch_depth)
-      .then(APIConnection.get_result_array)
-      .then((res) => {
+    Connection.fetch(row.url)
+      .then(row_data => _update(row_data.content))
+      .catch(e => {
         // If we deleted the row, delete it in state
-        if (typeof res === 'number') {
-          console.info(`${row.url} -> ${res}`)
+        if (e.message === `Fetch failed for ${row.url}: 404`)
           this.setState({row_data: this.state.row_data.filter(r => r.id !== row.id)})
-        } else {
-          // otherwise, update
-          const row_data = res.pop()
-          if (row_data === undefined) {
-            console.error(res)
-            throw new Error(`refresh_row expected 1 API result, got ${res.length}`)
-          }
-          _update(row_data)
-        }
+        else
+          console.error('AsyncTable.update_single_row error', e, row)
       })
-      .catch(e => console.error('AsyncTable.update_single_row error', e, row))
       .finally(
         () => this.mark_row_loading(row.id, false)
       )

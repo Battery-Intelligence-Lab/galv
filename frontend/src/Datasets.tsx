@@ -1,4 +1,4 @@
-import React, {useEffect, useState, Fragment, ReactElement} from "react";
+import React, {useState, Fragment, ReactElement, useRef} from "react";
 import Container from '@mui/material/Container';
 import Button from '@mui/material/Button';
 import { useNavigate } from "react-router-dom";
@@ -8,7 +8,7 @@ import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
-import Connection, {APIConnection} from "./APIConnection"
+import Connection from "./APIConnection"
 import AsyncTable, {RowGeneratorContext} from "./AsyncTable"
 import Paper from "@mui/material/Paper";
 import FormControl from "@mui/material/FormControl";
@@ -43,38 +43,8 @@ export type DatasetFields = {
 export default function Datasets() {
   const classes = useStyles();
   const [selected, setSelected] = useState<DatasetFields|null>(null)
-  const [cellListLoading, setCellListLoading] = useState<boolean>(true)
-  const [cellList, setCellList] = useState<CellFields[]>([])
-  const [equipmentListLoading, setEquipmentListLoading] = useState<boolean>(true)
-  const [equipmentList, setEquipmentList] = useState<EquipmentFields[]>([])
-
-  useEffect(() => {
-    Connection.fetch('cells/?all=true', {}, 0)
-      .then(APIConnection.get_result_array)
-      .then(r => {
-        setCellListLoading(false)
-        if (typeof r === 'number') {
-          console.error(`cells/?all=true -> ${r}`)
-          setCellList([])
-        }
-        // @ts-ignore
-        setCellList(r)
-      })
-  }, [])
-
-  useEffect(() => {
-    Connection.fetch('equipment/?all=true', {}, 0)
-      .then(APIConnection.get_result_array)
-      .then(r => {
-        setEquipmentListLoading(false)
-        if (typeof r === 'number') {
-          console.error(`equipment/?all=true -> ${r}`)
-          setEquipmentList([])
-        }
-        // @ts-ignore
-        setEquipmentList(r)
-      })
-  }, [])
+  const cellList = useRef<CellFields[]>(Connection.results.get_contents<CellFields>('cells/?all=true'))
+  const equipmentList = useRef<EquipmentFields[]>(Connection.results.get_contents<EquipmentFields>('equipment/?all=true'))
 
   const updateRow = (data: DatasetFields, context: RowGeneratorContext<DatasetFields>) => {
     context.mark_loading(true)
@@ -123,12 +93,9 @@ export default function Datasets() {
     if (dataset?.cell) {
       items.push(menuItem(dataset.cell))
     }
-    if (cellListLoading)
-      items.push(<MenuItem key="loading" value="" disabled={true}><CircularProgress/></MenuItem>)
-    else
-      items.push(<MenuItem key="na" value=""><em>None</em></MenuItem>)
-    if (cellList.length)
-      items.push(...cellList.filter(c => c.id !== dataset.cell?.id).map(menuItem))
+    items.push(<MenuItem key="na" value=""><em>None</em></MenuItem>)
+    if (cellList.current.length)
+      items.push(...cellList.current.filter(c => c.id !== dataset.cell?.id).map(menuItem))
     if (!items.length)
       items.push(<MenuItem key="empty" disabled={true}><em>No cells defined</em></MenuItem>)
     return items
@@ -143,12 +110,9 @@ export default function Datasets() {
       items.push(...dataset.equipment.map(e => menuItem(e)))
       current_equipment_ids.push(...dataset.equipment.map(e => e.id))
     }
-    if (equipmentListLoading)
-      items.push(<MenuItem key="loading" value="" disabled={true}><CircularProgress/></MenuItem>)
-    else
-      items.push(<MenuItem key="none" value=""><em>None</em></MenuItem>)
-    if (equipmentList.length)
-      items.push(...equipmentList.filter(e => !current_equipment_ids.includes(e.id)).map(menuItem))
+    items.push(<MenuItem key="none" value=""><em>None</em></MenuItem>)
+    if (equipmentList.current.length)
+      items.push(...equipmentList.current.filter(e => !current_equipment_ids.includes(e.id)).map(menuItem))
     if (!items.length)
       items.push(<MenuItem key="empty" disabled={true}><em>No equipment defined</em></MenuItem>)
     return items
@@ -237,7 +201,7 @@ export default function Datasets() {
                         value={dataset.cell?.id || ''}
                         sx={{minWidth: 100}}
                         onChange={
-                          (e) => context.update_direct('cell', cellList?.find(c => c.id === e.target.value) || null)
+                          (e) => context.update_direct('cell', cellList.current?.find(c => c.id === e.target.value) || null)
                         }
                       >
                         {get_cell_items(dataset)}
@@ -268,7 +232,7 @@ export default function Datasets() {
                       e.target.value.split(',').map(i => parseInt(i)) : e.target.value
                     context.update_direct(
                       'equipment',
-                      equipmentList?.filter(eq => value.includes(eq.id))
+                      equipmentList.current?.filter(eq => value.includes(eq.id))
                     )
                   }
                 }
