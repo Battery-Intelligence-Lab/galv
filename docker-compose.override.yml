@@ -4,20 +4,20 @@ services:
     image: app
     build:
       dockerfile: Dockerfile
-      context: ./django
+      context: backend
     depends_on:
       - postgres
     ports:
       - "5000:5000"
     volumes:
-     - ./django:/usr/app
+     - ./backend:/usr/app
     restart: unless-stopped
     working_dir: /usr/app
     command: ./server.sh
 #    command: tail -F anything
     env_file:
      - ./.env
-     - ./django/.env.secret
+     - backend/.env.secret
 
   harvester:
     build:

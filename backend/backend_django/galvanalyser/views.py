@@ -100,9 +100,9 @@ class HarvesterViewSet(viewsets.ModelViewSet):
         """
         # TODO: move to serializer?
         # Validate input
-        if not request.data['name']:
+        if not request.data.get('name'):
             return error_response('No name specified for Harvester.')
-        if not request.data['user']:
+        if not request.data.get('user'):
             return error_response('No administrator id specified for Harvester.')
         if len(Harvester.objects.filter(name=request.data['name'])):
             return error_response('Harvester with that name already exists')
@@ -173,8 +173,14 @@ class HarvesterViewSet(viewsets.ModelViewSet):
 
         Only Harvesters are authorised to issue reports.
         """
-        # TODO access class Harvester
-        harvester = Harvester.objects.get(id=pk)
+        harvester = get_object_or_404(Harvester, id=pk)
+        try:
+            key = request.META.get('HTTP_AUTHORIZATION', '')
+            key = key[len('Harvester '):]
+            assert key == harvester.api_key
+        except AssertionError:
+            return error_response("Invalid AUTHORIZATION header. Required 'Harvester [api_key]'.")
+
         harvester.last_check_in = timezone.now()
         harvester.save()
         if request.data.get('status') is None:
@@ -238,7 +244,7 @@ class HarvesterViewSet(viewsets.ModelViewSet):
                     if file.last_observed_time + timezone.timedelta(seconds=path.stable_time) > timezone.now():
                         file.state = FileState.UNSTABLE
                     # Stable file -- already imported?
-                    elif file.state not in [FileState.IMPORTED.value, FileState.IMPORT_FAILED.value]:
+                    elif file.state not in [FileState.IMPORTED, FileState.IMPORT_FAILED]:
                         file.state = FileState.STABLE
 
                 file.save()
@@ -276,7 +282,7 @@ class HarvesterViewSet(viewsets.ModelViewSet):
                                 date=date
                             )
                         elif content['status'] == 'complete':
-                            if file.state == FileState.IMPORTING.value:
+                            if file.state == FileState.IMPORTING:
                                 file.state = FileState.IMPORTED
                         else:
                             time_start = time.time()

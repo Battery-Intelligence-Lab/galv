@@ -6,7 +6,7 @@ from django.contrib.auth.models import User, Group
 import random
 
 
-class FileState(models.Choices):
+class FileState(models.TextChoices):
     RETRY_IMPORT = "RETRY IMPORT"
     IMPORT_FAILED = "IMPORT FAILED"
     UNSTABLE = "UNSTABLE"
