@@ -33,8 +33,8 @@ export type RowGeneratorContext<T> = {
 }
 
 export type RowGenerator<T extends APIObject> =
-  ((row_data: T) => ReactElement[]) |
-  ((row_data: T, context: RowGeneratorContext<T>) => ReactElement[])
+  ((row_data: T) => ReactElement[]|null) |
+  ((row_data: T, context: RowGeneratorContext<T>) => ReactElement[]|null)
 
 type CompleteHeading = {
   label: string;
@@ -285,6 +285,8 @@ export default class AsyncTable<T extends APIObject> extends Component<AsyncTabl
         return this.loading_row(row.id)
 
       const row_contents = this.props.row_generator(row, this.row_conversion_context(row, is_new_row))
+      if(!row_contents)
+        return null
       return this.wrap_cells_in_row(row_contents, row_index)
     } catch(e) {
       console.info('Error constructing table row:', e)

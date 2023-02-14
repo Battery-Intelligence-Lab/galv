@@ -1,4 +1,4 @@
-import React, {useState, Fragment, ReactElement, useRef} from "react";
+import React, {useState, Fragment, ReactElement, useEffect} from "react";
 import Container from '@mui/material/Container';
 import Button from '@mui/material/Button';
 import { useNavigate } from "react-router-dom";
@@ -17,16 +17,16 @@ import TextField from "@mui/material/TextField";
 import {UserSet} from "./UserRoleSet";
 import {CellFields} from "./CellList";
 import MenuItem from "@mui/material/MenuItem";
-import CircularProgress from "@mui/material/CircularProgress";
 import {EquipmentFields} from "./Equipment";
 import OutlinedInput from "@mui/material/OutlinedInput";
 import Box from "@mui/material/Box";
-import Chip from "@mui/material/Chip";
+import ListItem from "@mui/material/ListItem";
 import Tooltip from "@mui/material/Tooltip";
 import Grid from "@mui/material/Grid";
 import InputLabel from "@mui/material/InputLabel";
 import useStyles from "./UseStyles";
 import ActionButtons from "./ActionButtons";
+import Stack from "@mui/material/Stack";
 
 export type DatasetFields = {
   url: string;
@@ -34,8 +34,8 @@ export type DatasetFields = {
   name: string;
   type: string;
   date: string;
-  cell: CellFields | null;
-  equipment: EquipmentFields[];
+  cell: string | null;
+  equipment: string[];
   purpose: string;
   user_sets: UserSet[];
 }
@@ -43,19 +43,25 @@ export type DatasetFields = {
 export default function Datasets() {
   const classes = useStyles();
   const [selected, setSelected] = useState<DatasetFields|null>(null)
-  const cellList = useRef<CellFields[]>(Connection.results.get_contents<CellFields>('cells/?all=true'))
-  const equipmentList = useRef<EquipmentFields[]>(Connection.results.get_contents<EquipmentFields>('equipment/?all=true'))
+
+  useEffect(() => {
+    console.log(`Dataset useEffect`)
+    Connection.fetchMany<DatasetFields>('datasets/?all=true').catch(e => console.warn)
+    Connection.fetchMany<CellFields>('cells/?all=true').catch(e => console.warn)
+    Connection.fetchMany<EquipmentFields>('equipment/?all=true').catch(e => console.warn)
+  }, [Connection.user])
 
   const updateRow = (data: DatasetFields, context: RowGeneratorContext<DatasetFields>) => {
     context.mark_loading(true)
     const insert_data: any = {
       name: data.name,
       type: data.type,
-      cell: data.cell?.url || null,
-      equipment: data.equipment.map(e => e.url)
+      cell: data.cell || null,
+      equipment: data.equipment
     }
     if (data.purpose) insert_data.purpose = data.purpose
     return Connection.fetch(data.url, {body: JSON.stringify(insert_data), method: 'PATCH'})
+      .then(r => r.content)
   }
 
   const columns = [
@@ -88,31 +94,36 @@ export default function Datasets() {
   };
 
   const get_cell_items = (dataset: DatasetFields) => {
-    const menuItem = (cell: CellFields) => <MenuItem key={cell.id} value={cell.id}>{cell.display_name}</MenuItem>
+    const cellList = Connection.results.get_contents<CellFields>('cells/?all=true')
+    const menuItem = (cell: CellFields) => <MenuItem key={cell.id} value={cell.url}>{cell.display_name}</MenuItem>
     const items: ReactElement[] = []
     if (dataset?.cell) {
-      items.push(menuItem(dataset.cell))
+      const cell = cellList.find(c => c.url === dataset.cell)
+      if (cell !== undefined)
+        items.push(menuItem(cell))
     }
     items.push(<MenuItem key="na" value=""><em>None</em></MenuItem>)
-    if (cellList.current.length)
-      items.push(...cellList.current.filter(c => c.id !== dataset.cell?.id).map(menuItem))
+    if (cellList.length)
+      items.push(...cellList.filter(c => c.url !== dataset.cell).map(menuItem))
     if (!items.length)
       items.push(<MenuItem key="empty" disabled={true}><em>No cells defined</em></MenuItem>)
     return items
   }
 
   const get_equipment_items = (dataset: DatasetFields) => {
+    const equipmentList = Connection.results.get_contents<EquipmentFields>('equipment/?all=true')
     const menuItem = (equipment: EquipmentFields) =>
-      <MenuItem key={equipment.id} value={equipment.id}>{equipment.name}</MenuItem>
+      <MenuItem key={equipment.id} value={equipment.url}>{equipment.name}</MenuItem>
     const items: ReactElement[] = []
-    const current_equipment_ids: number[] = []
     if (dataset?.equipment) {
-      items.push(...dataset.equipment.map(e => menuItem(e)))
-      current_equipment_ids.push(...dataset.equipment.map(e => e.id))
+      dataset.equipment.map(e => equipmentList.find(eq => eq.url === e))
+        .forEach(e => {
+          if (e !== undefined)
+            items.push(menuItem(e))
+        })
     }
-    items.push(<MenuItem key="none" value=""><em>None</em></MenuItem>)
-    if (equipmentList.current.length)
-      items.push(...equipmentList.current.filter(e => !current_equipment_ids.includes(e.id)).map(menuItem))
+    if (equipmentList.length)
+      items.push(...equipmentList.filter(e => !dataset?.equipment.includes(e.url)).map(menuItem))
     if (!items.length)
       items.push(<MenuItem key="empty" disabled={true}><em>No equipment defined</em></MenuItem>)
     return items
@@ -198,10 +209,10 @@ export default function Datasets() {
                         key='select'
                         id={`cell-select-${dataset.id}`}
                         name="cell"
-                        value={dataset.cell?.id || ''}
+                        value={dataset.cell || ''}
                         sx={{minWidth: 100}}
                         onChange={
-                          (e) => context.update_direct('cell', cellList.current?.find(c => c.id === e.target.value) || null)
+                          (e) => context.update_direct('cell', e.target.value || null)
                         }
                       >
                         {get_cell_items(dataset)}
@@ -216,24 +227,23 @@ export default function Datasets() {
                 id={`equipment-select-${dataset.id}`}
                 input={<OutlinedInput id="select-multiple-chip" label="Chip" />}
                 renderValue={(selected) => (
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                  <Stack spacing={0.5}>
                     {selected.map((value) => (
-                      <Chip key={value} label={dataset.equipment.find(e => e.id === value)?.name || '???'} />
+                      <ListItem key={value}>
+                        {Connection.results.get_contents<EquipmentFields>(value)[0]?.name || '???'}
+                      </ListItem>
                     ))}
-                  </Box>
+                  </Stack>
                 )}
                 name={'equipment'}
                 sx={{minWidth: 100}}
                 multiple
-                value={dataset?.equipment?.map(e => e.id) || []}
+                value={dataset?.equipment}
                 onChange={
                   (e) => {
-                    const value: number[] = typeof e.target.value === 'string' ?
-                      e.target.value.split(',').map(i => parseInt(i)) : e.target.value
-                    context.update_direct(
-                      'equipment',
-                      equipmentList.current?.filter(eq => value.includes(eq.id))
-                    )
+                    const value: string[] = typeof e.target.value === 'string' ?
+                      [e.target.value] : e.target.value
+                    context.update_direct('equipment', value)
                   }
                 }
               >

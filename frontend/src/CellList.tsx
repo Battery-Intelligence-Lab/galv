@@ -42,6 +42,7 @@ export default function CellList(props: CellDetailProps) {
     context.mark_loading(true)
     const insert_data = {display_name: data.display_name, family: props.family.url}
     return Connection.fetch(data.url, {body: JSON.stringify(insert_data), method: 'PATCH'})
+      .then(r => r.content)
   };
 
   const deleteCell = (data: CellFields) => Connection.fetch(data.url, {method: 'DELETE'})
@@ -52,7 +53,8 @@ export default function CellList(props: CellDetailProps) {
         <AsyncTable<CellFields>
           classes={classes}
           columns={columns}
-          row_generator={(cell, context) => [
+          row_generator={(cell, context) =>
+            cell.family !== props.family.url ? null : [
             <Fragment>
               <TextField
                 name="display_name"
@@ -90,8 +92,7 @@ export default function CellList(props: CellDetailProps) {
             </Fragment>
           ]}
           new_row_values={{display_name: '', datasets: []}}
-          url={`cells/?all=true&family__id=${props.family.id}`}
-          fetch_depth={0}
+          url={`cells/?all=true`}
         />
         <Typography p={2} fontSize="small">
           Note: Cells assigned to existing datasets cannot be changed.

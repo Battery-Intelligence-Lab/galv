@@ -33,10 +33,19 @@ export type CachedAPIResponse<T extends SingleAPIResponse> = {
   parents: string[];
 }
 
+function clean_url(url: string, baseURL: string): string {
+  url = url.toLowerCase();
+  if (!url.startsWith(baseURL))
+    url = `${baseURL}${url}`
+  return url
+}
+
 class ResponseCache {
   results: CachedAPIResponse<any>[]
+  url: string
 
-  constructor() {
+  constructor(url: string) {
+    this.url = url
     this.results = []
   }
 
@@ -54,7 +63,7 @@ class ResponseCache {
             time: new Date(),
             content: item,
             loading: false,
-            parents: [...parents, parent]
+            parents: parent? [...parents, parent] : parents
           }
         ]
       } catch (e) {
@@ -63,14 +72,17 @@ class ResponseCache {
   }
 
   remove(url: string) {
+    url = clean_url(url, this.url)
     this.results = this.results.filter(i => i.url !== url)
   }
 
   get<T extends SingleAPIResponse>(url: string, include_children: boolean = true): CachedAPIResponse<T>[] {
-    return this.results.filter(i => i.url === url || (include_children && !i.parents.includes(url)))
+    url = clean_url(url, this.url)
+    return this.results.filter(i => i.url === url || (include_children && i.parents.includes(url)))
   }
 
   get_contents<T extends SingleAPIResponse>(url: string, include_children: boolean = true) {
+    url = clean_url(url, this.url)
     return this.get<T>(url, include_children).map(r => r.content)
   }
 }
@@ -85,7 +97,7 @@ export class APIConnection {
     console.info("Spawn API connection")
     this.login('admin', 'admin');
     console.log(document.cookie)
-    this.results = new ResponseCache()
+    this.results = new ResponseCache(this.url)
   }
 
   login(username: string, password: string) {
@@ -133,12 +145,6 @@ export class APIConnection {
     return cookie !== undefined && this.user !== null;
   }
 
-  _prepare_fetch_url(url: string) {
-    url = url.toLowerCase();
-    if (!url.startsWith(this.url))
-      url = `${this.url}${url}`
-    return url
-  }
   _prepare_fetch_headers(url: string, options?: any) {
     if (!this.is_logged_in)
       throw new Error(`Cannot fetch ${url}: not logged on.`)
@@ -155,7 +161,7 @@ export class APIConnection {
     return newOptions;
   }
 
-  _fetch<T extends SingleAPIResponse>(url: string, options: object): Promise<void> {
+  _fetch<T extends SingleAPIResponse>(url: string, options: object, parent: string = ""): Promise<void> {
     return fetch(url, options)
       .then((response) => {
         if (response.status >= 400) {
@@ -166,11 +172,11 @@ export class APIConnection {
         }
         return response.json() as Promise<T|T[]>;
       })
-      .then(json => this.results.add<T>(json))
+      .then(json => this.results.add<T>(json, parent))
   }
 
   async fetchMany<T extends SingleAPIResponse>(url: string, options?: any, ignore_cache: boolean = true): Promise<CachedAPIResponse<T>[]> {
-    url = this._prepare_fetch_url(url)
+    url = clean_url(url, this.url)
     const newOptions = this._prepare_fetch_headers(url, options);
     if (newOptions.method && newOptions.method.toLowerCase() !== 'get')
       ignore_cache = true;
@@ -185,12 +191,12 @@ export class APIConnection {
       await Promise.all(fetch.map(r => this.fetch(r.url, options, ignore_cache = true)))
       return this.results.get(url)
     }
-    return this._fetch<T>(url, newOptions)
+    return this._fetch<T>(url, newOptions, url)
       .then(() => this.results.get<T>(url))
   }
 
   async fetch<T extends SingleAPIResponse>(url: string, options?: any, ignore_cache = false): Promise<CachedAPIResponse<T>> {
-    url = this._prepare_fetch_url(url)
+    url = clean_url(url, this.url)
     const newOptions = this._prepare_fetch_headers(url, options);
     if (newOptions.method && newOptions.method.toLowerCase() !== 'get')
       ignore_cache = true;

@@ -40,6 +40,7 @@ export default function Equipment() {
   const updateEquipment = (data: EquipmentFields) => {
     const insert_data = get_write_data(data)
     return Connection.fetch(data.url, {body: JSON.stringify(insert_data), method: 'PATCH'})
+      .then(r => r.content)
   };
 
   const deleteEquipment = (data: EquipmentFields) => Connection.fetch(data.url, {method: 'DELETE'})

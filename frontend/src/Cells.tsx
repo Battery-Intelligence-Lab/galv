@@ -62,6 +62,7 @@ export default function Cells() {
     context.mark_loading(true)
     const insert_data = get_write_data(data)
     return Connection.fetch(data.url, {body: JSON.stringify(insert_data), method: 'PATCH'})
+      .then(r => r.content)
   };
 
   const deleteCell = (data: CellFamilyFields) => Connection.fetch(data.url, {method: 'DELETE'})
@@ -198,7 +199,6 @@ export default function Cells() {
             nominal_capacity: 0, nominal_cell_weight: 0, cells: []
           }}
           url="cell_families/?all=true"
-          fetch_depth={0}
         />
         <Typography p={2} fontSize="small">
           Note: Cell families with cells cannot be changed.

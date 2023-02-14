@@ -39,6 +39,7 @@ export default function Harvesters() {
       sleep_time: data.sleep_time
     }
     return Connection.fetch(data.url, {body: JSON.stringify(insert_data), method: 'PATCH'})
+      .then(r => r.content)
   };
 
   const deleteHarvester = (harvester: HarvesterFields) => Connection.fetch(harvester.url, {method: 'DELETE'})

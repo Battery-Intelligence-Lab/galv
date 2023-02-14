@@ -40,6 +40,7 @@ export default function HarvesterDetail(props: HarvesterDetailProps) {
   const updatePath = (data: MonitoredPathFields) => {
     const insert_data = {path: data.path, stable_time: data.stable_time}
     return Connection.fetch(data.url, {body: JSON.stringify(insert_data), method: 'PATCH'})
+      .then(r => r.content)
   };
 
   const columns = [
