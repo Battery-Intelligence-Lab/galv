@@ -27,5 +27,8 @@ python manage.py loaddata galvanalyser/fixtures/Users.json || \
 
 >&2 echo "Initialisation complete - starting server"
 
-python manage.py test --noinput
-#python manage.py runserver 0.0.0.0:5000
+if [ -z "${DJANGO_TEST}" ]; then
+  python manage.py runserver 0.0.0.0:5000
+else
+  python manage.py test --noinput
+fi

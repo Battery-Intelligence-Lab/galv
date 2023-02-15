@@ -93,3 +93,9 @@ supported. An entity relationship diagram is shown below.
 | Delete path | Admins        |
 
 All Harvester Admins are Admins on all paths on that Harvester.
+
+### Running Tests
+
+- The Harvester code has its own tests, in `harvester/test`. These are run with `unittest`.
+- The Django backend has Django Rest Framework tests, using `FactoryBoy` and `Faker`.
+  - Run with `docker compose -f docker-compose.test.yml up`

@@ -184,13 +184,15 @@ class HarvesterViewSet(viewsets.ModelViewSet):
         harvester.last_check_in = timezone.now()
         harvester.save()
         if request.data.get('status') is None:
-            return Response({'error': 'Badly formatted request'}, status=400)
+            return error_response('Badly formatted request')
         try:
             path = MonitoredPath.objects.get(path=request.data['path'], harvester=harvester)
         except MonitoredPath.DoesNotExist:
-            return Response({'error': 'Unrecognized path'}, status=400)
+            return error_response('Unrecognized path')
+        except KeyError:
+            return error_response('Harvester report must specify a path')
         if request.data['status'] == 'error':
-            error = request.data['error']
+            error = request.data.get('error')
             if not isinstance(error, str):
                 try:
                     error = json.dumps(error)
@@ -198,7 +200,7 @@ class HarvesterViewSet(viewsets.ModelViewSet):
                     error = str(error)
             file_rel_path = request.data.get('file')
             if file_rel_path:
-                err = HarvestError.objects.create(
+                HarvestError.objects.create(
                     harvester=harvester,
                     path=path,
                     file=ObservedFile.objects.get_or_create(
@@ -209,26 +211,24 @@ class HarvesterViewSet(viewsets.ModelViewSet):
                     error=str(error)
                 )
             else:
-                err = HarvestError.objects.create(
+                HarvestError.objects.create(
                     harvester=harvester,
                     path=path,
                     error=str(error)
                 )
-            if request.data.get('file'):
-                try:
-                    file = ObservedFile.objects.get(monitored_path=path, relative_path=request.data['file'])
-                    err.file = file
-                    err.save()
-                except ObservedFile.DoesNotExist:
-                    pass
             return Response({})
         elif request.data['status'] == 'success':
             # Figure out what we succeeded in doing!
-            content = request.data['content']
+            content = request.data.get('content')
+            if content is None:
+                return error_response('content field required when status=success')
             if content['task'] == 'file_size':
                 # Harvester is reporting the size of a file
                 # Update our database record and return a file status
                 file, _ = ObservedFile.objects.get_or_create(monitored_path=path, relative_path=request.data['file'])
+
+                if content.get('size') is None:
+                    return error_response('file_size task requires content to include size field')
 
                 size = content['size']
                 if size < file.last_observed_size:
@@ -392,19 +392,19 @@ class MonitoredPathViewSet(viewsets.ModelViewSet):
         """
 
         # Validate input
-        path = str(request.data['path']).lower().lstrip().rstrip()
+        path = str(request.data.get('path')).lower().lstrip().rstrip()
         if not path:
-            return Response({'error': 'No path specified.'}, status=400)
+            return error_response('No path specified.')
         try:
             harvester = Harvester.objects.get(id=request.data['harvester'])
         except (Harvester.DoesNotExist, AttributeError):
-            return Response({'error': 'Harvester not found.'})
+            return error_response('Harvester not found.')
         if len(MonitoredPath.objects.filter(path=path, harvester=harvester)):
-            return Response({'error': 'Path already exists on Harvester.'}, status=400)
+            return error_response('Path already exists on Harvester.')
         # Check user is authorised to create paths on Harvester
         if not request.user.groups.filter(id=harvester.user_group_id).exists() and \
                 not request.user.groups.filter(id=harvester.admin_group_id).exists():
-            return Response({'error': f'Permission denied to {request.user.username} for {harvester.name}'})
+            return error_response(f'Permission denied to {request.user.username} for {harvester.name}')
 
         # Create Path
         try:

@@ -80,7 +80,7 @@ class ObservedFile(models.Model):
 class HarvestError(models.Model):
     harvester = models.ForeignKey(to=Harvester, related_name='paths', on_delete=models.CASCADE)
     path = models.ForeignKey(to=MonitoredPath, on_delete=models.DO_NOTHING)
-    file = models.ForeignKey(to=ObservedFile, related_name='errors', on_delete=models.DO_NOTHING)
+    file = models.ForeignKey(to=ObservedFile, related_name='errors', on_delete=models.SET_NULL, null=True)
     error = models.TextField()
     timestamp = models.DateTimeField(auto_now=True, null=True)
 
