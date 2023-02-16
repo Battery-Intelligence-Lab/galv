@@ -1,3 +1,4 @@
+import knox.auth
 from django.db.models import Q
 from .serializers import HarvesterSerializer, \
     HarvesterConfigSerializer, \
@@ -30,15 +31,19 @@ from .models import Harvester, \
     TimeseriesData, \
     TimeseriesRangeLabel, \
     FileState
+from .auth import HarvesterAccess
 from django.contrib.auth.models import User, Group
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
-from rest_framework import viewsets
+from rest_framework import viewsets, serializers
 from rest_framework.permissions import AllowAny
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from knox.views import LoginView as KnoxLoginView
+from knox.views import LogoutView as KnoxLogoutView
+from knox.views import LogoutAllView as KnoxLogoutAllView
 from rest_framework.authentication import BasicAuthentication
+from drf_spectacular.utils import extend_schema, extend_schema_view, inline_serializer, OpenApiResponse
 from .utils import IteratorFile
 import json
 import time
@@ -66,9 +71,47 @@ def deserialize_datetime(serialized_value: str | float) -> timezone.datetime:
     raise TypeError
 
 
+@extend_schema(
+    description="Log in to retrieve a Knox Token for use elsewhere in the API.",
+    responses={
+        200: inline_serializer(
+            name='KnoxUser',
+            fields={
+                'expiry': serializers.DateTimeField(),
+                'token': serializers.CharField(),
+                'user': UserSerializer
+            }
+        ),
+        401: OpenApiResponse(description='Invalid username/password'),
+    },
+    request=None
+)
 class LoginView(KnoxLoginView):
     permission_classes = [AllowAny]
     authentication_classes = [BasicAuthentication]
+
+    def post(self, request, fmt=None):
+        if isinstance(request.user, User):
+            return super(LoginView, self).post(request=request, format=fmt)
+        return Response({'detail': "Anonymous login not allowed"}, status=401)
+
+
+@extend_schema(
+    description="Log out current Knox Token.",
+    responses={204: None, 401: OpenApiResponse(description='Unauthorized')},
+    request=None
+)
+class LogoutView(KnoxLogoutView):
+    authentication_classes = [knox.auth.TokenAuthentication]
+
+
+@extend_schema(
+    description="Log out all Knox Tokens.",
+    responses={204: None, 401: OpenApiResponse(description='Unauthorized')},
+    request=None
+)
+class LogoutAllView(KnoxLogoutAllView):
+    authentication_classes = [knox.auth.TokenAuthentication]
 
 
 class HarvesterViewSet(viewsets.ModelViewSet):
@@ -82,6 +125,7 @@ class HarvesterViewSet(viewsets.ModelViewSet):
 
     Harvesters are created by a separate software package available within Galvanalyser.
     """
+    permission_classes = [HarvesterAccess]
     serializer_class = HarvesterSerializer
     filterset_fields = ['name']
     search_fields = ['@name']
@@ -123,6 +167,7 @@ class HarvesterViewSet(viewsets.ModelViewSet):
         return Response(HarvesterConfigSerializer(harvester, context={'request': request}).data)
 
     def update(self, request, *args, **kwargs):
+        """Update Harvester properties."""
         try:
             harvester = Harvester.objects.get(id=kwargs.get('pk'))
         except Harvester.DoesNotExist:
@@ -154,16 +199,11 @@ class HarvesterViewSet(viewsets.ModelViewSet):
     def config(self, request, pk: int = None):
         """
         Return a full configuration file including MonitoredPaths under paths.
-        Used by the API for updating the Harvester.
+
+        Only available to Harvesters.
         """
         harvester = get_object_or_404(Harvester, id=pk)
-        try:
-            key = request.META.get('HTTP_AUTHORIZATION', '')
-            key = key[len('Harvester '):]
-            assert key == harvester.api_key
-            return Response(HarvesterConfigSerializer(harvester, context={'request': request}).data)
-        except AssertionError:
-            return error_response("Invalid AUTHORIZATION header. Required 'Harvester [api_key]'.")
+        return Response(HarvesterConfigSerializer(harvester, context={'request': request}).data)
 
     @action(detail=True, methods=['POST'])
     def report(self, request, pk: int = None):
@@ -174,13 +214,6 @@ class HarvesterViewSet(viewsets.ModelViewSet):
         Only Harvesters are authorised to issue reports.
         """
         harvester = get_object_or_404(Harvester, id=pk)
-        try:
-            key = request.META.get('HTTP_AUTHORIZATION', '')
-            key = key[len('Harvester '):]
-            assert key == harvester.api_key
-        except AssertionError:
-            return error_response("Invalid AUTHORIZATION header. Required 'Harvester [api_key]'.")
-
         harvester.last_check_in = timezone.now()
         harvester.save()
         if request.data.get('status') is None:

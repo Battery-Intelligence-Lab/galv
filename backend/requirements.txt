@@ -5,5 +5,4 @@ djangorestframework==3.14.0
 django-rest-knox==4.2.0
 psycopg2-binary==2.9.5
 redis==4.4.0
-pyyaml==6.0
-uritemplate==4.1.1
+drf-spectacular==0.25.1

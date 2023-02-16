@@ -21,7 +21,7 @@ from rest_framework import serializers
 class HarvesterSerializer(serializers.HyperlinkedModelSerializer):
     user_sets = serializers.SerializerMethodField()
 
-    def get_user_sets(self, instance):
+    def get_user_sets(self, instance) -> list:
         return [
             UserSetSerializer(
                 instance.admin_group,
@@ -89,7 +89,7 @@ class HarvesterConfigSerializer(serializers.HyperlinkedModelSerializer):
 class MonitoredPathSerializer(serializers.HyperlinkedModelSerializer):
     user_sets = serializers.SerializerMethodField()
 
-    def get_user_sets(self, instance):
+    def get_user_sets(self, instance) -> list:
         return [
             UserSetSerializer(
                 instance.harvester.admin_group,
@@ -134,7 +134,7 @@ class MonitoredPathSerializer(serializers.HyperlinkedModelSerializer):
 class ObservedFileSerializer(serializers.HyperlinkedModelSerializer):
     upload_info = serializers.SerializerMethodField()
 
-    def get_upload_info(self, instance):
+    def get_upload_info(self, instance) -> dict:
         if not self.context.get('with_upload_info'):
             return None
         try:
@@ -228,7 +228,7 @@ class EquipmentSerializer(serializers.HyperlinkedModelSerializer):
 class DatasetSerializer(serializers.HyperlinkedModelSerializer):
     user_sets = serializers.SerializerMethodField()
 
-    def get_user_sets(self, instance):
+    def get_user_sets(self, instance) -> list:
         return MonitoredPathSerializer(
             instance.file.monitored_path, context={'request': self.context.get('request')}
         ).data.get('user_sets')
@@ -272,7 +272,7 @@ class TimeseriesRangeLabelSerializer(serializers.HyperlinkedModelSerializer):
 class GroupSerializer(serializers.HyperlinkedModelSerializer):
     users = serializers.SerializerMethodField()
 
-    def get_users(self, instance):
+    def get_users(self, instance) -> list:
         return UserSerializer(instance.user_set.all(), many=True, context={'request': self.context['request']}).data
 
     class Meta:
@@ -292,7 +292,7 @@ class UserSetSerializer(serializers.HyperlinkedModelSerializer):
     def get_description(self, instance):
         return self.context.get('description')
 
-    def get_users(self, instance):
+    def get_users(self, instance) -> list:
         return UserSerializer(instance.user_set.all(), many=True, context={'request': self.context['request']}).data
 
     def get_name(self, instance):

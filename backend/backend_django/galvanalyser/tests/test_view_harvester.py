@@ -53,7 +53,7 @@ class HarvesterTests(APITestCase):
         url = reverse('harvester-config', args=(harvester.id,))
         headers = {'HTTP_AUTHORIZATION': f"Harvester {harvester.api_key}"}
         print("Test config rejection")
-        self.assertEqual(self.client.get(url).status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(self.client.get(url).status_code, status.HTTP_401_UNAUTHORIZED)
         print("OK")
         print("Test access config")
         response = self.client.get(url, **headers)
@@ -68,7 +68,7 @@ class HarvesterTests(APITestCase):
         print("OK")
         print("Test config rejection with other harvester key")
         headers = {'HTTP_AUTHORIZATION': f"Harvester {other.api_key}"}
-        self.assertEqual(self.client.get(url, **headers).status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(self.client.get(url, **headers).status_code, status.HTTP_401_UNAUTHORIZED)
         print("OK")
 
     def test_update(self):

@@ -34,6 +34,9 @@ class Harvester(models.Model):
         related_name='readable_harvesters'
     )
 
+    def __str__(self):
+        return f"{self.name} [Harvester {self.id}]"
+
     def save(self, *args, **kwargs):
         if self.id is None:
             # Create groups for Harvester
@@ -62,6 +65,9 @@ class MonitoredPath(models.Model):
         related_name='readable_paths'
     )
 
+    def __str__(self):
+        return self.path
+
     class Meta:
         unique_together = [['harvester', 'path']]
 
@@ -72,6 +78,9 @@ class ObservedFile(models.Model):
     last_observed_size = models.PositiveBigIntegerField(null=False, default=0)
     last_observed_time = models.DateTimeField(null=True)
     state = models.TextField(choices=FileState.choices, default=FileState.UNSTABLE, null=False)
+
+    def __str__(self):
+        return self.relative_path
 
     class Meta:
         unique_together = [['monitored_path', 'relative_path']]
@@ -84,6 +93,13 @@ class HarvestError(models.Model):
     error = models.TextField()
     timestamp = models.DateTimeField(auto_now=True, null=True)
 
+    def __str__(self):
+        if self.path:
+            if self.file:
+                return f"{self.error} [Harvester_{self.harvester_id}/{self.path}/{self.file}]"
+            return f"{self.error} [Harvester_{self.harvester_id}/{self.path}]"
+        return f"{self.error} [Harvester_{self.harvester_id}]"
+
 
 class CellFamily(models.Model):
     name = models.TextField(null=False, unique=True)
@@ -95,10 +111,16 @@ class CellFamily(models.Model):
     nominal_cell_weight = models.FloatField()
     manufacturer = models.TextField()
 
+    def __str__(self):
+        return f"{self.name} [CellFamily {self.id}]"
+
 
 class Cell(models.Model):
     display_name = models.TextField(null=True, unique=True)
     family = models.ForeignKey(to=CellFamily, related_name='cells', on_delete=models.SET_NULL, null=True)
+
+    def __str__(self):
+        return f"{self.display_name} [Cell {self.id}]"
 
 
 class Dataset(models.Model):
@@ -110,6 +132,9 @@ class Dataset(models.Model):
     purpose = models.TextField()
     json_data = models.JSONField(null=True)
 
+    def __str__(self):
+        return f"{self.name} [Dataset {self.id}]"
+
     class Meta:
         unique_together = [['file', 'date']]
 
@@ -118,6 +143,9 @@ class Equipment(models.Model):
     name = models.TextField(null=False, unique=True)
     type = models.TextField()
     datasets = models.ManyToManyField(to=Dataset, related_name='equipment')
+
+    def __str__(self):
+        return f"{self.name} [Equipment {self.id}]"
 
 
 class DataUnit(models.Model):

@@ -133,7 +133,7 @@ export class APIConnection {
   }
 
   get is_logged_in() {
-    return this.user !== null
+    return !!this.user?.token
   }
 
   async get_is_logged_in(skip: boolean = true): Promise<boolean> {
@@ -156,8 +156,8 @@ export class APIConnection {
     newOptions.headers = {...newOptions.headers};
     newOptions.headers['Content-Type'] = "application/json";
     newOptions.headers['Accept'] = "application/json";
-    newOptions.headers['Authorization'] = `Token ${token}`;
-    newOptions.headers['X-CSRF-TOKEN'] = this.get_cookie('csrf_access_token');
+    newOptions.headers['Authorization'] = `Bearer ${token}`;
+    // newOptions.headers['X-CSRF-TOKEN'] = this.get_cookie('csrf_access_token');
     return newOptions;
   }
 
