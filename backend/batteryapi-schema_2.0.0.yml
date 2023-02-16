@@ -1,0 +1,3230 @@
+openapi: 3.0.2
+info:
+  title: ''
+  version: 2.0.0
+paths:
+  /harvesters/:
+    get:
+      operationId: listHarvesters
+      description: 'Harvesters monitor a set of MonitoredPaths and send reports about
+        ObservedFiles
+
+        within those paths.
+
+        A Harvester has Users and Admins, managed by Django''s inbuilt User and Group
+        models.
+
+
+        When Harvesters communicate with the API they do so using special Harvester
+        API Keys.
+
+        These provide access to the report and configuration endpoints.
+
+
+        Harvesters are created by a separate software package available within Galvanalyser.'
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    example: 123
+                  next:
+                    type: string
+                    nullable: true
+                    format: uri
+                    example: http://api.example.org/accounts/?page=4
+                  previous:
+                    type: string
+                    nullable: true
+                    format: uri
+                    example: http://api.example.org/accounts/?page=2
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Harvester'
+          description: ''
+      tags:
+      - harvesters
+    post:
+      operationId: createHarvester
+      description: Create a Harvester and the user Groups required to control it.
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Harvester'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Harvester'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Harvester'
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Harvester'
+          description: ''
+      tags:
+      - harvesters
+  /harvesters/{id}/:
+    get:
+      operationId: retrieveHarvester
+      description: 'Harvesters monitor a set of MonitoredPaths and send reports about
+        ObservedFiles
+
+        within those paths.
+
+        A Harvester has Users and Admins, managed by Django''s inbuilt User and Group
+        models.
+
+
+        When Harvesters communicate with the API they do so using special Harvester
+        API Keys.
+
+        These provide access to the report and configuration endpoints.
+
+
+        Harvesters are created by a separate software package available within Galvanalyser.'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: A unique integer value identifying this harvester.
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Harvester'
+          description: ''
+      tags:
+      - harvesters
+    put:
+      operationId: updateHarvester
+      description: 'Harvesters monitor a set of MonitoredPaths and send reports about
+        ObservedFiles
+
+        within those paths.
+
+        A Harvester has Users and Admins, managed by Django''s inbuilt User and Group
+        models.
+
+
+        When Harvesters communicate with the API they do so using special Harvester
+        API Keys.
+
+        These provide access to the report and configuration endpoints.
+
+
+        Harvesters are created by a separate software package available within Galvanalyser.'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: A unique integer value identifying this harvester.
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Harvester'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Harvester'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Harvester'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Harvester'
+          description: ''
+      tags:
+      - harvesters
+    patch:
+      operationId: partialUpdateHarvester
+      description: 'Harvesters monitor a set of MonitoredPaths and send reports about
+        ObservedFiles
+
+        within those paths.
+
+        A Harvester has Users and Admins, managed by Django''s inbuilt User and Group
+        models.
+
+
+        When Harvesters communicate with the API they do so using special Harvester
+        API Keys.
+
+        These provide access to the report and configuration endpoints.
+
+
+        Harvesters are created by a separate software package available within Galvanalyser.'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: A unique integer value identifying this harvester.
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Harvester'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Harvester'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Harvester'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Harvester'
+          description: ''
+      tags:
+      - harvesters
+    delete:
+      operationId: destroyHarvester
+      description: 'Harvesters monitor a set of MonitoredPaths and send reports about
+        ObservedFiles
+
+        within those paths.
+
+        A Harvester has Users and Admins, managed by Django''s inbuilt User and Group
+        models.
+
+
+        When Harvesters communicate with the API they do so using special Harvester
+        API Keys.
+
+        These provide access to the report and configuration endpoints.
+
+
+        Harvesters are created by a separate software package available within Galvanalyser.'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: A unique integer value identifying this harvester.
+        schema:
+          type: string
+      responses:
+        '204':
+          description: ''
+      tags:
+      - harvesters
+  /harvesters/{id}/config/:
+    get:
+      operationId: configHarvester
+      description: 'Return a full configuration file including MonitoredPaths under
+        paths.
+
+        Used by the API for updating the Harvester.'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: A unique integer value identifying this harvester.
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Harvester'
+          description: ''
+      tags:
+      - harvesters
+  /harvest_errors/:
+    get:
+      operationId: listHarvestErrors
+      description: 'HarvestErrors are problems encountered by Harvesters during the
+        crawling of
+
+        MonitoredPaths or the importing or inspection of ObservedFiles.'
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    example: 123
+                  next:
+                    type: string
+                    nullable: true
+                    format: uri
+                    example: http://api.example.org/accounts/?page=4
+                  previous:
+                    type: string
+                    nullable: true
+                    format: uri
+                    example: http://api.example.org/accounts/?page=2
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/HarvestError'
+          description: ''
+      tags:
+      - harvest-errors
+    post:
+      operationId: createHarvestError
+      description: 'HarvestErrors are problems encountered by Harvesters during the
+        crawling of
+
+        MonitoredPaths or the importing or inspection of ObservedFiles.'
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HarvestError'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/HarvestError'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/HarvestError'
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HarvestError'
+          description: ''
+      tags:
+      - harvest-errors
+  /harvest_errors/{id}/:
+    get:
+      operationId: retrieveHarvestError
+      description: 'HarvestErrors are problems encountered by Harvesters during the
+        crawling of
+
+        MonitoredPaths or the importing or inspection of ObservedFiles.'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: A unique integer value identifying this harvest error.
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HarvestError'
+          description: ''
+      tags:
+      - harvest-errors
+    put:
+      operationId: updateHarvestError
+      description: 'HarvestErrors are problems encountered by Harvesters during the
+        crawling of
+
+        MonitoredPaths or the importing or inspection of ObservedFiles.'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: A unique integer value identifying this harvest error.
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HarvestError'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/HarvestError'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/HarvestError'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HarvestError'
+          description: ''
+      tags:
+      - harvest-errors
+    patch:
+      operationId: partialUpdateHarvestError
+      description: 'HarvestErrors are problems encountered by Harvesters during the
+        crawling of
+
+        MonitoredPaths or the importing or inspection of ObservedFiles.'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: A unique integer value identifying this harvest error.
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HarvestError'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/HarvestError'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/HarvestError'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HarvestError'
+          description: ''
+      tags:
+      - harvest-errors
+    delete:
+      operationId: destroyHarvestError
+      description: 'HarvestErrors are problems encountered by Harvesters during the
+        crawling of
+
+        MonitoredPaths or the importing or inspection of ObservedFiles.'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: A unique integer value identifying this harvest error.
+        schema:
+          type: string
+      responses:
+        '204':
+          description: ''
+      tags:
+      - harvest-errors
+  /monitored_paths/:
+    get:
+      operationId: listMonitoredPaths
+      description: 'A MonitoredPath refers to a directory accessible by a Harvester
+        in which
+
+        data files will reside. Those files will be scanned periodically by the Harvester,
+
+        becoming ObservedFiles once they are reported to Galvanalyser by the Harvester.
+
+
+        MonitoredPaths can be created or updated by a Harvester''s admins and users,
+        as
+
+        well as any users who have been given explicit permissions to edit the MonitoredPath.'
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    example: 123
+                  next:
+                    type: string
+                    nullable: true
+                    format: uri
+                    example: http://api.example.org/accounts/?page=4
+                  previous:
+                    type: string
+                    nullable: true
+                    format: uri
+                    example: http://api.example.org/accounts/?page=2
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MonitoredPath'
+          description: ''
+      tags:
+      - monitored-paths
+    post:
+      operationId: createMonitoredPath
+      description: Create a MonitoredPath for a Harvester and the user Groups required
+        to control it.
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MonitoredPath'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/MonitoredPath'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/MonitoredPath'
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MonitoredPath'
+          description: ''
+      tags:
+      - monitored-paths
+  /monitored_paths/{id}/:
+    get:
+      operationId: retrieveMonitoredPath
+      description: 'A MonitoredPath refers to a directory accessible by a Harvester
+        in which
+
+        data files will reside. Those files will be scanned periodically by the Harvester,
+
+        becoming ObservedFiles once they are reported to Galvanalyser by the Harvester.
+
+
+        MonitoredPaths can be created or updated by a Harvester''s admins and users,
+        as
+
+        well as any users who have been given explicit permissions to edit the MonitoredPath.'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: A unique integer value identifying this monitored path.
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MonitoredPath'
+          description: ''
+      tags:
+      - monitored-paths
+    put:
+      operationId: updateMonitoredPath
+      description: 'A MonitoredPath refers to a directory accessible by a Harvester
+        in which
+
+        data files will reside. Those files will be scanned periodically by the Harvester,
+
+        becoming ObservedFiles once they are reported to Galvanalyser by the Harvester.
+
+
+        MonitoredPaths can be created or updated by a Harvester''s admins and users,
+        as
+
+        well as any users who have been given explicit permissions to edit the MonitoredPath.'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: A unique integer value identifying this monitored path.
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MonitoredPath'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/MonitoredPath'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/MonitoredPath'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MonitoredPath'
+          description: ''
+      tags:
+      - monitored-paths
+    patch:
+      operationId: partialUpdateMonitoredPath
+      description: 'A MonitoredPath refers to a directory accessible by a Harvester
+        in which
+
+        data files will reside. Those files will be scanned periodically by the Harvester,
+
+        becoming ObservedFiles once they are reported to Galvanalyser by the Harvester.
+
+
+        MonitoredPaths can be created or updated by a Harvester''s admins and users,
+        as
+
+        well as any users who have been given explicit permissions to edit the MonitoredPath.'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: A unique integer value identifying this monitored path.
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MonitoredPath'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/MonitoredPath'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/MonitoredPath'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MonitoredPath'
+          description: ''
+      tags:
+      - monitored-paths
+    delete:
+      operationId: destroyMonitoredPath
+      description: 'A MonitoredPath refers to a directory accessible by a Harvester
+        in which
+
+        data files will reside. Those files will be scanned periodically by the Harvester,
+
+        becoming ObservedFiles once they are reported to Galvanalyser by the Harvester.
+
+
+        MonitoredPaths can be created or updated by a Harvester''s admins and users,
+        as
+
+        well as any users who have been given explicit permissions to edit the MonitoredPath.'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: A unique integer value identifying this monitored path.
+        schema:
+          type: string
+      responses:
+        '204':
+          description: ''
+      tags:
+      - monitored-paths
+  /files/:
+    get:
+      operationId: listObservedFiles
+      description: 'ObservedFiles are files that exist (or have existed) in a MonitoredPath
+        and have
+
+        been reported to Galvanalyser by the Harvester.
+
+
+        An ObservedFile instance will have file metadata (size, modification time),
+        and a
+
+        status representing its import state. It may be linked to HarvestErrors
+
+        encountered while importing the file, and/or to Datasets representing the
+        content
+
+        of imported files.'
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    example: 123
+                  next:
+                    type: string
+                    nullable: true
+                    format: uri
+                    example: http://api.example.org/accounts/?page=4
+                  previous:
+                    type: string
+                    nullable: true
+                    format: uri
+                    example: http://api.example.org/accounts/?page=2
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ObservedFile'
+          description: ''
+      tags:
+      - files
+    post:
+      operationId: createObservedFile
+      description: 'ObservedFiles are files that exist (or have existed) in a MonitoredPath
+        and have
+
+        been reported to Galvanalyser by the Harvester.
+
+
+        An ObservedFile instance will have file metadata (size, modification time),
+        and a
+
+        status representing its import state. It may be linked to HarvestErrors
+
+        encountered while importing the file, and/or to Datasets representing the
+        content
+
+        of imported files.'
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ObservedFile'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ObservedFile'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ObservedFile'
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ObservedFile'
+          description: ''
+      tags:
+      - files
+  /files/{id}/:
+    get:
+      operationId: retrieveObservedFile
+      description: 'ObservedFiles are files that exist (or have existed) in a MonitoredPath
+        and have
+
+        been reported to Galvanalyser by the Harvester.
+
+
+        An ObservedFile instance will have file metadata (size, modification time),
+        and a
+
+        status representing its import state. It may be linked to HarvestErrors
+
+        encountered while importing the file, and/or to Datasets representing the
+        content
+
+        of imported files.'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: A unique integer value identifying this observed file.
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ObservedFile'
+          description: ''
+      tags:
+      - files
+    put:
+      operationId: updateObservedFile
+      description: 'ObservedFiles are files that exist (or have existed) in a MonitoredPath
+        and have
+
+        been reported to Galvanalyser by the Harvester.
+
+
+        An ObservedFile instance will have file metadata (size, modification time),
+        and a
+
+        status representing its import state. It may be linked to HarvestErrors
+
+        encountered while importing the file, and/or to Datasets representing the
+        content
+
+        of imported files.'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: A unique integer value identifying this observed file.
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ObservedFile'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ObservedFile'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ObservedFile'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ObservedFile'
+          description: ''
+      tags:
+      - files
+    patch:
+      operationId: partialUpdateObservedFile
+      description: 'ObservedFiles are files that exist (or have existed) in a MonitoredPath
+        and have
+
+        been reported to Galvanalyser by the Harvester.
+
+
+        An ObservedFile instance will have file metadata (size, modification time),
+        and a
+
+        status representing its import state. It may be linked to HarvestErrors
+
+        encountered while importing the file, and/or to Datasets representing the
+        content
+
+        of imported files.'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: A unique integer value identifying this observed file.
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ObservedFile'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ObservedFile'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ObservedFile'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ObservedFile'
+          description: ''
+      tags:
+      - files
+    delete:
+      operationId: destroyObservedFile
+      description: 'ObservedFiles are files that exist (or have existed) in a MonitoredPath
+        and have
+
+        been reported to Galvanalyser by the Harvester.
+
+
+        An ObservedFile instance will have file metadata (size, modification time),
+        and a
+
+        status representing its import state. It may be linked to HarvestErrors
+
+        encountered while importing the file, and/or to Datasets representing the
+        content
+
+        of imported files.'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: A unique integer value identifying this observed file.
+        schema:
+          type: string
+      responses:
+        '204':
+          description: ''
+      tags:
+      - files
+  /files/{id}/reimport/:
+    get:
+      operationId: reimportObservedFile
+      description: 'ObservedFiles are files that exist (or have existed) in a MonitoredPath
+        and have
+
+        been reported to Galvanalyser by the Harvester.
+
+
+        An ObservedFile instance will have file metadata (size, modification time),
+        and a
+
+        status representing its import state. It may be linked to HarvestErrors
+
+        encountered while importing the file, and/or to Datasets representing the
+        content
+
+        of imported files.'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: A unique integer value identifying this observed file.
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ObservedFile'
+          description: ''
+      tags:
+      - files
+  /datasets/:
+    get:
+      operationId: listDatasets
+      description: 'A Dataset contains structured data from an ObservedFile.
+
+
+        Datasets are decomposed within Galvanalyser into columns and datapoints,
+
+        providing an ability flexibly handle any kind of tabular data.'
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    example: 123
+                  next:
+                    type: string
+                    nullable: true
+                    format: uri
+                    example: http://api.example.org/accounts/?page=4
+                  previous:
+                    type: string
+                    nullable: true
+                    format: uri
+                    example: http://api.example.org/accounts/?page=2
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Dataset'
+          description: ''
+      tags:
+      - datasets
+    post:
+      operationId: createDataset
+      description: 'A Dataset contains structured data from an ObservedFile.
+
+
+        Datasets are decomposed within Galvanalyser into columns and datapoints,
+
+        providing an ability flexibly handle any kind of tabular data.'
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Dataset'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Dataset'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Dataset'
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dataset'
+          description: ''
+      tags:
+      - datasets
+  /datasets/{id}/:
+    get:
+      operationId: retrieveDataset
+      description: 'A Dataset contains structured data from an ObservedFile.
+
+
+        Datasets are decomposed within Galvanalyser into columns and datapoints,
+
+        providing an ability flexibly handle any kind of tabular data.'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: A unique integer value identifying this dataset.
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dataset'
+          description: ''
+      tags:
+      - datasets
+    put:
+      operationId: updateDataset
+      description: 'A Dataset contains structured data from an ObservedFile.
+
+
+        Datasets are decomposed within Galvanalyser into columns and datapoints,
+
+        providing an ability flexibly handle any kind of tabular data.'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: A unique integer value identifying this dataset.
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Dataset'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Dataset'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Dataset'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dataset'
+          description: ''
+      tags:
+      - datasets
+    patch:
+      operationId: partialUpdateDataset
+      description: 'A Dataset contains structured data from an ObservedFile.
+
+
+        Datasets are decomposed within Galvanalyser into columns and datapoints,
+
+        providing an ability flexibly handle any kind of tabular data.'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: A unique integer value identifying this dataset.
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Dataset'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Dataset'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Dataset'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dataset'
+          description: ''
+      tags:
+      - datasets
+    delete:
+      operationId: destroyDataset
+      description: 'A Dataset contains structured data from an ObservedFile.
+
+
+        Datasets are decomposed within Galvanalyser into columns and datapoints,
+
+        providing an ability flexibly handle any kind of tabular data.'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: A unique integer value identifying this dataset.
+        schema:
+          type: string
+      responses:
+        '204':
+          description: ''
+      tags:
+      - datasets
+  /columns/:
+    get:
+      operationId: listDataColumnTypes
+      description: 'DataColumnTypes support reuse of DataColumns over multiple DataSets
+
+        by abstracting their information.'
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: name
+        required: false
+        in: query
+        description: name
+        schema:
+          type: string
+      - name: unit__symbol
+        required: false
+        in: query
+        description: unit__symbol
+        schema:
+          type: string
+      - name: unit__name
+        required: false
+        in: query
+        description: unit__name
+        schema:
+          type: string
+      - name: is_default
+        required: false
+        in: query
+        description: is_default
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    example: 123
+                  next:
+                    type: string
+                    nullable: true
+                    format: uri
+                    example: http://api.example.org/accounts/?page=4
+                  previous:
+                    type: string
+                    nullable: true
+                    format: uri
+                    example: http://api.example.org/accounts/?page=2
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DataColumnType'
+          description: ''
+      tags:
+      - columns
+    post:
+      operationId: createDataColumnType
+      description: 'DataColumnTypes support reuse of DataColumns over multiple DataSets
+
+        by abstracting their information.'
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DataColumnType'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DataColumnType'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DataColumnType'
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataColumnType'
+          description: ''
+      tags:
+      - columns
+  /columns/{id}/:
+    get:
+      operationId: retrieveDataColumnType
+      description: 'DataColumnTypes support reuse of DataColumns over multiple DataSets
+
+        by abstracting their information.'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: A unique integer value identifying this data column type.
+        schema:
+          type: string
+      - name: name
+        required: false
+        in: query
+        description: name
+        schema:
+          type: string
+      - name: unit__symbol
+        required: false
+        in: query
+        description: unit__symbol
+        schema:
+          type: string
+      - name: unit__name
+        required: false
+        in: query
+        description: unit__name
+        schema:
+          type: string
+      - name: is_default
+        required: false
+        in: query
+        description: is_default
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataColumnType'
+          description: ''
+      tags:
+      - columns
+    put:
+      operationId: updateDataColumnType
+      description: 'DataColumnTypes support reuse of DataColumns over multiple DataSets
+
+        by abstracting their information.'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: A unique integer value identifying this data column type.
+        schema:
+          type: string
+      - name: name
+        required: false
+        in: query
+        description: name
+        schema:
+          type: string
+      - name: unit__symbol
+        required: false
+        in: query
+        description: unit__symbol
+        schema:
+          type: string
+      - name: unit__name
+        required: false
+        in: query
+        description: unit__name
+        schema:
+          type: string
+      - name: is_default
+        required: false
+        in: query
+        description: is_default
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DataColumnType'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DataColumnType'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DataColumnType'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataColumnType'
+          description: ''
+      tags:
+      - columns
+    patch:
+      operationId: partialUpdateDataColumnType
+      description: 'DataColumnTypes support reuse of DataColumns over multiple DataSets
+
+        by abstracting their information.'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: A unique integer value identifying this data column type.
+        schema:
+          type: string
+      - name: name
+        required: false
+        in: query
+        description: name
+        schema:
+          type: string
+      - name: unit__symbol
+        required: false
+        in: query
+        description: unit__symbol
+        schema:
+          type: string
+      - name: unit__name
+        required: false
+        in: query
+        description: unit__name
+        schema:
+          type: string
+      - name: is_default
+        required: false
+        in: query
+        description: is_default
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DataColumnType'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DataColumnType'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DataColumnType'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataColumnType'
+          description: ''
+      tags:
+      - columns
+    delete:
+      operationId: destroyDataColumnType
+      description: 'DataColumnTypes support reuse of DataColumns over multiple DataSets
+
+        by abstracting their information.'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: A unique integer value identifying this data column type.
+        schema:
+          type: string
+      - name: name
+        required: false
+        in: query
+        description: name
+        schema:
+          type: string
+      - name: unit__symbol
+        required: false
+        in: query
+        description: unit__symbol
+        schema:
+          type: string
+      - name: unit__name
+        required: false
+        in: query
+        description: unit__name
+        schema:
+          type: string
+      - name: is_default
+        required: false
+        in: query
+        description: is_default
+        schema:
+          type: string
+      responses:
+        '204':
+          description: ''
+      tags:
+      - columns
+  /units/:
+    get:
+      operationId: listDataUnits
+      description: DataUnits are units used to characterise data in a DataColumn.
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: name
+        required: false
+        in: query
+        description: name
+        schema:
+          type: string
+      - name: symbol
+        required: false
+        in: query
+        description: symbol
+        schema:
+          type: string
+      - name: is_default
+        required: false
+        in: query
+        description: is_default
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    example: 123
+                  next:
+                    type: string
+                    nullable: true
+                    format: uri
+                    example: http://api.example.org/accounts/?page=4
+                  previous:
+                    type: string
+                    nullable: true
+                    format: uri
+                    example: http://api.example.org/accounts/?page=2
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DataUnit'
+          description: ''
+      tags:
+      - units
+    post:
+      operationId: createDataUnit
+      description: DataUnits are units used to characterise data in a DataColumn.
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DataUnit'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DataUnit'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DataUnit'
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataUnit'
+          description: ''
+      tags:
+      - units
+  /units/{id}/:
+    get:
+      operationId: retrieveDataUnit
+      description: DataUnits are units used to characterise data in a DataColumn.
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: A unique integer value identifying this data unit.
+        schema:
+          type: string
+      - name: name
+        required: false
+        in: query
+        description: name
+        schema:
+          type: string
+      - name: symbol
+        required: false
+        in: query
+        description: symbol
+        schema:
+          type: string
+      - name: is_default
+        required: false
+        in: query
+        description: is_default
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataUnit'
+          description: ''
+      tags:
+      - units
+    put:
+      operationId: updateDataUnit
+      description: DataUnits are units used to characterise data in a DataColumn.
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: A unique integer value identifying this data unit.
+        schema:
+          type: string
+      - name: name
+        required: false
+        in: query
+        description: name
+        schema:
+          type: string
+      - name: symbol
+        required: false
+        in: query
+        description: symbol
+        schema:
+          type: string
+      - name: is_default
+        required: false
+        in: query
+        description: is_default
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DataUnit'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DataUnit'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DataUnit'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataUnit'
+          description: ''
+      tags:
+      - units
+    patch:
+      operationId: partialUpdateDataUnit
+      description: DataUnits are units used to characterise data in a DataColumn.
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: A unique integer value identifying this data unit.
+        schema:
+          type: string
+      - name: name
+        required: false
+        in: query
+        description: name
+        schema:
+          type: string
+      - name: symbol
+        required: false
+        in: query
+        description: symbol
+        schema:
+          type: string
+      - name: is_default
+        required: false
+        in: query
+        description: is_default
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DataUnit'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DataUnit'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DataUnit'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataUnit'
+          description: ''
+      tags:
+      - units
+    delete:
+      operationId: destroyDataUnit
+      description: DataUnits are units used to characterise data in a DataColumn.
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: A unique integer value identifying this data unit.
+        schema:
+          type: string
+      - name: name
+        required: false
+        in: query
+        description: name
+        schema:
+          type: string
+      - name: symbol
+        required: false
+        in: query
+        description: symbol
+        schema:
+          type: string
+      - name: is_default
+        required: false
+        in: query
+        description: is_default
+        schema:
+          type: string
+      responses:
+        '204':
+          description: ''
+      tags:
+      - units
+  /equipment/:
+    get:
+      operationId: listEquipments
+      description: 'Equipment can be attached to Datasets and used to view Datasets
+        which
+
+        have used similar equipment.'
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    example: 123
+                  next:
+                    type: string
+                    nullable: true
+                    format: uri
+                    example: http://api.example.org/accounts/?page=4
+                  previous:
+                    type: string
+                    nullable: true
+                    format: uri
+                    example: http://api.example.org/accounts/?page=2
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Equipment'
+          description: ''
+      tags:
+      - equipment
+    post:
+      operationId: createEquipment
+      description: 'Equipment can be attached to Datasets and used to view Datasets
+        which
+
+        have used similar equipment.'
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Equipment'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Equipment'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Equipment'
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Equipment'
+          description: ''
+      tags:
+      - equipment
+  /equipment/{id}/:
+    get:
+      operationId: retrieveEquipment
+      description: 'Equipment can be attached to Datasets and used to view Datasets
+        which
+
+        have used similar equipment.'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: A unique integer value identifying this equipment.
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Equipment'
+          description: ''
+      tags:
+      - equipment
+    put:
+      operationId: updateEquipment
+      description: 'Equipment can be attached to Datasets and used to view Datasets
+        which
+
+        have used similar equipment.'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: A unique integer value identifying this equipment.
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Equipment'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Equipment'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Equipment'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Equipment'
+          description: ''
+      tags:
+      - equipment
+    patch:
+      operationId: partialUpdateEquipment
+      description: 'Equipment can be attached to Datasets and used to view Datasets
+        which
+
+        have used similar equipment.'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: A unique integer value identifying this equipment.
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Equipment'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Equipment'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Equipment'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Equipment'
+          description: ''
+      tags:
+      - equipment
+    delete:
+      operationId: destroyEquipment
+      description: 'Equipment can be attached to Datasets and used to view Datasets
+        which
+
+        have used similar equipment.'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: A unique integer value identifying this equipment.
+        schema:
+          type: string
+      responses:
+        '204':
+          description: ''
+      tags:
+      - equipment
+  /cell_families/:
+    get:
+      operationId: listCellFamilys
+      description: CellFamilies describe types of Cell.
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: name
+        required: false
+        in: query
+        description: name
+        schema:
+          type: string
+      - name: form_factor
+        required: false
+        in: query
+        description: form_factor
+        schema:
+          type: string
+      - name: anode_chemistry
+        required: false
+        in: query
+        description: anode_chemistry
+        schema:
+          type: string
+      - name: cathode_chemistry
+        required: false
+        in: query
+        description: cathode_chemistry
+        schema:
+          type: string
+      - name: nominal_capacity
+        required: false
+        in: query
+        description: nominal_capacity
+        schema:
+          type: string
+      - name: nominal_cell_weight
+        required: false
+        in: query
+        description: nominal_cell_weight
+        schema:
+          type: string
+      - name: manufacturer
+        required: false
+        in: query
+        description: manufacturer
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    example: 123
+                  next:
+                    type: string
+                    nullable: true
+                    format: uri
+                    example: http://api.example.org/accounts/?page=4
+                  previous:
+                    type: string
+                    nullable: true
+                    format: uri
+                    example: http://api.example.org/accounts/?page=2
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CellFamily'
+          description: ''
+      tags:
+      - cell-families
+    post:
+      operationId: createCellFamily
+      description: CellFamilies describe types of Cell.
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CellFamily'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CellFamily'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CellFamily'
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CellFamily'
+          description: ''
+      tags:
+      - cell-families
+  /cell_families/{id}/:
+    get:
+      operationId: retrieveCellFamily
+      description: CellFamilies describe types of Cell.
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: A unique integer value identifying this cell family.
+        schema:
+          type: string
+      - name: name
+        required: false
+        in: query
+        description: name
+        schema:
+          type: string
+      - name: form_factor
+        required: false
+        in: query
+        description: form_factor
+        schema:
+          type: string
+      - name: anode_chemistry
+        required: false
+        in: query
+        description: anode_chemistry
+        schema:
+          type: string
+      - name: cathode_chemistry
+        required: false
+        in: query
+        description: cathode_chemistry
+        schema:
+          type: string
+      - name: nominal_capacity
+        required: false
+        in: query
+        description: nominal_capacity
+        schema:
+          type: string
+      - name: nominal_cell_weight
+        required: false
+        in: query
+        description: nominal_cell_weight
+        schema:
+          type: string
+      - name: manufacturer
+        required: false
+        in: query
+        description: manufacturer
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CellFamily'
+          description: ''
+      tags:
+      - cell-families
+    put:
+      operationId: updateCellFamily
+      description: CellFamilies describe types of Cell.
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: A unique integer value identifying this cell family.
+        schema:
+          type: string
+      - name: name
+        required: false
+        in: query
+        description: name
+        schema:
+          type: string
+      - name: form_factor
+        required: false
+        in: query
+        description: form_factor
+        schema:
+          type: string
+      - name: anode_chemistry
+        required: false
+        in: query
+        description: anode_chemistry
+        schema:
+          type: string
+      - name: cathode_chemistry
+        required: false
+        in: query
+        description: cathode_chemistry
+        schema:
+          type: string
+      - name: nominal_capacity
+        required: false
+        in: query
+        description: nominal_capacity
+        schema:
+          type: string
+      - name: nominal_cell_weight
+        required: false
+        in: query
+        description: nominal_cell_weight
+        schema:
+          type: string
+      - name: manufacturer
+        required: false
+        in: query
+        description: manufacturer
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CellFamily'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CellFamily'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CellFamily'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CellFamily'
+          description: ''
+      tags:
+      - cell-families
+    patch:
+      operationId: partialUpdateCellFamily
+      description: CellFamilies describe types of Cell.
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: A unique integer value identifying this cell family.
+        schema:
+          type: string
+      - name: name
+        required: false
+        in: query
+        description: name
+        schema:
+          type: string
+      - name: form_factor
+        required: false
+        in: query
+        description: form_factor
+        schema:
+          type: string
+      - name: anode_chemistry
+        required: false
+        in: query
+        description: anode_chemistry
+        schema:
+          type: string
+      - name: cathode_chemistry
+        required: false
+        in: query
+        description: cathode_chemistry
+        schema:
+          type: string
+      - name: nominal_capacity
+        required: false
+        in: query
+        description: nominal_capacity
+        schema:
+          type: string
+      - name: nominal_cell_weight
+        required: false
+        in: query
+        description: nominal_cell_weight
+        schema:
+          type: string
+      - name: manufacturer
+        required: false
+        in: query
+        description: manufacturer
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CellFamily'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CellFamily'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CellFamily'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CellFamily'
+          description: ''
+      tags:
+      - cell-families
+    delete:
+      operationId: destroyCellFamily
+      description: CellFamilies describe types of Cell.
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: A unique integer value identifying this cell family.
+        schema:
+          type: string
+      - name: name
+        required: false
+        in: query
+        description: name
+        schema:
+          type: string
+      - name: form_factor
+        required: false
+        in: query
+        description: form_factor
+        schema:
+          type: string
+      - name: anode_chemistry
+        required: false
+        in: query
+        description: anode_chemistry
+        schema:
+          type: string
+      - name: cathode_chemistry
+        required: false
+        in: query
+        description: cathode_chemistry
+        schema:
+          type: string
+      - name: nominal_capacity
+        required: false
+        in: query
+        description: nominal_capacity
+        schema:
+          type: string
+      - name: nominal_cell_weight
+        required: false
+        in: query
+        description: nominal_cell_weight
+        schema:
+          type: string
+      - name: manufacturer
+        required: false
+        in: query
+        description: manufacturer
+        schema:
+          type: string
+      responses:
+        '204':
+          description: ''
+      tags:
+      - cell-families
+  /cells/:
+    get:
+      operationId: listCells
+      description: Cells are specific cells which have generated data stored in Datasets/ObservedFiles.
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: display_name
+        required: false
+        in: query
+        description: display_name
+        schema:
+          type: string
+      - name: family__id
+        required: false
+        in: query
+        description: family__id
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    example: 123
+                  next:
+                    type: string
+                    nullable: true
+                    format: uri
+                    example: http://api.example.org/accounts/?page=4
+                  previous:
+                    type: string
+                    nullable: true
+                    format: uri
+                    example: http://api.example.org/accounts/?page=2
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Cell'
+          description: ''
+      tags:
+      - cells
+    post:
+      operationId: createCell
+      description: Cells are specific cells which have generated data stored in Datasets/ObservedFiles.
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Cell'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Cell'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Cell'
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cell'
+          description: ''
+      tags:
+      - cells
+  /cells/{id}/:
+    get:
+      operationId: retrieveCell
+      description: Cells are specific cells which have generated data stored in Datasets/ObservedFiles.
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: A unique integer value identifying this cell.
+        schema:
+          type: string
+      - name: display_name
+        required: false
+        in: query
+        description: display_name
+        schema:
+          type: string
+      - name: family__id
+        required: false
+        in: query
+        description: family__id
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cell'
+          description: ''
+      tags:
+      - cells
+    put:
+      operationId: updateCell
+      description: Cells are specific cells which have generated data stored in Datasets/ObservedFiles.
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: A unique integer value identifying this cell.
+        schema:
+          type: string
+      - name: display_name
+        required: false
+        in: query
+        description: display_name
+        schema:
+          type: string
+      - name: family__id
+        required: false
+        in: query
+        description: family__id
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Cell'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Cell'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Cell'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cell'
+          description: ''
+      tags:
+      - cells
+    patch:
+      operationId: partialUpdateCell
+      description: Cells are specific cells which have generated data stored in Datasets/ObservedFiles.
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: A unique integer value identifying this cell.
+        schema:
+          type: string
+      - name: display_name
+        required: false
+        in: query
+        description: display_name
+        schema:
+          type: string
+      - name: family__id
+        required: false
+        in: query
+        description: family__id
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Cell'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Cell'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Cell'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cell'
+          description: ''
+      tags:
+      - cells
+    delete:
+      operationId: destroyCell
+      description: Cells are specific cells which have generated data stored in Datasets/ObservedFiles.
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: A unique integer value identifying this cell.
+        schema:
+          type: string
+      - name: display_name
+        required: false
+        in: query
+        description: display_name
+        schema:
+          type: string
+      - name: family__id
+        required: false
+        in: query
+        description: family__id
+        schema:
+          type: string
+      responses:
+        '204':
+          description: ''
+      tags:
+      - cells
+  /users/:
+    get:
+      operationId: listUsers
+      description: Users are Django User instances custom-serialized for convenience.
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    example: 123
+                  next:
+                    type: string
+                    nullable: true
+                    format: uri
+                    example: http://api.example.org/accounts/?page=4
+                  previous:
+                    type: string
+                    nullable: true
+                    format: uri
+                    example: http://api.example.org/accounts/?page=2
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+          description: ''
+      tags:
+      - users
+    post:
+      operationId: createUser
+      description: Users are Django User instances custom-serialized for convenience.
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/User'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+      tags:
+      - users
+  /users/{id}/:
+    get:
+      operationId: retrieveUser
+      description: Users are Django User instances custom-serialized for convenience.
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: A unique integer value identifying this user.
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+      tags:
+      - users
+    put:
+      operationId: updateUser
+      description: Users are Django User instances custom-serialized for convenience.
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: A unique integer value identifying this user.
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/User'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+      tags:
+      - users
+    patch:
+      operationId: partialUpdateUser
+      description: Users are Django User instances custom-serialized for convenience.
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: A unique integer value identifying this user.
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/User'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+      tags:
+      - users
+    delete:
+      operationId: destroyUser
+      description: Users are Django User instances custom-serialized for convenience.
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: A unique integer value identifying this user.
+        schema:
+          type: string
+      responses:
+        '204':
+          description: ''
+      tags:
+      - users
+  /groups/:
+    get:
+      operationId: listGroups
+      description: Groups are Django Group instances custom-serialized for convenience.
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    example: 123
+                  next:
+                    type: string
+                    nullable: true
+                    format: uri
+                    example: http://api.example.org/accounts/?page=4
+                  previous:
+                    type: string
+                    nullable: true
+                    format: uri
+                    example: http://api.example.org/accounts/?page=2
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Group'
+          description: ''
+      tags:
+      - groups
+    post:
+      operationId: createGroup
+      description: Groups are Django Group instances custom-serialized for convenience.
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Group'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Group'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Group'
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Group'
+          description: ''
+      tags:
+      - groups
+  /groups/{id}/:
+    get:
+      operationId: retrieveGroup
+      description: Groups are Django Group instances custom-serialized for convenience.
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: A unique integer value identifying this group.
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Group'
+          description: ''
+      tags:
+      - groups
+    put:
+      operationId: updateGroup
+      description: Groups are Django Group instances custom-serialized for convenience.
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: A unique integer value identifying this group.
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Group'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Group'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Group'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Group'
+          description: ''
+      tags:
+      - groups
+    patch:
+      operationId: partialUpdateGroup
+      description: Groups are Django Group instances custom-serialized for convenience.
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: A unique integer value identifying this group.
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Group'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Group'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Group'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Group'
+          description: ''
+      tags:
+      - groups
+    delete:
+      operationId: destroyGroup
+      description: Groups are Django Group instances custom-serialized for convenience.
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: A unique integer value identifying this group.
+        schema:
+          type: string
+      responses:
+        '204':
+          description: ''
+      tags:
+      - groups
+  /harvesters/{id}/report/:
+    post:
+      operationId: reportHarvester
+      description: 'Process a Harvester''s report on its activity.
+
+        This will spawn various other database updates depending on payload content.
+
+
+        Only Harvesters are authorised to issue reports.'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: A unique integer value identifying this harvester.
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Harvester'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Harvester'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Harvester'
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Harvester'
+          description: ''
+      tags:
+      - harvesters
+  /groups/{id}/add/:
+    post:
+      operationId: addGroup
+      description: Groups are Django Group instances custom-serialized for convenience.
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: A unique integer value identifying this group.
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Group'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Group'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Group'
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Group'
+          description: ''
+      tags:
+      - groups
+  /groups/{id}/remove/:
+    post:
+      operationId: removeGroup
+      description: Groups are Django Group instances custom-serialized for convenience.
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: A unique integer value identifying this group.
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Group'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Group'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Group'
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Group'
+          description: ''
+      tags:
+      - groups
+  /login/:
+    post:
+      operationId: createLogin
+      description: ''
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema: {}
+          application/x-www-form-urlencoded:
+            schema: {}
+          multipart/form-data:
+            schema: {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema: {}
+          description: ''
+      tags:
+      - login
+  /logout/:
+    post:
+      operationId: createLogout
+      description: ''
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema: {}
+          application/x-www-form-urlencoded:
+            schema: {}
+          multipart/form-data:
+            schema: {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema: {}
+          description: ''
+      tags:
+      - logout
+  /logoutall/:
+    post:
+      operationId: createLogoutAll
+      description: 'Log the user out of all sessions
+
+        I.E. deletes all auth tokens for the user'
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema: {}
+          application/x-www-form-urlencoded:
+            schema: {}
+          multipart/form-data:
+            schema: {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema: {}
+          description: ''
+      tags:
+      - logoutall
+components:
+  schemas:
+    Harvester:
+      type: object
+      properties:
+        url:
+          type: string
+          readOnly: true
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+        sleep_time:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+        last_check_in:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        user_sets:
+          type: string
+          readOnly: true
+      required:
+      - name
+    HarvestError:
+      type: object
+      properties:
+        url:
+          type: string
+          readOnly: true
+        id:
+          type: integer
+          readOnly: true
+        harvester:
+          type: string
+        path:
+          type: string
+        file:
+          type: string
+          nullable: true
+        error:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+      required:
+      - harvester
+      - path
+      - error
+    MonitoredPath:
+      type: object
+      properties:
+        url:
+          type: string
+          readOnly: true
+        id:
+          type: integer
+          readOnly: true
+        path:
+          type: string
+        stable_time:
+          type: integer
+          maximum: 32767
+          minimum: 0
+        harvester:
+          type: string
+          readOnly: true
+          nullable: true
+        user_sets:
+          type: string
+          readOnly: true
+      required:
+      - path
+    ObservedFile:
+      type: object
+      properties:
+        url:
+          type: string
+          readOnly: true
+        id:
+          type: integer
+          readOnly: true
+        monitored_path:
+          type: string
+          readOnly: true
+        relative_path:
+          type: string
+          readOnly: true
+        state:
+          enum:
+          - RETRY IMPORT
+          - IMPORT FAILED
+          - UNSTABLE
+          - GROWING
+          - STABLE
+          - IMPORTING
+          - IMPORTED
+          type: string
+        last_observed_time:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        last_observed_size:
+          type: integer
+          readOnly: true
+        errors:
+          type: array
+          items:
+            type: string
+          readOnly: true
+        datasets:
+          type: array
+          items:
+            type: string
+          readOnly: true
+        upload_info:
+          type: string
+          readOnly: true
+    Dataset:
+      type: object
+      properties:
+        url:
+          type: string
+          readOnly: true
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          nullable: true
+        date:
+          type: string
+          format: date-time
+          readOnly: true
+        type:
+          type: string
+          nullable: true
+        purpose:
+          type: string
+        cell:
+          type: string
+          nullable: true
+        equipment:
+          type: array
+          items:
+            type: string
+        file:
+          type: string
+          readOnly: true
+        user_sets:
+          type: string
+          readOnly: true
+      required:
+      - purpose
+      - equipment
+    DataColumnType:
+      type: object
+      properties:
+        url:
+          type: string
+          readOnly: true
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+        description:
+          type: string
+        is_default:
+          type: boolean
+        unit:
+          type: string
+          nullable: true
+      required:
+      - name
+      - description
+      - unit
+    DataUnit:
+      type: object
+      properties:
+        url:
+          type: string
+          readOnly: true
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+        symbol:
+          type: string
+        description:
+          type: string
+        is_default:
+          type: boolean
+      required:
+      - name
+      - symbol
+      - description
+    Equipment:
+      type: object
+      properties:
+        url:
+          type: string
+          readOnly: true
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+        type:
+          type: string
+        datasets:
+          type: array
+          items:
+            type: string
+          readOnly: true
+      required:
+      - name
+      - type
+    CellFamily:
+      type: object
+      properties:
+        url:
+          type: string
+          readOnly: true
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+        form_factor:
+          type: string
+        link_to_datasheet:
+          type: string
+        anode_chemistry:
+          type: string
+        cathode_chemistry:
+          type: string
+        nominal_capacity:
+          type: number
+        nominal_cell_weight:
+          type: number
+        manufacturer:
+          type: string
+        cells:
+          type: array
+          items:
+            type: string
+          readOnly: true
+      required:
+      - name
+      - form_factor
+      - link_to_datasheet
+      - anode_chemistry
+      - cathode_chemistry
+      - nominal_capacity
+      - nominal_cell_weight
+      - manufacturer
+    Cell:
+      type: object
+      properties:
+        url:
+          type: string
+          readOnly: true
+        id:
+          type: integer
+          readOnly: true
+        display_name:
+          type: string
+          nullable: true
+        family:
+          type: string
+          nullable: true
+        datasets:
+          type: array
+          items:
+            type: string
+          readOnly: true
+    User:
+      type: object
+      properties:
+        url:
+          type: string
+          readOnly: true
+        id:
+          type: integer
+          readOnly: true
+        username:
+          type: string
+          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
+            only.
+          pattern: ^[\w.@+-]+\z
+          maxLength: 150
+        first_name:
+          type: string
+          maxLength: 150
+        last_name:
+          type: string
+          maxLength: 150
+        is_staff:
+          type: boolean
+          description: Designates whether the user can log into this admin site.
+        is_superuser:
+          type: boolean
+          description: Designates that this user has all permissions without explicitly
+            assigning them.
+      required:
+      - username
+    Group:
+      type: object
+      properties:
+        url:
+          type: string
+          readOnly: true
+        name:
+          type: string
+          maxLength: 150
+        users:
+          type: string
+          readOnly: true
+        readable_paths:
+          type: array
+          items:
+            type: string
+        editable_paths:
+          type: array
+          items:
+            type: string
+        readable_harvesters:
+          type: array
+          items:
+            type: string
+        editable_harvesters:
+          type: array
+          items:
+            type: string
+      required:
+      - name
+      - readable_paths
+      - editable_paths
+      - readable_harvesters
+      - editable_harvesters

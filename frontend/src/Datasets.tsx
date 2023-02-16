@@ -46,9 +46,9 @@ export default function Datasets() {
 
   useEffect(() => {
     console.log(`Dataset useEffect`)
-    Connection.fetchMany<DatasetFields>('datasets/?all=true').catch(e => console.warn)
-    Connection.fetchMany<CellFields>('cells/?all=true').catch(e => console.warn)
-    Connection.fetchMany<EquipmentFields>('equipment/?all=true').catch(e => console.warn)
+    Connection.fetchMany<DatasetFields>('datasets/').catch(e => console.warn)
+    Connection.fetchMany<CellFields>('cells/').catch(e => console.warn)
+    Connection.fetchMany<EquipmentFields>('equipment/').catch(e => console.warn)
   }, [Connection.user])
 
   const updateRow = (data: DatasetFields, context: RowGeneratorContext<DatasetFields>) => {
@@ -94,7 +94,7 @@ export default function Datasets() {
   };
 
   const get_cell_items = (dataset: DatasetFields) => {
-    const cellList = Connection.results.get_contents<CellFields>('cells/?all=true')
+    const cellList = Connection.results.get_contents<CellFields>('cells/')
     const menuItem = (cell: CellFields) => <MenuItem key={cell.id} value={cell.url}>{cell.display_name}</MenuItem>
     const items: ReactElement[] = []
     if (dataset?.cell) {
@@ -111,7 +111,7 @@ export default function Datasets() {
   }
 
   const get_equipment_items = (dataset: DatasetFields) => {
-    const equipmentList = Connection.results.get_contents<EquipmentFields>('equipment/?all=true')
+    const equipmentList = Connection.results.get_contents<EquipmentFields>('equipment/')
     const menuItem = (equipment: EquipmentFields) =>
       <MenuItem key={equipment.id} value={equipment.url}>{equipment.name}</MenuItem>
     const items: ReactElement[] = []
@@ -260,7 +260,7 @@ export default function Datasets() {
               />
             </Fragment>
           ]}
-          url={`datasets/?all=true`}
+          url={`datasets/`}
           styles={classes}
         />
       </Paper>

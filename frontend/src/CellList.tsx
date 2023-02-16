@@ -92,7 +92,7 @@ export default function CellList(props: CellDetailProps) {
             </Fragment>
           ]}
           new_row_values={{display_name: '', datasets: []}}
-          url={`cells/?all=true`}
+          url={`cells/`}
         />
         <Typography p={2} fontSize="small">
           Note: Cells assigned to existing datasets cannot be changed.

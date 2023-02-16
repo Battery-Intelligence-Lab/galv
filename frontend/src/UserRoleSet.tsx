@@ -116,7 +116,7 @@ export default class UserRoleSet extends Component<UserSetProps, UserSetState> {
   }
 
   async componentDidMount() {
-    Connection.fetchMany<User>('users/?all=true')
+    Connection.fetchMany<User>('users/')
       .then(results => results.map(r => r.content))
       .then(r => this.setState({all_users: r}))
   }

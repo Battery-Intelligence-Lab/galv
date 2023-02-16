@@ -106,7 +106,7 @@ export default function Harvesters() {
               />
             </Fragment>,
           ]}
-          url="harvesters/?all=true"
+          url="harvesters/"
         />}
       </Paper>
       {selected !== null && <HarvesterDetail harvester={selected} />}

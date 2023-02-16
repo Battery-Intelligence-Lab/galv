@@ -198,7 +198,7 @@ export default function Cells() {
             name: '', manufacturer: '', form_factor: '', link_to_datasheet: '', anode_chemistry: '', cathode_chemistry: '',
             nominal_capacity: 0, nominal_cell_weight: 0, cells: []
           }}
-          url="cell_families/?all=true"
+          url="cell_families/"
         />
         <Typography p={2} fontSize="small">
           Note: Cell families with cells cannot be changed.
