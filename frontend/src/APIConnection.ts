@@ -92,11 +92,13 @@ export class APIConnection {
   user: User | null = null
   cache_expiry_time = 60_000 // 1 minute
   results: ResponseCache
+  cookies: any
 
   constructor() {
     console.info("Spawn API connection")
-    this.login('admin', 'admin');
-    console.log(document.cookie)
+    const local_user = window.localStorage.getItem('user')
+    if (local_user)
+      this.user = JSON.parse(local_user)
     this.results = new ResponseCache(this.url)
   }
 
@@ -111,6 +113,7 @@ export class APIConnection {
           ...r.user,
           token: r.token
         }
+        window.localStorage.setItem('user', JSON.stringify(this.user))
         console.info(`Logged in as ${this.user?.username}`)
         return true
       })
@@ -152,12 +155,10 @@ export class APIConnection {
     // console.info('fetch options', options)
     const token = this.user?.token;
     let newOptions = {...options};
-    newOptions.credentials = 'same-origin';
     newOptions.headers = {...newOptions.headers};
     newOptions.headers['Content-Type'] = "application/json";
     newOptions.headers['Accept'] = "application/json";
     newOptions.headers['Authorization'] = `Bearer ${token}`;
-    // newOptions.headers['X-CSRF-TOKEN'] = this.get_cookie('csrf_access_token');
     return newOptions;
   }
 
