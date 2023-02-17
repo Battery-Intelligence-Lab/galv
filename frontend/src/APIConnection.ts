@@ -125,6 +125,7 @@ export class APIConnection {
 
   logout() {
     this.user = null
+    window.localStorage.removeItem('user')
     return fetch(this.url + "logout/", {method: 'POST'})
   }
 
