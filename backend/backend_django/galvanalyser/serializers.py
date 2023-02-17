@@ -260,7 +260,35 @@ class TimeseriesDataSerializer(serializers.Serializer):
         with connection.cursor() as cur:
             cur.execute(f"SELECT sample, value FROM timeseries_data WHERE column_id={instance.id} ORDER BY sample")
             data = cur.fetchall()
-        return {'observations': {x[0]: x[1] for x in data}}
+        keys = DataColumnStringKeys.objects.filter(column_id=instance.id)
+        if keys.exists():
+            key_map = {k.key: k.string for k in keys}
+            obs = {x[0]: key_map[x[1]] for x in data}
+        else:
+            obs = {x[0]: x[1] for x in data}
+        return {
+            'id': instance.id,
+            'url': self.context['request'].build_absolute_uri(reverse('datacolumn-data', args=(instance.id,))),
+            'observations': obs
+        }
+
+
+class TimeseriesDataListSerializer(serializers.Serializer):
+    def to_representation(self, instance):
+        with connection.cursor() as cur:
+            cur.execute(f"SELECT value FROM timeseries_data WHERE column_id={instance.id} ORDER BY sample")
+            data = cur.fetchall()
+        keys = DataColumnStringKeys.objects.filter(column_id=instance.id)
+        if keys.exists():
+            key_map = {k.key: k.string for k in keys}
+            obs = [key_map[x[0]] for x in data]
+        else:
+            obs = [x[0] for x in data]
+        return {
+            'id': instance.id,
+            'url': self.context['request'].build_absolute_uri(reverse('datacolumn-data', args=(instance.id,))),
+            'observations': obs
+        }
 
 
 class DataColumnSerializer(serializers.Serializer):
@@ -268,13 +296,18 @@ class DataColumnSerializer(serializers.Serializer):
     A column contains metadata and data. Data are an ordered list of values.
     """
     def to_representation(self, instance):
+        uri = self.context['request'].build_absolute_uri
         return {
             'id': instance.id,
-            'url': self.context['request'].build_absolute_uri(reverse('datacolumn-detail', args=(instance.id,))),
-            'name': instance.type.name,
+            'url': uri(reverse('datacolumn-detail', args=(instance.id,))),
+            'name': instance.name,
+            'dataset': uri(reverse('dataset-detail', args=(instance.dataset.id,))),
+            'is_numeric': not DataColumnStringKeys.objects.filter(column_id=instance.id).exists(),
+            'type_name': instance.type.name,
             'description': instance.type.description,
             'unit': DataUnitSerializer(instance.type.unit).data,
-            'data': self.context['request'].build_absolute_uri(reverse('datacolumn-data', args=(instance.id,)))
+            'data': uri(reverse('datacolumn-data', args=(instance.id,))),
+            'data_list': uri(reverse('datacolumn-data_list', args=(instance.id,)))
         }
 
 

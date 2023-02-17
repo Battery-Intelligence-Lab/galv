@@ -11,6 +11,7 @@ from .serializers import HarvesterSerializer, \
     DataUnitSerializer, \
     DataColumnSerializer, \
     TimeseriesDataSerializer, \
+    TimeseriesDataListSerializer, \
     TimeseriesRangeLabelSerializer, \
     UserSerializer, \
     GroupSerializer, \
@@ -620,7 +621,15 @@ class DataColumnViewSet(viewsets.ModelViewSet):
         Fetch the data for this column in an 'observations' dictionary of record_id: observed_value pairs.
         """
         column = get_object_or_404(DataColumn, id=pk)
-        return Response(TimeseriesDataSerializer(column).data)
+        return Response(TimeseriesDataSerializer(column, context={'request': self.request}).data)
+
+    @action(methods=['GET'], detail=True)
+    def data_list(self, request, pk: int = None):
+        """
+        Fetch the data for this column in an 'observations' dictionary of record_id: observed_value pairs.
+        """
+        column = get_object_or_404(DataColumn, id=pk)
+        return Response(TimeseriesDataListSerializer(column, context={'request': self.request}).data)
 
 
 class TimeseriesRangeLabelViewSet(viewsets.ModelViewSet):
