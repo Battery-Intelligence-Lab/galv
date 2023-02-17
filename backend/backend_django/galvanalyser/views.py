@@ -9,7 +9,6 @@ from .serializers import HarvesterSerializer, \
     DatasetSerializer, \
     EquipmentSerializer, \
     DataUnitSerializer, \
-    DataColumnTypeSerializer, \
     DataColumnSerializer, \
     TimeseriesDataSerializer, \
     TimeseriesRangeLabelSerializer, \
@@ -598,32 +597,30 @@ class DataUnitViewSet(viewsets.ModelViewSet):
     queryset = DataUnit.objects.all().order_by('id')
 
 
-class DataColumnTypeViewSet(viewsets.ModelViewSet):
-    """
-    DataColumnTypes support reuse of DataColumns over multiple DataSets
-    by abstracting their information.
-    """
-    serializer_class = DataColumnTypeSerializer
-    filterset_fields = ['name', 'unit__symbol', 'unit__name', 'is_default']
-    search_fields = ['@name', '@description']
-    queryset = DataColumnType.objects.all().order_by('id')
-
-
 class DataColumnViewSet(viewsets.ModelViewSet):
     """
     DataColumns describe which columns are in a Dataset's data.
     """
     serializer_class = DataColumnSerializer
+    filterset_fields = ['dataset__name', 'type__unit__symbol']
+    search_fields = ['@dataset__name']
     queryset = DataColumn.objects.all()
 
+    def get_queryset(self):
+        datasets_ids = [d.id for d in Dataset.objects.filter(
+            Q(file__monitored_path__user_group__in=self.request.user.groups.all()) |
+            Q(file__monitored_path__admin_group__in=self.request.user.groups.all()) |
+            Q(file__monitored_path__harvester__admin_group__in=self.request.user.groups.all())
+        ).only('id')]
+        return DataColumn.objects.filter(dataset_id__in=datasets_ids)
 
-class TimeseriesDataViewSet(viewsets.ModelViewSet):
-    """
-    TimeseriesData link observation identifiers (rows) with DataColumns,
-    and therefore hold the actual values in the cells of a dataset.
-    """
-    serializer_class = TimeseriesDataSerializer
-    queryset = TimeseriesData.objects.all()
+    @action(methods=['GET'], detail=True)
+    def data(self, request, pk: int = None):
+        """
+        Fetch the data for this column in an 'observations' dictionary of record_id: observed_value pairs.
+        """
+        column = get_object_or_404(DataColumn, id=pk)
+        return Response(TimeseriesDataSerializer(column).data)
 
 
 class TimeseriesRangeLabelViewSet(viewsets.ModelViewSet):

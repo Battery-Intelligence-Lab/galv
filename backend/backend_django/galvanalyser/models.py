@@ -175,6 +175,9 @@ class DataColumn(models.Model):
     type = models.ForeignKey(to=DataColumnType, on_delete=models.CASCADE)
     name = models.TextField(null=False)
 
+    def __str__(self):
+        return f"{self.name} ({self.type.unit.symbol})"
+
     class Meta:
         unique_together = [['dataset', 'name']]
 

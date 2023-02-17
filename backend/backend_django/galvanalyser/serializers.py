@@ -1,3 +1,5 @@
+from django.urls import reverse
+
 from .models import Harvester, \
     HarvestError, \
     MonitoredPath, \
@@ -235,38 +237,45 @@ class DatasetSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Dataset
-        fields = ['url', 'id', 'name', 'date', 'type', 'purpose', 'cell', 'equipment', 'file', 'user_sets']
-        read_only_fields = ['date', 'file', 'id', 'url', 'user_sets']
+        fields = ['url', 'id', 'name', 'date', 'type', 'purpose', 'cell', 'equipment', 'file', 'user_sets', 'columns']
+        read_only_fields = ['date', 'file', 'id', 'url', 'user_sets', 'columns']
 
 
-class DataUnitSerializer(serializers.HyperlinkedModelSerializer):
+class DataUnitSerializer(serializers.ModelSerializer):
     class Meta:
         model = DataUnit
-        fields = ['url', 'id', 'name', 'symbol', 'description', 'is_default']
-
-
-class DataColumnTypeSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta:
-        model = DataColumnType
-        fields = ['url', 'id', 'name', 'description', 'is_default', 'unit']
-
-
-class DataColumnSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta:
-        model = DataColumn
-        fields = '__all__'
-
-
-class TimeseriesDataSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta:
-        model = TimeseriesData
-        fields = '__all__'
+        fields = ['name', 'symbol', 'description']
 
 
 class TimeseriesRangeLabelSerializer(serializers.HyperlinkedModelSerializer):
+    data = serializers.SerializerMethodField()
+
     class Meta:
         model = TimeseriesRangeLabel
         fields = '__all__'
+
+
+class TimeseriesDataSerializer(serializers.Serializer):
+    def to_representation(self, instance):
+        with connection.cursor() as cur:
+            cur.execute(f"SELECT sample, value FROM timeseries_data WHERE column_id={instance.id} ORDER BY sample")
+            data = cur.fetchall()
+        return {'observations': {x[0]: x[1] for x in data}}
+
+
+class DataColumnSerializer(serializers.Serializer):
+    """
+    A column contains metadata and data. Data are an ordered list of values.
+    """
+    def to_representation(self, instance):
+        return {
+            'id': instance.id,
+            'url': self.context['request'].build_absolute_uri(reverse('datacolumn-detail', args=(instance.id,))),
+            'name': instance.type.name,
+            'description': instance.type.description,
+            'unit': DataUnitSerializer(instance.type.unit).data,
+            'data': self.context['request'].build_absolute_uri(reverse('datacolumn-data', args=(instance.id,)))
+        }
 
 
 class GroupSerializer(serializers.HyperlinkedModelSerializer):
