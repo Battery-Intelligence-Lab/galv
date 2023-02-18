@@ -27,6 +27,7 @@ import InputLabel from "@mui/material/InputLabel";
 import useStyles from "./UseStyles";
 import ActionButtons from "./ActionButtons";
 import Stack from "@mui/material/Stack";
+import DatasetChart from "./DatasetChart";
 
 export type DatasetFields = {
   url: string;
@@ -36,6 +37,7 @@ export type DatasetFields = {
   date: string;
   cell: string | null;
   equipment: string[];
+  columns: string[];
   purpose: string;
   user_sets: UserSet[];
 }
@@ -327,6 +329,9 @@ export default function Datasets() {
                   </DialogActions>
               </Dialog>
           </React.Fragment>
+      }
+      {
+        selected !== null && <DatasetChart dataset={selected}/>
       }
     </Container>
   );

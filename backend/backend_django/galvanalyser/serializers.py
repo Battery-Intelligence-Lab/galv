@@ -286,9 +286,15 @@ class TimeseriesDataListSerializer(serializers.Serializer):
             obs = [x[0] for x in data]
         return {
             'id': instance.id,
-            'url': self.context['request'].build_absolute_uri(reverse('datacolumn-data', args=(instance.id,))),
+            'url': self.context['request'].build_absolute_uri(reverse('datacolumn-data-list', args=(instance.id,))),
             'observations': obs
         }
+
+
+class DataColumnTypeSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = DataColumnType
+        fields = ['url', 'id', 'name', 'description', 'is_default', 'unit']
 
 
 class DataColumnSerializer(serializers.Serializer):
@@ -307,7 +313,7 @@ class DataColumnSerializer(serializers.Serializer):
             'description': instance.type.description,
             'unit': DataUnitSerializer(instance.type.unit).data,
             'data': uri(reverse('datacolumn-data', args=(instance.id,))),
-            'data_list': uri(reverse('datacolumn-data_list', args=(instance.id,)))
+            'data_list': uri(reverse('datacolumn-data-list', args=(instance.id,)))
         }
 
 

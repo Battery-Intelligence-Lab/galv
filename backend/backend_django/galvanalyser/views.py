@@ -10,6 +10,7 @@ from .serializers import HarvesterSerializer, \
     EquipmentSerializer, \
     DataUnitSerializer, \
     DataColumnSerializer, \
+    DataColumnTypeSerializer, \
     TimeseriesDataSerializer, \
     TimeseriesDataListSerializer, \
     TimeseriesRangeLabelSerializer, \
@@ -35,8 +36,7 @@ from .auth import HarvesterAccess
 from django.contrib.auth.models import User, Group
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
-from rest_framework import viewsets, serializers
-from rest_framework.permissions import AllowAny
+from rest_framework import viewsets, serializers, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from knox.views import LoginView as KnoxLoginView
@@ -87,7 +87,7 @@ def deserialize_datetime(serialized_value: str | float) -> timezone.datetime:
     request=None
 )
 class LoginView(KnoxLoginView):
-    permission_classes = [AllowAny]
+    permission_classes = [permissions.AllowAny]
     authentication_classes = [BasicAuthentication]
 
     def post(self, request, fmt=None):
@@ -537,7 +537,7 @@ class DatasetViewSet(viewsets.ModelViewSet):
         ).order_by('-date', '-id')
 
 
-class HarvestErrorViewSet(viewsets.ModelViewSet):
+class HarvestErrorViewSet(viewsets.ReadOnlyModelViewSet):
     """
     HarvestErrors are problems encountered by Harvesters during the crawling of
     MonitoredPaths or the importing or inspection of ObservedFiles.
@@ -588,7 +588,7 @@ class EquipmentViewSet(viewsets.ModelViewSet):
     queryset = Equipment.objects.all()
 
 
-class DataUnitViewSet(viewsets.ModelViewSet):
+class DataUnitViewSet(viewsets.ReadOnlyModelViewSet):
     """
     DataUnits are units used to characterise data in a DataColumn.
     """
@@ -598,7 +598,18 @@ class DataUnitViewSet(viewsets.ModelViewSet):
     queryset = DataUnit.objects.all().order_by('id')
 
 
-class DataColumnViewSet(viewsets.ModelViewSet):
+class DataColumnTypeViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    DataColumnTypes support reuse of DataColumns over multiple DataSets
+    by abstracting their information.
+    """
+    serializer_class = DataColumnTypeSerializer
+    filterset_fields = ['name', 'unit__symbol', 'unit__name', 'is_default']
+    search_fields = ['@name', '@description']
+    queryset = DataColumnType.objects.all().order_by('id')
+
+
+class DataColumnViewSet(viewsets.ReadOnlyModelViewSet):
     """
     DataColumns describe which columns are in a Dataset's data.
     """
@@ -640,7 +651,7 @@ class TimeseriesRangeLabelViewSet(viewsets.ModelViewSet):
     queryset = TimeseriesRangeLabel.objects.all()
 
 
-class UserViewSet(viewsets.ModelViewSet):
+class UserViewSet(viewsets.ReadOnlyModelViewSet):
     """
     Users are Django User instances custom-serialized for convenience.
     """
@@ -648,7 +659,7 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
 
 
-class GroupViewSet(viewsets.ModelViewSet):
+class GroupViewSet(viewsets.ReadOnlyModelViewSet):
     """
     Groups are Django Group instances custom-serialized for convenience.
     """

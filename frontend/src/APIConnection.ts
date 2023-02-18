@@ -168,6 +168,10 @@ export class APIConnection {
       .then((response) => {
         if (response.status >= 400) {
           console.error(response)
+          if (response.status === 401)
+            return this.logout().then(() => {
+              throw new Error(`Logged out: not authorized to access ${url}`)
+            })
           if (response.status === 404)
             this.results.remove(url)
           throw new Error(`Fetch failed for ${url}: ${response.status}`)
