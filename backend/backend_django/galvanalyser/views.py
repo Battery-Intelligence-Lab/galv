@@ -575,7 +575,7 @@ class CellViewSet(viewsets.ModelViewSet):
     Cells are specific cells which have generated data stored in Datasets/ObservedFiles.
     """
     serializer_class = CellSerializer
-    filterset_fields = ['display_name', 'family__id']
+    filterset_fields = ['display_name', 'uid', 'family__id']
     search_fields = ['@display_name']
     queryset = Cell.objects.all().order_by('-id')
 

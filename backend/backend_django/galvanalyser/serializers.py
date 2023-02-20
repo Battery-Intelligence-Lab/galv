@@ -198,7 +198,7 @@ class CellSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Cell
-        fields = ['url', 'id', 'display_name', 'family', 'datasets']
+        fields = ['url', 'id', 'uid', 'display_name', 'family', 'datasets']
         read_only_fields = ['id', 'url', 'datasets']
         extra_kwargs = {'display_name': {'allow_blank': True, 'allow_null': True}}
 
@@ -213,11 +213,12 @@ class CellSerializer(serializers.HyperlinkedModelSerializer):
         return value
 
     def create(self, validated_data):
+        uid = validated_data.pop('uid')
         display_name = validated_data.pop('display_name')
         family = validated_data.pop('family')
         if display_name == '':
             display_name = f"{family.name}_{family.cells.count()}"
-        return Cell.objects.create(family=family, display_name=display_name)
+        return Cell.objects.create(uid=uid, family=family, display_name=display_name)
 
 
 class EquipmentSerializer(serializers.HyperlinkedModelSerializer):

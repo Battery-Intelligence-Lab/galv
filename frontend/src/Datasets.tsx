@@ -97,7 +97,7 @@ export default function Datasets() {
 
   const get_cell_items = (dataset: DatasetFields) => {
     const cellList = Connection.results.get_contents<CellFields>('cells/')
-    const menuItem = (cell: CellFields) => <MenuItem key={cell.id} value={cell.url}>{cell.display_name}</MenuItem>
+    const menuItem = (cell: CellFields) => <MenuItem key={cell.id} value={cell.url}>{cell.uid}{cell.display_name? ` (${cell.display_name})` : ''}</MenuItem>
     const items: ReactElement[] = []
     if (dataset?.cell) {
       const cell = cellList.find(c => c.url === dataset.cell)

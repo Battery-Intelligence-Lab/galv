@@ -14,6 +14,7 @@ import ActionButtons from "./ActionButtons";
 export type CellFields = {
   id: number;
   url: string;
+  uid: string;
   display_name: string;
   family: string;
   datasets: string[];
@@ -24,6 +25,7 @@ type CellDetailProps = {
 }
 
 const columns = [
+  {label: 'UID', help: 'Unique identifier for the cell. This should be a serial number or similar unique to the specific cell.'},
   {label: 'Display Name', help: 'Human-friendly name for the cell'},
   {label: 'Linked Datasets', help: 'Number of datasets linked to this cell'},
   {label: 'Actions', help: 'Save / Delete a cell. Edits are disabled for cells that are in use'}
@@ -34,13 +36,13 @@ export default function CellList(props: CellDetailProps) {
 
   const addNewCell = (data: CellFields, context: RowGeneratorContext<CellFields>) => {
     context.mark_loading(true)
-    const insert_data = {display_name: data.display_name, family: props.family.url}
+    const insert_data = {uid: data.uid, display_name: data.display_name, family: props.family.url}
     return Connection.fetch('cells/', {body: JSON.stringify(insert_data), method: 'POST'})
   };
 
   const updateCell = (data: CellFields, context: RowGeneratorContext<CellFields>) => {
     context.mark_loading(true)
-    const insert_data = {display_name: data.display_name, family: props.family.url}
+    const insert_data = {uid: data.uid, display_name: data.display_name, family: props.family.url}
     return Connection.fetch(data.url, {body: JSON.stringify(insert_data), method: 'PATCH'})
       .then(r => r.content)
   };
@@ -55,6 +57,20 @@ export default function CellList(props: CellDetailProps) {
           columns={columns}
           row_generator={(cell, context) =>
             cell.family !== props.family.url ? null : [
+            <Fragment>
+              <TextField
+                name="uid"
+                value={cell.uid}
+                disabled={cell.datasets.length > 0}
+                placeholder={`Serial number or other unique identifer`}
+                InputProps={{
+                  classes: {
+                    input: classes.resize,
+                  },
+                }}
+                onChange={context.update}
+              />
+            </Fragment>,
             <Fragment>
               <TextField
                 name="display_name"

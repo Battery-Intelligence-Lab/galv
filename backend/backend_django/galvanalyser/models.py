@@ -117,10 +117,13 @@ class CellFamily(models.Model):
 
 class Cell(models.Model):
     display_name = models.TextField(null=True, unique=True)
+    uid = models.TextField(null=False, unique=True)
     family = models.ForeignKey(to=CellFamily, related_name='cells', on_delete=models.SET_NULL, null=True)
 
     def __str__(self):
-        return f"{self.display_name} [Cell {self.id}]"
+        if self.display_name:
+            return f"{self.uid} ({self.display_name})"
+        return self.uid
 
 
 class Dataset(models.Model):
