@@ -27,7 +27,7 @@ export type RowGeneratorContext<T> = {
   mark_loading: (state?: boolean) => void;
   refresh: (row_data: any) => void;
   refresh_from_api: () => void;
-  refresh_all_rows: () => void;
+  refresh_all_rows: (use_cache?: boolean) => void;
   is_new_row: boolean;
   value_changed: boolean;
 }
@@ -138,11 +138,11 @@ export default class AsyncTable<T extends APIObject> extends Component<AsyncTabl
     this.setState({changed_rows: rows})
   }
 
-  get_data: (url?: string) => void = (url) => {
+  get_data: (url?: string, use_cache?: boolean) => void = (url, use_cache = true) => {
     this.setState({loading: true, row_data: []})
     if (!url)
       url = this.props.url;
-    Connection.fetchMany(url)
+    Connection.fetchMany(url, {}, !use_cache)
       .then((res) => {
         console.log(res)
         this.setState({
@@ -186,9 +186,9 @@ export default class AsyncTable<T extends APIObject> extends Component<AsyncTabl
       )
   }
 
-  update_all = async () => {
+  update_all = async (use_cache: boolean = true) => {
     this.reset_new_row()
-    return this.get_data()
+    return this.get_data(this.props.url, use_cache)
   }
 
   get header_row() {

@@ -76,6 +76,13 @@ class ResponseCache {
     this.results = this.results.filter(i => i.url !== url)
   }
 
+  purge(parent: string) {
+    if (parent === '')
+      throw new Error(`You have passed an empty string to ResponseCache.remove.
+      This is likely a mistake and results will not be removed.`)
+    this.results = this.results.filter(r => !r.parents.includes(parent))
+  }
+
   get<T extends SingleAPIResponse>(url: string, include_children: boolean = true): CachedAPIResponse<T>[] {
     url = clean_url(url, this.url)
     return this.results.filter(i => i.url === url || (include_children && i.parents.includes(url)))
@@ -100,6 +107,22 @@ export class APIConnection {
     if (local_user)
       this.user = JSON.parse(local_user)
     this.results = new ResponseCache(this.url)
+  }
+
+  create_user(username: string, email: string, password: string): Promise<User> {
+    return fetch(
+      this.url + 'users/',
+      {
+        method: 'POST',
+        headers: {accept: 'application/json', 'content-type': 'application/json'},
+        body: JSON.stringify({username, email, password})
+      }
+    )
+      .then(r => {
+        if (r.status !== 200)
+          return r.json().then(json => {throw new Error(json.error)})
+        return r.json()
+      })
   }
 
   login(username: string, password: string) {
@@ -163,7 +186,7 @@ export class APIConnection {
     return newOptions;
   }
 
-  _fetch<T extends SingleAPIResponse>(url: string, options: object, parent: string = ""): Promise<void> {
+  _fetch<T extends SingleAPIResponse>(url: string, options: object, parent: string = "", void_cache: boolean = false): Promise<void> {
     return fetch(url, options)
       .then((response) => {
         if (response.status >= 400) {
@@ -178,7 +201,11 @@ export class APIConnection {
         }
         return response.json() as Promise<T|T[]>;
       })
-      .then(json => this.results.add<T>(json, parent))
+      .then(json => {
+        if (void_cache)
+          this.results.purge(parent)
+        this.results.add<T>(json, parent)
+      })
   }
 
   async fetchMany<T extends SingleAPIResponse>(url: string, options?: any, ignore_cache: boolean = true): Promise<CachedAPIResponse<T>[]> {
@@ -197,7 +224,7 @@ export class APIConnection {
       await Promise.all(fetch.map(r => this.fetch(r.url, options, ignore_cache = true)))
       return this.results.get(url)
     }
-    return this._fetch<T>(url, newOptions, url)
+    return this._fetch<T>(url, newOptions, url, ignore_cache)
       .then(() => this.results.get<T>(url))
   }
 

@@ -31,11 +31,12 @@ from .models import Harvester, \
     DataColumn, \
     TimeseriesData, \
     TimeseriesRangeLabel, \
-    FileState
+    FileState, VouchFor
 from .auth import HarvesterAccess
 from django.contrib.auth.models import User, Group
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from django.core import validators
 from rest_framework import viewsets, serializers, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -651,12 +652,42 @@ class TimeseriesRangeLabelViewSet(viewsets.ModelViewSet):
     queryset = TimeseriesRangeLabel.objects.all()
 
 
-class UserViewSet(viewsets.ReadOnlyModelViewSet):
+class UserViewSet(viewsets.ModelViewSet):
     """
     Users are Django User instances custom-serialized for convenience.
+
+    New users can be created at will, but they will be marked as is_active=False
+    until vouched for by an existing active user.
     """
     serializer_class = UserSerializer
-    queryset = User.objects.all()
+    queryset = User.objects.filter(is_active=False)
+
+    def create(self, request, *args, **kwargs):
+        # TODO: Move to serializer so only wanted fields appear in Django web form?
+        try:
+            username = request.data['username']
+            email = validators.validate_email(request.data['email'])
+            password = request.data['password']
+        except (KeyError, validators.ValidationError):
+            return error_response(f"Username, email, and password fields required.")
+        if User.objects.filter(username=username).exists():
+            return error_response(f"User {username} already exists.")
+        try:
+            new_user = User.objects.create_user(username=username, email=email, password=password, is_active=False)
+        except:
+            return error_response(error='Error creating user')
+        return Response(UserSerializer(new_user, context={'request': request}).data)
+
+    @action(methods=['GET'], detail=True)
+    def vouch_for(self, request, pk: int = None):
+        try:
+            new_user = User.objects.get(id=pk)
+        except User.DoesNotExist:
+            return error_response(f"User not found")
+        VouchFor.objects.create(new_user=new_user, vouching_user=request.user)
+        new_user.is_active = True
+        new_user.save()
+        return Response(UserSerializer(new_user, context={'request': request}).data)
 
 
 class GroupViewSet(viewsets.ReadOnlyModelViewSet):

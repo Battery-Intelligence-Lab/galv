@@ -1,19 +1,13 @@
-import React, {useEffect, useState} from "react";
+import React, {useState} from "react";
 import SyntaxHighlighter from 'react-syntax-highlighter';
 import { docco } from 'react-syntax-highlighter/dist/esm/styles/hljs';
-import {getToken} from "./Api"
 import Typography from '@mui/material/Typography';
+import Connection from "./APIConnection";
 
 
 export default function GetDatasetMatlab({dataset}) {
-  const [token, setToken] = useState('API_TOKEN');
-  useEffect(() => {
-  getToken().then(response => response.json()).then(data => {
-      setToken(data.access_token)
-    })
-    
-  }, [])
-  
+  const [token, setToken] = useState(Connection.user?.token || 'API_TOKEN');
+
   let domain = window.location.href.split('/')[2];
   domain = domain.split(':')[0]
 

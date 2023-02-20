@@ -103,7 +103,7 @@ export default function HarvesterDetail(props: HarvesterDetailProps) {
               inspectIconProps={selected?.id === row.id ? {color: 'info'} : {}}
               onSave={
                 context.is_new_row?
-                  () => addNewPath(row).then(context.refresh_all_rows) :
+                  () => addNewPath(row).then(() => context.refresh_all_rows()) :
                   () => updatePath(row).then(context.refresh)
               }
               saveButtonProps={{disabled: !context.value_changed}}

@@ -10,10 +10,11 @@ import {
   matchPath,
 } from "react-router-dom";
 import Login from "./Login"
+import ActivateUsers from "./ActivateUsers"
 import Harvesters from "./Harvesters"
-import DatasetDetail from "./DatasetDetail"
 import Cells from "./Cells"
 import SpeedIcon from '@mui/icons-material/Speed';
+import GroupAddIcon from '@mui/icons-material/GroupAdd';
 import Equipment from "./Equipment"
 import Datasets from "./Datasets"
 import TableChartIcon from '@mui/icons-material/TableChart';
@@ -44,6 +45,7 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import { ReactComponent as GalvanalyserLogo } from './Galvanalyser-logo.svg';
 import Connection from "./APIConnection";
+import Stack from "@mui/material/Stack";
 
 const PrivateRoute = (component: JSX.Element) => {
   const logged = Connection.is_logged_in;
@@ -150,6 +152,8 @@ export default function Core() {
   const isCellsPath = matchPath({path: cellsPath, end: true}, pathname) !== null
   const equipmentPath = "/equipment"
   const isEquipmentPath = matchPath({path: equipmentPath, end: true}, pathname) !== null
+  const userPath = "/users"
+  const isUsersPath = matchPath({path: userPath, end: true}, pathname) !== null
 
   const [open, setOpen] = React.useState(false);
   const handleDrawerOpen = () => {
@@ -198,7 +202,7 @@ export default function Core() {
   )
 
   const mainListItems = (
-    <div>
+    <Stack>
       <ListItem button 
         selected={isDatasetPath} 
         component={Link} to={datasetsPath}>
@@ -231,7 +235,16 @@ export default function Core() {
         </ListItemIcon>
         <ListItemText primary="Equipment" />
       </ListItem>
-    </div>
+      <Divider/>
+      <ListItem button
+                selected={isUsersPath}
+                component={Link} to={userPath}>
+        <ListItemIcon>
+          <GroupAddIcon/>
+        </ListItemIcon>
+        <ListItemText primary="Equipment" />
+      </ListItem>
+    </Stack>
   );
 
   let navigate = useNavigate();
@@ -291,11 +304,11 @@ export default function Core() {
   return (
       <Routes>
         <Route path="/login" element={<Login />}/>
-        <Route path="/" element={PrivateRoute(Layout)}>
-          <Route path="/cells" element={Cells()} />
-          <Route path="/equipment" element={Equipment()} />
-          <Route path="/harvesters" element={Harvesters()} />
-          <Route path="/dataset/:id" element={DatasetDetail()} />
+        <Route path={datasetsPath} element={PrivateRoute(Layout)}>
+          <Route path={cellsPath} element={Cells()} />
+          <Route path={equipmentPath} element={Equipment()} />
+          <Route path={harvestersPath} element={Harvesters()} />
+          <Route path={userPath} element={ActivateUsers()} />
           <Route index element={Datasets()} />
         </Route>
       </Routes>

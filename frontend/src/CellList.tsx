@@ -77,7 +77,7 @@ export default function CellList(props: CellDetailProps) {
                 classes={classes}
                 onSave={
                   context.is_new_row?
-                    () => addNewCell(cell, context).then(context.refresh_all_rows) :
+                    () => addNewCell(cell, context).then(() => context.refresh_all_rows()) :
                     () => updateCell(cell, context).then(context.refresh)
                 }
                 saveButtonProps={{disabled: !context.value_changed || cell.datasets.length > 0}}

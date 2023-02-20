@@ -71,7 +71,7 @@ export default function Equipment() {
                 classes={classes}
                 onSave={
                   context.is_new_row?
-                    () => addNewEquipment(equipment).then(context.refresh_all_rows) :
+                    () => addNewEquipment(equipment).then(() => context.refresh_all_rows()) :
                     () => updateEquipment(equipment).then(context.refresh)
                 }
                 saveButtonProps={{disabled: !context.value_changed || equipment.in_use}}

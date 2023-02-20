@@ -180,7 +180,7 @@ export default function Cells() {
                 inspectIconProps={selected?.id === family.id ? {color: 'info'} : {}}
                 onSave={
                   context.is_new_row?
-                    () => addNewCell(family, context).then(context.refresh_all_rows) :
+                    () => addNewCell(family, context).then(() => context.refresh_all_rows()) :
                     () => updateCell(family, context).then(context.refresh)
                 }
                 saveButtonProps={{disabled: !context.value_changed || family.cells.length > 0}}

@@ -218,3 +218,8 @@ class TimeseriesRangeLabel(models.Model):
     range_start = models.PositiveBigIntegerField(null=False)
     range_end = models.PositiveBigIntegerField(null=False)
     info = models.TextField()
+
+
+class VouchFor(models.Model):
+    new_user = models.ForeignKey(to=User, related_name='vouched_for', null=False, on_delete=models.DO_NOTHING)
+    vouching_user = models.ForeignKey(to=User, related_name='vouched_by', null=False, on_delete=models.DO_NOTHING)
