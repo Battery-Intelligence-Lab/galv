@@ -242,7 +242,7 @@ export default function Core() {
         <ListItemIcon>
           <GroupAddIcon/>
         </ListItemIcon>
-        <ListItemText primary="Equipment" />
+        <ListItemText primary="Activate Users" />
       </ListItem>
     </Stack>
   );

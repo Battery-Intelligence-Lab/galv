@@ -61,13 +61,15 @@ export default function Harvesters() {
           row_generator={(row, context) => [
             <Fragment key="id"><Typography>{row.id}</Typography></Fragment>,
             <Fragment key="name">
-              <TextField
-                InputProps={{classes: {input: classes.resize}}}
-                value={row.name}
-                name="name"
-                onChange={context.update}
-              >
-              </TextField>
+              {
+                userIsAdmin(row) ? <TextField
+                  InputProps={{classes: {input: classes.resize}}}
+                  value={row.name}
+                  name="name"
+                  onChange={context.update}
+                >
+                </TextField> : <Typography>{row.name}</Typography>
+              }
             </Fragment>,
             <Fragment key="last_check_in">
               {
@@ -80,19 +82,21 @@ export default function Harvesters() {
               }
             </Fragment>,
             <Fragment key="sleep_time">
-              <TextField
-                type="number"
-                placeholder="60"
-                InputProps={{
-                  classes: {
-                    input: classes.resize,
-                  },
-                }}
-                value={row.sleep_time || ''}
-                name="sleep_time"
-                onChange={context.update}
-              >
-              </TextField>
+              {
+                userIsAdmin(row) ? <TextField
+                  type="number"
+                  placeholder="60"
+                  InputProps={{
+                    classes: {
+                      input: classes.resize,
+                    },
+                  }}
+                  value={row.sleep_time || ''}
+                  name="sleep_time"
+                  onChange={context.update}
+                >
+                </TextField> : <Typography>{row.sleep_time}</Typography>
+              }
             </Fragment>,
             <Fragment key="actions">
               <ActionButtons

@@ -134,10 +134,16 @@ class HarvesterViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user_groups = self.request.user.groups.all()
-        return Harvester.objects.filter(
+        # Allow access to Harvesters where we have a Path
+        path_harvesters = [p.harvester.id for p in MonitoredPath.objects.filter(
+            Q(user_group__in=user_groups) | Q(admin_group__in=user_groups)
+        )]
+        my_harvesters = Harvester.objects.filter(
             Q(user_group__in=user_groups) |
-            Q(admin_group__in=user_groups)
-        ).order_by('-last_check_in', '-id')
+            Q(admin_group__in=user_groups) |
+            Q(id__in=path_harvesters)
+        )
+        return my_harvesters.order_by('-last_check_in', '-id')
 
     def create(self, request, *args, **kwargs):
         """
@@ -173,7 +179,7 @@ class HarvesterViewSet(viewsets.ModelViewSet):
             harvester = Harvester.objects.get(id=kwargs.get('pk'))
         except Harvester.DoesNotExist:
             return error_response(f'Harvester with id {request.data["id"]} not found.')
-        if not request.user.groups.filter(id=harvester.admin_group_id).exists():
+        if not request.user.groups.contains(harvester.admin_group):
             return error_response(f'Access denied.')
 
         name = request.data.get('name')
