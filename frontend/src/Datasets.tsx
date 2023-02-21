@@ -267,14 +267,6 @@ export default function Datasets() {
         />
       </Paper>
       {selected !== null &&
-          <Button variant="contained"
-                  className={classes.button}
-                  onClick={()=>{navigate(`/dataset/${selected.id}`);}}
-          >
-              Edit Metadata
-          </Button>
-      }
-      {selected !== null &&
           <React.Fragment>
               <Button
                   variant="contained" onClick={handleCodeOpen}
@@ -292,7 +284,7 @@ export default function Datasets() {
                     {`API Code (Python) for dataset "${selected.name}"`}
                   </DialogTitle>
                   <DialogContent>
-                      <GetDatasetPython dataset={selected.id} />
+                      <GetDatasetPython dataset={selected} />
                   </DialogContent>
                   <DialogActions>
                       <Button onClick={handleCodeClose} color="primary" autoFocus>
@@ -320,7 +312,7 @@ export default function Datasets() {
                     {`API Code (MATLAB) for dataset "${selected.name}"`}
                   </DialogTitle>
                   <DialogContent>
-                      <GetDatasetMatlab dataset={selected.id} />
+                      <GetDatasetMatlab dataset={selected} />
                   </DialogContent>
                   <DialogActions>
                       <Button onClick={handleMatlabCodeClose} color="primary" autoFocus>

@@ -54,7 +54,7 @@ for i = 1:length(dataset_ids)
     d = dataset_ids(i);
     
     % get data
-    dsURL = strcat(apiURL, '/', d);
+    dsURL = strcat(apiURL, '/', d, '/');
     meta = webread(dsURL, options);
     
     % append column data in columns
