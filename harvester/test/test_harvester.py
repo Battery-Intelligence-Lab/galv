@@ -2,11 +2,11 @@ import unittest
 from unittest.mock import patch
 import os
 from pathlib import Path
-import datetime
 
 from harvester.harvester.parse.input_file import InputFile
 import harvester.harvester.run
 import harvester.harvester.harvest
+
 
 class ConfigResponse:
     status_code = 200
@@ -137,7 +137,7 @@ class ConfigResponse:
 
 
 class JSONResponse:
-    def __init__(self, status_code = 200, json_data=None):
+    def __init__(self, status_code=200, json_data=None):
         self.status_code = status_code
         self.ok = 200 <= self.status_code < 400
         self.json_data = json_data if json_data else {}
