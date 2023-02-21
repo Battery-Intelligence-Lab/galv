@@ -107,7 +107,7 @@ export default function CellList(props: CellDetailProps) {
               />
             </Fragment>
           ]}
-          new_row_values={{display_name: '', datasets: []}}
+          new_row_values={{uid: '', display_name: '', family: props.family.url, datasets: []}}
           url={`cells/`}
         />
         <Typography p={2} fontSize="small">
