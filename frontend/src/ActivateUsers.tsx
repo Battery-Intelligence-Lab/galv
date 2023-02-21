@@ -37,7 +37,7 @@ export default function ActivateUsers() {
               </IconButton>
             </Fragment>
           ]}
-          url={`users/`}
+          url={`inactive_users/`}
           styles={classes}
         />
       </Paper>

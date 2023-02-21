@@ -18,12 +18,11 @@ cd backend_django || exit 1
 python manage.py makemigrations
 python manage.py migrate
 python manage.py init_db
+python manage.py create_superuser
 
 >&2 echo "... populating database"
 python manage.py loaddata galvanalyser/fixtures/DataUnit.json
 python manage.py loaddata galvanalyser/fixtures/DataColumnType.json
-python manage.py loaddata galvanalyser/fixtures/Users.json || \
-  echo "admin:admin already exists; continuing"
 
 >&2 echo "Initialisation complete - starting server"
 

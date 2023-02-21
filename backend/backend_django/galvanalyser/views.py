@@ -652,7 +652,7 @@ class TimeseriesRangeLabelViewSet(viewsets.ModelViewSet):
     queryset = TimeseriesRangeLabel.objects.all()
 
 
-class UserViewSet(viewsets.ModelViewSet):
+class InactiveViewSet(viewsets.ModelViewSet):
     """
     Users are Django User instances custom-serialized for convenience.
 
@@ -690,6 +690,14 @@ class UserViewSet(viewsets.ModelViewSet):
         return Response(UserSerializer(new_user, context={'request': request}).data)
 
 
+class UserViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    Users are Django User instances custom-serialized for convenience.
+    """
+    serializer_class = UserSerializer
+    queryset = User.objects.filter(is_active=True)
+
+
 class GroupViewSet(viewsets.ReadOnlyModelViewSet):
     """
     Groups are Django Group instances custom-serialized for convenience.
@@ -723,7 +731,7 @@ class GroupViewSet(viewsets.ReadOnlyModelViewSet):
             return Response(GroupSerializer(target_group, context={'request': request}).data)
 
         if group.editable_harvesters.first() is not None:
-            if not group.user_set.contains(self.request.user).exists():
+            if not group.user_set.contains(self.request.user):
                 return error_response(f"You are not authorised to edit this group")
             if len(group.user_set.all()) <= 1:
                 return error_response(f"Removing that user would leave the group empty")
@@ -772,7 +780,7 @@ class GroupViewSet(viewsets.ReadOnlyModelViewSet):
             return Response(GroupSerializer(target_group, context={'request': request}).data)
 
         if group.editable_harvesters.first() is not None:
-            if not group.user_set.contains(self.request.user).exists():
+            if not group.user_set.contains(self.request.user):
                 return error_response(f"You are not authorised to edit this group")
             return add_user(group, self.request)
 

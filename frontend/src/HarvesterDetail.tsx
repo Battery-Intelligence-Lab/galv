@@ -92,7 +92,7 @@ export default function HarvesterDetail(props: HarvesterDetailProps) {
               key={`userroleset-${row.id}`}
               user_sets={row.user_sets}
               last_updated={new Date()}
-              set_last_updated={context.refresh}
+              set_last_updated={() => context.refresh_all_rows(false)}
             />
           </Fragment>,
           <Fragment key="actions">

@@ -360,6 +360,14 @@ class UserSetSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
+    url = serializers.SerializerMethodField()
+
+    def get_url(self, instance):
+        uri = self.context['request'].build_absolute_uri
+        if instance.is_active:
+            return uri(reverse('user-detail', args=(instance.id,))),
+        return uri(reverse('inactive_user-detail', args=(instance.id,)))
+
     class Meta:
         model = User
         fields = [
