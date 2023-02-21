@@ -26,3 +26,5 @@ backend/backend_django/django_celery_beat.schedulersDatabaseScheduler
 .harvester/
 
 *.pptx
+
+docker-compose.override.yml
