@@ -1,39 +1,19 @@
 version: "2"
 services:
-  app:
-    image: app
-    build:
-      dockerfile: Dockerfile
-      context: backend
-    depends_on:
-      - postgres
-    ports:
-      - "5000:5000"
-    volumes:
-     - ./backend:/usr/app
-    restart: unless-stopped
-    working_dir: /usr/app
-    command: ./server.sh
-#    command: tail -F anything
-    env_file:
-     - ./.env
-     - backend/.env.secret
-
   harvester:
     build:
       dockerfile: Dockerfile
       context: ./harvester
-    command: python start.py --name "harvey" --url http://app:5000/ --user_id 42 --run_foreground --restart
-#    command: tail -F anything
     depends_on:
       - app
-    restart: unless-stopped
     volumes:
      - ./harvester:/usr/harvester
      - ./.harvester:/harvester_files
      - "${GALVANALYSER_HARVESTER_TEST_PATH}:/usr/test_data"
-     - "${GALVANALYSER_HARVESTER_BASE_PATH}:/usr/data"
     working_dir: /usr/harvester
+    restart: unless-stopped
+    command: python start.py --name "harvey" --url http://app:5000/ --user_id 1 --run_foreground --restart
+#    command: tail -F anything
 
   frontend:
     image: frontend_dev
