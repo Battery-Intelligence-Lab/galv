@@ -7,13 +7,13 @@ import harvester.run
 import harvester.settings
 
 
-def query(url: str, data: object = None) -> object:
+def query(url: str, data: object = None) -> object|list:
     if data is None:
-        click.echo(f"GET {url}")
         result = requests.get(url)
+        click.echo(f"GET {url} {result.status_code}")
     else:
-        click.echo(f"POST {url}; {json.dumps(data)}")
         result = requests.post(url, data=data)
+        click.echo(f"POST {url}; {json.dumps(data)} {result.status_code}")
     if result.status_code != 200:
         try:
             raise ConnectionError(result.json()['error'])
@@ -28,7 +28,7 @@ def get_name() -> str:
 
 def append_slash(url: str) -> str:
     if url[-1] != "/":
-        url = f"{url}"
+        url = f"{url}/"
     return url
 
 
@@ -36,11 +36,6 @@ def get_url() -> str:
     click.echo("Enter the URL for the Galvanalyser server you wish to connect to.")
     url = input("API URL: ")
     return append_slash(url)
-
-
-def get_users(url: str, page: int = 1) -> object:
-    result = query(f"{url}users/?page={page}")
-    return result
 
 
 def register(url: str = None, name: str = None, user_id: int = None, run_foreground: bool = False):
@@ -76,7 +71,7 @@ def register(url: str = None, name: str = None, user_id: int = None, run_foregro
     while True:
         result = query(f"{url}harvesters/?name={name}")
 
-        if len(result['results']) > 0:
+        if len(result) > 0:
             click.echo(f"There is already a harvester called {name}.", err=True)
             if name_specified:
                 exit(1)
@@ -89,31 +84,33 @@ def register(url: str = None, name: str = None, user_id: int = None, run_foregro
     if user_id is None:
         user_url = ""
         user_name = ""
-        page = 1
+        result = query(f"{url}users/")
+        page = 0
+        page_size = 10
         click.echo("All harvesters require an administrator to complete setup. Fetching users from database...")
         while user_url == "":
-            result = get_users(url, page=page)
+            users = result[page:page + page_size]
+            has_prev = page != 0
+            has_next = len(result) > ((page + 1) * page_size)
             click.echo("Press a number for the username you would like to assign as harvester admin.")
-            for i, r in enumerate(result['results']):
+            for i, r in enumerate(users):
                 s = f"{i}: {r['username']}"
-                if r['is_superuser']:
-                    s += f" [admin]"
                 click.echo(s)
-            if result['previous'] or result['next']:
-                p = "[p]revious" if result['previous'] else ""
-                n = "[n]ext" if result['next'] else ""
+            if has_prev or has_next:
+                p = "[p]revious" if has_prev else ""
+                n = "[n]ext" if has_next else ""
                 s = f"Or go to the {'/'.join([p, n])} page of results"
                 click.echo(s)
 
             user_id = click.getchar()
             if user_id == "p":
-                if not result['previous']:
+                if not has_prev:
                     click.echo("No previous page available to navigate to!")
                     continue
                 page -= 1
                 continue
             if user_id == "n":
-                if not result['next']:
+                if not has_next:
                     click.echo("No next page available to navigate to!")
                     continue
                 page += 1
@@ -121,14 +118,14 @@ def register(url: str = None, name: str = None, user_id: int = None, run_foregro
 
             try:
                 user_id = int(user_id)
-                assert user_id <= len(result['results'])
+                assert user_id <= page_size - 1
             except ValueError:
                 click.echo(f"Unrecognised option {user_id}")
             except AssertionError:
                 click.echo(f"{user_id} is not an available option")
 
-            user_name = result['results'][user_id]['username']
-            user_url = result['results'][user_id]['url']
+            user_name = users[user_id]['username']
+            user_url = users[user_id]['url']
     else:
         user_url = f"{url}users/{user_id}/"
         try:
@@ -162,7 +159,7 @@ def register(url: str = None, name: str = None, user_id: int = None, run_foregro
     if run_foreground:
         harvester.run.run_cycle()
     else:
-        subprocess.Popen(["python", "harvest.py"])
+        subprocess.Popen(["python", "-m", "harvester.run"])
         click.echo(f"Complete. Harvester is running and logging to {harvester.settings.get_logfile()}")
 
 

@@ -92,5 +92,5 @@ def run_cycle():
             logger.error(e)
 
 
-if __name__ == "main":
-    run()
+if __name__ == "__main__":
+    run_cycle()

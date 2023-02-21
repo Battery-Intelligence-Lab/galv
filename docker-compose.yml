@@ -1,38 +1,23 @@
 version: "2"
 services:
-#  app:
-##    image: app
-#    build:
-#      dockerfile: Dockerfile
-#      context: backend_flask
-#    depends_on:
-#      - postgres
-#    ports:
-#      - "5000:5000"
-#    volumes:
-#     - ./backend_flask:/usr/app
-#     - "${GALVANALYSER_HARVESTER_TEST_PATH}:/usr/test_data"
-#     - "${GALVANALYSER_HARVESTER_BASE_PATH}:/usr/data"
-#     - "${CELERY_LOG_DIR}:/var/log/celery"
-#    restart: unless-stopped
-#    working_dir: /usr/app
-#    command: ./server.sh
-#    env_file:
-#     - ./.env
-#  worker:
-#    image: app
-#    command: ./worker.sh
-#    depends_on:
-#      - app
-#    volumes:
-#     - ./backend:/usr/app
-#     - "${GALVANALYSER_HARVESTER_BASE_PATH}:/usr/data"
-#     - "${CELERY_LOG_DIR}:/var/log/celery"
-#
-#    working_dir: /usr/app
-#    restart: unless-stopped
-#    env_file:
-#     - ./.env
+  app:
+    image: app
+    build:
+      dockerfile: Dockerfile
+      context: backend
+    depends_on:
+      - postgres
+    ports:
+      - "5000:5000"
+    volumes:
+     - ./backend:/usr/app
+    working_dir: /usr/app
+    env_file:
+     - ./.env
+     - ./.env.secret
+    restart: unless-stopped
+    command: ./server.sh
+
   frontend:
     image: frontend
     build:
@@ -44,19 +29,20 @@ services:
       - "80:80"
     volumes:
      - ./frontend:/app
-    restart: unless-stopped
     working_dir: /app
     env_file:
      - ./.env
+    restart: unless-stopped
+
   postgres:
     image: "postgres"
     stop_signal: SIGINT                 # Fast Shutdown mode
     ports:
       - "5433:5433"
-    command: -p 5433
     volumes:
       - "${GALVANALYSER_DATA_PATH}:/var/lib/postgresql/data"
     env_file:
       - ./.env
+      - ./.env.secret
     restart: unless-stopped
-  
+    command: -p 5433
