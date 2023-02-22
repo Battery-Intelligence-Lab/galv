@@ -41,7 +41,7 @@ jobs:
         run: touch .env.secret && docker-compose -f docker-compose.test.yml build harvester
 
       - name: Run tests
-        run: docker-compose -f docker-compose.test.yml up
+        run: docker-compose -f docker-compose.test.yml up harvester
 
   test-backend:
     runs-on: ubuntu-latest
