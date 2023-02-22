@@ -32,10 +32,10 @@ jobs:
           sudo smbget -R $LIIONSDEN_SMB_PATH/test-suite-small -U "$LIIONSDEN_SMB_USERNAME%$LIIONSDEN_SMB_PASSWORD"
 
       - name: Build the stack
-        run: touch .env.secret && docker-compose build harvester
+        run: touch .env.secret && docker-compose -f docker-compose.dev.yml build harvester
 
       - name: Run tests
-        run: docker-compose run --rm harvester cd /usr && python -m unittest discover -s /usr/harvester/test
+        run: docker-compose -f docker-compose.dev.yml run --rm harvester cd /usr && python -m unittest discover -s /usr/harvester/test
 
   test-backend:
     runs-on: ubuntu-latest
