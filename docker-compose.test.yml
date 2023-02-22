@@ -42,4 +42,4 @@ services:
      - "${GALVANALYSER_HARVESTER_TEST_PATH}:/usr/test_data"
     working_dir: /usr/harvester
     restart: unless-stopped
-    command: python -m unittest discover -s /usr/harvester/test
+    command: cd /usr && python -m unittest discover -s /usr/harvester/test
