@@ -31,3 +31,15 @@ services:
       POSTGRES_PASSWORD: "galvanalyser"
       DJANGO_SECRET_KEY: "long-and-insecure-key-12345"
       DJANGO_TEST: "TRUE"
+
+  harvester:
+    build:
+      dockerfile: Dockerfile
+      context: ./harvester
+    volumes:
+     - ./harvester:/usr/harvester
+     - ./.harvester:/harvester_files
+     - "${GALVANALYSER_HARVESTER_TEST_PATH}:/usr/test_data"
+    working_dir: /usr/harvester
+    restart: unless-stopped
+    command: python -m unittest discover -s /usr/harvester/test
