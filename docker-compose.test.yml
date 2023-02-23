@@ -24,7 +24,7 @@ services:
     volumes:
      - ./backend:/usr/app
     restart: unless-stopped
-    working_dir: /usr/app
+    working_dir: /usr/app/backend_django
     command: ./server.sh
 #    command: tail -F anything
     environment:
