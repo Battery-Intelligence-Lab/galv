@@ -120,6 +120,7 @@ class CellFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Cell
 
+    uid = factory.Faker('bothify', text='?????-##??#-#?#??-?####-?#???')
     display_name = factory.Faker('catch_phrase')
     family = factory.SubFactory(CellFamilyFactory)
 

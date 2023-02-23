@@ -26,7 +26,10 @@ class CellFamilyTests(APITestCase):
         self.assertIsInstance(family_url, str)
         print("OK")
         print("Test create Cell")
-        response = self.client.post(reverse('cell-list'), {'display_name': 'test cell', 'family': family_url})
+        response = self.client.post(
+            reverse('cell-list'),
+            {'uid': 'some-unique-id-1234', 'display_name': 'test cell', 'family': family_url}
+        )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         print("OK")
 
@@ -44,6 +47,9 @@ class CellFamilyTests(APITestCase):
         response = self.client.patch(url, {'display_name': 'c123'})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(Cell.objects.get(id=cell.id).display_name, 'c123')
+        response = self.client.patch(url, {'uid': 'c123'})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(Cell.objects.get(id=cell.id).uid, 'c123')
         print("OK")
 
 
