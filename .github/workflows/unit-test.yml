@@ -38,7 +38,7 @@ jobs:
           sudo smbget -R $LIIONSDEN_SMB_PATH/test-suite-small -U "$LIIONSDEN_SMB_USERNAME%$LIIONSDEN_SMB_PASSWORD"
 
       - name: Build the stack
-        run: touch .env.secret && docker-compose -f docker-compose.test.yml build harvester
+        run: docker-compose -f docker-compose.test.yml build harvester
 
       # Enable tmate debugging of manually-triggered workflows if the input option was provided
       - name: Setup tmate session

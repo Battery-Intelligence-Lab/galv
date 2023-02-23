@@ -40,6 +40,6 @@ services:
      - ./harvester:/usr/harvester
      - ./.harvester:/harvester_files
      - "${GALVANALYSER_HARVESTER_TEST_PATH}:/usr/test_data"
-    working_dir: /usr/harvester
+    working_dir: /usr
     restart: unless-stopped
-    command: cd /usr && python -m unittest discover -s /usr/harvester/test
+    command: python -m unittest discover -s /usr/harvester/test
