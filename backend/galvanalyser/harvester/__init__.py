@@ -1,1 +1,0 @@
-from .harvester import main

@@ -1,0 +1,112 @@
+[
+    {
+        "pk": 1,
+        "model": "galvanalyser.DataUnit",
+        "fields": {
+            "name": "Unitless",
+            "symbol": "",
+            "description": "A value with no units",
+            "is_default": true
+        }
+    },
+    {
+        "pk": 2,
+        "model": "galvanalyser.DataUnit",
+        "fields": {
+            "name": "Time",
+            "symbol": "s",
+            "description": "Time in seconds",
+            "is_default": true
+        }
+    },
+    {
+        "pk": 3,
+        "model": "galvanalyser.DataUnit",
+        "fields": {
+            "name": "Volts",
+            "symbol": "V",
+            "description": "Voltage",
+            "is_default": true
+        }
+    },
+    {
+        "pk": 4,
+        "model": "galvanalyser.DataUnit",
+        "fields": {
+            "name": "Amps",
+            "symbol": "A",
+            "description": "Current",
+            "is_default": true
+        }
+    },
+    {
+        "pk": 5,
+        "model": "galvanalyser.DataUnit",
+        "fields": {
+            "name": "Energy",
+            "symbol": "Wh",
+            "description": "Energy in Watt-Hours",
+            "is_default": true
+        }
+    },
+    {
+        "pk": 6,
+        "model": "galvanalyser.DataUnit",
+        "fields": {
+            "name": "Charge",
+            "symbol": "Ah",
+            "description": "Charge in Amp-Hours",
+            "is_default": true
+        }
+    },
+    {
+        "pk": 7,
+        "model": "galvanalyser.DataUnit",
+        "fields": {
+            "name": "Temperature",
+            "symbol": "°c",
+            "description": "Temperature in Centigrade",
+            "is_default": true
+        }
+    },
+    {
+        "pk": 8,
+        "model": "galvanalyser.DataUnit",
+        "fields": {
+            "name": "Power",
+            "symbol": "W",
+            "description": "Power in Watts",
+            "is_default": true
+        }
+    },
+    {
+        "pk": 9,
+        "model": "galvanalyser.DataUnit",
+        "fields": {
+            "name": "Ohm",
+            "symbol": "Ω",
+            "description": "Resistance or impediance in Ohms",
+            "is_default": true
+        }
+    },
+    {
+        "pk": 10,
+        "model": "galvanalyser.DataUnit",
+        "fields": {
+            "name": "Degrees",
+            "symbol": "°",
+            "description": "Angle in degrees",
+            "is_default": true
+        }
+    },
+    {
+        "pk": 11,
+        "model": "galvanalyser.DataUnit",
+        "fields": {
+            "name": "Frequency",
+            "symbol": "Hz",
+            "description": "Frequency in Hz",
+            "is_default": true
+        }
+    }
+]

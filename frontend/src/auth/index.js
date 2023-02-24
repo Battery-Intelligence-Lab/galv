@@ -5,9 +5,10 @@ export const [useAuth, authFetch, login, logout] =
     createAuthProvider({
         accessTokenKey: 'access_token',
         onUpdateToken: (token) => fetch(
-          '/api/refresh', {
+          '/api-auth/refresh', {
             method: 'POST',
-            body: token.access_token
+            body: token.access_token,
+            headers: {'Content-Type': 'application/json'}
           }
         ).then((response) => {
           if (response.ok) {

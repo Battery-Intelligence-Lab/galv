@@ -6,9 +6,16 @@ on:
   pull_request:
     branches:
       - '**'
+  workflow_dispatch:
+    inputs:
+      debug_enabled:
+        type: boolean
+        description: 'Run the build with tmate debugging enabled (https://github.com/marketplace/actions/debugging-with-tmate)'
+        required: false
+        default: false
 
 jobs:
-  test:
+  test-harvester:
     runs-on: ubuntu-latest
     env:
       GALVANALYSER_HARVESTER_TEST_PATH: /home/mrobins/git/tmp/test_datafiles
@@ -31,7 +38,32 @@ jobs:
           sudo smbget -R $LIIONSDEN_SMB_PATH/test-suite-small -U "$LIIONSDEN_SMB_USERNAME%$LIIONSDEN_SMB_PASSWORD"
 
       - name: Build the stack
-        run: docker-compose up --detach --build
+        run: docker-compose -f docker-compose.test.yml build harvester
+
+      # Enable tmate debugging of manually-triggered workflows if the input option was provided
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
 
       - name: Run tests
-        run: docker-compose run --rm app python manage.py test
+        run: docker-compose -f docker-compose.test.yml up harvester
+
+  test-backend:
+    runs-on: ubuntu-latest
+    env:
+      POSTGRES_PASSWORD: "galvanalyser"
+      DJANGO_SECRET_KEY: "long-and-insecure-key-12345"
+      DJANGO_TEST: "TRUE"
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Build the stack
+        run: touch .env.secret && docker-compose -f docker-compose.test.yml up -d --build app_test
+
+      # Enable tmate debugging of manually-triggered workflows if the input option was provided
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
+
+      - name: Run tests
+        run: docker-compose -f docker-compose.test.yml run --rm app_test python manage.py test

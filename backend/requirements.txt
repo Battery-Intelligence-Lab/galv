@@ -1,0 +1,8 @@
+Django==4.1.4
+django-cors-headers==3.13.0
+django-filter==22.1
+djangorestframework==3.14.0
+django-rest-knox==4.2.0
+psycopg2-binary==2.9.5
+redis==4.4.0
+drf-spectacular==0.25.1

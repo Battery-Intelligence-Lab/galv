@@ -1,0 +1,37 @@
+import unittest
+from django.urls import reverse
+from rest_framework import status
+from rest_framework.test import APITestCase
+import logging
+
+from .factories import UserFactory, \
+    HarvesterFactory, \
+    DatasetFactory
+
+logger = logging.getLogger(__file__)
+logger.setLevel(logging.INFO)
+
+
+class DatasetTests(APITestCase):
+    def setUp(self):
+        self.harvester = HarvesterFactory.create(name='Test Dataset')
+        self.dataset = DatasetFactory.create(file__monitored_path__harvester=self.harvester)
+        self.user = UserFactory.create(username='test_user')
+        self.admin_user = UserFactory.create(username='test_user_admin')
+        self.user.groups.add(self.harvester.user_group)
+        self.admin_user.groups.add(self.harvester.admin_group)
+        self.url = reverse('dataset-detail', args=(self.dataset.id,))
+
+    def test_view(self):
+        self.client.force_login(self.user)
+        print("Test rejection of dataset view")
+        self.assertNotEqual(self.client.get(self.url).status_code, status.HTTP_200_OK)
+        print("OK")
+        self.client.force_login(self.admin_user)
+        print("Test dataset view")
+        self.assertEqual(self.client.get(self.url).status_code, status.HTTP_200_OK)
+        print("OK")
+
+
+if __name__ == '__main__':
+    unittest.main()

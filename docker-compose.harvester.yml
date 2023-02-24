@@ -1,0 +1,14 @@
+version: "2"
+services:
+  harvester:
+    build:
+      dockerfile: Dockerfile
+      context: ./harvester
+    volumes:
+     - ./harvester:/usr/harvester
+     - ./.harvester:/harvester_files
+    working_dir: /usr/harvester
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
+    command: python start.py
