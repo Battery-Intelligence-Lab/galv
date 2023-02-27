@@ -38,7 +38,7 @@ jobs:
           sudo smbget -R $LIIONSDEN_SMB_PATH/test-suite-small -U "$LIIONSDEN_SMB_USERNAME%$LIIONSDEN_SMB_PASSWORD"
 
       - name: Build the stack
-        run: docker-compose -f docker-compose.test.yml build harvester
+        run: touch .env.secret && docker-compose -f docker-compose.test.yml build harvester
 
       # Enable tmate debugging of manually-triggered workflows if the input option was provided
       - name: Setup tmate session
@@ -57,8 +57,14 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: Set up secrets
+        run: |
+          echo "POSTGRES_PASSWORD=$POSTGRES_PASSWORD" > .env.secret
+          echo "DJANGO_SECRET_KEY=$DJANGO_SECRET_KEY" >> .env.secret
+          echo "DJANGO_TEST=$DJANGO_TEST" >> .env.secret
+
       - name: Build the stack
-        run: touch .env.secret && docker-compose -f docker-compose.test.yml up -d --build app_test
+        run: docker-compose -f docker-compose.test.yml up -d --build app_test
 
       # Enable tmate debugging of manually-triggered workflows if the input option was provided
       - name: Setup tmate session

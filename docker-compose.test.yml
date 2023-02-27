@@ -9,8 +9,8 @@ services:
     command: -p 5433
     volumes:
       - "${GALVANALYSER_DATA_PATH}:/var/lib/postgresql/data"
-    environment:
-      POSTGRES_PASSWORD: "galvanalyser"
+    env_file:
+      - .env.secret
     restart: unless-stopped
 
   app_test:
@@ -27,10 +27,8 @@ services:
     working_dir: /usr/app/backend_django
     command: ../server.sh
 #    command: tail -F anything
-    environment:
-      POSTGRES_PASSWORD: "galvanalyser"
-      DJANGO_SECRET_KEY: "long-and-insecure-key-12345"
-      DJANGO_TEST: "TRUE"
+    env_file:
+      - .env.secret
 
   harvester:
     build:
