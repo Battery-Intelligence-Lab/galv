@@ -29,6 +29,7 @@ services:
       - "80:80"
     volumes:
      - ./frontend:/app
+     - /app/node_modules/
     working_dir: /app
     env_file:
      - ./.env
