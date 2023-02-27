@@ -111,7 +111,7 @@ export class APIConnection {
 
   create_user(username: string, email: string, password: string): Promise<User> {
     return fetch(
-      this.url + 'users/',
+      this.url + 'inactive_users/',
       {
         method: 'POST',
         headers: {accept: 'application/json', 'content-type': 'application/json'},

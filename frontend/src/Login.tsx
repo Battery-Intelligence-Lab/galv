@@ -121,6 +121,15 @@ export default function Login() {
       To activate a user, log in to Galvanalyser as an active user and
       select the appropriate inactive user from the 'users' tab on the left.
     </Typography>
+    <Button
+      fullWidth
+      variant="contained"
+      color="primary"
+      className={classes.submit}
+      onClick={()=>window.location.reload()}
+    >
+      Log in with another account
+    </Button>
   </Stack>
 
   const formContent = <Fragment>
