@@ -160,7 +160,8 @@ REST_KNOX = {
     'SECURE_HASH_ALGORITHM': 'cryptography.hazmat.primitives.hashes.SHA512',
     'USER_SERIALIZER': 'galvanalyser.serializers.UserSerializer',
     'AUTO_REFRESH': True,
-    'AUTH_HEADER_PREFIX': 'Bearer'
+    'AUTH_HEADER_PREFIX': 'Bearer',
+    'TOKEN_LIMIT_PER_USER': 20
 }
 SPECTACULAR_SETTINGS = {
     'TITLE': 'Battery Data API',

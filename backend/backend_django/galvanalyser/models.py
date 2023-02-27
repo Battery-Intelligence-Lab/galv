@@ -1,8 +1,6 @@
-from django.db.models import F
-from django.utils import timezone
 from django.db import models
 from django.contrib.auth.models import User, Group
-
+from knox.models import AuthToken
 import random
 
 
@@ -226,3 +224,11 @@ class TimeseriesRangeLabel(models.Model):
 class VouchFor(models.Model):
     new_user = models.ForeignKey(to=User, related_name='vouched_for', null=False, on_delete=models.DO_NOTHING)
     vouching_user = models.ForeignKey(to=User, related_name='vouched_by', null=False, on_delete=models.DO_NOTHING)
+
+
+class KnoxAuthToken(models.Model):
+    knox_token_key = models.TextField()
+    name = models.TextField()
+
+    def __str__(self):
+        return f"{self.knox_token_key}:{self.name}"

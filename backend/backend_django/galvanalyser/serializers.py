@@ -11,13 +11,14 @@ from .models import Harvester, \
     DataUnit, \
     DataColumnType, \
     DataColumn, \
-    TimeseriesData, \
     TimeseriesRangeLabel, \
-    DataColumnStringKeys
+    DataColumnStringKeys, \
+    KnoxAuthToken
 from django.db import connection
 from django.contrib.auth.models import User, Group
 from django.conf.global_settings import DATA_UPLOAD_MAX_MEMORY_SIZE
 from rest_framework import serializers
+from knox.models import AuthToken
 
 
 class HarvesterSerializer(serializers.HyperlinkedModelSerializer):
@@ -245,7 +246,7 @@ class DatasetSerializer(serializers.HyperlinkedModelSerializer):
 class DataUnitSerializer(serializers.ModelSerializer):
     class Meta:
         model = DataUnit
-        fields = ['name', 'symbol', 'description']
+        fields = ['url', 'id', 'name', 'symbol', 'description']
 
 
 class TimeseriesRangeLabelSerializer(serializers.HyperlinkedModelSerializer):
@@ -380,3 +381,25 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
             'is_staff',
             'is_superuser',
         ]
+
+
+class KnoxTokenSerializer(serializers.HyperlinkedModelSerializer):
+    created = serializers.SerializerMethodField()
+    expiry = serializers.SerializerMethodField()
+
+    def knox_token(self, instance):
+        key, id = instance.knox_token_key.split('_')
+        if not int(id) == self.context['request'].user.id:
+            raise ValueError('Bad user ID for token access')
+        return AuthToken.objects.get(user_id=int(id), token_key=key)
+
+    def get_created(self, instance):
+        return self.knox_token(instance).created
+
+    def get_expiry(self, instance):
+        return self.knox_token(instance).expiry
+
+    class Meta:
+        model = KnoxAuthToken
+        fields = ['url', 'id', 'name', 'created', 'expiry']
+        read_only_fields = ['url', 'id', 'created', 'expiry']

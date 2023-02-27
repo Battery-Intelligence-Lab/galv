@@ -186,7 +186,7 @@ export class APIConnection {
     return newOptions;
   }
 
-  _fetch<T extends SingleAPIResponse>(url: string, options: object, parent: string = "", void_cache: boolean = false): Promise<void> {
+  _fetch<T extends SingleAPIResponse>(url: string, options: object, parent: string = "", void_cache: boolean = false): Promise<string> {
     return fetch(url, options)
       .then((response) => {
         if (response.status >= 400) {
@@ -199,12 +199,19 @@ export class APIConnection {
             this.results.remove(url)
           throw new Error(`Fetch failed for ${url}: ${response.status}`)
         }
+        if (response.status === 204)
+          return null;
         return response.json() as Promise<T|T[]>;
       })
       .then(json => {
         if (void_cache)
           this.results.purge(parent)
+        if (json === null) {
+          this.results.remove(url)
+          return url
+        }
         this.results.add<T>(json, parent)
+        return json instanceof Array? parent : json.url
       })
   }
 
@@ -225,7 +232,7 @@ export class APIConnection {
       return this.results.get(url)
     }
     return this._fetch<T>(url, newOptions, url, ignore_cache)
-      .then(() => this.results.get<T>(url))
+      .then((result_url) => this.results.get<T>(result_url))
   }
 
   async fetch<T extends SingleAPIResponse>(url: string, options?: any, ignore_cache = false): Promise<CachedAPIResponse<T>> {
@@ -244,7 +251,7 @@ export class APIConnection {
       return results[0]
     }
     return this._fetch<T>(url, newOptions)
-      .then(() => this.results.get<T>(url)[0])
+      .then((result_url) => this.results.get<T>(result_url)[0])
   }
 }
 

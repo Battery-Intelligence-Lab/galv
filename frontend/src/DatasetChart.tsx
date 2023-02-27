@@ -8,6 +8,8 @@ import Typography from "@mui/material/Typography";
 import Stack from "@mui/material/Stack";
 
 export type UnitFields = {
+  url: string;
+  id: number;
   name: string;
   symbol: string;
   description: string;

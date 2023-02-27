@@ -46,6 +46,7 @@ import ListItemText from '@mui/material/ListItemText';
 import { ReactComponent as GalvanalyserLogo } from './Galvanalyser-logo.svg';
 import Connection from "./APIConnection";
 import Stack from "@mui/material/Stack";
+import Tokens from "./Tokens";
 
 const PrivateRoute = (component: JSX.Element) => {
   const logged = Connection.is_logged_in;
@@ -154,6 +155,8 @@ export default function Core() {
   const isEquipmentPath = matchPath({path: equipmentPath, end: true}, pathname) !== null
   const userPath = "/users"
   const isUsersPath = matchPath({path: userPath, end: true}, pathname) !== null
+  const tokenPath = "/tokens"
+  const isTokenPath = matchPath({path: tokenPath, end: true}, pathname) !== null
 
   const [open, setOpen] = React.useState(false);
   const handleDrawerOpen = () => {
@@ -162,44 +165,6 @@ export default function Core() {
   const handleDrawerClose = () => {
     setOpen(false);
   };
-
-  const [tokenOpen, setTokenOpen] = React.useState(false);
-  const [token, setToken] = React.useState<string|undefined>();
-
-  const handleTokenOpen = () => {
-    setToken(Connection.user?.token)
-    setTokenOpen(true);
-  };
-
-  const handleTokenClose = () => {
-    setTokenOpen(false);
-  };
-
-  const tokenGenerator = (
-    <React.Fragment>
-    <Button color="inherit" onClick={handleTokenOpen}>
-      API token
-    </Button>
-    <Dialog
-        open={tokenOpen}
-        onClose={handleTokenClose}
-      >
-        <DialogTitle>
-          {"API Token"}
-        </DialogTitle>
-        <DialogContent>
-          <DialogContentText style={{ wordWrap: 'break-word' }}>
-            {token}
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleTokenClose} color="primary" autoFocus>
-            Close 
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </React.Fragment>
-  )
 
   const mainListItems = (
     <Stack>
@@ -270,7 +235,11 @@ export default function Core() {
         <Button color="inherit" >
           User: {userDisplayName}
         </Button>
-        {tokenGenerator}
+        <Button color="inherit" onClick={() => {
+          navigate('/tokens')
+        }}>
+          Manage API Tokens
+        </Button>
         <Button color="inherit" onClick={() => {
           Connection.logout().then(()=> {navigate('/login');});
         }}>
@@ -309,6 +278,7 @@ export default function Core() {
           <Route path={equipmentPath} element={Equipment()} />
           <Route path={harvestersPath} element={Harvesters()} />
           <Route path={userPath} element={ActivateUsers()} />
+          <Route path={tokenPath} element={Tokens()} />
           <Route index element={Datasets()} />
         </Route>
       </Routes>

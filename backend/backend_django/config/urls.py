@@ -35,6 +35,7 @@ router.register(r'cells', views.CellViewSet)
 router.register(r'inactive_users', views.InactiveViewSet, basename='inactive_user')
 router.register(r'users', views.UserViewSet, basename='user')
 router.register(r'groups', views.GroupViewSet)
+router.register(r'tokens', views.TokenViewSet)
 
 # Wire up our API using automatic URL routing.
 # Additionally, we include login URLs for the browsable API.
@@ -46,6 +47,7 @@ urlpatterns = [
     path(r'login/', views.LoginView.as_view(), name='knox_login'),
     path(r'logout/', views.LogoutView.as_view(), name='knox_logout'),
     path(r'logoutall/', views.LogoutAllView.as_view(), name='knox_logoutall'),
+    path(r'create_token/', views.CreateTokenView.as_view(), name='knox_create_token'),
     path('schema/', SpectacularAPIView.as_view(), name='schema'),
     path('schema/swagger-ui/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
     path('schema/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
