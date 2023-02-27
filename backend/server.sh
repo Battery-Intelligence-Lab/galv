@@ -7,7 +7,7 @@ set -e
 PGUP=1
 
 while [ $PGUP -ne 0 ]; do
-  pg_isready -d "postgresql://postgres:galvanalyser@postgres:5433/postgres"
+  pg_isready -d "postgresql://postgres:galvanalyser@${POSTGRES_HOST:-postgres}:${POSTGRES_PORT:-5433}/postgres"
   PGUP=$?
   >&2 echo "Postgres is unavailable - sleeping"
   sleep 1

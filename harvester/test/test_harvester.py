@@ -7,6 +7,8 @@ from harvester.harvester.parse.input_file import InputFile
 import harvester.harvester.run
 import harvester.harvester.harvest
 
+def get_test_file_path():
+    return os.getenv('TEST_DIR', "/usr/test_data")
 
 class ConfigResponse:
     status_code = 200
@@ -20,7 +22,7 @@ class ConfigResponse:
             "sleep_time": 0,
             "monitored_paths": [
                 {
-                    "path": "/usr/test_data",
+                    "path": get_test_file_path(),
                     "stable_time": 0
                 }
             ],
@@ -183,13 +185,13 @@ class TestHarvester(unittest.TestCase):
         mock_logger.error = fail
         mock_report.return_value = JSONResponse(200, {'state': 'STABLE'})
         mock_import.return_value = True
-        harvester.harvester.run.harvest_path(Path('/usr/test_data'))
+        harvester.harvester.run.harvest_path(Path(get_test_file_path()))
         files = []
         for c in mock_import.call_args_list:
             if c.args[1] not in files:
                 files.append(c.args[1])
         if len(files) != 5:
-            raise AssertionError(f"Did not find 5 files in path /usr/test_data")
+            raise AssertionError(f"Did not find 5 files in path {get_test_file_path()}")
         for f in files:
             for task in ['file_size', 'import']:
                 ok = False
@@ -210,8 +212,8 @@ class TestHarvester(unittest.TestCase):
         mock_report.return_value = JSONResponse(
             200, {'upload_info': {'last_record_number': 0, 'columns': []}}
         )
-        if not harvester.harvester.harvest.import_file('/usr/test_data', filename):
-            raise AssertionError(f"Import failed for /usr/test_data/{filename}")
+        if not harvester.harvester.harvest.import_file(get_test_file_path(), filename):
+            raise AssertionError(f"Import failed for {get_test_file_path()}/{filename}")
         self.validate_report_calls(mock_report.call_args_list)
 
     def validate_report_calls(self, calls):
