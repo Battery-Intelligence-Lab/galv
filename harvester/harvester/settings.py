@@ -5,7 +5,7 @@ import logging
 import logging.handlers
 
 logging.basicConfig(
-    format='%(asctime)s %(levelname)s %(message)s [%(name)s]',
+    format='%(asctime)s %(levelname)s %(message)s [%(name)s:%(lineno)d]',
     level=logging.INFO,
     datefmt='%Y-%m-%d %H:%M:%S'
 )
