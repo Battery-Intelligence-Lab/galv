@@ -323,7 +323,11 @@ class GroupSerializer(serializers.HyperlinkedModelSerializer):
     users = serializers.SerializerMethodField()
 
     def get_users(self, instance) -> list:
-        return UserSerializer(instance.user_set.all(), many=True, context={'request': self.context['request']}).data
+        return UserSerializer(
+            instance.user_set.filter(is_active=True),
+            many=True,
+            context={'request': self.context['request']}
+        ).data
 
     class Meta:
         model = Group
@@ -343,7 +347,11 @@ class UserSetSerializer(serializers.HyperlinkedModelSerializer):
         return self.context.get('description')
 
     def get_users(self, instance) -> list:
-        return UserSerializer(instance.user_set.all(), many=True, context={'request': self.context['request']}).data
+        return UserSerializer(
+            instance.user_set.filter(is_active=True),
+            many=True,
+            context={'request': self.context['request']}
+        ).data
 
     def get_name(self, instance):
         return self.context.get('name', instance.name)
@@ -375,6 +383,7 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
             'url',
             'id',
             'username',
+            'email',
             'first_name',
             'last_name',
             'is_active',

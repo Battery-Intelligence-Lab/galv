@@ -18,11 +18,6 @@ import GroupAddIcon from '@mui/icons-material/GroupAdd';
 import Equipment from "./Equipment"
 import Datasets from "./Datasets"
 import TableChartIcon from '@mui/icons-material/TableChart';
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogContentText from '@mui/material/DialogContentText';
-import DialogTitle from '@mui/material/DialogTitle';
 import BatteryUnknownIcon from '@mui/icons-material/BatteryUnknown';
 import BackupIcon from '@mui/icons-material/Backup';
 import { makeStyles} from "@mui/styles";
@@ -47,6 +42,7 @@ import { ReactComponent as GalvanalyserLogo } from './Galvanalyser-logo.svg';
 import Connection from "./APIConnection";
 import Stack from "@mui/material/Stack";
 import Tokens from "./Tokens";
+import UserProfile from "./UserProfile";
 
 const PrivateRoute = (component: JSX.Element) => {
   const logged = Connection.is_logged_in;
@@ -153,8 +149,10 @@ export default function Core() {
   const isCellsPath = matchPath({path: cellsPath, end: true}, pathname) !== null
   const equipmentPath = "/equipment"
   const isEquipmentPath = matchPath({path: equipmentPath, end: true}, pathname) !== null
-  const userPath = "/users"
-  const isUsersPath = matchPath({path: userPath, end: true}, pathname) !== null
+  const usersPath = "/users"
+  const isUsersPath = matchPath({path: usersPath, end: true}, pathname) !== null
+  const profilePath = "/profile"
+  const isProfilePath = matchPath({path: profilePath, end: true}, pathname) !== null
   const tokenPath = "/tokens"
   const isTokenPath = matchPath({path: tokenPath, end: true}, pathname) !== null
 
@@ -203,7 +201,7 @@ export default function Core() {
       <Divider/>
       <ListItem button
                 selected={isUsersPath}
-                component={Link} to={userPath}>
+                component={Link} to={usersPath}>
         <ListItemIcon>
           <GroupAddIcon/>
         </ListItemIcon>
@@ -236,7 +234,12 @@ export default function Core() {
           User: {userDisplayName}
         </Button>
         <Button color="inherit" onClick={() => {
-          navigate('/tokens')
+          navigate(profilePath)
+        }}>
+          Manage Profile
+        </Button>
+        <Button color="inherit" onClick={() => {
+          navigate(tokenPath)
         }}>
           Manage API Tokens
         </Button>
@@ -277,7 +280,8 @@ export default function Core() {
           <Route path={cellsPath} element={Cells()} />
           <Route path={equipmentPath} element={Equipment()} />
           <Route path={harvestersPath} element={Harvesters()} />
-          <Route path={userPath} element={ActivateUsers()} />
+          <Route path={usersPath} element={ActivateUsers()} />
+          <Route path={profilePath} element={UserProfile()} />
           <Route path={tokenPath} element={Tokens()} />
           <Route index element={Datasets()} />
         </Route>

@@ -102,6 +102,11 @@ class LoginView(KnoxLoginView):
             return super(LoginView, self).post(request=request, format=fmt)
         return Response({'detail': "Anonymous login not allowed"}, status=401)
 
+    def get_post_response_data(self, request, token, instance):
+        return {
+            **UserSerializer(request.user, context={'request': request}).data,
+            'token': token
+        }
 
 @extend_schema(
     description="Log out current Knox Token.",
@@ -778,6 +783,33 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
     """
     serializer_class = UserSerializer
     queryset = User.objects.filter(is_active=True)
+
+    @action(detail=True, methods=['PATCH'])
+    def update_profile(self, request, pk: int = None):
+        try:
+            user = User.objects.get(id=pk)
+        except User.DoesNotExist:
+            return error_response("User not found", 404)
+        if user != request.user:
+            return error_response("You may only edit your own details", 401)
+        email = request.data.get('email')
+        if email:
+            try:
+                validators.validate_email(email)
+            except validators.ValidationError:
+                return error_response("Invalid email")
+        password = request.data.get('password')
+        if password and not len(password) > 7:
+            return error_response("Password must be at least 7 characters")
+        current_password = request.data.get('currentPassword')
+        if not user.check_password(current_password):
+            return error_response("You must include the correct current password", 401)
+        if email:
+            user.email = email
+        if password:
+            user.set_password(password)
+        user.save()
+        return Response(UserSerializer(user, context={'request': request}).data)
 
 
 class GroupViewSet(viewsets.ReadOnlyModelViewSet):

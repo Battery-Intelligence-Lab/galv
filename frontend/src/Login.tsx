@@ -12,6 +12,7 @@ import Connection, {User} from "./APIConnection";
 import Grid from "@mui/material/Grid";
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
+import Tooltip from "@mui/material/Tooltip";
 
 const useStyles = makeStyles((theme) => ({
   paper: {
@@ -184,20 +185,22 @@ export default function Login() {
         id="password"
         autoComplete="current-password"
       />
-      {registerMode && <TextField
-        variant="outlined"
-        margin="normal"
-        required
-        fullWidth
-        name="email"
-        label="Email address"
-        type="email"
-        onChange={handleEmailChange}
-        onKeyDown={handleEnterKey}
-        ref={email_input}
-        id="email"
-        autoComplete="email"
-      />}
+      {registerMode && <Tooltip title="An email address is required in case you forget your password.">
+          <TextField
+              variant="outlined"
+              margin="normal"
+              required
+              fullWidth
+              name="email"
+              label="Email address"
+              type="email"
+              onChange={handleEmailChange}
+              onKeyDown={handleEnterKey}
+              ref={email_input}
+              id="email"
+              autoComplete="email"
+          />
+      </Tooltip>}
       {error &&
           <Alert severity="error">
             {error}
