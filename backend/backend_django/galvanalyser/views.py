@@ -1,5 +1,8 @@
+import datetime
+
 import knox.auth
 from django.db.models import Q
+
 from .serializers import HarvesterSerializer, \
     HarvesterConfigSerializer, \
     MonitoredPathSerializer, \
@@ -16,7 +19,8 @@ from .serializers import HarvesterSerializer, \
     TimeseriesRangeLabelSerializer, \
     UserSerializer, \
     GroupSerializer, \
-    HarvestErrorSerializer
+    HarvestErrorSerializer, \
+    KnoxTokenSerializer
 from .models import Harvester, \
     HarvestError, \
     MonitoredPath, \
@@ -29,9 +33,10 @@ from .models import Harvester, \
     DataColumnType, \
     DataColumnStringKeys, \
     DataColumn, \
-    TimeseriesData, \
     TimeseriesRangeLabel, \
-    FileState, VouchFor
+    FileState, \
+    VouchFor, \
+    KnoxAuthToken
 from .auth import HarvesterAccess
 from django.contrib.auth.models import User, Group
 from django.shortcuts import get_object_or_404
@@ -43,6 +48,7 @@ from rest_framework.response import Response
 from knox.views import LoginView as KnoxLoginView
 from knox.views import LogoutView as KnoxLogoutView
 from knox.views import LogoutAllView as KnoxLogoutAllView
+from knox.models import AuthToken
 from rest_framework.authentication import BasicAuthentication
 from drf_spectacular.utils import extend_schema, extend_schema_view, inline_serializer, OpenApiResponse
 from .utils import IteratorFile
@@ -96,6 +102,11 @@ class LoginView(KnoxLoginView):
             return super(LoginView, self).post(request=request, format=fmt)
         return Response({'detail': "Anonymous login not allowed"}, status=401)
 
+    def get_post_response_data(self, request, token, instance):
+        return {
+            **UserSerializer(request.user, context={'request': request}).data,
+            'token': token
+        }
 
 @extend_schema(
     description="Log out current Knox Token.",
@@ -113,6 +124,76 @@ class LogoutView(KnoxLogoutView):
 )
 class LogoutAllView(KnoxLogoutAllView):
     authentication_classes = [knox.auth.TokenAuthentication]
+
+
+@extend_schema(
+    description="Create a new Knox Token. May specify ttl (s) and name in POST request.",
+    responses={
+        200: inline_serializer(
+            name='KnoxUser',
+            fields={
+                'expiry': serializers.DateTimeField(),
+                'token': serializers.CharField(),
+                'user': UserSerializer
+            }
+        )
+    }
+)
+class CreateTokenView(KnoxLoginView):
+    def get_token_ttl(self):
+        try:
+            ttl = self.get_context()['request'].data.get('ttl', None)
+            if ttl is not None:
+                ttl = datetime.timedelta(seconds=int(ttl))
+            return ttl
+        except (AttributeError, KeyError, ValueError):
+            return None
+
+    def get_post_response_data(self, request, token, instance):
+        error = None
+        name = request.data.get('name')
+        if not name:
+            error = KeyError("Token must have a name")
+        elif KnoxAuthToken.objects.filter(name=name, knox_token_key__regex=f"_{request.user.id}$").exists():
+            error = ValueError("You already have a token with that name")
+        if error:
+            instance.delete()
+            raise error
+        else:
+            token_wrapper = KnoxAuthToken.objects.create(
+                name=name,
+                knox_token_key=f"{instance.token_key}_{request.user.id}"
+            )
+        return {
+            'token': token,
+            **KnoxTokenSerializer(token_wrapper, context={'request': request}).data
+        }
+
+
+class TokenViewSet(viewsets.ModelViewSet):
+    serializer_class = KnoxTokenSerializer
+    queryset = KnoxAuthToken.objects.none().order_by('-id')
+
+    def get_queryset(self):
+        token_keys = [f"{t.token_key}_{t.user_id}" for t in AuthToken.objects.filter(user_id=self.request.user.id)]
+        # Create entries for temporary browser tokens
+        for k in token_keys:
+            if not KnoxAuthToken.objects.filter(knox_token_key=k).exists():
+                KnoxAuthToken.objects.create(knox_token_key=k, name=f"Browser session [{k}]")
+        return KnoxAuthToken.objects.filter(knox_token_key__in=token_keys).order_by('-id')
+
+    def destroy(self, request, *args, **kwargs):
+        try:
+            token = KnoxAuthToken.objects.get(
+                pk=kwargs.get('pk'),
+                knox_token_key__regex=f"_{request.user.id}$"
+            )
+        except KnoxAuthToken.DoesNotExist:
+            return error_response("Token not found")
+        key, id = token.knox_token_key.split("_")
+        AuthToken.objects.filter(user_id=int(id), token_key=key).delete()
+        token.delete()
+        return Response(status=204)
 
 
 class HarvesterViewSet(viewsets.ModelViewSet):
@@ -702,6 +783,33 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
     """
     serializer_class = UserSerializer
     queryset = User.objects.filter(is_active=True)
+
+    @action(detail=True, methods=['PATCH'])
+    def update_profile(self, request, pk: int = None):
+        try:
+            user = User.objects.get(id=pk)
+        except User.DoesNotExist:
+            return error_response("User not found", 404)
+        if user != request.user:
+            return error_response("You may only edit your own details", 401)
+        email = request.data.get('email')
+        if email:
+            try:
+                validators.validate_email(email)
+            except validators.ValidationError:
+                return error_response("Invalid email")
+        password = request.data.get('password')
+        if password and not len(password) > 7:
+            return error_response("Password must be at least 7 characters")
+        current_password = request.data.get('currentPassword')
+        if not user.check_password(current_password):
+            return error_response("You must include the correct current password", 401)
+        if email:
+            user.email = email
+        if password:
+            user.set_password(password)
+        user.save()
+        return Response(UserSerializer(user, context={'request': request}).data)
 
 
 class GroupViewSet(viewsets.ReadOnlyModelViewSet):

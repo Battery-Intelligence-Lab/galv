@@ -1,12 +1,15 @@
+import {UpdateResult} from "./UserProfile";
+
 export type User = {
-  url: string,
-  id: number,
-  username: string,
-  first_name: string,
-  last_name: string,
-  is_staff: boolean,
-  is_superuser: boolean,
-  token: string,
+  url: string;
+  id: number;
+  username: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  is_staff: boolean;
+  is_superuser: boolean;
+  token: string;
 }
 
 export interface APIObject {
@@ -125,17 +128,41 @@ export class APIConnection {
       })
   }
 
+  update_user(email: string, password: string, currentPassword: string): Promise<UpdateResult> {
+    if (!this.user)
+      return new Promise(() => {})
+    return fetch(
+      `${this.user.url}update_profile/`,
+      {
+        method: 'PATCH',
+        headers: {
+          'content-type': 'application/json',
+          accept: 'application/json',
+          authorization: `Bearer ${this.user.token}`
+        },
+        body: JSON.stringify({email, password, currentPassword})
+      }
+    )
+      .then(r => {
+        if (r.status === 200)
+          return r.json()
+            .then(user => {
+              this.user = {...user, token: this.user?.token}
+            })
+            .then(() => ({success: true, message: 'Updated successfully'}))
+        return r.json()
+          .then(r => ({success: false, message: r.error}))
+      })
+  }
+
   login(username: string, password: string) {
     let headers = new Headers();
     headers.set('Authorization', 'Basic ' + btoa(username + ":" + password));
     headers.set('Accept', 'application/json');
     return fetch(this.url + 'login/', {method: 'POST', headers: headers})
       .then(r => r.json())
-      .then(r => {
-        this.user = {
-          ...r.user,
-          token: r.token
-        }
+      .then(user => {
+        this.user = user
         window.localStorage.setItem('user', JSON.stringify(this.user))
         console.info(`Logged in as ${this.user?.username}`)
         return true
@@ -186,7 +213,7 @@ export class APIConnection {
     return newOptions;
   }
 
-  _fetch<T extends SingleAPIResponse>(url: string, options: object, parent: string = "", void_cache: boolean = false): Promise<void> {
+  _fetch<T extends SingleAPIResponse>(url: string, options: object, parent: string = "", void_cache: boolean = false): Promise<string> {
     return fetch(url, options)
       .then((response) => {
         if (response.status >= 400) {
@@ -199,12 +226,19 @@ export class APIConnection {
             this.results.remove(url)
           throw new Error(`Fetch failed for ${url}: ${response.status}`)
         }
+        if (response.status === 204)
+          return null;
         return response.json() as Promise<T|T[]>;
       })
       .then(json => {
         if (void_cache)
           this.results.purge(parent)
+        if (json === null) {
+          this.results.remove(url)
+          return url
+        }
         this.results.add<T>(json, parent)
+        return json instanceof Array? parent : json.url
       })
   }
 
@@ -225,7 +259,7 @@ export class APIConnection {
       return this.results.get(url)
     }
     return this._fetch<T>(url, newOptions, url, ignore_cache)
-      .then(() => this.results.get<T>(url))
+      .then((result_url) => this.results.get<T>(result_url))
   }
 
   async fetch<T extends SingleAPIResponse>(url: string, options?: any, ignore_cache = false): Promise<CachedAPIResponse<T>> {
@@ -244,7 +278,7 @@ export class APIConnection {
       return results[0]
     }
     return this._fetch<T>(url, newOptions)
-      .then(() => this.results.get<T>(url)[0])
+      .then((result_url) => this.results.get<T>(result_url)[0])
   }
 }
 
