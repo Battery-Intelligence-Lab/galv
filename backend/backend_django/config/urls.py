@@ -35,7 +35,7 @@ router.register(r'cells', views.CellViewSet)
 router.register(r'inactive_users', views.InactiveViewSet, basename='inactive_user')
 router.register(r'users', views.UserViewSet, basename='user')
 router.register(r'groups', views.GroupViewSet)
-router.register(r'tokens', views.TokenViewSet)
+router.register(r'tokens', views.TokenViewSet, basename='tokens')
 
 # Wire up our API using automatic URL routing.
 # Additionally, we include login URLs for the browsable API.

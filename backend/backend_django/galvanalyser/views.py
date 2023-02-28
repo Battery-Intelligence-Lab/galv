@@ -144,9 +144,9 @@ class CreateTokenView(KnoxLoginView):
         try:
             ttl = self.get_context()['request'].data.get('ttl', None)
             if ttl is not None:
-                ttl = datetime.timedelta(seconds=ttl)
+                ttl = datetime.timedelta(seconds=int(ttl))
             return ttl
-        except (AttributeError, KeyError):
+        except (AttributeError, KeyError, ValueError):
             return None
 
     def get_post_response_data(self, request, token, instance):

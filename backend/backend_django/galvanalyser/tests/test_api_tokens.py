@@ -24,23 +24,23 @@ class TokenTests(APITestCase):
         response = self.client.post(url, body)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.json().get('name'), body['name'])
-        self.assertIn(response.json(), 'token')
+        self.assertIn('token', response.json())
         print("OK")
 
         print("Test list tokens")
         url = reverse('tokens-list')
         response = self.client.get(url)
         self.assertEqual(len(response.json()), 1)
-        detail_url = response.json()['url']
+        detail_url = response.json()[0]['url']
         self.client.force_login(self.other_user)
-        self.assertEqual(self.client.get(url).status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(self.client.get(detail_url).status_code, status.HTTP_404_NOT_FOUND)
         print("OK")
 
         print("Test token detail")
         self.client.force_login(self.user)
         response = self.client.get(detail_url)
         self.assertEqual(response.json()['name'], body['name'])
-        self.assertNotIn(response.json(), 'token')
+        self.assertNotIn('token', response.json())
         print("OK")
 
         print("Test update")

@@ -395,6 +395,7 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
 class KnoxTokenSerializer(serializers.HyperlinkedModelSerializer):
     created = serializers.SerializerMethodField()
     expiry = serializers.SerializerMethodField()
+    url = serializers.SerializerMethodField()
 
     def knox_token(self, instance):
         key, id = instance.knox_token_key.split('_')
@@ -407,6 +408,9 @@ class KnoxTokenSerializer(serializers.HyperlinkedModelSerializer):
 
     def get_expiry(self, instance):
         return self.knox_token(instance).expiry
+
+    def get_url(self, instance) -> str:
+        return self.context['request'].build_absolute_uri(reverse('tokens-detail', args=(instance.id,)))
 
     class Meta:
         model = KnoxAuthToken
