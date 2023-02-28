@@ -1,5 +1,3 @@
-import {UpdateResult} from "./UserProfile";
-
 export type User = {
   url: string;
   id: number;
@@ -34,6 +32,19 @@ export type CachedAPIResponse<T extends SingleAPIResponse> = {
   content: T;
   loading: boolean;
   parents: string[];
+}
+
+export type APIMessage = {
+  severity: "error" | "warning" | "info" | "success";
+  message: string;
+  context?: any;
+}
+
+export type MessageHandler = (message: APIMessage) => void
+
+export type ConnectionProps = {
+  base_url?: string;
+  message_handlers?: MessageHandler[];
 }
 
 function clean_url(url: string, baseURL: string): string {
@@ -97,15 +108,29 @@ class ResponseCache {
   }
 }
 
+/**
+ * @class
+ * APIConnection manages a connection to the backend REST API.
+ * It handles user management directly, and offers a modified
+ * fetch interface for everything else.
+ *
+ * Results are cached and can be referenced directly with their
+ * canonical URL and indirectly with a parent URL.
+ */
 export class APIConnection {
   url: string = 'http://localhost:5000/'.toLowerCase()
   user: User | null = null
   cache_expiry_time = 60_000 // 1 minute
   results: ResponseCache
   cookies: any
+  message_handlers: MessageHandler[] = []
 
-  constructor() {
-    console.info("Spawn API connection")
+  constructor(props?: ConnectionProps) {
+    if (props?.base_url)
+      this.url = props.base_url
+    if (props?.message_handlers)
+      this.message_handlers = props.message_handlers
+    console.info(`Spawn API connection (${this.url})`)
     const local_user = window.localStorage.getItem('user')
     if (local_user)
       this.user = JSON.parse(local_user)
@@ -128,7 +153,7 @@ export class APIConnection {
       })
   }
 
-  update_user(email: string, password: string, currentPassword: string): Promise<UpdateResult> {
+  update_user(email: string, password: string, currentPassword: string): Promise<APIMessage> {
     if (!this.user)
       return new Promise(() => {})
     return fetch(
@@ -149,9 +174,9 @@ export class APIConnection {
             .then(user => {
               this.user = {...user, token: this.user?.token}
             })
-            .then(() => ({success: true, message: 'Updated successfully'}))
+            .then(() => ({severity: "success", message: 'Updated successfully'}))
         return r.json()
-          .then(r => ({success: false, message: r.error}))
+          .then(r => ({severity: "error", message: r.error}))
       })
   }
 
@@ -179,24 +204,8 @@ export class APIConnection {
     return fetch(this.url + "logout/", {method: 'POST'})
   }
 
-  get_cookie(name: string) {
-    const value = `; ${document.cookie}`;
-    const parts = value.split(`; ${name}=`);
-    if (parts.length === 2) return parts?.pop()?.split(';').shift();
-    return null
-  }
-
   get is_logged_in() {
     return !!this.user?.token
-  }
-
-  async get_is_logged_in(skip: boolean = true): Promise<boolean> {
-    await this.login('admin', 'admin')
-    const cookie = this.get_cookie('csrf_access_token');
-    if (cookie === undefined || !this.user)
-      if (!skip)
-        return this.get_is_logged_in(false);
-    return cookie !== undefined && this.user !== null;
   }
 
   _prepare_fetch_headers(url: string, options?: any) {
@@ -230,9 +239,15 @@ export class APIConnection {
           return null;
         return response.json() as Promise<T|T[]>;
       })
+      .catch(e => {
+        this.message_handlers.forEach(h => h({severity: "error", message: e.message, context: e}))
+        return url
+      })
       .then(json => {
         if (void_cache)
           this.results.purge(parent)
+        if (typeof json === "string")
+          return json
         if (json === null) {
           this.results.remove(url)
           return url

@@ -2,7 +2,7 @@ import React, {SyntheticEvent, useState} from 'react';
 import TextField from '@mui/material/TextField';
 import Paper from '@mui/material/Paper';
 import Container from '@mui/material/Container';
-import Connection from "./APIConnection";
+import Connection, {APIMessage} from "./APIConnection";
 import useStyles from "./UseStyles";
 import Typography from "@mui/material/Typography";
 import Stack from "@mui/material/Stack";
@@ -10,17 +10,12 @@ import Button from "@mui/material/Button";
 import Alert from "@mui/material/Alert";
 import Snackbar from "@mui/material/Snackbar";
 
-export type UpdateResult = {
-  success: boolean;
-  message: string;
-}
-
 export default function UserProfile() {
   const classes = useStyles();
   const [email, setEmail] = useState<string>(Connection.user?.email || '')
   const [password, setPassword] = useState<string>('')
   const [currentPassword, setCurrentPassword] = useState<string>('')
-  const [updateResult, setUpdateResult] = useState<UpdateResult|null>()
+  const [updateResult, setUpdateResult] = useState<APIMessage|null>()
   const [open, setOpen] = useState<boolean>(false)
 
   const updateUser = () => Connection.update_user(email, password, currentPassword)
@@ -91,7 +86,7 @@ export default function UserProfile() {
           </Button>
         </Stack>
         <Snackbar open={open} autoHideDuration={6000} onClose={handleClose}>
-          <Alert onClose={handleClose} severity={updateResult?.success? 'success' : 'error'} sx={{ width: '100%' }}>
+          <Alert onClose={handleClose} severity={updateResult?.severity} sx={{ width: '100%' }}>
             {updateResult?.message}
           </Alert>
         </Snackbar>

@@ -186,7 +186,7 @@ export default class AsyncTable<T extends APIObject> extends Component<AsyncTabl
       )
   }
 
-  update_all = async (use_cache: boolean = true) => {
+  update_all = async (use_cache: boolean = false) => {
     this.reset_new_row()
     return this.get_data(this.props.url, use_cache)
   }

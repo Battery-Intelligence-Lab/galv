@@ -39,10 +39,12 @@ import ListItem from '@mui/material/ListItem';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import { ReactComponent as GalvanalyserLogo } from './Galvanalyser-logo.svg';
-import Connection from "./APIConnection";
+import Connection, {APIMessage} from "./APIConnection";
 import Stack from "@mui/material/Stack";
 import Tokens from "./Tokens";
 import UserProfile from "./UserProfile";
+import Snackbar from "@mui/material/Snackbar";
+import Alert from "@mui/material/Alert";
 
 const PrivateRoute = (component: JSX.Element) => {
   const logged = Connection.is_logged_in;
@@ -82,7 +84,7 @@ const useStyles = makeStyles((theme) => ({
     }),
   },
   galvanalyserLogo: {
-    height: '40px' 
+    height: '40px'
   },
   menuButton: {
     marginRight: 36,
@@ -164,35 +166,48 @@ export default function Core() {
     setOpen(false);
   };
 
+  const [snackbarOpen, setSnackbarOpen] = React.useState<boolean>(false)
+  const [apiMessage, setAPIMessage] = React.useState<APIMessage|null>(null)
+  const handleSnackbarClose = (e: any, reason?: string) => {
+    if (reason !== 'clickaway') {
+      setSnackbarOpen(false)
+      setAPIMessage(null)
+    }
+  }
+  Connection.message_handlers.push((h) => {
+    setAPIMessage(h)
+    setSnackbarOpen(true)
+  })
+
   const mainListItems = (
     <Stack>
-      <ListItem button 
-        selected={isDatasetPath} 
-        component={Link} to={datasetsPath}>
+      <ListItem button
+                selected={isDatasetPath}
+                component={Link} to={datasetsPath}>
         <ListItemIcon>
           <TableChartIcon />
         </ListItemIcon>
         <ListItemText primary="Datasets" />
       </ListItem>
-      <ListItem button 
-        selected={isHarvestersPath} 
-        component={Link} to={harvestersPath}>
+      <ListItem button
+                selected={isHarvestersPath}
+                component={Link} to={harvestersPath}>
         <ListItemIcon>
           <BackupIcon />
         </ListItemIcon>
         <ListItemText primary="Harvesters" />
       </ListItem>
-      <ListItem button 
-        selected={isCellsPath} 
-        component={Link} to={cellsPath}>
+      <ListItem button
+                selected={isCellsPath}
+                component={Link} to={cellsPath}>
         <ListItemIcon>
           <BatteryUnknownIcon />
         </ListItemIcon>
         <ListItemText primary="Cells" />
       </ListItem>
-      <ListItem button 
-        selected={isEquipmentPath} 
-        component={Link} to={equipmentPath}>
+      <ListItem button
+                selected={isEquipmentPath}
+                component={Link} to={equipmentPath}>
         <ListItemIcon>
           <SpeedIcon/>
         </ListItemIcon>
@@ -214,78 +229,83 @@ export default function Core() {
 
   const Layout = (
     <div className={classes.root}>
-    <CssBaseline />
-    <AppBar position="absolute" className={clsx(classes.appBar, open && classes.appBarShift)}>
-      <Toolbar className={classes.toolbar}>
-        <IconButton
-          edge="start"
-          color="inherit"
-          aria-label="open drawer"
-          onClick={handleDrawerOpen}
-          className={clsx(classes.menuButton, open && classes.menuButtonHidden)}
-        >
-          <MenuIcon />
-        </IconButton>
-        <GalvanalyserLogo className={classes.galvanalyserLogo}/>
-        <Typography component="h1" variant="h6" color="inherit" noWrap className={classes.title}>
-        </Typography>
+      <CssBaseline />
+      <AppBar position="absolute" className={clsx(classes.appBar, open && classes.appBarShift)}>
+        <Toolbar className={classes.toolbar}>
+          <IconButton
+            edge="start"
+            color="inherit"
+            aria-label="open drawer"
+            onClick={handleDrawerOpen}
+            className={clsx(classes.menuButton, open && classes.menuButtonHidden)}
+          >
+            <MenuIcon />
+          </IconButton>
+          <GalvanalyserLogo className={classes.galvanalyserLogo}/>
+          <Typography component="h1" variant="h6" color="inherit" noWrap className={classes.title}>
+          </Typography>
 
-        <Button color="inherit" >
-          User: {userDisplayName}
-        </Button>
-        <Button color="inherit" onClick={() => {
-          navigate(profilePath)
-        }}>
-          Manage Profile
-        </Button>
-        <Button color="inherit" onClick={() => {
-          navigate(tokenPath)
-        }}>
-          Manage API Tokens
-        </Button>
-        <Button color="inherit" onClick={() => {
-          Connection.logout().then(()=> {navigate('/login');});
-        }}>
-          Logout
-        </Button>
-      </Toolbar>
-    </AppBar>
-    <Drawer
-      variant="permanent"
-      classes={{
-        paper: clsx(classes.drawerPaper, !open && classes.drawerPaperClose),
-      }}
-      open={open}
-    >
-      <div className={classes.toolbarIcon}>
-        <IconButton onClick={handleDrawerClose}>
-          <ChevronLeftIcon />
-        </IconButton>
-      </div>
-      <Divider />
-      <List>{mainListItems}</List>
-    </Drawer>
-    <main className={classes.content}>
-      <div className={classes.appBarSpacer} />
+          <Button color="inherit" >
+            User: {userDisplayName}
+          </Button>
+          <Button color="inherit" onClick={() => {
+            navigate(profilePath)
+          }}>
+            Manage Profile
+          </Button>
+          <Button color="inherit" onClick={() => {
+            navigate(tokenPath)
+          }}>
+            Manage API Tokens
+          </Button>
+          <Button color="inherit" onClick={() => {
+            Connection.logout().then(()=> {navigate('/login');});
+          }}>
+            Logout
+          </Button>
+        </Toolbar>
+      </AppBar>
+      <Drawer
+        variant="permanent"
+        classes={{
+          paper: clsx(classes.drawerPaper, !open && classes.drawerPaperClose),
+        }}
+        open={open}
+      >
+        <div className={classes.toolbarIcon}>
+          <IconButton onClick={handleDrawerClose}>
+            <ChevronLeftIcon />
+          </IconButton>
+        </div>
+        <Divider />
+        <List>{mainListItems}</List>
+      </Drawer>
+      <main className={classes.content}>
+        <div className={classes.appBarSpacer} />
         <Outlet />
-    </main>
+      </main>
+      <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={handleSnackbarClose}>
+        <Alert onClose={handleSnackbarClose} severity={apiMessage?.severity} sx={{ width: '100%' }}>
+          {apiMessage?.message}
+        </Alert>
+      </Snackbar>
     </div>
   );
 
   /* A <Routes> looks through its children <Route>s and renders the first one that matches the current URL. */
   return (
-      <Routes>
-        <Route path="/login" element={<Login />}/>
-        <Route path={datasetsPath} element={PrivateRoute(Layout)}>
-          <Route path={cellsPath} element={Cells()} />
-          <Route path={equipmentPath} element={Equipment()} />
-          <Route path={harvestersPath} element={Harvesters()} />
-          <Route path={usersPath} element={ActivateUsers()} />
-          <Route path={profilePath} element={UserProfile()} />
-          <Route path={tokenPath} element={Tokens()} />
-          <Route index element={Datasets()} />
-        </Route>
-      </Routes>
+    <Routes>
+      <Route path="/login" element={<Login />}/>
+      <Route path={datasetsPath} element={PrivateRoute(Layout)}>
+        <Route path={cellsPath} element={Cells()} />
+        <Route path={equipmentPath} element={Equipment()} />
+        <Route path={harvestersPath} element={Harvesters()} />
+        <Route path={usersPath} element={ActivateUsers()} />
+        <Route path={profilePath} element={UserProfile()} />
+        <Route path={tokenPath} element={Tokens()} />
+        <Route index element={Datasets()} />
+      </Route>
+    </Routes>
   );
 }
  
