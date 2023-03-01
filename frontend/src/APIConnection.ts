@@ -157,7 +157,7 @@ export class APIConnection {
     if (!this.user)
       return new Promise(() => {})
     return fetch(
-      `${this.user.url}update_profile/`,
+      this.user.url,
       {
         method: 'PATCH',
         headers: {

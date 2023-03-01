@@ -54,10 +54,10 @@ function AddUserButton(props: AddUserButtonProps) {
   const handleChange = (event: React.SyntheticEvent, value: any) => {
     handleClose()
     console.log(value)
-    const user_id = value.id;
+    const user_url = value.url;
     Connection.fetch(
       `${props.user_set.url}add/`,
-      {method: 'POST', body: JSON.stringify({user: user_id})}
+      {method: 'POST', body: JSON.stringify({user: user_url})}
     )
       .then(() => props.set_last_updated(new Date()))
   }
@@ -121,10 +121,10 @@ export default class UserRoleSet extends Component<UserSetProps, UserSetState> {
       .then(r => this.setState({all_users: r}))
   }
 
-  handleDelete(user_id: number, group_url: string) {
+  handleDelete(user_url: string, group_url: string) {
     Connection.fetch(
       `${group_url}remove/`,
-      {method: 'POST', body: JSON.stringify({user: user_id})}
+      {method: 'POST', body: JSON.stringify({user: user_url})}
     ).then(() => this.props.set_last_updated(new Date()))
   }
 
@@ -170,7 +170,7 @@ export default class UserRoleSet extends Component<UserSetProps, UserSetState> {
           else if (editable)
             return <Chip
               key={`user_set-${u.id}_${usr.id}`}
-              onDelete={() => this.handleDelete(usr.id, u.url)}
+              onDelete={() => this.handleDelete(usr.url, u.url)}
               avatar={<Avatar alt={usr.username}/>}
               label={<Typography noWrap>{usr.username}</Typography>}
               size={'small'}

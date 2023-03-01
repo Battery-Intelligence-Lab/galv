@@ -1,3 +1,4 @@
+import django.db.models
 from django.urls import reverse
 
 from .models import Harvester, \
@@ -15,16 +16,76 @@ from .models import Harvester, \
     DataColumnStringKeys, \
     KnoxAuthToken
 from django.db import connection
+from django.utils import timezone
 from django.contrib.auth.models import User, Group
 from django.conf.global_settings import DATA_UPLOAD_MAX_MEMORY_SIZE
 from rest_framework import serializers
 from knox.models import AuthToken
 
 
-class HarvesterSerializer(serializers.HyperlinkedModelSerializer):
-    user_sets = serializers.SerializerMethodField()
+url_help_text = "Canonical URL for this object"
 
-    def get_user_sets(self, instance) -> list:
+
+def augment_extra_kwargs(extra_kwargs: dict[str, dict] = None):
+    def _augment(name: str, content: dict):
+        if name == 'url':
+            return {'help_text': url_help_text, 'read_only': True, **content}
+        if name == 'id':
+            return {'help_text': "Auto-assigned object identifier", 'read_only': True, **content}
+        return {**content}
+
+    if extra_kwargs is None:
+        extra_kwargs = {}
+    extra_kwargs = {'url': {}, 'id': {}, **extra_kwargs}
+    return {k: _augment(k, v) for k, v in extra_kwargs.items()}
+
+
+def get_model_field(model: django.db.models.Model, field_name: str) -> django.db.models.Field:
+    """
+    Get a field from a Model.
+    Works, but generates type warnings because Django uses hidden Metaclass ModelBase for models.
+    """
+    fields = {f.name: f for f in model._meta.fields}
+    return fields[field_name]
+
+
+class UserSetSerializer(serializers.HyperlinkedModelSerializer):
+    description = serializers.SerializerMethodField(help_text="Permissions granted to users with this role")
+    users = serializers.SerializerMethodField(help_text="Users in this group")
+    name = serializers.SerializerMethodField(help_text="Group name")
+    is_admin = serializers.SerializerMethodField(help_text="Whether this is an administrator group")
+
+    def get_description(self, instance):
+        return self.context.get('description')
+
+    def get_users(self, instance) -> list:
+        return UserSerializer(
+            instance.user_set.filter(is_active=True),
+            many=True,
+            context={'request': self.context['request']}
+        ).data
+
+    def get_name(self, instance):
+        return self.context.get('name', instance.name)
+
+    def get_is_admin(self, instance):
+        """
+        Admin groups can control their own members, as well as members in groups
+        lower down the list of UserSets[]
+        """
+        return self.context.get('is_admin', False)
+
+    class Meta:
+        model = Group
+        fields = ['url', 'id', 'name', 'description', 'is_admin', 'users']
+        read_only_fields = fields
+        extra_kwargs = augment_extra_kwargs()
+
+
+class HarvesterSerializer(serializers.HyperlinkedModelSerializer):
+    user_sets = serializers.SerializerMethodField(help_text="Roles and the Users assigned to them")
+
+    def get_user_sets(self, instance) -> list[UserSetSerializer]:
         return [
             UserSetSerializer(
                 instance.admin_group,
@@ -55,12 +116,13 @@ class HarvesterSerializer(serializers.HyperlinkedModelSerializer):
         model = Harvester
         fields = ['url', 'id', 'name', 'sleep_time', 'last_check_in', 'user_sets']
         read_only_fields = ['url', 'id', 'last_check_in', 'user_sets']
+        extra_kwargs = augment_extra_kwargs()
 
 
 class HarvesterConfigSerializer(serializers.HyperlinkedModelSerializer):
-    standard_units = serializers.SerializerMethodField()
-    standard_columns = serializers.SerializerMethodField()
-    max_upload_bytes = serializers.SerializerMethodField()
+    standard_units = serializers.SerializerMethodField(help_text="Units recognised by the initial database")
+    standard_columns = serializers.SerializerMethodField(help_text="Column Types recognised by the initial database")
+    max_upload_bytes = serializers.SerializerMethodField(help_text="Maximum upload size (bytes)")
 
     def get_standard_units(self, instance):
         return DataUnitSerializer(
@@ -90,7 +152,7 @@ class HarvesterConfigSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class MonitoredPathSerializer(serializers.HyperlinkedModelSerializer):
-    user_sets = serializers.SerializerMethodField()
+    user_sets = serializers.SerializerMethodField(help_text="Roles and the Users assigned to them")
 
     def get_user_sets(self, instance) -> list:
         return [
@@ -132,12 +194,15 @@ class MonitoredPathSerializer(serializers.HyperlinkedModelSerializer):
         model = MonitoredPath
         fields = ['url', 'id', 'path', 'stable_time', 'harvester', 'user_sets']
         read_only_fields = ['url', 'id', 'harvester', 'user_sets']
+        extra_kwargs = augment_extra_kwargs()
 
 
 class ObservedFileSerializer(serializers.HyperlinkedModelSerializer):
-    upload_info = serializers.SerializerMethodField()
+    upload_info = serializers.SerializerMethodField(
+        help_text="Metadata required for harvester program to resume file parsing"
+    )
 
-    def get_upload_info(self, instance) -> dict:
+    def get_upload_info(self, instance) -> dict | None:
         if not self.context.get('with_upload_info'):
             return None
         try:
@@ -173,12 +238,17 @@ class ObservedFileSerializer(serializers.HyperlinkedModelSerializer):
             'last_observed_time', 'last_observed_size', 'datasets',
             'errors'
         ]
+        extra_kwargs = augment_extra_kwargs({
+            'errors': {'help_text': "Errors associated with this File"},
+            'datasets': {'help_text': "Datasets extracted from this File"}
+        })
 
 
 class HarvestErrorSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = HarvestError
         fields = ['url', 'id', 'harvester', 'path', 'file', 'error', 'timestamp']
+        extra_kwargs = augment_extra_kwargs()
 
 
 class CellFamilySerializer(serializers.HyperlinkedModelSerializer):
@@ -193,15 +263,10 @@ class CellFamilySerializer(serializers.HyperlinkedModelSerializer):
             'cells'
         ]
         read_only_fields = ['id', 'url', 'cells']
+        extra_kwargs = augment_extra_kwargs({'cells': {'help_text': "Cells in this Family"}})
 
 
 class CellSerializer(serializers.HyperlinkedModelSerializer):
-
-    class Meta:
-        model = Cell
-        fields = ['url', 'id', 'uid', 'display_name', 'family', 'datasets']
-        read_only_fields = ['id', 'url', 'datasets']
-        extra_kwargs = {'display_name': {'allow_blank': True, 'allow_null': True}}
 
     def validate_display_name(self, value):
         if isinstance(value, str):
@@ -221,16 +286,28 @@ class CellSerializer(serializers.HyperlinkedModelSerializer):
             display_name = f"{family.name}_{family.cells.count()}"
         return Cell.objects.create(uid=uid, family=family, display_name=display_name)
 
+    class Meta:
+        model = Cell
+        fields = ['url', 'id', 'uid', 'display_name', 'family', 'datasets']
+        read_only_fields = ['id', 'url', 'datasets']
+        extra_kwargs = augment_extra_kwargs({
+            'family': {'help_text': "Cell Family to which this Cell belongs"},
+            'datasets': {'help_text': "Datasets generated in experiments using this Cell"}
+        })
+
 
 class EquipmentSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Equipment
         fields = ['url', 'id', 'name', 'type', 'datasets']
         read_only_fields = ['url', 'id', 'datasets']
+        extra_kwargs = augment_extra_kwargs({
+            'datasets': {'help_text': "Datasets generated in experiments using this Equipment"}
+        })
 
 
 class DatasetSerializer(serializers.HyperlinkedModelSerializer):
-    user_sets = serializers.SerializerMethodField()
+    user_sets = serializers.SerializerMethodField(help_text="Roles and the Users assigned to them")
 
     def get_user_sets(self, instance) -> list:
         return MonitoredPathSerializer(
@@ -241,12 +318,17 @@ class DatasetSerializer(serializers.HyperlinkedModelSerializer):
         model = Dataset
         fields = ['url', 'id', 'name', 'date', 'type', 'purpose', 'cell', 'equipment', 'file', 'user_sets', 'columns']
         read_only_fields = ['date', 'file', 'id', 'url', 'user_sets', 'columns']
+        extra_kwargs = augment_extra_kwargs({
+            'equipment': {'help_text': "Equipment used in this Dataset's experiment"},
+            'columns': {'help_text': "Columns in this Dataset"}
+        })
 
 
 class DataUnitSerializer(serializers.ModelSerializer):
     class Meta:
         model = DataUnit
         fields = ['url', 'id', 'name', 'symbol', 'description']
+        extra_kwargs = augment_extra_kwargs()
 
 
 class TimeseriesRangeLabelSerializer(serializers.HyperlinkedModelSerializer):
@@ -255,9 +337,14 @@ class TimeseriesRangeLabelSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = TimeseriesRangeLabel
         fields = '__all__'
+        extra_kwargs = augment_extra_kwargs()
 
 
 class TimeseriesDataSerializer(serializers.Serializer):
+    id = serializers.IntegerField(help_text="Auto-assigned object identifier")
+    url = serializers.CharField(help_text=url_help_text)
+    observations = serializers.DictField(help_text="row_number:value dictionary of observations")
+
     def to_representation(self, instance):
         with connection.cursor() as cur:
             cur.execute(f"SELECT sample, value FROM timeseries_data WHERE column_id={instance.id} ORDER BY sample")
@@ -276,6 +363,10 @@ class TimeseriesDataSerializer(serializers.Serializer):
 
 
 class TimeseriesDataListSerializer(serializers.Serializer):
+    id = serializers.IntegerField(help_text="Auto-assigned object identifier")
+    url = serializers.CharField(help_text=url_help_text)
+    observations = serializers.ListField(help_text="List of observation values ordered by row number")
+
     def to_representation(self, instance):
         with connection.cursor() as cur:
             cur.execute(f"SELECT value FROM timeseries_data WHERE column_id={instance.id} ORDER BY sample")
@@ -297,30 +388,69 @@ class DataColumnTypeSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = DataColumnType
         fields = ['url', 'id', 'name', 'description', 'is_default', 'unit']
+        extra_kwargs = augment_extra_kwargs()
 
 
-class DataColumnSerializer(serializers.Serializer):
+class DataColumnSerializer(serializers.HyperlinkedModelSerializer):
     """
     A column contains metadata and data. Data are an ordered list of values.
     """
-    def to_representation(self, instance):
-        uri = self.context['request'].build_absolute_uri
-        return {
-            'id': instance.id,
-            'url': uri(reverse('datacolumn-detail', args=(instance.id,))),
-            'name': instance.name,
-            'dataset': uri(reverse('dataset-detail', args=(instance.dataset.id,))),
-            'is_numeric': not DataColumnStringKeys.objects.filter(column_id=instance.id).exists(),
-            'type_name': instance.type.name,
-            'description': instance.type.description,
-            'unit': DataUnitSerializer(instance.type.unit).data,
-            'data': uri(reverse('datacolumn-data', args=(instance.id,))),
-            'data_list': uri(reverse('datacolumn-data-list', args=(instance.id,)))
-        }
+    name = serializers.SerializerMethodField(help_text=get_model_field(DataColumn, 'name').help_text)
+    dataset = serializers.SerializerMethodField(help_text=get_model_field(DataColumn, 'dataset').help_text)
+    is_numeric = serializers.SerializerMethodField(help_text="true for numeric columns, false for string columns")
+    type_name = serializers.SerializerMethodField(help_text=get_model_field(DataColumnType, 'name').help_text)
+    description = serializers.SerializerMethodField(help_text=get_model_field(DataColumnType, 'description').help_text)
+    unit = serializers.SerializerMethodField(help_text=get_model_field(DataColumnType, 'unit').help_text)
+    data = serializers.SerializerMethodField(help_text="Dictionary of row_number:value observations")
+    data_list = serializers.SerializerMethodField(help_text="List of observation values ordered by row number")
+
+    def uri(self, rel_url: str) -> str:
+        return self.context['request'].build_absolute_uri(rel_url)
+
+    def get_name(self, instance) -> str:
+        return instance.name
+
+    def get_dataset(self, instance) -> str:
+        return self.uri(reverse('dataset-detail', args=(instance.dataset.id,)))
+
+    def get_is_numeric(self, instance) -> bool:
+        return not DataColumnStringKeys.objects.filter(column_id=instance.id).exists()
+
+    def get_type_name(self, instance) -> str:
+        return instance.type.name
+
+    def get_description(self, instance) -> str:
+        return instance.type.description
+
+    def get_unit(self, instance) -> DataUnitSerializer:
+        return DataUnitSerializer(instance.type.unit, context=self.context).data
+
+    def get_data(self, instance) -> str:
+        return self.uri(reverse('datacolumn-data', args=(instance.id,)))
+
+    def get_data_list(self, instance) -> str:
+        return self.uri(reverse('datacolumn-data-list', args=(instance.id,)))
+
+    class Meta:
+        model = DataColumn
+        fields = [
+            'id',
+            'url',
+            'name',
+            'dataset',
+            'is_numeric',
+            'type_name',
+            'description',
+            'unit',
+            'data',
+            'data_list'
+        ]
+        read_only_fields = fields
+        extra_kwargs = augment_extra_kwargs()
 
 
 class GroupSerializer(serializers.HyperlinkedModelSerializer):
-    users = serializers.SerializerMethodField()
+    users = serializers.SerializerMethodField(help_text="Users in the group")
 
     def get_users(self, instance) -> list:
         return UserSerializer(
@@ -332,44 +462,25 @@ class GroupSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Group
         fields = [
-            'url', 'name', 'users',
-            'readable_paths', 'editable_paths', 'readable_harvesters', 'editable_harvesters'
+            'id',
+            'url',
+            'name',
+            'users',
+            'readable_paths',
+            'editable_paths',
+            'readable_harvesters',
+            'editable_harvesters'
         ]
-
-
-class UserSetSerializer(serializers.HyperlinkedModelSerializer):
-    description = serializers.SerializerMethodField()
-    users = serializers.SerializerMethodField()
-    name = serializers.SerializerMethodField()
-    is_admin = serializers.SerializerMethodField()
-
-    def get_description(self, instance):
-        return self.context.get('description')
-
-    def get_users(self, instance) -> list:
-        return UserSerializer(
-            instance.user_set.filter(is_active=True),
-            many=True,
-            context={'request': self.context['request']}
-        ).data
-
-    def get_name(self, instance):
-        return self.context.get('name', instance.name)
-
-    def get_is_admin(self, instance):
-        """
-        Admin groups can control their own members, as well as members in groups
-        lower down the list of UserSets[]
-        """
-        return self.context.get('is_admin', False)
-
-    class Meta:
-        model = Group
-        fields = ['url', 'id', 'name', 'description', 'is_admin', 'users']
+        extra_kwargs = augment_extra_kwargs({
+            'readable_paths': {'help_text': "Paths on which this Group are Users"},
+            'editable_paths': {'help_text': "Paths on which this Group are Admins"},
+            'readable_harvesters': {'help_text': "Harvesters for which this Group are Users"},
+            'editable_harvesters': {'help_text': "Harvesters for which this Group are Admins"},
+        })
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
-    url = serializers.SerializerMethodField()
+    url = serializers.SerializerMethodField(help_text=url_help_text)
 
     def get_url(self, instance) -> str:
         uri = self.context['request'].build_absolute_uri
@@ -379,23 +490,16 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = User
-        fields = [
-            'url',
-            'id',
-            'username',
-            'email',
-            'first_name',
-            'last_name',
-            'is_active',
-            'is_staff',
-            'is_superuser',
-        ]
+        write_fields = ['username', 'email', 'first_name', 'last_name']
+        read_only_fields = ['url', 'id', 'is_active', 'is_staff', 'is_superuser']
+        fields = [*write_fields, *read_only_fields]
+        extra_kwargs = augment_extra_kwargs()
 
 
 class KnoxTokenSerializer(serializers.HyperlinkedModelSerializer):
-    created = serializers.SerializerMethodField()
-    expiry = serializers.SerializerMethodField()
-    url = serializers.SerializerMethodField()
+    created = serializers.SerializerMethodField(help_text="Date and time of creation")
+    expiry = serializers.SerializerMethodField(help_text="Date and time token expires (blank = never)")
+    url = serializers.SerializerMethodField(help_text=url_help_text)
 
     def knox_token(self, instance):
         key, id = instance.knox_token_key.split('_')
@@ -403,10 +507,10 @@ class KnoxTokenSerializer(serializers.HyperlinkedModelSerializer):
             raise ValueError('Bad user ID for token access')
         return AuthToken.objects.get(user_id=int(id), token_key=key)
 
-    def get_created(self, instance):
+    def get_created(self, instance) -> timezone.datetime:
         return self.knox_token(instance).created
 
-    def get_expiry(self, instance):
+    def get_expiry(self, instance) -> timezone.datetime | None:
         return self.knox_token(instance).expiry
 
     def get_url(self, instance) -> str:
@@ -416,3 +520,17 @@ class KnoxTokenSerializer(serializers.HyperlinkedModelSerializer):
         model = KnoxAuthToken
         fields = ['url', 'id', 'name', 'created', 'expiry']
         read_only_fields = ['url', 'id', 'created', 'expiry']
+        extra_kwargs = augment_extra_kwargs()
+
+
+class KnoxTokenFullSerializer(KnoxTokenSerializer):
+    token = serializers.SerializerMethodField(help_text="Token value")
+
+    def get_token(self, instance) -> str:
+        return self.context['token']
+
+    class Meta:
+        model = KnoxAuthToken
+        fields = ['url', 'id', 'name', 'created', 'expiry', 'token']
+        read_only_fields = fields
+        extra_kwargs = augment_extra_kwargs()
