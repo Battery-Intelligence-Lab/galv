@@ -27,9 +27,6 @@ services:
       - app
     ports:
       - "80:80"
-    volumes:
-     - ./frontend:/app
-    working_dir: /app
     env_file:
      - ./.env
     restart: unless-stopped
