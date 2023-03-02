@@ -204,7 +204,7 @@ class CreateTokenView(KnoxLoginView):
                 name=name,
                 knox_token_key=f"{instance.token_key}_{request.user.id}"
             )
-        return KnoxTokenSerializer(token_wrapper, context={'request': request, 'token': token}).data
+        return KnoxTokenFullSerializer(token_wrapper, context={'request': request, 'token': token}).data
 
 
 @extend_schema_view(
@@ -986,15 +986,15 @@ class CellFamilyViewSet(viewsets.ModelViewSet):
 
     def partial_update(self, request, *args, **kwargs):
         family = get_object_or_404(CellFamily, id=kwargs.get('pk'))
-        if len(family.cells) > 0:
+        if family.cells.count() > 0:
             return error_response("Cannot update a Cell Family that has child Cells")
-        super(CellFamilyViewSet, self).partial_update(request=request, *args, **kwargs)
+        return super(CellFamilyViewSet, self).partial_update(request=request, *args, **kwargs)
 
     def destroy(self, request, *args, **kwargs):
         family = get_object_or_404(CellFamily, id=kwargs.get('pk'))
-        if len(family.cells) > 0:
+        if family.cells.count() > 0:
             return error_response("Cannot delete a Cell Family that has child Cells")
-        super(CellFamilyViewSet, self).destroy(request=request, *args, **kwargs)
+        return super(CellFamilyViewSet, self).destroy(request=request, *args, **kwargs)
 
 
 @extend_schema_view(
@@ -1046,15 +1046,15 @@ class CellViewSet(viewsets.ModelViewSet):
 
     def partial_update(self, request, *args, **kwargs):
         cell = get_object_or_404(Cell, id=kwargs.get('pk'))
-        if len(cell.datasets) > 0:
+        if cell.datasets.count() > 0:
             return error_response("Cannot update a Cell Family that is used in a Dataset")
-        super(CellViewSet, self).partial_update(request=request, *args, **kwargs)
+        return super(CellViewSet, self).partial_update(request=request, *args, **kwargs)
 
     def destroy(self, request, *args, **kwargs):
         cell = get_object_or_404(Cell, id=kwargs.get('pk'))
-        if len(cell.datasets) > 0:
+        if cell.datasets.count() > 0:
             return error_response("Cannot delete a Cell that is used in a Dataset")
-        super(CellViewSet, self).destroy(request=request, *args, **kwargs)
+        return super(CellViewSet, self).destroy(request=request, *args, **kwargs)
 
 
 @extend_schema_view(
@@ -1108,15 +1108,15 @@ class EquipmentViewSet(viewsets.ModelViewSet):
 
     def partial_update(self, request, *args, **kwargs):
         equipment = get_object_or_404(Equipment, id=kwargs.get('pk'))
-        if len(equipment.datasets) > 0:
+        if equipment.datasets.count() > 0:
             return error_response("Cannot update Equipment that is used in a Dataset")
-        super(EquipmentViewSet, self).partial_update(request=request, *args, **kwargs)
+        return super(EquipmentViewSet, self).partial_update(request=request, *args, **kwargs)
 
     def destroy(self, request, *args, **kwargs):
         equipment = get_object_or_404(Equipment, id=kwargs.get('pk'))
-        if len(equipment.datasets) > 0:
+        if equipment.datasets.count() > 0:
             return error_response("Cannot delete Equipment that is used in a Dataset")
-        super(EquipmentViewSet, self).destroy(request=request, *args, **kwargs)
+        return super(EquipmentViewSet, self).destroy(request=request, *args, **kwargs)
 
 
 @extend_schema_view(
@@ -1309,7 +1309,7 @@ class InactiveViewSet(viewsets.ModelViewSet):
     until vouched for by an existing active user.
     """
     serializer_class = UserSerializer
-    queryset = User.objects.filter(is_active=False)
+    queryset = User.objects.filter(is_active=False).order_by('-id')
     http_method_names = ['get', 'post', 'options']
 
     def create(self, request, *args, **kwargs):
@@ -1320,6 +1320,8 @@ class InactiveViewSet(viewsets.ModelViewSet):
             password = request.data['password']
         except (KeyError, validators.ValidationError):
             return error_response(f"Username, email, and password fields required.")
+        if len(password) < 8:
+            return error_response(f"Password must be at least 8 characters long")
         if User.objects.filter(username=username).exists():
             return error_response(f"User {username} already exists.")
         try:
@@ -1379,7 +1381,7 @@ class UserViewSet(viewsets.ModelViewSet):
                 return error_response("Invalid email")
         password = request.data.get('password')
         if password and not len(password) > 7:
-            return error_response("Password must be at least 7 characters")
+            return error_response("Password must be at least 8 characters long")
         current_password = request.data.get('currentPassword')
         if not user.check_password(current_password):
             return error_response("You must include the correct current password", 401)

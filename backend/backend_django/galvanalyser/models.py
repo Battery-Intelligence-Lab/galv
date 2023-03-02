@@ -405,6 +405,9 @@ class VouchFor(models.Model):
         help_text="User doing approving"
     )
 
+    def __str__(self):
+        return f"{self.new_user.username} approved by {self.vouching_user.username}"
+
 
 class KnoxAuthToken(models.Model):
     knox_token_key = models.TextField(help_text="KnoxToken reference ([token_key]_[user_id]")
