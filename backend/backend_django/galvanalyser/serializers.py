@@ -134,7 +134,7 @@ class HarvesterSerializer(serializers.HyperlinkedModelSerializer):
     def get_user_sets(self, instance):
         group_ids = [instance.admin_group.id, instance.user_group.id]
         return UserSetSerializer(
-            Group.objects.filter(id__in=group_ids),
+            Group.objects.filter(id__in=group_ids).order_by('id'),
             context={
                 'request': self.context.get('request'),
                 instance.admin_group.id: {
@@ -170,7 +170,7 @@ class MonitoredPathSerializer(serializers.HyperlinkedModelSerializer):
     def get_user_sets(self, instance):
         group_ids = [instance.harvester.admin_group.id, instance.admin_group.id, instance.user_group.id]
         return UserSetSerializer(
-            Group.objects.filter(id__in=group_ids),
+            Group.objects.filter(id__in=group_ids).order_by('id'),
             context={
                 'request': self.context.get('request'),
                 instance.harvester.admin_group.id: {

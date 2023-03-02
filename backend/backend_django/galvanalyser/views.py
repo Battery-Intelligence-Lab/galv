@@ -390,8 +390,8 @@ class HarvesterViewSet(viewsets.ModelViewSet):
         # Create Harvester
         harvester = Harvester.objects.create(name=request.data['name'])
         # Create user/admin groups
-        harvester.user_group = Group.objects.create(name=f"harvester_{harvester.id}_users")
         harvester.admin_group = Group.objects.create(name=f"harvester_{harvester.id}_admins")
+        harvester.user_group = Group.objects.create(name=f"harvester_{harvester.id}_users")
         harvester.save()
         # Add user as admin
         user = User.objects.get(id=int(request.data['user']))
@@ -726,8 +726,8 @@ class MonitoredPathViewSet(viewsets.ModelViewSet):
         except (TypeError, ValueError):
             monitored_path = MonitoredPath.objects.create(path=path, harvester=harvester)
         # Create user/admin groups
-        monitored_path.user_group = Group.objects.create(name=f"path_{harvester.id}_{monitored_path.id}_users")
         monitored_path.admin_group = Group.objects.create(name=f"path_{harvester.id}_{monitored_path.id}_admins")
+        monitored_path.user_group = Group.objects.create(name=f"path_{harvester.id}_{monitored_path.id}_users")
         monitored_path.save()
         # Add user as admin
         request.user.groups.add(monitored_path.admin_group)
