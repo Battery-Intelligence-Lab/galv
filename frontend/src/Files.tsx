@@ -78,7 +78,7 @@ export default function Files(props: FilesProps) {
               </IconButton>
             </Fragment>
           ]}
-          url={`files/?monitored_path__id=${props.path.id}&all=true`}
+          url={`files/?monitored_path__id=${props.path.id}`}
           styles={classes}
         />
       </Paper>

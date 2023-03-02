@@ -962,7 +962,7 @@ Cell Families that _do_ have Cells associated with them are locked,
 to prevent accidental updating.
         """
     ),
-    delete=extend_schema(
+    destroy=extend_schema(
         summary="Delete a Cell Family",
         description="""
 Cell Families that do not have any Cells associated with them may be deleted. 
@@ -1223,7 +1223,7 @@ View the TimeseriesData contents of the Column.
 Data are presented as a dictionary of observations where keys are row numbers and values are observation values.
         """
     ),
-    data_list=extend_schema(
+    data_listformat=extend_schema(
         summary="View Column data as a list",
         description="""
 View the TimeseriesData contents of the Column as a list.
@@ -1258,7 +1258,7 @@ class DataColumnViewSet(viewsets.ReadOnlyModelViewSet):
         return Response(TimeseriesDataSerializer(column, context={'request': self.request}).data)
 
     @action(methods=['GET'], detail=True)
-    def data_list(self, request, pk: int = None):
+    def data_listformat(self, request, pk: int = None):
         """
         Fetch the data for this column in an 'observations' dictionary of record_id: observed_value pairs.
         """
@@ -1367,7 +1367,7 @@ class UserViewSet(viewsets.ModelViewSet):
     """
     serializer_class = UserSerializer
     queryset = User.objects.filter(is_active=True)
-    http_method_names = ['patch', 'options']
+    http_method_names = ['get', 'patch', 'options']
 
     def partial_update(self, request, *args, **kwargs):
         user = get_object_or_404(User, id=kwargs.get('pk'))

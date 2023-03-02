@@ -113,7 +113,7 @@ export default function HarvesterDetail(props: HarvesterDetailProps) {
             />
           </Fragment>
         ]}
-        url={`monitored_paths/?harvester__id=${harvester.id}&all=true`}
+        url={`monitored_paths/?harvester__id=${harvester.id}`}
         new_row_values={{path: "", stable_time: 60}}
         styles={classes}
       />

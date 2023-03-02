@@ -1,5 +1,6 @@
 import django.db.models
 from django.urls import reverse
+from drf_spectacular.utils import extend_schema_field
 
 from .models import Harvester, \
     HarvestError, \
@@ -49,31 +50,75 @@ def get_model_field(model: django.db.models.Model, field_name: str) -> django.db
     return fields[field_name]
 
 
-class UserSetSerializer(serializers.HyperlinkedModelSerializer):
-    description = serializers.SerializerMethodField(help_text="Permissions granted to users with this role")
-    users = serializers.SerializerMethodField(help_text="Users in this group")
-    name = serializers.SerializerMethodField(help_text="Group name")
-    is_admin = serializers.SerializerMethodField(help_text="Whether this is an administrator group")
+class UserSerializer(serializers.HyperlinkedModelSerializer):
+    url = serializers.SerializerMethodField(help_text=url_help_text)
 
-    def get_description(self, instance):
-        return self.context.get('description')
+    def get_url(self, instance) -> str:
+        uri = self.context['request'].build_absolute_uri
+        if instance.is_active:
+            return uri(reverse('user-detail', args=(instance.id,)))
+        return uri(reverse('inactive_user-detail', args=(instance.id,)))
 
-    def get_users(self, instance) -> list:
+    class Meta:
+        model = User
+        write_fields = ['username', 'email', 'first_name', 'last_name']
+        read_only_fields = ['url', 'id', 'is_active', 'is_staff', 'is_superuser']
+        fields = [*write_fields, *read_only_fields]
+        extra_kwargs = augment_extra_kwargs()
+
+
+class GroupSerializer(serializers.HyperlinkedModelSerializer):
+    users = serializers.SerializerMethodField(help_text="Users in the group")
+
+    @extend_schema_field(UserSerializer(many=True))
+    def get_users(self, instance):
         return UserSerializer(
             instance.user_set.filter(is_active=True),
             many=True,
             context={'request': self.context['request']}
         ).data
 
-    def get_name(self, instance):
-        return self.context.get('name', instance.name)
+    class Meta:
+        model = Group
+        fields = [
+            'id',
+            'url',
+            'name',
+            'users',
+            'readable_paths',
+            'editable_paths',
+            'readable_harvesters',
+            'editable_harvesters'
+        ]
+        extra_kwargs = augment_extra_kwargs({
+            'readable_paths': {'help_text': "Paths on which this Group are Users"},
+            'editable_paths': {'help_text': "Paths on which this Group are Admins"},
+            'readable_harvesters': {'help_text': "Harvesters for which this Group are Users"},
+            'editable_harvesters': {'help_text': "Harvesters for which this Group are Admins"},
+        })
 
-    def get_is_admin(self, instance):
+
+class UserSetSerializer(GroupSerializer):
+    description = serializers.SerializerMethodField(help_text="Permissions granted to users with this role")
+    users = serializers.SerializerMethodField(help_text="Users in this group")
+    name = serializers.SerializerMethodField(help_text="Group name")
+    is_admin = serializers.SerializerMethodField(help_text="Whether this is an administrator group")
+
+    def my_context(self, instance, key: str, default=None):
+        return self.context.get(instance.id, {}).get(key, default)
+
+    def get_description(self, instance) -> str | None:
+        return self.my_context(instance, 'description')
+
+    def get_name(self, instance) -> str:
+        return self.my_context(instance, 'name', instance.name)
+
+    def get_is_admin(self, instance) -> bool:
         """
         Admin groups can control their own members, as well as members in groups
         lower down the list of UserSets[]
         """
-        return self.context.get('is_admin', False)
+        return self.my_context(instance, 'is_admin', False)
 
     class Meta:
         model = Group
@@ -85,32 +130,31 @@ class UserSetSerializer(serializers.HyperlinkedModelSerializer):
 class HarvesterSerializer(serializers.HyperlinkedModelSerializer):
     user_sets = serializers.SerializerMethodField(help_text="Roles and the Users assigned to them")
 
-    def get_user_sets(self, instance) -> list[UserSetSerializer]:
-        return [
-            UserSetSerializer(
-                instance.admin_group,
-                context={
-                    'request': self.context.get('request'),
+    @extend_schema_field(UserSetSerializer(many=True))
+    def get_user_sets(self, instance):
+        group_ids = [instance.admin_group.id, instance.user_group.id]
+        return UserSetSerializer(
+            Group.objects.filter(id__in=group_ids),
+            context={
+                'request': self.context.get('request'),
+                instance.admin_group.id: {
                     'name': 'Admins',
                     'description': (
                         'Administrators can change harvester properties, '
                         'as well as any of the harvester\'s paths or datasets.'
                     ),
                     'is_admin': True
-                }
-            ).data,
-            UserSetSerializer(
-                instance.user_group,
-                context={
-                    'request': self.context.get('request'),
+                },
+                instance.user_group.id: {
                     'name': 'Users',
                     'description': (
                         'Users can view harvester properties. '
                         'They can also add monitored paths.'
                     )
                 }
-            ).data,
-        ]
+            },
+            many=True
+        ).data
 
     class Meta:
         model = Harvester
@@ -119,76 +163,39 @@ class HarvesterSerializer(serializers.HyperlinkedModelSerializer):
         extra_kwargs = augment_extra_kwargs()
 
 
-class HarvesterConfigSerializer(serializers.HyperlinkedModelSerializer):
-    standard_units = serializers.SerializerMethodField(help_text="Units recognised by the initial database")
-    standard_columns = serializers.SerializerMethodField(help_text="Column Types recognised by the initial database")
-    max_upload_bytes = serializers.SerializerMethodField(help_text="Maximum upload size (bytes)")
-
-    def get_standard_units(self, instance):
-        return DataUnitSerializer(
-            DataUnit.objects.filter(is_default=True),
-            many=True,
-            context={'request': self.context['request']}
-        ).data
-
-    def get_standard_columns(self, instance):
-        return DataColumnTypeSerializer(
-            DataColumnType.objects.filter(is_default=True),
-            many=True,
-            context={'request': self.context['request']}
-        ).data
-
-    def get_max_upload_bytes(self, instance):
-        return DATA_UPLOAD_MAX_MEMORY_SIZE
-
-    class Meta:
-        model = Harvester
-        fields = [
-            'url', 'id', 'api_key', 'name', 'sleep_time', 'monitored_paths',
-            'standard_units', 'standard_columns', 'max_upload_bytes'
-        ]
-        read_only_fields = fields
-        depth = 1
-
-
 class MonitoredPathSerializer(serializers.HyperlinkedModelSerializer):
     user_sets = serializers.SerializerMethodField(help_text="Roles and the Users assigned to them")
 
-    def get_user_sets(self, instance) -> list:
-        return [
-            UserSetSerializer(
-                instance.harvester.admin_group,
-                context={
-                    'request': self.context.get('request'),
+    @extend_schema_field(UserSetSerializer(many=True))
+    def get_user_sets(self, instance):
+        group_ids = [instance.harvester.admin_group.id, instance.admin_group.id, instance.user_group.id]
+        return UserSetSerializer(
+            Group.objects.filter(id__in=group_ids),
+            context={
+                'request': self.context.get('request'),
+                instance.harvester.admin_group.id: {
                     'name': 'Harvester admins',
                     'description': (
                         'Harvester administrators can alter any of the harvester\'s paths or datasets.'
                     ),
                     'is_admin': True
-                }
-            ).data,
-            UserSetSerializer(
-                instance.admin_group,
-                context={
-                    'request': self.context.get('request'),
+                },
+                instance.admin_group.id: {
                     'name': 'Admins',
                     'description': (
                         'Administrators can change paths and their datasets.'
                     ),
                     'is_admin': True
-                }
-            ).data,
-            UserSetSerializer(
-                instance.user_group,
-                context={
-                    'request': self.context.get('request'),
+                },
+                instance.user_group.id: {
                     'name': 'Users',
                     'description': (
                         'Users can monitored paths and their datasets.'
                     )
                 }
-            ).data,
-        ]
+            },
+            many=True
+        ).data
 
     class Meta:
         model = MonitoredPath
@@ -309,7 +316,8 @@ class EquipmentSerializer(serializers.HyperlinkedModelSerializer):
 class DatasetSerializer(serializers.HyperlinkedModelSerializer):
     user_sets = serializers.SerializerMethodField(help_text="Roles and the Users assigned to them")
 
-    def get_user_sets(self, instance) -> list:
+    @extend_schema_field(UserSetSerializer(many=True))
+    def get_user_sets(self, instance):
         return MonitoredPathSerializer(
             instance.file.monitored_path, context={'request': self.context.get('request')}
         ).data.get('user_sets')
@@ -379,7 +387,9 @@ class TimeseriesDataListSerializer(serializers.Serializer):
             obs = [x[0] for x in data]
         return {
             'id': instance.id,
-            'url': self.context['request'].build_absolute_uri(reverse('datacolumn-data-list', args=(instance.id,))),
+            'url': self.context['request'].build_absolute_uri(
+                reverse('datacolumn-data-listformat', args=(instance.id,))
+            ),
             'observations': obs
         }
 
@@ -422,14 +432,15 @@ class DataColumnSerializer(serializers.HyperlinkedModelSerializer):
     def get_description(self, instance) -> str:
         return instance.type.description
 
-    def get_unit(self, instance) -> DataUnitSerializer:
+    @extend_schema_field(DataUnitSerializer())
+    def get_unit(self, instance):
         return DataUnitSerializer(instance.type.unit, context=self.context).data
 
     def get_data(self, instance) -> str:
         return self.uri(reverse('datacolumn-data', args=(instance.id,)))
 
     def get_data_list(self, instance) -> str:
-        return self.uri(reverse('datacolumn-data-list', args=(instance.id,)))
+        return self.uri(reverse('datacolumn-data-listformat', args=(instance.id,)))
 
     class Meta:
         model = DataColumn
@@ -446,53 +457,6 @@ class DataColumnSerializer(serializers.HyperlinkedModelSerializer):
             'data_list'
         ]
         read_only_fields = fields
-        extra_kwargs = augment_extra_kwargs()
-
-
-class GroupSerializer(serializers.HyperlinkedModelSerializer):
-    users = serializers.SerializerMethodField(help_text="Users in the group")
-
-    def get_users(self, instance) -> list:
-        return UserSerializer(
-            instance.user_set.filter(is_active=True),
-            many=True,
-            context={'request': self.context['request']}
-        ).data
-
-    class Meta:
-        model = Group
-        fields = [
-            'id',
-            'url',
-            'name',
-            'users',
-            'readable_paths',
-            'editable_paths',
-            'readable_harvesters',
-            'editable_harvesters'
-        ]
-        extra_kwargs = augment_extra_kwargs({
-            'readable_paths': {'help_text': "Paths on which this Group are Users"},
-            'editable_paths': {'help_text': "Paths on which this Group are Admins"},
-            'readable_harvesters': {'help_text': "Harvesters for which this Group are Users"},
-            'editable_harvesters': {'help_text': "Harvesters for which this Group are Admins"},
-        })
-
-
-class UserSerializer(serializers.HyperlinkedModelSerializer):
-    url = serializers.SerializerMethodField(help_text=url_help_text)
-
-    def get_url(self, instance) -> str:
-        uri = self.context['request'].build_absolute_uri
-        if instance.is_active:
-            return uri(reverse('user-detail', args=(instance.id,)))
-        return uri(reverse('inactive_user-detail', args=(instance.id,)))
-
-    class Meta:
-        model = User
-        write_fields = ['username', 'email', 'first_name', 'last_name']
-        read_only_fields = ['url', 'id', 'is_active', 'is_staff', 'is_superuser']
-        fields = [*write_fields, *read_only_fields]
         extra_kwargs = augment_extra_kwargs()
 
 
@@ -534,3 +498,37 @@ class KnoxTokenFullSerializer(KnoxTokenSerializer):
         fields = ['url', 'id', 'name', 'created', 'expiry', 'token']
         read_only_fields = fields
         extra_kwargs = augment_extra_kwargs()
+
+
+class HarvesterConfigSerializer(serializers.HyperlinkedModelSerializer):
+    standard_units = serializers.SerializerMethodField(help_text="Units recognised by the initial database")
+    standard_columns = serializers.SerializerMethodField(help_text="Column Types recognised by the initial database")
+    max_upload_bytes = serializers.SerializerMethodField(help_text="Maximum upload size (bytes)")
+
+    @extend_schema_field(DataUnitSerializer(many=True))
+    def get_standard_units(self, instance):
+        return DataUnitSerializer(
+            DataUnit.objects.filter(is_default=True),
+            many=True,
+            context={'request': self.context['request']}
+        ).data
+
+    @extend_schema_field(DataColumnTypeSerializer(many=True))
+    def get_standard_columns(self, instance):
+        return DataColumnTypeSerializer(
+            DataColumnType.objects.filter(is_default=True),
+            many=True,
+            context={'request': self.context['request']}
+        ).data
+
+    def get_max_upload_bytes(self, instance):
+        return DATA_UPLOAD_MAX_MEMORY_SIZE
+
+    class Meta:
+        model = Harvester
+        fields = [
+            'url', 'id', 'api_key', 'name', 'sleep_time', 'monitored_paths',
+            'standard_units', 'standard_columns', 'max_upload_bytes'
+        ]
+        read_only_fields = fields
+        depth = 1
