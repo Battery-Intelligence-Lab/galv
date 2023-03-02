@@ -28,3 +28,5 @@ backend/backend_django/django_celery_beat.schedulersDatabaseScheduler
 *.pptx
 
 docker-compose.override.yml
+backend/backend_django/galvanalyser/migrations/*.py
+!backend/backend_django/galvanalyser/migrations/__init__.py

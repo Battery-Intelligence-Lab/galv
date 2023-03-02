@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - master
+      - "v2.0.0"
   pull_request:
     branches:
       - '**'
@@ -72,4 +73,4 @@ jobs:
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
 
       - name: Run tests
-        run: docker-compose -f docker-compose.test.yml run --rm app_test python manage.py test
+        run: docker-compose -f docker-compose.test.yml run --rm app_test bash -c "cd .. && ./server.sh"
