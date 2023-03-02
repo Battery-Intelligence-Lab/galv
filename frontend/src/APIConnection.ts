@@ -233,7 +233,15 @@ export class APIConnection {
             })
           if (response.status === 404)
             this.results.remove(url)
-          throw new Error(`Fetch failed for ${url}: ${response.status}`)
+          try {
+            return response.json().then(j => {
+              if (j.error)
+                throw new Error(`Server error: ${j.error}`)
+              throw new Error(`Fetch failed for ${url}: ${response.status}`)
+            })
+          } catch (e) {
+            throw new Error(`Fetch failed for ${url}: ${response.status}`)
+          }
         }
         if (response.status === 204)
           return null;
