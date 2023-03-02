@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - master
+      - "v2.0.0"
   pull_request:
     branches:
       - '**'
@@ -69,7 +70,7 @@ jobs:
       # Enable tmate debugging of manually-triggered workflows if the input option was provided
       - name: Setup tmate session
         uses: mxschmitt/action-tmate@v3
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
+#        if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
 
       - name: Run tests
         run: docker-compose -f docker-compose.test.yml run --rm app_test python manage.py test
