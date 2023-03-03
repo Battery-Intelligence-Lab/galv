@@ -1,0 +1,2 @@
+factory_boy==3.2.1
+faker==17.0.0

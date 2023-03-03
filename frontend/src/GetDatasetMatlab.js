@@ -1,23 +1,17 @@
-import React, {useEffect, useState} from "react";
+import React, {useState} from "react";
 import SyntaxHighlighter from 'react-syntax-highlighter';
 import { docco } from 'react-syntax-highlighter/dist/esm/styles/hljs';
-import {getToken} from "./Api"
-import Typography from '@material-ui/core/Typography';
+import Typography from '@mui/material/Typography';
+import Connection from "./APIConnection";
 
 
 export default function GetDatasetMatlab({dataset}) {
-  const [token, setToken] = useState('API_TOKEN');
-  useEffect(() => {
-  getToken().then(response => response.json()).then(data => {
-      setToken(data.access_token)
-    })
-    
-  }, [])
-  
+  const [token, setToken] = useState(Connection.user?.token || 'API_TOKEN');
+
   let domain = window.location.href.split('/')[2];
   domain = domain.split(':')[0]
 
-  const host = `http://${domain}:5001`
+  const host = `http://${domain}:5000`
   const codeString = `%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % 
 % galvanalyser REST API access
@@ -33,7 +27,7 @@ export default function GetDatasetMatlab({dataset}) {
 
 % login to galvanalyser > Generate API Token
 token = '${token}';
-apiURL = '${host}/api/dataset';
+apiURL = '${host}/Dataset';
 options = weboptions('HeaderFields', {'Authorization' ['Bearer ' token]});
 
 % Datasets can be referenced by name or by id. 
@@ -60,7 +54,7 @@ for i = 1:length(dataset_ids)
     d = dataset_ids(i);
     
     % get data
-    dsURL = strcat(apiURL, '/', d);
+    dsURL = strcat(apiURL, '/', d, '/');
     meta = webread(dsURL, options);
     
     % append column data in columns

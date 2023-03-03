@@ -4,38 +4,20 @@ services:
     image: app
     build:
       dockerfile: Dockerfile
-      context: ./backend
+      context: backend
     depends_on:
-      - redis
-      - rabbitmq
       - postgres
     ports:
-      - "5001:5000"
+      - "5000:5000"
     volumes:
      - ./backend:/usr/app
-     - "${GALVANALYSER_HARVESTER_TEST_PATH}:/usr/test_data"
-     - "${GALVANALYSER_HARVESTER_BASE_PATH}:/usr/data"
-     - "${CELERY_LOG_DIR}:/var/log/celery"
-    restart: unless-stopped
     working_dir: /usr/app
-    command: ./server.sh 
-    restart: unless-stopped
     env_file:
      - ./.env
-  worker:
-    image: app
-    command: ./worker.sh 
-    depends_on:
-      - app
-    volumes:
-     - ./backend:/usr/app
-     - "${GALVANALYSER_HARVESTER_BASE_PATH}:/usr/data"
-     - "${CELERY_LOG_DIR}:/var/log/celery"
+     - ./.env.secret
+    restart: unless-stopped
+    command: ./server.sh
 
-    working_dir: /usr/app
-    restart: unless-stopped
-    env_file:
-     - ./.env
   frontend:
     image: frontend
     build:
@@ -45,37 +27,19 @@ services:
       - app
     ports:
       - "80:80"
-    volumes:
-     - ./frontend:/app
-    restart: unless-stopped
-    working_dir: /app
-    restart: unless-stopped
     env_file:
      - ./.env
-  rabbitmq:
-    image: "rabbitmq"
-    ports:
-      - "5672:5672"
-    env_file:
-      - ./.env
     restart: unless-stopped
-  redis:
-    image: redis:5.0-alpine
-    restart: always
-    command: redis-server --requirepass ${REDIS_PASSWORD}
-    ports:
-     - "6379:6379"
-    volumes:
-     - "${REDIS_DATA_PATH}:/var/lib/redis"
+
   postgres:
     image: "postgres"
     stop_signal: SIGINT                 # Fast Shutdown mode
     ports:
       - "5433:5433"
-    command: -p 5433
     volumes:
       - "${GALVANALYSER_DATA_PATH}:/var/lib/postgresql/data"
     env_file:
       - ./.env
+      - ./.env.secret
     restart: unless-stopped
-  
+    command: -p 5433

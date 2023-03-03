@@ -1,0 +1,1 @@
+import galvanalyser.schema

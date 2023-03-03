@@ -1,7 +1,6 @@
 *.pyc
 .vscode
 .venv
-config
 .removed
 galvanalyser/protobuf
 galvanalyser/webapp/assets/protobuf
@@ -19,3 +18,15 @@ env
 .test-data/
 
 frontend/src/demo_matlab_code.m
+
+**/.env.*
+dev.sh
+backend/backend_django/django_celery_beat.schedulersDatabaseScheduler
+
+.harvester/
+
+*.pptx
+
+docker-compose.override.yml
+backend/backend_django/galvanalyser/migrations/*.py
+!backend/backend_django/galvanalyser/migrations/__init__.py

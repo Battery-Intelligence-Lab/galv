@@ -1,30 +1,38 @@
-import React, {useEffect, useState} from "react";
+import React, {useState, useEffect} from "react";
 import SyntaxHighlighter from 'react-syntax-highlighter';
 import { docco } from 'react-syntax-highlighter/dist/esm/styles/hljs';
-import {getToken} from "./Api"
-import Typography from '@material-ui/core/Typography';
+import Typography from '@mui/material/Typography';
+import Connection from "./APIConnection";
+import {CircularProgress} from "@mui/material";
 
 
 export default function GetDatasetPython({dataset}) {
-  const [token, setToken] = useState('API_TOKEN');
-  useEffect(() => {
-  getToken().then(response => response.json()).then(data => {
-      setToken(data.access_token)
-    })
-    
-  }, [])
-  
+  const [token, setToken] = useState(Connection.user?.token || 'API_TOKEN');
+  const [columns, setColumns] = useState("")
+  const [code, setCode] = useState(<CircularProgress/>)
+
   let domain = window.location.href.split('/')[2];
   domain = domain.split(':')[0]
 
-  const host = `http://${domain}:5001`
-  const column_ids = dataset.columns.map(column => {
-    return `      '${column.name}': ${column.id},`
-  })
-  const column_ids_str = column_ids.join('\n')
+  const host = `http://${domain}:5000`
   const setupEnvString = `pip install batteryclient numpy`
 
-  const codeString = `import batteryclient
+  useEffect(() => {
+    Promise.all(dataset.columns.map(column =>
+        Connection.fetch(column)
+            .then(r => r.content)
+            .then(col => `      '${col.name}': ${col.id},`)
+    ))
+        .then(cols => setColumns(cols.join('\n')))
+  }, [dataset])
+
+  useEffect(() => {
+    if (!columns)
+      setCode(<CircularProgress/>)
+    else
+      setCode(
+          <SyntaxHighlighter language="python" style={docco}>{
+            `import batteryclient
 from batteryclient.api import users_api
 import numpy as np
 
@@ -48,7 +56,7 @@ with batteryclient.ApiClient(configuration) as api_client:
 
     # get the data columns (delete those you don't need)
     column_ids = {
-${column_ids_str}
+${columns}
     }
 
     # download column data
@@ -58,25 +66,25 @@ ${column_ids_str}
         dtype=np.float32
       ) for column_name, column_id in column_ids.items()
     }`
+          }</SyntaxHighlighter>
+      )
+  }, [columns])
 
   return (
-    <React.Fragment>
-    <Typography>
-      Setup Dependencies
-    </Typography>
+      <React.Fragment>
+        <Typography>
+          Setup Dependencies
+        </Typography>
 
-    <SyntaxHighlighter language="bash" style={docco}>
-      {setupEnvString}
-    </SyntaxHighlighter>
+        <SyntaxHighlighter language="bash" style={docco}>
+          {setupEnvString}
+        </SyntaxHighlighter>
 
-    <Typography>
-      Python Code
-    </Typography>
+        <Typography>
+          Python Code
+        </Typography>
 
-
-    <SyntaxHighlighter language="python" style={docco}>
-      {codeString}
-    </SyntaxHighlighter>
-    </React.Fragment>
+        {code}
+      </React.Fragment>
   )
 }

@@ -11,3 +11,8 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+/* Override .MuiPopover-paper because we can't do it inside the UserRoleSet component */
+.MuiPopover-paper {
+  overflow: visible;
+}

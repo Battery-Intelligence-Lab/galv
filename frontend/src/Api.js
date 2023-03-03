@@ -1,5 +1,5 @@
 
-const url = '/api/';
+export const url = 'http://localhost:5000/';
 const headers = {
       'Accept': 'application/json',
       'Content-Type': 'application/json'
@@ -7,34 +7,31 @@ const headers = {
 
 let user = null;
 
-export function getUser() {
-  return authFetch(url + 'user/current').then(response => {
-    if (!response.ok) {
-      return Promise.reject()
-    }
-    return response.json()
-  }).then(data => {
-    console.log('setUser ', data)
-    user = data
-    return data
-  });
+export function handleLogin(data) {
+    user = {...data.user, token: data.token};
 }
 
+export function getUser() {return user;}
+
 export function isAdmin() {
-  if (!user) {
-    return false;
-  }
-  return user.groups.find(g => g.groupname === 'admin')
+    return user !== null;
+  // if (!user) {
+  //   return false;
+  // }
+  // return user.groups.find(g => g.groupname === 'admin')
 }
 
 export async function login(username, password) {
   let headers = new Headers();
   headers.set('Authorization', 'Basic ' + btoa(username + ":" + password));
-  return fetch(url + '/login', {method: 'POST', headers: headers})
+  headers.set('Accept', 'application/json');
+  return fetch(url + 'login/', {method: 'POST', headers: headers})
 }
 
 export async function logout() {
-  return fetch(url + '/logout', {method: 'POST'});
+    let headers = new Headers();
+    headers.set('Accept', 'application/json');
+  return fetch(url + 'logout/', {method: 'POST'});
 }
 
 export function getCookie(name) {
@@ -43,29 +40,48 @@ export function getCookie(name) {
   if (parts.length === 2) return parts.pop().split(';').shift();
 }
 
-export function loggedIn() {
+export async function loggedIn(skip = true) {
+    await login('admin', 'admin').then(r => r.json()).then(data => handleLogin(data))
   const cookie = getCookie('csrf_access_token');
-  return  cookie !== undefined;
+    if (cookie === undefined || !user)
+        if (!skip)
+            return loggedIn(false);
+  return  cookie !== undefined && user;
 }
 
-async function authFetch(url, options) {
+export async function authFetch(url, options) {
+  const token = user?.token;
   let newOptions = {...options};
   newOptions.credentials = 'same-origin';
   newOptions.headers = {...newOptions.headers};
+  newOptions.headers['Content-Type'] = "application/json";
+  newOptions.headers['Accept'] = "application/json";
+  newOptions.headers['Authorization'] = `Token ${token}`;
   newOptions.headers['X-CSRF-TOKEN'] = getCookie('csrf_access_token');
+  url = /\/$/.test(url) ? url : `${url}/`;
   return fetch(url, newOptions).then((response) => {
     if (response.status === 401) {
-      return logout().then(() => {
-        return response;
-      });
+        throw new Error(`Server said 'unauthorised'`)
+      // return logout().then(() => {
+      //   return response;
+      // });
     }
     return response;
-  });;
+  }).catch(e => {
+      // console.error(e);
+      return {
+          count: 0,
+          previous: null,
+          next: null,
+          results: [],
+          error: "Unauthorised"
+      };
+  });
 }
 
 export async function run_harvester(id) { 
   return authFetch(
-    url + `harvester/${id}/run`,
+    url + `harvesters/${id}/run`,
     {
       method: 'PUT',
       headers: headers,
@@ -78,19 +94,19 @@ export async function getToken() {
 }
 
 export async function env_harvester(id) { 
-  return authFetch(url + `harvester/${id}/env`);
+  return authFetch(url + `harvesters/${id}/env`);
 }
 
 export async function harvesters(id) { 
   if (id) {
-    return authFetch(url + `harvester/${id}`);
+    return authFetch(url + `harvesters/${id}`);
   }
-  return authFetch(url + 'harvester');
+  return authFetch(url + 'harvesters/');
 }
 
 export async function delete_harvester(id) { 
   return authFetch(
-    url + `harvester/${id}`, 
+    url + `harvesters/${id}`,
     {
       method: 'DELETE',
     }
@@ -102,7 +118,7 @@ export async function delete_harvester(id) {
 // { machine_id: ? }
 export async function add_harvester(harvester) { 
   return authFetch(
-    url + `harvester`, 
+    url + `harvesters/`,
     {
       method: 'POST',
       headers: headers,
@@ -116,7 +132,7 @@ export async function add_harvester(harvester) {
 // { machine_id: ? }
 export async function update_harvester(id, harvester) { 
   return authFetch(
-    url + `harvester/${id}`, 
+    url + `harvesters/${id}`,
     {
       method: 'PUT',
       headers: headers,
@@ -130,7 +146,7 @@ export async function update_harvester(id, harvester) {
 // { path: ?, monitored_for: ?, harvester_id: ? }
 export async function update_monitored_path(id, path) { 
   return authFetch(
-    url + `monitored_path/${id}`, 
+    url + `monitored_paths/${id}`,
     {
       method: 'PUT',
       headers: headers,
@@ -144,7 +160,7 @@ export async function update_monitored_path(id, path) {
 // { path: ?, monitored_for: ?, harvester_id: ? }
 export async function add_monitored_path(path) { 
   return authFetch(
-    url + `monitored_path`, 
+    url + `monitored_paths`,
     {
       method: 'POST',
       headers: headers,
@@ -155,7 +171,7 @@ export async function add_monitored_path(path) {
 
 export async function delete_monitored_path(id) { 
   return authFetch(
-    url + `monitored_path/${id}`, 
+    url + `monitored_paths/${id}`,
     {
       method: 'DELETE',
     }
@@ -164,23 +180,23 @@ export async function delete_monitored_path(id) {
 
 export async function monitored_paths(harvester_id) { 
   return authFetch(
-    url + `monitored_path?harvester_id=${harvester_id}`
+    url + `monitored_paths?harvester_id=${harvester_id}`
   );
 }
 
 export async function users() { 
-  return authFetch(url + 'user');
+  return authFetch(url + 'users/');
 }
 
 export async function files(path_id) { 
-  return authFetch(url + `file?path_id=${path_id}`);
+  return authFetch(url + `files?path_id=${path_id}`);
 }
 
 export async function datasets(id) { 
   if (id) {
-    return authFetch(url + `dataset/${id}`);
+    return authFetch(url + `datasets/${id}`);
   }
-  return authFetch(url + 'dataset');
+  return authFetch(url + 'datasets/');
 
 }
 
@@ -191,7 +207,7 @@ export async function datasets(id) {
 //   purpose: ? }
 export async function update_dataset(id, dataset) { 
   return authFetch(
-    url + `dataset/${id}`, 
+    url + `datasets/${id}`,
     {
       method: 'PUT',
       headers: headers,
@@ -208,7 +224,7 @@ export async function equipment(id) {
   if (id) {
     return authFetch(url + `equipment/${id}`);
   }
-  return authFetch(url + `equipment`);
+  return authFetch(url + `equipment/`);
 }
 
 //// equipment is object with fields:
@@ -216,7 +232,7 @@ export async function equipment(id) {
 // { name: ?, type: ?, }
 export async function add_equipment(equipment) { 
   return authFetch(
-    url + `equipment`, 
+    url + `equipment/`,
     {
       method: 'POST',
       headers: headers,
@@ -250,9 +266,9 @@ export async function delete_equipment(id) {
 
 export async function cells(id) { 
   if (id) {
-    return authFetch(url + `cell/${id}`);
+    return authFetch(url + `cells/${id}`);
   }
-  return authFetch(url + `cell`);
+  return authFetch(url + `cells/`);
 }
 
 //// cell is object with fields:
@@ -262,7 +278,7 @@ export async function cells(id) {
 //   nominal_capacity: ?, nominal_cell_weight: ? }
 export async function add_cell(cell) { 
   return authFetch(
-    url + `cell`, 
+    url + `cells/`,
     {
       method: 'POST',
       headers: headers,
@@ -278,7 +294,7 @@ export async function add_cell(cell) {
 //   nominal_capacity: ?, nominal_cell_weight: ? }
 export async function update_cell(id, cell) { 
   return authFetch(
-    url + `cell/${id}`, 
+    url + `cells/${id}`,
     {
       method: 'PUT',
       headers: headers,
@@ -289,7 +305,7 @@ export async function update_cell(id, cell) {
 
 export async function delete_cell(id) { 
   return authFetch(
-    url + `cell/${id}`, 
+    url + `cells/${id}`,
     {
       method: 'DELETE',
     }
@@ -298,14 +314,14 @@ export async function delete_cell(id) {
 
 export async function manufacturers(id) { 
   if (id) {
-    return authFetch(url + `manufacturer/${id}`);
+    return authFetch(url + `manufacturers/${id}`);
   }
-  return authFetch(url + `manufacturer`);
+  return authFetch(url + `manufacturers/`);
 }
 
 export async function delete_manufacturer(id) { 
   return authFetch(
-    url + `manufacturer/${id}`, 
+    url + `manufacturers/${id}`,
     {
       method: 'DELETE',
     }
@@ -317,7 +333,7 @@ export async function delete_manufacturer(id) {
 // { name: ? }
 export async function add_manufacturer(manufacturer) { 
   return authFetch(
-    url + `manufacturer`, 
+    url + `manufacturers/`,
     {
       method: 'POST',
       headers: headers,
@@ -331,7 +347,7 @@ export async function add_manufacturer(manufacturer) {
 // { path: ?, monitored_for: ?, harvester_id: ? }
 export async function update_manufacturer(id, manufacturer) { 
   return authFetch(
-    url + `manufacturer/${id}`, 
+    url + `manufacturers/${id}`,
     {
       method: 'PUT',
       headers: headers,
@@ -342,14 +358,14 @@ export async function update_manufacturer(id, manufacturer) {
 
 export async function institutions(id) { 
   if (id) {
-    return authFetch(url + `institution/${id}`);
+    return authFetch(url + `institutions/${id}`);
   }
-  return authFetch(url + `institution`);
+  return authFetch(url + `institutions/`);
 }
 
 export async function delete_institution(id) { 
   return authFetch(
-    url + `institution/${id}`, 
+    url + `institutions/${id}`,
     {
       method: 'DELETE',
     }
@@ -361,7 +377,7 @@ export async function delete_institution(id) {
 // { name: ? }
 export async function add_institution(institution) { 
   return authFetch(
-    url + `institution`, 
+    url + `institutions/`,
     {
       method: 'POST',
       headers: headers,
@@ -375,7 +391,7 @@ export async function add_institution(institution) {
 // { path: ?, monitored_for: ?, harvester_id: ? }
 export async function update_institution(id, institution) { 
   return authFetch(
-    url + `institution/${id}`, 
+    url + `institutions/${id}`,
     {
       method: 'PUT',
       headers: headers,
@@ -407,7 +423,7 @@ export async function update_metadata(dataset_id, metadata) {
 }
 
 export async function timeseries_column(dataset_id, col_id) { 
-  return authFetch(url + `dataset/${dataset_id}/${col_id}`,
+  return authFetch(url + `datasets/${dataset_id}/${col_id}`,
     {
       responseType: 'arraybuffer',
       headers: {

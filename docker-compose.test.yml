@@ -1,0 +1,43 @@
+version: "2"
+services:
+
+  postgres:
+    image: "postgres"
+    stop_signal: SIGINT                 # Fast Shutdown mode
+    ports:
+      - "5433:5433"
+    command: -p 5433
+    volumes:
+      - "${GALVANALYSER_DATA_PATH}:/var/lib/postgresql/data"
+    env_file:
+      - .env.secret
+    restart: unless-stopped
+
+  app_test:
+    build:
+      dockerfile: Dockerfile-test
+      context: backend
+    depends_on:
+      - postgres
+    ports:
+      - "5005:5005"
+    volumes:
+     - ./backend:/usr/app
+    restart: unless-stopped
+    working_dir: /usr/app/backend_django
+    command: ../server.sh
+#    command: tail -F anything
+    env_file:
+      - .env.secret
+
+  harvester:
+    build:
+      dockerfile: Dockerfile
+      context: ./harvester
+    volumes:
+     - ./harvester:/usr/harvester
+     - ./.harvester:/harvester_files
+     - "${GALVANALYSER_HARVESTER_TEST_PATH}:/usr/test_data"
+    working_dir: /usr
+    restart: unless-stopped
+    command: python -m unittest discover -s /usr/harvester/test
