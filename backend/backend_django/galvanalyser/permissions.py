@@ -21,3 +21,10 @@ class HarvesterAccess(permissions.BasePermission):
                 return False
 
         return True
+
+
+class ReadOnlyIfInUse(permissions.BasePermission):
+    def has_object_permission(self, request, view, obj):
+        if request.method in permissions.SAFE_METHODS:
+            return True
+        return not obj.in_use()

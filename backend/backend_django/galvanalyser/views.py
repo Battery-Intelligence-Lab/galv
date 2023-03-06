@@ -5,8 +5,10 @@ import os
 from django.db.models import Q
 
 from .serializers import HarvesterSerializer, \
+    HarvesterCreateSerializer, \
     HarvesterConfigSerializer, \
     MonitoredPathSerializer, \
+    MonitoredPathCreateSerializer, \
     ObservedFileSerializer, \
     CellSerializer, \
     CellFamilySerializer, \
@@ -39,7 +41,7 @@ from .models import Harvester, \
     FileState, \
     VouchFor, \
     KnoxAuthToken
-from .auth import HarvesterAccess
+from .permissions import HarvesterAccess, ReadOnlyIfInUse
 from django.contrib.auth.models import User, Group
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -296,7 +298,9 @@ Harvesters monitor a set of MonitoredPaths and send reports about ObservedFiles 
         description="""
 A new Harvester created with the harvester program's `start.py` script will register itself via this endpoint.
 This endpoint will register the Harvester and set up the user and administrator groups.
-        """
+        """,
+        request=HarvesterCreateSerializer(),
+        responses={201: HarvesterConfigSerializer()}
     ),
     partial_update=extend_schema(
         summary="Update Harvester details",
@@ -338,7 +342,13 @@ The harvester programs use the report endpoint for all information they send to 
 (except initial self-registration).
 Reports will be file size reports, file parsing reports, or error reports. 
 File parsing reports may contain metadata or data to store.
-        """
+        """,
+        request=inline_serializer('HarvesterReportSerializer', {
+            # TODO
+        }),
+        responses={
+            # TODO
+        }
     )
 )
 class HarvesterViewSet(viewsets.ModelViewSet):
@@ -353,11 +363,15 @@ class HarvesterViewSet(viewsets.ModelViewSet):
     Harvesters are created by a separate software package available within Galvanalyser.
     """
     permission_classes = [HarvesterAccess]
-    serializer_class = HarvesterSerializer
     filterset_fields = ['name']
     search_fields = ['@name']
     queryset = Harvester.objects.none().order_by('-last_check_in', '-id')
     http_method_names = ['get', 'post', 'patch', 'delete', 'options']
+
+    def get_serializer_class(self):
+        if self.request.method.lower() == "post":
+            return HarvesterCreateSerializer
+        return HarvesterSerializer
 
     def get_queryset(self):
         user_groups = self.request.user.groups.all()
@@ -371,61 +385,6 @@ class HarvesterViewSet(viewsets.ModelViewSet):
             Q(id__in=path_harvesters)
         )
         return my_harvesters.order_by('-last_check_in', '-id')
-
-    def create(self, request, *args, **kwargs):
-        """
-        Create a Harvester and the user Groups required to control it.
-        """
-        # TODO: move to serializer?
-        # Validate input
-        if not request.data.get('name'):
-            return error_response('No name specified for Harvester.')
-        if not request.data.get('user'):
-            return error_response('No administrator id specified for Harvester.')
-        if len(Harvester.objects.filter(name=request.data['name'])):
-            return error_response('Harvester with that name already exists')
-        if len(User.objects.filter(id=int(request.data['user']))) != 1:
-            return error_response('No user exists with id {request.data["user"]}')
-
-        # Create Harvester
-        harvester = Harvester.objects.create(name=request.data['name'])
-        # Create user/admin groups
-        harvester.admin_group = Group.objects.create(name=f"harvester_{harvester.id}_admins")
-        harvester.user_group = Group.objects.create(name=f"harvester_{harvester.id}_users")
-        harvester.save()
-        # Add user as admin
-        user = User.objects.get(id=int(request.data['user']))
-        user.groups.add(harvester.admin_group)
-        user.save()
-
-        return Response(HarvesterConfigSerializer(harvester, context={'request': request}).data)
-
-    def partial_update(self, request, *args, **kwargs):
-        """Update Harvester properties."""
-        try:
-            harvester = Harvester.objects.get(id=kwargs.get('pk'))
-        except Harvester.DoesNotExist:
-            return error_response(f'Harvester with id {request.data["id"]} not found.')
-        if not request.user.groups.contains(harvester.admin_group):
-            return error_response(f'Access denied.')
-
-        name = request.data.get('name')
-        if name and name != harvester.name:
-            if Harvester.objects.filter(name=name).exists():
-                return error_response(f'Another Harvester already has the name {name}')
-            harvester.name = name
-        sleep_time = request.data.get('sleep_time', None)
-        if sleep_time is not None:
-            try:
-                sleep_time = int(sleep_time)
-                assert sleep_time > 0
-            except (TypeError, ValueError, AssertionError):
-                return error_response('sleep_time must be an integer greater than 0')
-            if sleep_time != harvester.sleep_time:
-                harvester.sleep_time = sleep_time
-
-        harvester.save()
-        return Response(self.get_serializer(harvester).data)
 
     # TODO: handle harvester envvars?
 
@@ -660,12 +619,17 @@ becoming ObservedFiles once they are reported to Galvanalyser by the Harvester.
 Register a new directory on for a Harvester to crawl. 
 Files in that directory will be scanned periodically by the Harvester,
 becoming ObservedFiles once they are reported to Galvanalyser by the Harvester.
-        """
+        """,
+        request=MonitoredPathCreateSerializer(),
+        responses={
+            201: MonitoredPathSerializer()
+        }
     ),
     partial_update=extend_schema(
         summary="Update a Path",
         description="""
-Alter the path to the monitored directory, or the time for which files need to be stable before being imported.
+Alter the path to the monitored directory, 
+or the time for which files need to be stable before being imported.
         """
     ),
     destroy=extend_schema(
@@ -685,11 +649,16 @@ class MonitoredPathViewSet(viewsets.ModelViewSet):
     MonitoredPaths can be created or updated by a Harvester's admins and users, as
     well as any users who have been given explicit permissions to edit the MonitoredPath.
     """
-    serializer_class = MonitoredPathSerializer
+    # serializer_class = MonitoredPathSerializer
     filterset_fields = ['path', 'harvester__id', 'harvester__name']
     search_fields = ['@path']
     queryset = MonitoredPath.objects.none().order_by('-id')
     http_method_names = ['get', 'post', 'patch', 'delete', 'options']
+
+    def get_serializer_class(self):
+        if self.request.method.lower() == "post":
+            return MonitoredPathCreateSerializer
+        return MonitoredPathSerializer
 
     # Access restrictions
     def get_queryset(self):
@@ -698,68 +667,6 @@ class MonitoredPathViewSet(viewsets.ModelViewSet):
             Q(admin_group__in=self.request.user.groups.all()) |
             Q(harvester__admin_group__in=self.request.user.groups.all())
         ).order_by('-id')
-
-    def create(self, request, *args, **kwargs):
-        """
-        Create a MonitoredPath for a Harvester and the user Groups required to control it.
-        """
-
-        # Validate input
-        path = str(request.data.get('path')).lower().lstrip().rstrip()
-        if not path:
-            return error_response('No path specified.')
-        try:
-            harvester = Harvester.objects.get(id=request.data['harvester'])
-        except (Harvester.DoesNotExist, AttributeError):
-            return error_response('Harvester not found.')
-        if len(MonitoredPath.objects.filter(path=path, harvester=harvester)):
-            return error_response('Path already exists on Harvester.')
-        # Check user is authorised to create paths on Harvester
-        if not request.user.groups.filter(id=harvester.user_group_id).exists() and \
-                not request.user.groups.filter(id=harvester.admin_group_id).exists():
-            return error_response(f'Permission denied to {request.user.username} for {harvester.name}')
-
-        # Create Path
-        try:
-            stable_time = int(request.data['stable_time'])
-            monitored_path = MonitoredPath.objects.create(path=path, harvester=harvester, stable_time=stable_time)
-        except (TypeError, ValueError):
-            monitored_path = MonitoredPath.objects.create(path=path, harvester=harvester)
-        # Create user/admin groups
-        monitored_path.admin_group = Group.objects.create(name=f"path_{harvester.id}_{monitored_path.id}_admins")
-        monitored_path.user_group = Group.objects.create(name=f"path_{harvester.id}_{monitored_path.id}_users")
-        monitored_path.save()
-        # Add user as admin
-        request.user.groups.add(monitored_path.admin_group)
-
-        return Response(self.get_serializer(monitored_path).data)
-
-    def partial_update(self, request, *args, **kwargs):
-        try:
-            path = MonitoredPath.objects.get(id=kwargs.get('pk'))
-        except MonitoredPath.DoesNotExist:
-            return error_response(f'Path with id {request.data["id"]} not found.')
-        if not request.user.groups.filter(id=path.admin_group_id).exists():
-            if not request.user.groups.filter(id=path.harvester.admin_group_id).exists():
-                return error_response(f'Access denied.')
-
-        path_str = request.data.get('path')
-        if path_str and path_str != path.path:
-            if MonitoredPath.objects.filter(path=path_str, harvester=path.harvester).exists():
-                return error_response(f'Path {path_str} already exists on {path.harvester.name}')
-            path.path = path_str
-        stable_time = request.data.get('stable_time', None)
-        if stable_time is not None:
-            try:
-                stable_time = int(stable_time)
-                assert stable_time > 0
-            except (TypeError, ValueError, AssertionError):
-                return error_response('stable_time must be an integer greater than 0')
-            if stable_time != path.stable_time:
-                path.stable_time = stable_time
-
-        path.save()
-        return Response(self.get_serializer(path).data)
 
 
 @extend_schema_view(
@@ -975,6 +882,7 @@ class CellFamilyViewSet(viewsets.ModelViewSet):
     """
     CellFamilies describe types of Cell.
     """
+    permission_classes = [ReadOnlyIfInUse]
     serializer_class = CellFamilySerializer
     filterset_fields = [
         'name', 'form_factor', 'anode_chemistry', 'cathode_chemistry', 'nominal_capacity',
@@ -983,18 +891,6 @@ class CellFamilyViewSet(viewsets.ModelViewSet):
     search_fields = ['@name', '@manufacturer', 'form_factor']
     queryset = CellFamily.objects.all().order_by('-id')
     http_method_names = ['get', 'post', 'patch', 'delete', 'options']
-
-    def partial_update(self, request, *args, **kwargs):
-        family = get_object_or_404(CellFamily, id=kwargs.get('pk'))
-        if family.cells.count() > 0:
-            return error_response("Cannot update a Cell Family that has child Cells")
-        return super(CellFamilyViewSet, self).partial_update(request=request, *args, **kwargs)
-
-    def destroy(self, request, *args, **kwargs):
-        family = get_object_or_404(CellFamily, id=kwargs.get('pk'))
-        if family.cells.count() > 0:
-            return error_response("Cannot delete a Cell Family that has child Cells")
-        return super(CellFamilyViewSet, self).destroy(request=request, *args, **kwargs)
 
 
 @extend_schema_view(
@@ -1038,23 +934,12 @@ class CellViewSet(viewsets.ModelViewSet):
     """
     Cells are specific cells which have generated data stored in Datasets/ObservedFiles.
     """
+    permission_classes = [ReadOnlyIfInUse]
     serializer_class = CellSerializer
     filterset_fields = ['display_name', 'uid', 'family__id']
     search_fields = ['@display_name']
     queryset = Cell.objects.all().order_by('-id')
     http_method_names = ['get', 'post', 'patch', 'delete', 'options']
-
-    def partial_update(self, request, *args, **kwargs):
-        cell = get_object_or_404(Cell, id=kwargs.get('pk'))
-        if cell.datasets.count() > 0:
-            return error_response("Cannot update a Cell Family that is used in a Dataset")
-        return super(CellViewSet, self).partial_update(request=request, *args, **kwargs)
-
-    def destroy(self, request, *args, **kwargs):
-        cell = get_object_or_404(Cell, id=kwargs.get('pk'))
-        if cell.datasets.count() > 0:
-            return error_response("Cannot delete a Cell that is used in a Dataset")
-        return super(CellViewSet, self).destroy(request=request, *args, **kwargs)
 
 
 @extend_schema_view(
@@ -1100,23 +985,12 @@ class EquipmentViewSet(viewsets.ModelViewSet):
     Equipment can be attached to Datasets and used to view Datasets which
     have used similar equipment.
     """
+    permission_classes = [ReadOnlyIfInUse]
     serializer_class = EquipmentSerializer
     queryset = Equipment.objects.all()
     filterset_fields = ['type']
     search_fields = ['@name', '@type']
     http_method_names = ['get', 'post', 'patch', 'delete', 'options']
-
-    def partial_update(self, request, *args, **kwargs):
-        equipment = get_object_or_404(Equipment, id=kwargs.get('pk'))
-        if equipment.datasets.count() > 0:
-            return error_response("Cannot update Equipment that is used in a Dataset")
-        return super(EquipmentViewSet, self).partial_update(request=request, *args, **kwargs)
-
-    def destroy(self, request, *args, **kwargs):
-        equipment = get_object_or_404(Equipment, id=kwargs.get('pk'))
-        if equipment.datasets.count() > 0:
-            return error_response("Cannot delete Equipment that is used in a Dataset")
-        return super(EquipmentViewSet, self).destroy(request=request, *args, **kwargs)
 
 
 @extend_schema_view(

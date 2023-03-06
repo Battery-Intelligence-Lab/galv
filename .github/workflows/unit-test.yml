@@ -54,7 +54,6 @@ jobs:
     env:
       POSTGRES_PASSWORD: "galvanalyser"
       DJANGO_SECRET_KEY: "long-and-insecure-key-12345"
-      DJANGO_TEST: "TRUE"
     steps:
       - uses: actions/checkout@v2
 
@@ -62,7 +61,6 @@ jobs:
         run: |
           echo "POSTGRES_PASSWORD=$POSTGRES_PASSWORD" > .env.secret
           echo "DJANGO_SECRET_KEY=$DJANGO_SECRET_KEY" >> .env.secret
-          echo "DJANGO_TEST=$DJANGO_TEST" >> .env.secret
 
       - name: Build the stack
         run: docker-compose -f docker-compose.test.yml up -d --build app_test

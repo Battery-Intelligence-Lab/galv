@@ -177,6 +177,9 @@ class CellFamily(models.Model):
     def __str__(self):
         return f"{self.name} [CellFamily {self.id}]"
 
+    def in_use(self):
+        return self.cells.count() > 0
+
 
 class Cell(models.Model):
     display_name = models.TextField(
@@ -201,6 +204,9 @@ class Cell(models.Model):
         if self.display_name:
             return f"{self.uid} ({self.display_name})"
         return self.uid
+
+    def in_use(self):
+        return self.datasets.count() > 0
 
 
 class Dataset(models.Model):
@@ -257,6 +263,9 @@ class Equipment(models.Model):
 
     def __str__(self):
         return f"{self.name} [Equipment {self.id}]"
+
+    def in_use(self):
+        return self.datasets.count() > 0
 
 
 class DataUnit(models.Model):

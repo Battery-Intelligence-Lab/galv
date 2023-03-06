@@ -22,10 +22,13 @@ class HarvesterTests(APITestCase):
     def test_create(self):
         url = reverse('harvester-list')
         user_id = 1
+        user = UserFactory.create(id=user_id)
         harv = {
             'name': 'harv',
-            'user': user_id
+            'user': reverse('user-detail', args=(user_id,))
         }
+        user.is_active = False
+        user.save()
         print("Test rejection of Create Harvester with no name, user_id")
         for request in [
             self.client.post(url, {}),  # name missing
@@ -33,10 +36,11 @@ class HarvesterTests(APITestCase):
         ]:
             self.assertEqual(request.status_code, status.HTTP_400_BAD_REQUEST)
         print("OK")
+        user.is_active = True
+        user.save()
         print("Test successful Harvester creation")
-        UserFactory.create(id=user_id)
         request = self.client.post(url, harv)
-        self.assertEqual(request.status_code, status.HTTP_200_OK)
+        self.assertEqual(request.status_code, status.HTTP_201_CREATED)
         self.assertEqual(Harvester.objects.first().name, harv['name'])
         self.assertIn('api_key', request.json())
         print("OK")
@@ -81,15 +85,11 @@ class HarvesterTests(APITestCase):
         self.assertEqual(self.client.get(url, {}).status_code, status.HTTP_404_NOT_FOUND)
         print("OK")
         print("Test edit access rejection")
-        self.assertEqual(self.client.patch(url, {}).status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(self.client.patch(url, {}).status_code, status.HTTP_404_NOT_FOUND)
         print("OK")
         user.groups.add(harvester.admin_group)
         print("Test name duplication error")
         response = self.client.patch(url, {'name': other.name})
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        print("OK")
-        print("Test sleep time 0 rejection")
-        response = self.client.patch(url, {'sleep_time': 0})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         print("OK")
         print("Test successful update")

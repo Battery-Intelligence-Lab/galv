@@ -123,7 +123,7 @@ There are tweaks to the basic Django systems for:
     - called in `backend/server.sh`
     - configuration via `.env.secret`'s `DJANGO_SUPERUSER_PASSWORD` entry
 - providing a custom permission mechanism for Harvesters
-  - code in `backend/backend_django/galvanalyser/auth.py`
+  - code in `backend/backend_django/galvanalyser/permissions.py`
   - used in `backend/backend_django/galvanalyser/views.py:HarvesterViewSet`
 - extending `drf-spectacular` to play nicely with `django-rest-knox`
   - code in `backend/backend_django/galvanalyser/schema.py`
