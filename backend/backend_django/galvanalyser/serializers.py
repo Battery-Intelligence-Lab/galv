@@ -1,4 +1,5 @@
 import os.path
+import re
 
 import django.db.models
 from django.urls import reverse, resolve
@@ -7,6 +8,7 @@ from rest_framework.exceptions import ValidationError
 from urllib.parse import urlparse
 
 from .models import Harvester, \
+    HarvesterEnvVar, \
     HarvestError, \
     MonitoredPath, \
     ObservedFile, \
@@ -132,7 +134,38 @@ class UserSetSerializer(GroupSerializer):
 
 
 class HarvesterSerializer(serializers.HyperlinkedModelSerializer):
+    class EnvField(serializers.DictField):
+        # respresentation for json
+        def to_representation(self, value) -> dict[str, str]:
+            view = self.context.get('view')
+            if view and view.action == 'list':
+                return {}
+            return {v.key: v.value for v in value.all() if not v.deleted}
+
+        # respresentation for python object
+        def to_internal_value(self, values):
+            for k in values.keys():
+                if not re.match(r'^[a-zA-Z0-9_]+$', k):
+                    raise ValidationError(f'Key {k} is not alpha_numeric')
+            for k, v in values.items():
+                k = k.upper()
+                try:
+                    env = HarvesterEnvVar.objects.get(harvester=self.root.instance, key=k)
+                    env.value = v
+                    env.deleted = False
+                    env.save()
+                except HarvesterEnvVar.DoesNotExist:
+                    HarvesterEnvVar.objects.create(harvester=self.root.instance, key=k, value=v)
+            envvars = HarvesterEnvVar.objects.filter(harvester=self.root.instance, deleted=False)
+            input_keys = [k.upper() for k in values.keys()]
+            for v in envvars.all():
+                if v.key not in input_keys:
+                    v.deleted = True
+                    v.save()
+            return HarvesterEnvVar.objects.filter(harvester=self.root.instance, deleted=False)
+
     user_sets = serializers.SerializerMethodField(help_text="Roles and the Users assigned to them")
+    environment_variables = EnvField(help_text="Environment variables set on this Harvester")
 
     @extend_schema_field(UserSetSerializer(many=True))
     def get_user_sets(self, instance):
@@ -161,7 +194,7 @@ class HarvesterSerializer(serializers.HyperlinkedModelSerializer):
         ).data
 
     def validate_name(self, value):
-        if Harvester.objects.filter(name=value).exists():
+        if Harvester.objects.filter(name=value).exclude(id=self.instance.id).exists():
             raise ValidationError('Harvester with that name already exists')
         return value
 
@@ -175,7 +208,7 @@ class HarvesterSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Harvester
-        fields = ['url', 'id', 'name', 'sleep_time', 'last_check_in', 'user_sets']
+        fields = ['url', 'id', 'name', 'sleep_time', 'last_check_in', 'user_sets', 'environment_variables']
         read_only_fields = ['url', 'id', 'last_check_in', 'user_sets']
         extra_kwargs = augment_extra_kwargs()
 
@@ -607,10 +640,11 @@ class KnoxTokenFullSerializer(KnoxTokenSerializer):
         extra_kwargs = augment_extra_kwargs()
 
 
-class HarvesterConfigSerializer(serializers.HyperlinkedModelSerializer):
+class HarvesterConfigSerializer(HarvesterSerializer):
     standard_units = serializers.SerializerMethodField(help_text="Units recognised by the initial database")
     standard_columns = serializers.SerializerMethodField(help_text="Column Types recognised by the initial database")
     max_upload_bytes = serializers.SerializerMethodField(help_text="Maximum upload size (bytes)")
+    deleted_environment_variables = serializers.SerializerMethodField(help_text="Envvars to unset")
 
     @extend_schema_field(DataUnitSerializer(many=True))
     def get_standard_units(self, instance):
@@ -631,13 +665,20 @@ class HarvesterConfigSerializer(serializers.HyperlinkedModelSerializer):
     def get_max_upload_bytes(self, instance):
         return DATA_UPLOAD_MAX_MEMORY_SIZE
 
+    def get_deleted_environment_variables(self, instance):
+        return [v.key for v in instance.environment_variables.all() if v.deleted]
+
     class Meta:
         model = Harvester
         fields = [
             'url', 'id', 'api_key', 'name', 'sleep_time', 'monitored_paths',
-            'standard_units', 'standard_columns', 'max_upload_bytes'
+            'standard_units', 'standard_columns', 'max_upload_bytes',
+            'environment_variables', 'deleted_environment_variables'
         ]
         read_only_fields = fields
+        extra_kwargs = augment_extra_kwargs({
+            'environment_variables': {'help_text': "Envvars set on this Harvester"}
+        })
         depth = 1
 
 

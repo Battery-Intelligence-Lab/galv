@@ -276,11 +276,23 @@ class TokenViewSet(viewsets.ModelViewSet):
 
 @extend_schema_view(
     list=extend_schema(
-        summary="View all Harvesters to which you have access",
+        summary="View all Harvesters",
         description="""
 Harvesters monitor a set of MonitoredPaths and send reports about ObservedFiles within those paths.
 You can view all Harvesters on which you are an Administrator or User, 
 and those which have MonitoredPaths on which you are an Administrator or User. 
+
+Searchable fields:
+- name
+        """
+    ),
+    mine=extend_schema(
+        summary="View Harvesters to which you have access",
+        description="""
+View only Harvesters to which you have access.
+On systems with multiple Harvesters, this view is more useful than /harvesters/.
+
+This view will include Harvester environment variables, while /harvesters/ will not.
 
 Searchable fields:
 - name
@@ -365,7 +377,7 @@ class HarvesterViewSet(viewsets.ModelViewSet):
     permission_classes = [HarvesterAccess]
     filterset_fields = ['name']
     search_fields = ['@name']
-    queryset = Harvester.objects.none().order_by('-last_check_in', '-id')
+    queryset = Harvester.objects.all().order_by('-last_check_in', '-id')
     http_method_names = ['get', 'post', 'patch', 'delete', 'options']
 
     def get_serializer_class(self):
@@ -373,7 +385,8 @@ class HarvesterViewSet(viewsets.ModelViewSet):
             return HarvesterCreateSerializer
         return HarvesterSerializer
 
-    def get_queryset(self):
+    @action(detail=False, methods=['GET'])
+    def mine(self, request):
         user_groups = self.request.user.groups.all()
         # Allow access to Harvesters where we have a Path
         path_harvesters = [p.harvester.id for p in MonitoredPath.objects.filter(
@@ -384,9 +397,11 @@ class HarvesterViewSet(viewsets.ModelViewSet):
             Q(admin_group__in=user_groups) |
             Q(id__in=path_harvesters)
         )
-        return my_harvesters.order_by('-last_check_in', '-id')
-
-    # TODO: handle harvester envvars?
+        return Response(HarvesterSerializer(
+            my_harvesters.order_by('-last_check_in', '-id'),
+            many=True,
+            context={'request': request}
+        ).data)
 
     @action(detail=True, methods=['GET'])
     def config(self, request, pk: int = None):
@@ -396,7 +411,10 @@ class HarvesterViewSet(viewsets.ModelViewSet):
         Only available to Harvesters.
         """
         harvester = get_object_or_404(Harvester, id=pk)
-        return Response(HarvesterConfigSerializer(harvester, context={'request': request}).data)
+        return Response(HarvesterConfigSerializer(
+            harvester,
+            context={'request': request}
+        ).data)
 
     @action(detail=True, methods=['POST'])
     def report(self, request, pk: int = None):

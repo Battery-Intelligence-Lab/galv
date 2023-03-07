@@ -1,7 +1,7 @@
 import os
 import json
 import requests
-from .settings import get_setting, get_settings, get_settings_file, get_logger
+from .settings import get_setting, get_settings, get_settings_file, get_logger, update_envvars
 import time
 
 logger = get_logger(__file__)
@@ -72,6 +72,7 @@ def update_config():
             if dirty:
                 with open(get_settings_file(), 'w+') as f:
                     json.dump(result.json(), f)
+                update_envvars()
         else:
             logger.error(f"Unable to fetch {url}config/ -- received HTTP {result.status_code}")
     except BaseException as e:

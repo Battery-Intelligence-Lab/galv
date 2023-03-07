@@ -14,7 +14,7 @@ Below is a tree diagram of the folder structure of this project and a short desc
 │   ├── Dockerfile -- docker file for production and development
 │   ├── Dockerfile_test -- docker file for unit testing
 │   ├── requirements.txt -- Python library definition
-│   ├── requirements-test.txt -- Python library definition for unit testing
+│   ├── requirements-test.txt -- Additional Python libraries required for unit testing
 │   ├── server.sh -- Initilisation shell script (waits on database, then launches Django)
 │   ├── config/ -- Django configuration files
 │   ├── galvanalyser/ -- Django application
@@ -122,9 +122,9 @@ There are tweaks to the basic Django systems for:
   - created by `backend/backend_django/galvanalyser/management/commands/create_superuser.py`
     - called in `backend/server.sh`
     - configuration via `.env.secret`'s `DJANGO_SUPERUSER_PASSWORD` entry
-- providing a custom permission mechanism for Harvesters
+- providing custom permission mechanisms for Harvesters and Cell/Cell Family/Equipment
   - code in `backend/backend_django/galvanalyser/permissions.py`
-  - used in `backend/backend_django/galvanalyser/views.py:HarvesterViewSet`
+  - used in `backend/backend_django/galvanalyser/views.py`
 - extending `drf-spectacular` to play nicely with `django-rest-knox`
   - code in `backend/backend_django/galvanalyser/schema.py`
 - providing a mechanism for yielding data rapidly into the database via SQL's COPY directive
@@ -135,6 +135,14 @@ Additionally, there are some tricks here and there in
 `backend/backend_django/galvanalyser/models.py`. 
 It's hard to say what's counterintuitive off the bat, however,
 so if something confuses you and you figure it out, please document it here!
+
+Generally speaking, most of the logic is taken care of in `serializers.py`,
+with endpoint control and documentation mostly handled in `views.py`.
+A major exception is the Harvester `report/` endpoint which has its
+logic in `views.py`.
+
+Harvesters have an `api_key` they use to authenticate with the server.
+This is created the first time the Harvester model is saved in `models.py`.
 
 ### Harvesters 
 

@@ -14,7 +14,7 @@ def query(url: str, data: object = None) -> object|list:
     else:
         result = requests.post(url, data=data)
         click.echo(f"POST {url}; {json.dumps(data)} {result.status_code}")
-    if result.status_code != 200:
+    if result.status_code >= 400:
         try:
             raise ConnectionError(result.json()['error'])
         except (json.JSONDecodeError, AttributeError, KeyError):

@@ -20,7 +20,7 @@ export type MonitoredPathFields = {
   path: string;
   user_sets: UserSet[];
 }
-type HarvesterDetailProps = {
+export type HarvesterDetailProps = {
   harvester: HarvesterFields,
   [key: string]: any
 }
@@ -32,7 +32,7 @@ export default function HarvesterDetail(props: HarvesterDetailProps) {
   const [selected, setSelected] = useState<MonitoredPathFields|null>(null)
 
   const addNewPath = (data: MonitoredPathFields) => {
-    const insert_data = {harvester: harvester.id, path: data.path, stable_time: data.stable_time}
+    const insert_data = {harvester: harvester.url, path: data.path, stable_time: data.stable_time}
     return Connection.fetch('monitored_paths/', {body: JSON.stringify(insert_data), method: 'POST'})
   };
   const deletePath = (data: MonitoredPathFields) => Connection.fetch(data.url, {method: 'DELETE'})
