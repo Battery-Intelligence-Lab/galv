@@ -47,11 +47,12 @@ jobs:
       - name: Create API spec
         run: |
           docker-compose -f docker-compose.docs.yml run app python manage.py spectacular --file schema.yml
-          mv backend/backend_django/schema.yml docs/schema.yml
+          docker-compose -f docker-compose.docs.yml run app python manage.py spectacular --format json --file schema.json
+          mv backend/backend_django/schema.* docs/
 
       - name: Create API client
         run: |
-          echo '{"lang": "python", "type": "CLIENT", "codegenVersion": "V3", "spec": $(cat docs/schema.yml)}' > payload.json
+          echo "{\"lang\": \"python\", \"type\": \"CLIENT\", \"codegenVersion\": \"V3\", \"spec\": $(cat docs/schema.json)}" > payload.json
           curl -d @payload.json --remote-name -H "Content-Type: application/json" https://generator3.swagger.io/api/generate
 
       # Enable tmate debugging of manually-triggered workflows if the input option was provided
