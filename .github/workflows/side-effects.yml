@@ -34,7 +34,7 @@ jobs:
       - name: Create Entity Relationship Diagram
         run: |
           docker-compose -f docker-compose.docs.yml run app python manage.py graph_models --dot --output output.dot galvanalyser
-          dot -Tpng backend/output.dot -o docs/ERD.png
+          dot -Tpng backend/backend_django/output.dot -o docs/ERD.png
 
       - name: Create API spec
         run: |
