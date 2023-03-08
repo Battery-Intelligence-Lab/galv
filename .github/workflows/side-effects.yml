@@ -53,12 +53,12 @@ jobs:
       - name: Create API client
         run: |
           echo "{\"lang\": \"python\", \"type\": \"CLIENT\", \"codegenVersion\": \"V3\", \"spec\": $(cat docs/schema.json)}" > payload.json
-          curl -d @payload.json --remote-name -H "Content-Type: application/json" https://generator3.swagger.io/api/generate
+          curl -d @payload.json --output docs/galvanalyser-client-python.zip -H "Content-Type: application/json" https://generator3.swagger.io/api/generate
 
       # Enable tmate debugging of manually-triggered workflows if the input option was provided
       - name: Setup tmate session
         uses: mxschmitt/action-tmate@v3
-#        if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
 
       - name: Push to gh-pages branch
         if: (github.ref_name == 'main' && github.event_name == 'push') || inputs.deploy_docs
