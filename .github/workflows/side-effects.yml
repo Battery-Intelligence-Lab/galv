@@ -38,7 +38,7 @@ jobs:
 
       - name: Create API spec
         run: |
-          docker-compose -f docker-compose.docs.yml run app python manage.py spectacular galvanalyser --file schema.yml
+          docker-compose -f docker-compose.docs.yml run app python manage.py spectacular --file schema.yml
           mv backend/backend_django/schema.yml docs/schema.yml
 
       # Enable tmate debugging of manually-triggered workflows if the input option was provided
