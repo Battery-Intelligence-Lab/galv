@@ -41,21 +41,19 @@ jobs:
         uses: mxschmitt/action-tmate@v3
 #        if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
 
-      - name: Push ERD.png
+      - name: Push to docs branch
         run: |
-          # This assumes your book is in the root of your repository.
-          # Just add a `cd` here if you need to change to another directory.
-          git worktree add gh-pages gh-pages
+          git worktree add docs
           git config user.name "Deploy from CI"
           git config user.email ""
-          cd gh-pages
+          cd docs
           # Delete the ref to avoid keeping history.
-          git update-ref -d refs/heads/gh-pages
+          git update-ref -d refs/heads/docs
           rm -rf *
           mv ../docs/* .
           git add .
-          git commit -m "Deploy $GITHUB_SHA to gh-pages"
-          git push --force
+          git commit -m "Deploy $GITHUB_SHA to docs"
+          git push --set-upstream origin docs --force
 
 #  build-api-client:
 #    runs-on: ubuntu-latest
