@@ -42,20 +42,20 @@ jobs:
           dot -Tpng backend/output.dot -o docs/ERD.png
 
       - name: Push ERD.png
-          run: |
-            # This assumes your book is in the root of your repository.
-            # Just add a `cd` here if you need to change to another directory.
-            git worktree add gh-pages gh-pages
-            git config user.name "Deploy from CI"
-            git config user.email ""
-            cd gh-pages
-            # Delete the ref to avoid keeping history.
-            git update-ref -d refs/heads/gh-pages
-            rm -rf *
-            mv ../docs/* .
-            git add .
-            git commit -m "Deploy $GITHUB_SHA to gh-pages"
-            git push --force
+        run: |
+          # This assumes your book is in the root of your repository.
+          # Just add a `cd` here if you need to change to another directory.
+          git worktree add gh-pages gh-pages
+          git config user.name "Deploy from CI"
+          git config user.email ""
+          cd gh-pages
+          # Delete the ref to avoid keeping history.
+          git update-ref -d refs/heads/gh-pages
+          rm -rf *
+          mv ../docs/* .
+          git add .
+          git commit -m "Deploy $GITHUB_SHA to gh-pages"
+          git push --force
 
 #  build-api-client:
 #    runs-on: ubuntu-latest
