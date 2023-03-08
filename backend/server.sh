@@ -15,11 +15,7 @@ done
 
 >&2 echo "Postgres ready - initialising"
 >&2 echo "DJANGO_TEST=${DJANGO_TEST}"
-if [ -z "${DJANGO_TEST}" ]; then
-  cd backend_django || exit 1
-else
-  >&2 pwd
-fi
+cd backend_django || exit 1
 python manage.py makemigrations
 python manage.py migrate
 python manage.py init_db
