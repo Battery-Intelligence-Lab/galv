@@ -34,16 +34,28 @@ jobs:
       # Enable tmate debugging of manually-triggered workflows if the input option was provided
       - name: Setup tmate session
         uses: mxschmitt/action-tmate@v3
-#        if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
 
       - name: Create Entity Relationship Diagram
         run: |
-          docker-compose run --rm app python manage.py graph_models
-          dot -Tpng output.dot -o ERD.png
+          docker-compose -f docker-compose.docs.yml run app python backend_django/manage.py graph_models --dot --output output.dot galvanalyser
+          dot -Tpng backend/output.dot -o docs/ERD.png
 
       - name: Push ERD.png
-        run: |
-          echo "TODO"
+          run: |
+            # This assumes your book is in the root of your repository.
+            # Just add a `cd` here if you need to change to another directory.
+            git worktree add gh-pages gh-pages
+            git config user.name "Deploy from CI"
+            git config user.email ""
+            cd gh-pages
+            # Delete the ref to avoid keeping history.
+            git update-ref -d refs/heads/gh-pages
+            rm -rf *
+            mv ../docs/* .
+            git add .
+            git commit -m "Deploy $GITHUB_SHA to gh-pages"
+            git push --force
 
 #  build-api-client:
 #    runs-on: ubuntu-latest
