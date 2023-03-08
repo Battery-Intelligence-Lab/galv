@@ -1,0 +1,79 @@
+name: Unit Tests (Docker)
+on:
+  push:
+    branches:
+      - master
+      - '**'
+  pull_request:
+    branches:
+      - '**'
+  workflow_dispatch:
+    inputs:
+      debug_enabled:
+        type: boolean
+        description: 'Run the build with tmate debugging enabled (https://github.com/marketplace/actions/debugging-with-tmate)'
+        required: false
+        default: false
+
+jobs:
+  build-erd:
+    runs-on: ubuntu-latest
+    env:
+      POSTGRES_PASSWORD: "galvanalyser"
+      DJANGO_SECRET_KEY: "long-and-insecure-key-12345"
+    steps:
+      - uses: actions/checkout@v2
+
+      # Enable tmate debugging of manually-triggered workflows if the input option was provided
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+#        if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
+
+      - name: Install additional requirements
+        run: |
+          apt-get install -y graphviz
+          pip install django-extensions==3.2.1
+          echo "POSTGRES_PASSWORD=$POSTGRES_PASSWORD" > .env.secret
+          echo "DJANGO_SECRET_KEY=$DJANGO_SECRET_KEY" >> .env.secret
+
+      - name: Create Entity Relationship Diagram
+        run: |
+          docker-compose run --rm app python manage.py graph_models
+          dot -Tpng output.dot -o ERD.png
+
+      - name: Push ERD.png
+        run: |
+          echo "TODO"
+
+#  build-api-client:
+#    runs-on: ubuntu-latest
+#    env:
+#      DOCS_BRANCH: "docs"
+#    steps:
+#      - uses: actions/checkout@v2
+#
+#      - name: Install smbclient
+#        run: |
+#          sudo apt-get update
+#          sudo apt-get install -y smbclient
+#
+#      - name: Download test suite
+#        env:
+#          LIIONSDEN_SMB_PATH: ${{ secrets.LIIONSDEN_SMB_PATH }}
+#          LIIONSDEN_SMB_USERNAME: ${{ secrets.LIIONSDEN_SMB_USERNAME}}
+#          LIIONSDEN_SMB_PASSWORD: ${{ secrets.LIIONSDEN_SMB_PASSWORD}}
+#        run: |
+#          sudo mkdir -p $GALVANALYSER_HARVESTER_TEST_PATH
+#          cd $GALVANALYSER_HARVESTER_TEST_PATH
+#          sudo smbget -R $LIIONSDEN_SMB_PATH/test-suite-small -U "$LIIONSDEN_SMB_USERNAME%$LIIONSDEN_SMB_PASSWORD"
+#
+#      - name: Build the stack
+#        run: touch .env.secret && docker-compose -f docker-compose.test.yml build harvester
+#
+#      # Enable tmate debugging of manually-triggered workflows if the input option was provided
+#      - name: Setup tmate session
+#        uses: mxschmitt/action-tmate@v3
+#        if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
+#
+#      - name: Run tests
+#        run: docker-compose -f docker-compose.test.yml up harvester
