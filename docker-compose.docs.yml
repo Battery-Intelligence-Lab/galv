@@ -17,7 +17,7 @@ services:
     volumes:
 # local volume allows us to copy generated ER diagram easily
       - ./backend:/usr/app
-    working_dir: /usr/app
+    working_dir: /usr/app/backend_django
     env_file:
      - ./.env
      - ./.env.secret

@@ -33,13 +33,18 @@ jobs:
 
       - name: Create Entity Relationship Diagram
         run: |
-          docker-compose -f docker-compose.docs.yml run app python backend_django/manage.py graph_models --dot --output output.dot galvanalyser
+          docker-compose -f docker-compose.docs.yml run app python manage.py graph_models --dot --output output.dot
           dot -Tpng backend/output.dot -o docs/ERD.png
+
+      - name: Create API spec
+        run: |
+          docker-compose -f docker-compose.docs.yml run app python backend_django/manage.py spectacular galvanalyser --file schema.yml
+          mv backend/backend_django/schema.yml docs/schema.yml
 
       # Enable tmate debugging of manually-triggered workflows if the input option was provided
       - name: Setup tmate session
         uses: mxschmitt/action-tmate@v3
-#        if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
 
       - name: Push to docs branch
         run: |
@@ -54,36 +59,3 @@ jobs:
           git add .
           git commit -m "Deploy $GITHUB_SHA to docs"
           git push --set-upstream origin docs --force
-
-#  build-api-client:
-#    runs-on: ubuntu-latest
-#    env:
-#      DOCS_BRANCH: "docs"
-#    steps:
-#      - uses: actions/checkout@v2
-#
-#      - name: Install smbclient
-#        run: |
-#          sudo apt-get update
-#          sudo apt-get install -y smbclient
-#
-#      - name: Download test suite
-#        env:
-#          LIIONSDEN_SMB_PATH: ${{ secrets.LIIONSDEN_SMB_PATH }}
-#          LIIONSDEN_SMB_USERNAME: ${{ secrets.LIIONSDEN_SMB_USERNAME}}
-#          LIIONSDEN_SMB_PASSWORD: ${{ secrets.LIIONSDEN_SMB_PASSWORD}}
-#        run: |
-#          sudo mkdir -p $GALVANALYSER_HARVESTER_TEST_PATH
-#          cd $GALVANALYSER_HARVESTER_TEST_PATH
-#          sudo smbget -R $LIIONSDEN_SMB_PATH/test-suite-small -U "$LIIONSDEN_SMB_USERNAME%$LIIONSDEN_SMB_PASSWORD"
-#
-#      - name: Build the stack
-#        run: touch .env.secret && docker-compose -f docker-compose.test.yml build harvester
-#
-#      # Enable tmate debugging of manually-triggered workflows if the input option was provided
-#      - name: Setup tmate session
-#        uses: mxschmitt/action-tmate@v3
-#        if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
-#
-#      - name: Run tests
-#        run: docker-compose -f docker-compose.test.yml up harvester
