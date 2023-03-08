@@ -1,3 +1,6 @@
+# Generate documentation and associated files
+# If file gets unweildy with just one job, could refactor to use outputs:
+# https://docs.github.com/en/actions/using-jobs/defining-outputs-for-jobs
 name: Docs
 on:
   push:
@@ -47,6 +50,7 @@ jobs:
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
 
       - name: Push to docs branch
+        if: github.ref_name == 'main' && github.event_name == 'push'
         run: |
           git worktree add gh-pages
           git config user.name "Deploy from CI"
