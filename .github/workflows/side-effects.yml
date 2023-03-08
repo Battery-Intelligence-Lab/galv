@@ -47,7 +47,7 @@ jobs:
       - name: Create API spec
         run: |
           docker-compose -f docker-compose.docs.yml run app python manage.py spectacular --file schema.yml
-          docker-compose -f docker-compose.docs.yml run app python manage.py spectacular --format json --file schema.json
+          docker-compose -f docker-compose.docs.yml run app python manage.py spectacular --format openapi-json --file schema.json
           mv backend/backend_django/schema.* docs/
 
       - name: Create API client
