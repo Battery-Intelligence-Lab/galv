@@ -31,15 +31,15 @@ jobs:
           echo "django-extensions==3.2.1" >> backend/requirements.txt
           sed -i "s+'rest_framework',+'rest_framework', 'django_extensions',+g" backend/backend_django/config/settings.py
 
-      # Enable tmate debugging of manually-triggered workflows if the input option was provided
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
-
       - name: Create Entity Relationship Diagram
         run: |
           docker-compose -f docker-compose.docs.yml run app python backend_django/manage.py graph_models --dot --output output.dot galvanalyser
           dot -Tpng backend/output.dot -o docs/ERD.png
+
+      # Enable tmate debugging of manually-triggered workflows if the input option was provided
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+#        if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
 
       - name: Push ERD.png
         run: |
