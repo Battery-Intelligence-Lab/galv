@@ -12,6 +12,11 @@ on:
       - '**'
   workflow_dispatch:
     inputs:
+      deploy_docs:
+        type: boolean
+        description: 'Run the deploy-to-gh-pages step'
+        required: false
+        default: false
       debug_enabled:
         type: boolean
         description: 'Run the build with tmate debugging enabled (https://github.com/marketplace/actions/debugging-with-tmate)'
@@ -44,13 +49,17 @@ jobs:
           docker-compose -f docker-compose.docs.yml run app python manage.py spectacular --file schema.yml
           mv backend/backend_django/schema.yml docs/schema.yml
 
+      - name: Create API client
+        run: |
+          echo "TODO"
+
       # Enable tmate debugging of manually-triggered workflows if the input option was provided
       - name: Setup tmate session
         uses: mxschmitt/action-tmate@v3
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
+#        if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
 
-      - name: Push to docs branch
-        if: github.ref_name == 'main' && github.event_name == 'push'
+      - name: Push to gh-pages branch
+        if: (github.ref_name == 'main' && github.event_name == 'push') || inputs.deploy_docs
         run: |
           git worktree add gh-pages
           git config user.name "Deploy from CI"
