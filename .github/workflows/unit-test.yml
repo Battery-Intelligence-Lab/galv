@@ -71,4 +71,4 @@ jobs:
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
 
       - name: Run tests
-        run: docker-compose -f docker-compose.test.yml run --rm app_test bash -c "cd .. && ./server.sh"
+        run: docker-compose -f docker-compose.test.yml run --rm app_test bash -c "./server.sh"
