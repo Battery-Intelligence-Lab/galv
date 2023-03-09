@@ -14,7 +14,7 @@ def query(url: str, data: object = None) -> object|list:
     else:
         result = requests.post(url, data=data)
         click.echo(f"POST {url}; {json.dumps(data)} {result.status_code}")
-    if result.status_code != 200:
+    if result.status_code >= 400:
         try:
             raise ConnectionError(result.json()['error'])
         except (json.JSONDecodeError, AttributeError, KeyError):
@@ -135,9 +135,8 @@ def register(url: str = None, name: str = None, user_id: int = None, run_foregro
         user_name = result['username']
 
     # Register
-    uid = re.search('/(\\d+)/$', user_url).groups()[0]
     click.echo(f"Registering new harvester {name}, administrated by {user_name}")
-    result = query(f"{url}harvesters/", {'user': uid, 'name': name})
+    result = query(f"{url}harvesters/", {'user': user_url, 'name': name})
 
     # Save credentials
     file_name = harvester.settings.get_settings_file()

@@ -14,6 +14,7 @@ while [ $PGUP -ne 0 ]; do
 done
 
 >&2 echo "Postgres ready - initialising"
+>&2 echo "DJANGO_TEST=${DJANGO_TEST}"
 cd backend_django || exit 1
 python manage.py makemigrations
 python manage.py migrate

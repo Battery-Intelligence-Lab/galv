@@ -1,4 +1,4 @@
-import React, { useState, Fragment } from 'react';
+import React, {useState, Fragment, useRef} from 'react';
 import TextField from '@mui/material/TextField';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
@@ -9,10 +9,12 @@ import {UserSet} from "./UserRoleSet";
 import AsyncTable, {Column} from "./AsyncTable";
 import useStyles from "./UseStyles";
 import ActionButtons from "./ActionButtons";
+import HarvesterEnv from "./HarvesterEnv";
 
 export type HarvesterWriteableFields = {
   name: string;
   sleep_time: number;
+  environment_variables: { [key: string]: string };
 }
 
 export type HarvesterFields = HarvesterWriteableFields & {
@@ -34,7 +36,7 @@ export default function Harvesters() {
 
   const updateHarvester = (data: HarvesterFields) => {
     console.log('updateHarvester', data)
-    const insert_data: HarvesterWriteableFields = {
+    const insert_data: Partial<HarvesterWriteableFields> = {
       name: data.name,
       sleep_time: data.sleep_time
     }
@@ -52,10 +54,18 @@ export default function Harvesters() {
     {label: 'Actions', help: 'Inspect / Add / Save / Delete harvester path information'}
   ]
 
+  const table = useRef<AsyncTable<HarvesterFields>|null>(null)
+  const refreshTable = () => {
+    if (table.current !== null)
+      return table.current.update_all(true)
+    return new Promise<void>(() => {})
+  }
+
   return (
     <Container maxWidth="lg" className={classes.container}>
       <Paper className={classes.paper}>
         {<AsyncTable<HarvesterFields>
+          ref={table}
           classes={classes}
           columns={columns}
           row_generator={(row, context) => [
@@ -110,10 +120,11 @@ export default function Harvesters() {
               />
             </Fragment>,
           ]}
-          url="harvesters/"
+          url="harvesters/mine"
         />}
       </Paper>
       {selected !== null && <HarvesterDetail harvester={selected} />}
+      {selected !== null && <HarvesterEnv harvester={selected} refreshCallback={refreshTable} />}
     </Container>
   );
 }

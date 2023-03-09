@@ -60,6 +60,25 @@ class Harvester(models.Model):
         super(Harvester, self).save(*args, **kwargs)
 
 
+class HarvesterEnvVar(models.Model):
+    harvester = models.ForeignKey(
+        to=Harvester,
+        related_name='environment_variables',
+        on_delete=models.CASCADE,
+        null=False,
+        help_text="Harvester whose environment this describes"
+    )
+    key = models.TextField(help_text="Name of the variable")
+    value = models.TextField(help_text="Variable value")
+    deleted = models.BooleanField(help_text="Whether this variable was deleted", default=False, null=False)
+
+    def __str__(self):
+        return f"{self.key}={self.value}{'*' if self.deleted else ''}"
+
+    class Meta:
+        unique_together = [['harvester', 'key']]
+
+
 class MonitoredPath(models.Model):
     harvester = models.ForeignKey(
         to=Harvester,
@@ -177,6 +196,9 @@ class CellFamily(models.Model):
     def __str__(self):
         return f"{self.name} [CellFamily {self.id}]"
 
+    def in_use(self) -> bool:
+        return self.cells.count() > 0
+
 
 class Cell(models.Model):
     display_name = models.TextField(
@@ -201,6 +223,9 @@ class Cell(models.Model):
         if self.display_name:
             return f"{self.uid} ({self.display_name})"
         return self.uid
+
+    def in_use(self) -> bool:
+        return self.datasets.count() > 0
 
 
 class Dataset(models.Model):
@@ -257,6 +282,9 @@ class Equipment(models.Model):
 
     def __str__(self):
         return f"{self.name} [Equipment {self.id}]"
+
+    def in_use(self) -> bool:
+        return self.datasets.count() > 0
 
 
 class DataUnit(models.Model):

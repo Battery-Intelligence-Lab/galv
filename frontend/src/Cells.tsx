@@ -25,6 +25,7 @@ export type CellFamilyFields = {
   nominal_cell_weight: number;
   manufacturer: string;
   cells: CellFields[];
+  in_use: boolean;
 }
 
 const columns = [
@@ -183,14 +184,14 @@ export default function Cells() {
                     () => addNewCell(family, context).then(() => context.refresh_all_rows()) :
                     () => updateCell(family, context).then(context.refresh)
                 }
-                saveButtonProps={{disabled: !context.value_changed || family.cells.length > 0}}
+                saveButtonProps={{disabled: !context.value_changed || family.in_use}}
                 saveIconProps={{component: context.is_new_row? AddIcon : SaveIcon}}
                 onDelete={
                   () =>
                     window.confirm(`Delete cell family ${family.name}?`) &&
                     deleteCell(family).then(context.refresh)
                 }
-                deleteButtonProps={{disabled: context.is_new_row || family.cells.length > 0}}
+                deleteButtonProps={{disabled: context.is_new_row || family.in_use}}
               />
             </Fragment>
           ]}

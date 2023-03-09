@@ -18,6 +18,7 @@ export type CellFields = {
   display_name: string;
   family: string;
   datasets: string[];
+  in_use: boolean;
 }
 type CellDetailProps = {
   family: CellFamilyFields,
@@ -36,7 +37,9 @@ export default function CellList(props: CellDetailProps) {
 
   const addNewCell = (data: CellFields, context: RowGeneratorContext<CellFields>) => {
     context.mark_loading(true)
-    const insert_data = {uid: data.uid, display_name: data.display_name, family: props.family.url}
+    const insert_data: Partial<CellFields> = {uid: data.uid, family: props.family.url}
+    if (data.display_name)
+      insert_data.display_name = data.display_name
     return Connection.fetch('cells/', {body: JSON.stringify(insert_data), method: 'POST'})
   };
 
@@ -61,7 +64,7 @@ export default function CellList(props: CellDetailProps) {
               <TextField
                 name="uid"
                 value={cell.uid}
-                disabled={cell.datasets.length > 0}
+                disabled={cell.in_use}
                 placeholder={`Serial number or other unique identifer`}
                 InputProps={{
                   classes: {
@@ -75,7 +78,7 @@ export default function CellList(props: CellDetailProps) {
               <TextField
                 name="display_name"
                 value={cell.display_name}
-                disabled={cell.datasets.length > 0}
+                disabled={cell.in_use}
                 placeholder={`${props.family.name}_#`}
                 InputProps={{
                   classes: {
@@ -96,14 +99,14 @@ export default function CellList(props: CellDetailProps) {
                     () => addNewCell(cell, context).then(() => context.refresh_all_rows()) :
                     () => updateCell(cell, context).then(context.refresh)
                 }
-                saveButtonProps={{disabled: !context.value_changed || cell.datasets.length > 0}}
+                saveButtonProps={{disabled: !context.value_changed || cell.in_use}}
                 saveIconProps={{component: context.is_new_row? AddIcon : SaveIcon}}
                 onDelete={
                   () =>
                     window.confirm(`Delete cell ${cell.display_name}?`) &&
                     deleteCell(cell).then(context.refresh)
                 }
-                deleteButtonProps={{disabled: context.is_new_row || cell.datasets.length > 0}}
+                deleteButtonProps={{disabled: context.is_new_row || cell.in_use}}
               />
             </Fragment>
           ]}

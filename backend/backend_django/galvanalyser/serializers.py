@@ -1,8 +1,14 @@
+import os.path
+import re
+
 import django.db.models
-from django.urls import reverse
+from django.urls import reverse, resolve
 from drf_spectacular.utils import extend_schema_field
+from rest_framework.exceptions import ValidationError
+from urllib.parse import urlparse
 
 from .models import Harvester, \
+    HarvesterEnvVar, \
     HarvestError, \
     MonitoredPath, \
     ObservedFile, \
@@ -128,7 +134,38 @@ class UserSetSerializer(GroupSerializer):
 
 
 class HarvesterSerializer(serializers.HyperlinkedModelSerializer):
+    class EnvField(serializers.DictField):
+        # respresentation for json
+        def to_representation(self, value) -> dict[str, str]:
+            view = self.context.get('view')
+            if view and view.action == 'list':
+                return {}
+            return {v.key: v.value for v in value.all() if not v.deleted}
+
+        # respresentation for python object
+        def to_internal_value(self, values):
+            for k in values.keys():
+                if not re.match(r'^[a-zA-Z0-9_]+$', k):
+                    raise ValidationError(f'Key {k} is not alpha_numeric')
+            for k, v in values.items():
+                k = k.upper()
+                try:
+                    env = HarvesterEnvVar.objects.get(harvester=self.root.instance, key=k)
+                    env.value = v
+                    env.deleted = False
+                    env.save()
+                except HarvesterEnvVar.DoesNotExist:
+                    HarvesterEnvVar.objects.create(harvester=self.root.instance, key=k, value=v)
+            envvars = HarvesterEnvVar.objects.filter(harvester=self.root.instance, deleted=False)
+            input_keys = [k.upper() for k in values.keys()]
+            for v in envvars.all():
+                if v.key not in input_keys:
+                    v.deleted = True
+                    v.save()
+            return HarvesterEnvVar.objects.filter(harvester=self.root.instance, deleted=False)
+
     user_sets = serializers.SerializerMethodField(help_text="Roles and the Users assigned to them")
+    environment_variables = EnvField(help_text="Environment variables set on this Harvester")
 
     @extend_schema_field(UserSetSerializer(many=True))
     def get_user_sets(self, instance):
@@ -156,9 +193,25 @@ class HarvesterSerializer(serializers.HyperlinkedModelSerializer):
             many=True
         ).data
 
+    def validate_name(self, value):
+        harvesters = Harvester.objects.filter(name=value)
+        if self.instance is not None:
+            harvesters = harvesters.exclude(id=self.instance.id)
+        if harvesters.exists():
+            raise ValidationError('Harvester with that name already exists')
+        return value
+
+    def validate_sleep_time(self, value):
+        try:
+            value = int(value)
+            assert value > 0
+            return value
+        except (TypeError, ValueError, AssertionError):
+            return ValidationError('sleep_time must be an integer greater than 0')
+
     class Meta:
         model = Harvester
-        fields = ['url', 'id', 'name', 'sleep_time', 'last_check_in', 'user_sets']
+        fields = ['url', 'id', 'name', 'sleep_time', 'last_check_in', 'user_sets', 'environment_variables']
         read_only_fields = ['url', 'id', 'last_check_in', 'user_sets']
         extra_kwargs = augment_extra_kwargs()
 
@@ -197,11 +250,101 @@ class MonitoredPathSerializer(serializers.HyperlinkedModelSerializer):
             many=True
         ).data
 
+    def validate_path(self, value):
+        try:
+            value = str(value).lower().lstrip().rstrip()
+        except BaseException as e:
+            raise ValidationError(f"Invalid path: {e.__context__}")
+        abs_path = os.path.abspath(value)
+        if self.instance is not None:
+            harvester = self.instance.harvester
+        else:
+            try:
+                pk = resolve(urlparse(self.initial_data['harvester']).path).kwargs['pk']
+                harvester = Harvester.objects.get(id=pk)
+            except BaseException:
+                raise ValidationError("Harvester not found")
+        all_paths = MonitoredPath.objects.filter(harvester=harvester)
+        for p in all_paths:
+            if self.instance is None or p.id != self.instance.id:
+                other_abs_path = os.path.abspath(p.path)
+                if abs_path.startswith(other_abs_path):
+                    if abs_path == os.path.abspath(p.path):
+                        raise ValidationError(f"Path already exists on harvester")
+                    raise ValidationError(f"Path is a subpath of existing path {p.path}")
+                if other_abs_path.startswith(abs_path):
+                    raise ValidationError((
+                        f"Path is a parent of existing path {p.path}. "
+                        f"Delete that path before creating this one."
+                    ))
+        return value
+
+    def validate_stable_time(self, value):
+        try:
+            v = int(value)
+            assert v > 0
+            return v
+        except (TypeError, ValueError, AssertionError):
+            raise ValidationError(f"stable_time value '{value}' is not a positive integer")
+
+    def validate(self, attrs):
+        # Verify user is allowed to create/modify paths
+        if self.instance is not None:
+            harvester = self.instance.harvester
+        else:
+            try:
+                pk = resolve(urlparse(self.initial_data['harvester']).path).kwargs['pk']
+                harvester = Harvester.objects.get(id=pk)
+            except BaseException:
+                raise ValidationError("Harvester not found")
+        if not self.context['request'].user.groups.filter(id=harvester.admin_group_id).exists():
+            if self.instance is None or \
+                    not self.context['request'].user.groups.filter(id=self.instance.admin_group_id).exists():
+                raise ValidationError("Access denied")
+        return attrs
+
     class Meta:
         model = MonitoredPath
         fields = ['url', 'id', 'path', 'stable_time', 'harvester', 'user_sets']
         read_only_fields = ['url', 'id', 'harvester', 'user_sets']
         extra_kwargs = augment_extra_kwargs()
+
+
+class MonitoredPathCreateSerializer(MonitoredPathSerializer):
+
+    def create(self, validated_data):
+        stable_time = validated_data.get('stable_time', 60)
+        # Create Path
+        try:
+            monitored_path = MonitoredPath.objects.create(
+                path=validated_data['path'],
+                harvester=validated_data['harvester'],
+                stable_time=stable_time
+            )
+        except (TypeError, ValueError):
+            monitored_path = MonitoredPath.objects.create(
+                path=validated_data['path'],
+                harvester=validated_data['harvester']
+            )
+        # Create user/admin groups
+        monitored_path.admin_group = Group.objects.create(
+            name=f"path_{validated_data['harvester'].id}_{monitored_path.id}_admins"
+        )
+        monitored_path.user_group = Group.objects.create(
+            name=f"path_{validated_data['harvester'].id}_{monitored_path.id}_users"
+        )
+        monitored_path.save()
+        # Add user as admin
+        self.context['request'].user.groups.add(monitored_path.admin_group)
+        return monitored_path
+
+    def to_representation(self, instance):
+        return MonitoredPathSerializer(context=self.context).to_representation(instance)
+
+    class Meta:
+        model = MonitoredPath
+        fields = ['path', 'stable_time', 'harvester']
+        extra_metadata = {'stable_time': {'required': False}}
 
 
 class ObservedFileSerializer(serializers.HyperlinkedModelSerializer):
@@ -267,9 +410,9 @@ class CellFamilySerializer(serializers.HyperlinkedModelSerializer):
             'form_factor', 'link_to_datasheet',
             'anode_chemistry', 'cathode_chemistry',
             'nominal_capacity', 'nominal_cell_weight', 'manufacturer',
-            'cells'
+            'cells', 'in_use'
         ]
-        read_only_fields = ['id', 'url', 'cells']
+        read_only_fields = ['id', 'url', 'cells', 'in_use']
         extra_kwargs = augment_extra_kwargs({'cells': {'help_text': "Cells in this Family"}})
 
 
@@ -287,7 +430,7 @@ class CellSerializer(serializers.HyperlinkedModelSerializer):
 
     def create(self, validated_data):
         uid = validated_data.pop('uid')
-        display_name = validated_data.pop('display_name')
+        display_name = validated_data.pop('display_name', "")
         family = validated_data.pop('family')
         if display_name == '':
             display_name = f"{family.name}_{family.cells.count()}"
@@ -295,8 +438,8 @@ class CellSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Cell
-        fields = ['url', 'id', 'uid', 'display_name', 'family', 'datasets']
-        read_only_fields = ['id', 'url', 'datasets']
+        fields = ['url', 'id', 'uid', 'display_name', 'family', 'datasets', 'in_use']
+        read_only_fields = ['id', 'url', 'datasets', 'in_use']
         extra_kwargs = augment_extra_kwargs({
             'family': {'help_text': "Cell Family to which this Cell belongs"},
             'datasets': {'help_text': "Datasets generated in experiments using this Cell"}
@@ -306,8 +449,8 @@ class CellSerializer(serializers.HyperlinkedModelSerializer):
 class EquipmentSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Equipment
-        fields = ['url', 'id', 'name', 'type', 'datasets']
-        read_only_fields = ['url', 'id', 'datasets']
+        fields = ['url', 'id', 'name', 'type', 'datasets', 'in_use']
+        read_only_fields = ['url', 'id', 'datasets', 'in_use']
         extra_kwargs = augment_extra_kwargs({
             'datasets': {'help_text': "Datasets generated in experiments using this Equipment"}
         })
@@ -500,10 +643,11 @@ class KnoxTokenFullSerializer(KnoxTokenSerializer):
         extra_kwargs = augment_extra_kwargs()
 
 
-class HarvesterConfigSerializer(serializers.HyperlinkedModelSerializer):
+class HarvesterConfigSerializer(HarvesterSerializer):
     standard_units = serializers.SerializerMethodField(help_text="Units recognised by the initial database")
     standard_columns = serializers.SerializerMethodField(help_text="Column Types recognised by the initial database")
     max_upload_bytes = serializers.SerializerMethodField(help_text="Maximum upload size (bytes)")
+    deleted_environment_variables = serializers.SerializerMethodField(help_text="Envvars to unset")
 
     @extend_schema_field(DataUnitSerializer(many=True))
     def get_standard_units(self, instance):
@@ -524,11 +668,51 @@ class HarvesterConfigSerializer(serializers.HyperlinkedModelSerializer):
     def get_max_upload_bytes(self, instance):
         return DATA_UPLOAD_MAX_MEMORY_SIZE
 
+    def get_deleted_environment_variables(self, instance):
+        return [v.key for v in instance.environment_variables.all() if v.deleted]
+
     class Meta:
         model = Harvester
         fields = [
             'url', 'id', 'api_key', 'name', 'sleep_time', 'monitored_paths',
-            'standard_units', 'standard_columns', 'max_upload_bytes'
+            'standard_units', 'standard_columns', 'max_upload_bytes',
+            'environment_variables', 'deleted_environment_variables'
         ]
         read_only_fields = fields
+        extra_kwargs = augment_extra_kwargs({
+            'environment_variables': {'help_text': "Envvars set on this Harvester"}
+        })
         depth = 1
+
+
+class HarvesterCreateSerializer(HarvesterSerializer):
+    user = serializers.HyperlinkedRelatedField(
+        view_name='user-detail',
+        required=True,
+        queryset=User.objects.filter(is_active=True)
+    )
+
+    def create(self, validated_data):
+        """
+        Create a Harvester and the user Groups required to control it.
+        """
+        # Create Harvester
+        harvester = Harvester.objects.create(name=validated_data['name'])
+        # Create user/admin groups
+        harvester.admin_group = Group.objects.create(name=f"harvester_{harvester.id}_admins")
+        harvester.user_group = Group.objects.create(name=f"harvester_{harvester.id}_users")
+        harvester.save()
+        # Add user as admin
+        user = validated_data['user']
+        user.groups.add(harvester.admin_group)
+        user.save()
+
+        return harvester
+
+    def to_representation(self, instance):
+        return HarvesterConfigSerializer(context=self.context).to_representation(instance)
+
+    class Meta:
+        model = Harvester
+        fields = ['name', 'user']
+        extra_kwargs = {'name': {'required': True}}

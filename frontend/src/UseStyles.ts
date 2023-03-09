@@ -41,7 +41,7 @@ export default makeStyles((theme) => ({
   },
   newTableCell: {paddingTop: theme.spacing(4)},
   newTableRow: {},
-  paper: {},
+  paper: {marginBottom: theme.spacing(2)},
   refreshIcon: {
     "&:hover": {color: theme.palette.warning.light},
     "&:focus": {color: theme.palette.warning.light}

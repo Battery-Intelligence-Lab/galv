@@ -1,0 +1,38 @@
+# Docker-compose file for the containers that generate documentation artefacts.
+# Should allow generation of
+# - entity relationship diagram
+# - API schema
+# - API client libraries
+version: "2"
+services:
+  app:
+    image: app
+    build:
+      dockerfile: Dockerfile
+      context: backend
+    depends_on:
+      - postgres
+    ports:
+      - "5000:5000"
+    volumes:
+# local volume allows us to copy generated ER diagram easily
+      - ./backend:/usr/app
+    working_dir: /usr/app/backend_django
+    env_file:
+     - ./.env
+     - ./.env.secret
+    restart: unless-stopped
+    command: ./server.sh
+
+  postgres:
+    image: "postgres"
+    stop_signal: SIGINT                 # Fast Shutdown mode
+    ports:
+      - "5433:5433"
+    volumes:
+      - "${GALVANALYSER_DATA_PATH}:/var/lib/postgresql/data"
+    env_file:
+      - ./.env
+      - ./.env.secret
+    restart: unless-stopped
+    command: -p 5433

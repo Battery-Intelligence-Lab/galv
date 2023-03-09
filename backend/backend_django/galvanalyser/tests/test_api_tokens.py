@@ -5,13 +5,15 @@ from rest_framework.test import APITestCase
 import logging
 
 from galvanalyser.models import KnoxAuthToken
+
+from .utils import GalvanalyserTestCase
 from .factories import UserFactory
 
 logger = logging.getLogger(__file__)
 logger.setLevel(logging.INFO)
 
 
-class TokenTests(APITestCase):
+class TokenTests(GalvanalyserTestCase):
     def setUp(self):
         self.user = UserFactory.create(username='test_user')
         self.other_user = UserFactory.create(username='test_user_other')
