@@ -86,3 +86,12 @@ jobs:
           git add .
           git commit -m "Deploy $GITHUB_SHA to gh-pages"
           git push --set-upstream origin gh-pages --force
+
+      - name: Deploy to Pages
+        uses: peaceiris/actions-gh-pages@v3
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        with:
+          publish_branch: gh-pages
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: .
+          force_orphan: true
