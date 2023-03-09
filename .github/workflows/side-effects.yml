@@ -34,6 +34,8 @@ jobs:
       - name: Install additional requirements
         run: |
           sudo apt-get install -y graphviz
+          sudo pip install sphinx
+          mkdir docs/source/resources
           echo "POSTGRES_PASSWORD=$POSTGRES_PASSWORD" > .env.secret
           echo "DJANGO_SECRET_KEY=$DJANGO_SECRET_KEY" >> .env.secret
           echo "django-extensions==3.2.1" >> backend/requirements.txt
@@ -42,23 +44,33 @@ jobs:
       - name: Create Entity Relationship Diagram
         run: |
           docker-compose -f docker-compose.docs.yml run app python manage.py graph_models --dot --output output.dot galvanalyser
-          dot -Tpng backend/backend_django/output.dot -o docs/ERD.png
+          dot -Tpng backend/backend_django/output.dot -o docs/source/resources/ERD.png
 
       - name: Create API spec
         run: |
           docker-compose -f docker-compose.docs.yml run app python manage.py spectacular --file schema.yml
           docker-compose -f docker-compose.docs.yml run app python manage.py spectacular --format openapi-json --file schema.json
-          mv backend/backend_django/schema.* docs/
+          mv backend/backend_django/schema.* docs/source/resources/
 
       - name: Create API client
         run: |
           echo "{\"lang\": \"python\", \"type\": \"CLIENT\", \"codegenVersion\": \"V3\", \"spec\": $(cat docs/schema.json)}" > payload.json
-          curl -d @payload.json --output docs/galvanalyser-client-python.zip -H "Content-Type: application/json" https://generator3.swagger.io/api/generate
+          curl -d @payload.json --output docs/source/resources/galvanalyser-client-python.zip -H "Content-Type: application/json" https://generator3.swagger.io/api/generate
+          # Check size
+          if [ ! -s docs/source/resources/galvanalyser-client-python.zip ]; then 
+            echo "Downloaded python client zip file is zero bytes"
+            exit 1
+          fi 
 
       # Enable tmate debugging of manually-triggered workflows if the input option was provided
       - name: Setup tmate session
         uses: mxschmitt/action-tmate@v3
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
+
+      - name: Sphinx build
+        run: |
+          cd docs
+          make html
 
       - name: Push to gh-pages branch
         if: (github.ref_name == 'main' && github.event_name == 'push') || inputs.deploy_docs
@@ -70,7 +82,7 @@ jobs:
           # Delete the ref to avoid keeping history.
           git update-ref -d refs/heads/gh-pages
           rm -rf *
-          mv ../docs/* .
+          mv ../docs/build/* .
           git add .
           git commit -m "Deploy $GITHUB_SHA to gh-pages"
           git push --set-upstream origin gh-pages --force
