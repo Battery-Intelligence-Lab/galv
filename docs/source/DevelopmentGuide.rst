@@ -210,7 +210,7 @@ Database
 The project uses PostgreSQL for its database. Other databases are currently not 
 supported. An entity relationship diagram is shown below.
 
-<img src="https://github.com/Battery-Intelligence-Lab/galvanalyser/raw/main/docs/Galvanalyser_DB_ERD.png" width="600" />
+.. image:: resources/ERD.png
 
 Documentation
 ================================================================================
