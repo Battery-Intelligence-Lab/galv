@@ -1,6 +1,8 @@
 # Generate documentation and associated files
 # If file gets unweildy with just one job, could refactor to use outputs:
 # https://docs.github.com/en/actions/using-jobs/defining-outputs-for-jobs
+
+# This name is referenced by gh-pages.yml workflow. Update there if this changes.
 name: Docs
 on:
   push:
