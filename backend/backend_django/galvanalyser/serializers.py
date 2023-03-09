@@ -194,7 +194,10 @@ class HarvesterSerializer(serializers.HyperlinkedModelSerializer):
         ).data
 
     def validate_name(self, value):
-        if Harvester.objects.filter(name=value).exclude(id=self.instance.id).exists():
+        harvesters = Harvester.objects.filter(name=value)
+        if self.instance is not None:
+            harvesters = harvesters.exclude(id=self.instance.id)
+        if harvesters.exists():
             raise ValidationError('Harvester with that name already exists')
         return value
 

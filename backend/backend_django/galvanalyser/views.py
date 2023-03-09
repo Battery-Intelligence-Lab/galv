@@ -266,6 +266,7 @@ class TokenViewSet(viewsets.ModelViewSet):
                 pk=kwargs.get('pk'),
                 knox_token_key__regex=f"_{request.user.id}$"
             )
+            self.check_object_permissions(self.request, token)
         except KnoxAuthToken.DoesNotExist:
             return error_response("Token not found")
         key, id = token.knox_token_key.split("_")
@@ -411,6 +412,7 @@ class HarvesterViewSet(viewsets.ModelViewSet):
         Only available to Harvesters.
         """
         harvester = get_object_or_404(Harvester, id=pk)
+        self.check_object_permissions(self.request, harvester)
         return Response(HarvesterConfigSerializer(
             harvester,
             context={'request': request}
@@ -425,6 +427,7 @@ class HarvesterViewSet(viewsets.ModelViewSet):
         Only Harvesters are authorised to issue reports.
         """
         harvester = get_object_or_404(Harvester, id=pk)
+        self.check_object_permissions(self.request, harvester)
         harvester.last_check_in = timezone.now()
         harvester.save()
         if request.data.get('status') is None:
@@ -756,6 +759,7 @@ class ObservedFileViewSet(viewsets.ModelViewSet):
     def reimport(self, request, pk: int = None):
         try:
             file = self.get_queryset().get(id=pk)
+            self.check_object_permissions(self.request, file)
         except ObservedFile.DoesNotExist:
             return error_response('Requested file not found')
         file.state = FileState.RETRY_IMPORT
@@ -1147,6 +1151,7 @@ class DataColumnViewSet(viewsets.ReadOnlyModelViewSet):
         Fetch the data for this column in an 'observations' dictionary of record_id: observed_value pairs.
         """
         column = get_object_or_404(DataColumn, id=pk)
+        self.check_object_permissions(self.request, column)
         return Response(TimeseriesDataSerializer(column, context={'request': self.request}).data)
 
     @action(methods=['GET'], detail=True)
@@ -1155,6 +1160,7 @@ class DataColumnViewSet(viewsets.ReadOnlyModelViewSet):
         Fetch the data for this column in an 'observations' dictionary of record_id: observed_value pairs.
         """
         column = get_object_or_404(DataColumn, id=pk)
+        self.check_object_permissions(self.request, column)
         return Response(TimeseriesDataListSerializer(column, context={'request': self.request}).data)
 
 
@@ -1226,6 +1232,7 @@ class InactiveViewSet(viewsets.ModelViewSet):
     def vouch_for(self, request, pk: int = None):
         try:
             new_user = User.objects.get(id=pk)
+            self.check_object_permissions(self.request, new_user)
         except User.DoesNotExist:
             return error_response(f"User not found")
         VouchFor.objects.create(new_user=new_user, vouching_user=request.user)
@@ -1320,6 +1327,7 @@ class GroupViewSet(viewsets.ReadOnlyModelViewSet):
         # Determine what kind of group we're in
         try:
             group = Group.objects.get(id=pk)
+            self.check_object_permissions(self.request, group)
         except Group.DoesNotExist:
             return error_response(f"Group {pk} not found")
 
@@ -1369,6 +1377,7 @@ class GroupViewSet(viewsets.ReadOnlyModelViewSet):
         # Determine what kind of group we're in
         try:
             group = Group.objects.get(id=pk)
+            self.check_object_permissions(self.request, group)
         except Group.DoesNotExist:
             return error_response(f"Group {pk} not found")
 
