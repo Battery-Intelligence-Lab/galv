@@ -31,7 +31,7 @@ jobs:
         id: cache-restore
         uses: actions/cache/restore@v3
         with:
-          path: ${{ env.$GALVANALYSER_HARVESTER_TEST_PATH }}
+          path: ${{ env.GALVANALYSER_HARVESTER_TEST_PATH }}
           key: liionsden-test-suite
 
       - name: Download test suite
@@ -49,7 +49,7 @@ jobs:
         id: cache-save
         uses: actions/cache/save@v3
         with:
-          path: ${{ env.$GALVANALYSER_HARVESTER_TEST_PATH }}
+          path: ${{ env.GALVANALYSER_HARVESTER_TEST_PATH }}
           key: ${{ steps.cache-restore.outputs.cache-primary-key }}
 
       - name: Build the stack
