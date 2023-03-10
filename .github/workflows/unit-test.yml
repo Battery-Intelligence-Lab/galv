@@ -47,6 +47,7 @@ jobs:
 
       - name: Cache test suite
         id: cache-save
+        if: steps.cache-restore.outputs.cache-hit != 'true'
         uses: actions/cache/save@v3
         with:
           path: ${{ env.GALVANALYSER_HARVESTER_TEST_PATH }}
