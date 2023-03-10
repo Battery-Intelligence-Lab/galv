@@ -35,7 +35,7 @@ jobs:
           key: liionsden-test-suite
 
       - name: Download test suite
-        if: steps.cache-primes.outputs.cache-hit != 'true'
+        if: steps.cache-restore.outputs.cache-hit != 'true'
         env:
           LIIONSDEN_SMB_PATH: ${{ secrets.LIIONSDEN_SMB_PATH }}
           LIIONSDEN_SMB_USERNAME: ${{ secrets.LIIONSDEN_SMB_USERNAME}}
