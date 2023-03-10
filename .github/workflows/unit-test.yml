@@ -18,9 +18,9 @@ jobs:
   test-harvester:
     runs-on: ubuntu-latest
     env:
-      GALVANALYSER_HARVESTER_TEST_PATH: /test_datafiles
+      GALVANALYSER_HARVESTER_TEST_PATH: .test_datafiles
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Install smbclient
         run: |
@@ -69,7 +69,7 @@ jobs:
       POSTGRES_PASSWORD: "galvanalyser"
       DJANGO_SECRET_KEY: "long-and-insecure-key-12345"
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Set up secrets
         run: |
