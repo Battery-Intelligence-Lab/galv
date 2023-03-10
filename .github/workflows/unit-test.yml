@@ -18,7 +18,7 @@ jobs:
   test-harvester:
     runs-on: ubuntu-latest
     env:
-      GALVANALYSER_HARVESTER_TEST_PATH: /home/mrobins/git/tmp/test_datafiles
+      GALVANALYSER_HARVESTER_TEST_PATH: /test_datafiles
     steps:
       - uses: actions/checkout@v2
 
