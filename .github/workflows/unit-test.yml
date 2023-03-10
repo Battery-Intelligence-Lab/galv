@@ -2,8 +2,7 @@ name: Unit Tests (Docker)
 on:
   push:
     branches:
-      - master
-      - "v2.0.0"
+      - main
   pull_request:
     branches:
       - '**'
@@ -19,16 +18,24 @@ jobs:
   test-harvester:
     runs-on: ubuntu-latest
     env:
-      GALVANALYSER_HARVESTER_TEST_PATH: /home/mrobins/git/tmp/test_datafiles
+      GALVANALYSER_HARVESTER_TEST_PATH: .test_datafiles
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Install smbclient
         run: |
           sudo apt-get update
           sudo apt-get install -y smbclient
 
+      - name: Restore cached test suite
+        id: cache-restore
+        uses: actions/cache/restore@v3
+        with:
+          path: ${{ env.GALVANALYSER_HARVESTER_TEST_PATH }}
+          key: liionsden-test-suite
+
       - name: Download test suite
+        if: steps.cache-restore.outputs.cache-hit != 'true'
         env:
           LIIONSDEN_SMB_PATH: ${{ secrets.LIIONSDEN_SMB_PATH }}
           LIIONSDEN_SMB_USERNAME: ${{ secrets.LIIONSDEN_SMB_USERNAME}}
@@ -37,6 +44,14 @@ jobs:
           sudo mkdir -p $GALVANALYSER_HARVESTER_TEST_PATH 
           cd $GALVANALYSER_HARVESTER_TEST_PATH
           sudo smbget -R $LIIONSDEN_SMB_PATH/test-suite-small -U "$LIIONSDEN_SMB_USERNAME%$LIIONSDEN_SMB_PASSWORD"
+
+      - name: Cache test suite
+        id: cache-save
+        if: steps.cache-restore.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v3
+        with:
+          path: ${{ env.GALVANALYSER_HARVESTER_TEST_PATH }}
+          key: ${{ steps.cache-restore.outputs.cache-primary-key }}
 
       - name: Build the stack
         run: touch .env.secret && docker-compose -f docker-compose.test.yml build harvester
@@ -55,7 +70,7 @@ jobs:
       POSTGRES_PASSWORD: "galvanalyser"
       DJANGO_SECRET_KEY: "long-and-insecure-key-12345"
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Set up secrets
         run: |
