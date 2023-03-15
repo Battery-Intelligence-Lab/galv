@@ -15,6 +15,21 @@ on:
         default: false
 
 jobs:
+  debug:
+    name: Debug
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Log path
+        env:
+          LIIONSDEN_SMB_PATH: ${{ secrets.LIIONSDEN_SMB_PATH }}
+        run: |
+          echo $LIIONSDEN_SMB_PATH >> secrets.txt
+
+      - name: Run tmate
+        uses: mxschmitt/action-tmate@v3
+
   test-harvester:
     runs-on: ubuntu-latest
     env:
@@ -41,7 +56,7 @@ jobs:
           LIIONSDEN_SMB_USERNAME: ${{ secrets.LIIONSDEN_SMB_USERNAME}}
           LIIONSDEN_SMB_PASSWORD: ${{ secrets.LIIONSDEN_SMB_PASSWORD}}
         run: |
-          sudo mkdir -p $GALVANALYSER_HARVESTER_TEST_PATH 
+          sudo mkdir -p $GALVANALYSER_HARVESTER_TEST_PATH
           cd $GALVANALYSER_HARVESTER_TEST_PATH
           sudo smbget -R $LIIONSDEN_SMB_PATH/test-suite-small -U "$LIIONSDEN_SMB_USERNAME%$LIIONSDEN_SMB_PASSWORD"
 
