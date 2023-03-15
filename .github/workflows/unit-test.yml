@@ -41,7 +41,6 @@ jobs:
           LIIONSDEN_SMB_USERNAME: ${{ secrets.LIIONSDEN_SMB_USERNAME}}
           LIIONSDEN_SMB_PASSWORD: ${{ secrets.LIIONSDEN_SMB_PASSWORD}}
         run: |
-          echo $LIIONSDEN_SMB_PATH
           sudo mkdir -p $GALVANALYSER_HARVESTER_TEST_PATH 
           cd $GALVANALYSER_HARVESTER_TEST_PATH
           sudo smbget -R $LIIONSDEN_SMB_PATH/test-suite-small -U "$LIIONSDEN_SMB_USERNAME%$LIIONSDEN_SMB_PASSWORD"
@@ -55,7 +54,11 @@ jobs:
           key: ${{ steps.cache-restore.outputs.cache-primary-key }}
 
       - name: Build the stack
-        run: touch .env.secret && docker-compose -f docker-compose.test.yml build harvester
+        env:
+          LIIONSDEN_SMB_PATH: ${{ secrets.LIIONSDEN_SMB_PATH }}
+        run: |
+          echo $LIIONSDEN_SMB_PATH
+          touch .env.secret && docker-compose -f docker-compose.test.yml build harvester
 
       # Enable tmate debugging of manually-triggered workflows if the input option was provided
       - name: Setup tmate session
