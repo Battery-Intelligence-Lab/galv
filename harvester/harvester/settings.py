@@ -69,13 +69,13 @@ def get_standard_columns():
 
 
 def update_envvars():
-    envvars = get_setting('environment_variables')
+    envvars = get_setting('environment_variables') or {}
     for k, v in envvars.items():
         old = os.getenv(k)
         os.environ[k] = v
         if old != v:
             logger.info(f"Update envvar {k} from '{old}' to '{v}'")
-    delvars = get_setting('deleted_environment_variables')
+    delvars = get_setting('deleted_environment_variables') or {}
     for k in delvars:
         old = os.getenv(k)
         if old is not None:
