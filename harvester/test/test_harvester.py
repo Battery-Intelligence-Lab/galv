@@ -178,6 +178,8 @@ class TestHarvester(unittest.TestCase):
         if not os.path.isfile(mock_settings_file()):
             raise AssertionError(f"Expected JSON file '{mock_settings_file()}' not found")
 
+        os.remove(mock_settings_file())
+
     @patch('harvester.harvester.run.report_harvest_result')
     @patch('harvester.harvester.run.import_file')
     @patch('harvester.harvester.run.logger')
