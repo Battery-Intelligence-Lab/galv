@@ -33,7 +33,7 @@ ALLOWED_HOSTS = ['app', 'localhost']
 CORS_ALLOW_HEADERS = list(corsheaders.defaults.default_headers) + [
     "X-CSRF-TOKEN"
 ]
-CORS_ALLOWED_ORIGINS = ["http://localhost:3000"]
+CORS_ALLOWED_ORIGINS = [f"http://localhost:{os.environ.get('FRONTEND_PORT', 80)}"]
 CORS_ALLOW_CREDENTIALS = True
 CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS
 

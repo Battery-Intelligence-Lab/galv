@@ -26,7 +26,7 @@ services:
     depends_on:
       - app
     ports:
-      - "80:80"
+      - "${FRONTEND_PORT}:${FRONTEND_PORT}"
     env_file:
      - ./.env
     restart: unless-stopped
