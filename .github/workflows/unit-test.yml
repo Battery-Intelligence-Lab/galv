@@ -70,6 +70,7 @@ jobs:
       POSTGRES_PASSWORD: "galvanalyser"
       DJANGO_SECRET_KEY: "long-and-insecure-key-12345"
       BACKEND_CORS_ALLOWED_ORIGINS: "http://localhost"
+      BACKEND_HOSTNAME: "localhost"
     steps:
       - uses: actions/checkout@v3
 
