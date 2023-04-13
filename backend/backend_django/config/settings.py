@@ -28,12 +28,12 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['app', 'localhost']
+ALLOWED_HOSTS = ['app', *os.environ.get("BACKEND_HOSTNAME", "").split(",")]
 
 CORS_ALLOW_HEADERS = list(corsheaders.defaults.default_headers) + [
     "X-CSRF-TOKEN"
 ]
-CORS_ALLOWED_ORIGINS = [f"http://localhost:{os.environ.get('FRONTEND_PORT', 80)}"]
+CORS_ALLOWED_ORIGINS = os.environ.get("BACKEND_CORS_ALLOWED_ORIGINS", "").split(",")
 CORS_ALLOW_CREDENTIALS = True
 CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS
 

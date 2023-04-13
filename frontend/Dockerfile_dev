@@ -1,9 +1,14 @@
 FROM node:lts@sha256:132309f5136555725debd57b711eb4b329fff22a00588834dbec391a3f9782cf
+ARG FRONTEND_PORT=3000
+
 RUN mkdir -p /app
 WORKDIR /app
 COPY . /app
 
 # Required to get react running:
 ENV NODE_OPTIONS=--openssl-legacy-provider
+
+# Make react-scripts serve on desired port
+ENV PORT=${FRONTEND_PORT}
 
 RUN yarn install
