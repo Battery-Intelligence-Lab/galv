@@ -78,6 +78,8 @@ jobs:
         run: |
           echo "POSTGRES_PASSWORD=$POSTGRES_PASSWORD" > .env.secret
           echo "DJANGO_SECRET_KEY=$DJANGO_SECRET_KEY" >> .env.secret
+          echo "BACKEND_CORS_ALLOWED_ORIGINS=$BACKEND_CORS_ALLOWED_ORIGINS" >> .env.secret
+          echo "BACKEND_HOSTNAME=$BACKEND_HOSTNAME" >> .env.secret
 
       - name: Build the stack
         run: docker-compose -f docker-compose.test.yml up -d --build app_test
