@@ -1,3 +1,4 @@
+import math
 import os.path
 import re
 
@@ -496,9 +497,25 @@ class TimeseriesDataSerializer(serializers.Serializer):
     url = serializers.CharField(help_text=url_help_text)
     observations = serializers.DictField(help_text="row_number:value dictionary of observations")
 
+    def get_where_clause(self, instance):
+        request = self.context['request']
+        try:
+            min = f"AND sample >= {int(request.query_params['min'])} "
+        except:
+            min = ""
+        try:
+            max = f"AND sample <= {int(request.query_params['max'])} "
+        except:
+            max = ""
+        try:
+            mod = f"AND MOD(sample, {int(request.query_params['mod'])}) = 1 "
+        except:
+            mod = ""
+        return f"WHERE column_id={instance.id} {min}{max}{mod}"
+
     def to_representation(self, instance):
         with connection.cursor() as cur:
-            cur.execute(f"SELECT sample, value FROM timeseries_data WHERE column_id={instance.id} ORDER BY sample")
+            cur.execute(f"SELECT sample, value FROM timeseries_data {self.get_where_clause(instance)} ORDER BY sample")
             data = cur.fetchall()
         keys = DataColumnStringKeys.objects.filter(column_id=instance.id)
         if keys.exists():
@@ -513,14 +530,12 @@ class TimeseriesDataSerializer(serializers.Serializer):
         }
 
 
-class TimeseriesDataListSerializer(serializers.Serializer):
-    id = serializers.IntegerField(help_text="Auto-assigned object identifier")
-    url = serializers.CharField(help_text=url_help_text)
+class TimeseriesDataListSerializer(TimeseriesDataSerializer):
     observations = serializers.ListField(help_text="List of observation values ordered by row number")
 
     def to_representation(self, instance):
         with connection.cursor() as cur:
-            cur.execute(f"SELECT value FROM timeseries_data WHERE column_id={instance.id} ORDER BY sample")
+            cur.execute(f"SELECT value FROM timeseries_data {self.get_where_clause(instance)} ORDER BY sample")
             data = cur.fetchall()
         keys = DataColumnStringKeys.objects.filter(column_id=instance.id)
         if keys.exists():
