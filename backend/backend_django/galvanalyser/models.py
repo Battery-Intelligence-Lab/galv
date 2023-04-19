@@ -416,6 +416,9 @@ class TimeseriesRangeLabel(models.Model):
     )
     info = models.TextField(help_text="Additional information")
 
+    def __str__(self) -> str:
+        return f"{self.label} [{self.range_start}, {self.range_end}]: {self.info}"
+
 
 class VouchFor(models.Model):
     new_user = models.ForeignKey(

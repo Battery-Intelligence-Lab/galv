@@ -92,10 +92,10 @@ def deserialize_datetime(serialized_value: str | float) -> timezone.datetime:
 @extend_schema(
     summary="Log in to retrieve an API Token for use elsewhere in the API.",
     description="""
-Sign in with a username and password to obtain an API Token. 
+Sign in with a username and password to obtain an API Token.
 The token will allow you access to appropriate parts of the API in subsequent requests.
 
-Subsequent requests should include the Authorization header with the content `Bearer token` 
+Subsequent requests should include the Authorization header with the content `Bearer token`
 where token is the token you received in exchange for your credentials here.
     """,
     responses={
@@ -143,9 +143,9 @@ class LogoutView(KnoxLogoutView):
 @extend_schema(
     summary="Log out all API Tokens.",
     description="""
-Remove all tokens associated with your account. 
+Remove all tokens associated with your account.
 If you have numerous old or leaked tokens spread across numerous programs,
-you can use this endpoint to easily revoke them all. 
+you can use this endpoint to easily revoke them all.
     """,
     responses={204: None, 401: OpenApiResponse(description='Unauthorized')},
     request=None
@@ -158,9 +158,9 @@ class LogoutAllView(KnoxLogoutAllView):
 @extend_schema(
     summary="Create a new API Token",
     description="""
-Access to the API is authenticated by API Tokens. 
+Access to the API is authenticated by API Tokens.
 When you log into the web frontend, you are issued with a temporary token
-to allow your browser session to function. 
+to allow your browser session to function.
 If you wish to access the API via the Python client, or similar programmatically routes,
 you will likely want a token with a longer expiry time. Those tokens are created using
 this endpoint.
@@ -214,7 +214,7 @@ class CreateTokenView(KnoxLoginView):
         summary="View tokens associated with your account.",
         description="""
 List all API tokens associated with this user account.
-You will not be able to see the value of the tokens themselves, 
+You will not be able to see the value of the tokens themselves,
 because these values are encrypted, but you can see the names you gave them and their expiry dates.
 
 New Tokens cannot be created at this endpoint, use /create_token/ instead.
@@ -223,14 +223,14 @@ New Tokens cannot be created at this endpoint, use /create_token/ instead.
     retrieve=extend_schema(
         summary="View a token associated with your account.",
         description="""
-You will not be able to see the value of the token, 
+You will not be able to see the value of the token,
 but you can see the name you gave it and its creation/expiry date.
         """,
     ),
     partial_update=extend_schema(
         summary="Change the name of a token associated with your account.",
         description="""
-Token values and expiry dates are immutable, but you can change the name you 
+Token values and expiry dates are immutable, but you can change the name you
 associated with a token.
         """
     ),
@@ -280,8 +280,8 @@ class TokenViewSet(viewsets.ModelViewSet):
         summary="View all Harvesters",
         description="""
 Harvesters monitor a set of MonitoredPaths and send reports about ObservedFiles within those paths.
-You can view all Harvesters on which you are an Administrator or User, 
-and those which have MonitoredPaths on which you are an Administrator or User. 
+You can view all Harvesters on which you are an Administrator or User,
+and those which have MonitoredPaths on which you are an Administrator or User.
 
 Searchable fields:
 - name
@@ -318,7 +318,7 @@ This endpoint will register the Harvester and set up the user and administrator 
     partial_update=extend_schema(
         summary="Update Harvester details",
         description="""
-Some Harvester details can be updated after the Harvester is created. 
+Some Harvester details can be updated after the Harvester is created.
 Those details are updated using this endpoint.
 
 Only Harvester Administrators are authorised to make these changes.
@@ -331,7 +331,7 @@ Only Harvester Administrators are authorised to make these changes.
 
 Only Harvester Administrators are authorised to delete harvesters.
 Deleting a Harvester will not stop the harvester program running,
-it will instead deactivate its API access. 
+it will instead deactivate its API access.
 Currently, harvesters cannot be recreated easily, so don't delete them if you might want them later.
 Generally, a better solution is to stop the harvester program instead.
         """
@@ -343,7 +343,7 @@ Generally, a better solution is to stop the harvester program instead.
 Only accessible to Harvesters.
 
 Returns the full configuration information required by the harvester program to do its work.
-This includes the Harvester specification, the Paths to monitor, 
+This includes the Harvester specification, the Paths to monitor,
 and information about standard Columns and Units.
         """
     ),
@@ -353,7 +353,7 @@ and information about standard Columns and Units.
         description="""
 The harvester programs use the report endpoint for all information they send to the API
 (except initial self-registration).
-Reports will be file size reports, file parsing reports, or error reports. 
+Reports will be file size reports, file parsing reports, or error reports.
 File parsing reports may contain metadata or data to store.
         """,
         request=inline_serializer('HarvesterReportSerializer', {
@@ -637,7 +637,7 @@ becoming ObservedFiles once they are reported to Galvanalyser by the Harvester.
     create=extend_schema(
         summary="Create a new Path",
         description="""
-Register a new directory on for a Harvester to crawl. 
+Register a new directory on for a Harvester to crawl.
 Files in that directory will be scanned periodically by the Harvester,
 becoming ObservedFiles once they are reported to Galvanalyser by the Harvester.
         """,
@@ -649,14 +649,14 @@ becoming ObservedFiles once they are reported to Galvanalyser by the Harvester.
     partial_update=extend_schema(
         summary="Update a Path",
         description="""
-Alter the path to the monitored directory, 
+Alter the path to the monitored directory,
 or the time for which files need to be stable before being imported.
         """
     ),
     destroy=extend_schema(
         summary="Delete a Path",
         description="""
-Stop a directory from being monitored by a Harvester. 
+Stop a directory from being monitored by a Harvester.
 This will not delete datasets imported from Files in this Path.
         """
     )
@@ -696,7 +696,7 @@ class MonitoredPathViewSet(viewsets.ModelViewSet):
         description="""
 Files are files in a directory marked as a monitored Path for a Harvester.
 
-They are reported to Galvanalyser by the harvester program. 
+They are reported to Galvanalyser by the harvester program.
 An File will have file metadata (size, modification time), and a
 status representing its import state. It may be linked to HarvestErrors
 encountered while importing the file, and/or to Datasets representing the content
@@ -721,7 +721,7 @@ Files are files in a directory marked as a monitored Path for a Harvester.
         summary="Force a File to be re-imported",
         description="""
 A File will usually only be imported once, provided it is created, written to,
-and then left alone. Files will naturally be reimported if they grow in size 
+and then left alone. Files will naturally be reimported if they grow in size
 again.
 If an error was encountered while processing a file, or you have other reasons
 for wishing to repeat the import process, you can use this endpoint to force the
@@ -773,7 +773,7 @@ class ObservedFileViewSet(viewsets.ModelViewSet):
         description="""
 View the Datasets extracted from Files on Paths to which you have access.
 
-Datasets consist of metadata and links to the Columns that link to the actual data themselves. 
+Datasets consist of metadata and links to the Columns that link to the actual data themselves.
 
 Searchable fields:
 - name
@@ -791,7 +791,7 @@ Datasets consist of metadata and links to the Columns that link to the actual da
         description="""
 Update a Dataset's metadata to associate it with the Cell or Experimental equipment that were
 used in the experiment that generated the data, describe that experiment's purpose,
-or amend an incorrect name or file type value. 
+or amend an incorrect name or file type value.
         """
     )
 )
@@ -886,16 +886,16 @@ Each Cell is associated with a Cell Family.
     partial_update=extend_schema(
         summary="Update a Cell Family",
         description="""
-Cell Families that do not have any Cells associated with them may be edited. 
-Cell Families that _do_ have Cells associated with them are locked, 
+Cell Families that do not have any Cells associated with them may be edited.
+Cell Families that _do_ have Cells associated with them are locked,
 to prevent accidental updating.
         """
     ),
     destroy=extend_schema(
         summary="Delete a Cell Family",
         description="""
-Cell Families that do not have any Cells associated with them may be deleted. 
-Cell Families that _do_ have Cells associated with them are locked, 
+Cell Families that do not have any Cells associated with them may be deleted.
+Cell Families that _do_ have Cells associated with them are locked,
 to prevent accidental updating.
         """
     )
@@ -928,7 +928,7 @@ Searchable fields:
     retrieve=extend_schema(
         summary="View a Cell",
         description="""
-Cells are specific cells which generate data stored in Datasets/observed Files.        
+Cells are specific cells which generate data stored in Datasets/observed Files.
         """
     ),
     create=extend_schema(
@@ -940,14 +940,14 @@ Create an instance of a Cell by declaring its unique identifier and associated C
     partial_update=extend_schema(
         summary="Update a Cell",
         description="""
-Cells that are not used in any Dataset may be edited. 
+Cells that are not used in any Dataset may be edited.
 Cells that _are_ used in a Dataset are locked to prevent accidental updating.
         """
     ),
     destroy=extend_schema(
         summary="Delete a Cell",
         description="""
-Cells that are not used in any Dataset may be deleted. 
+Cells that are not used in any Dataset may be deleted.
 Cells that _are_ used in a Dataset are locked to prevent accidental updating.
         """
     )
@@ -978,7 +978,7 @@ Searchable fields:
     retrieve=extend_schema(
         summary="View specific Equipment",
         description="""
-Experimental equipment used in experiments which generate Files and their Datasets.    
+Experimental equipment used in experiments which generate Files and their Datasets.
         """
     ),
     create=extend_schema(
@@ -990,14 +990,14 @@ Create Equipment by describing its role and purpose.
     partial_update=extend_schema(
         summary="Update Equipment",
         description="""
-Equipment that is not used in any Dataset may be edited. 
+Equipment that is not used in any Dataset may be edited.
 Equipment that _is_ used in a Dataset is locked to prevent accidental updating.
         """
     ),
     destroy=extend_schema(
         summary="Delete Equipment",
         description="""
-Equipment that is not used in any Dataset may be deleted. 
+Equipment that is not used in any Dataset may be deleted.
 Equipment that _is_ used in a Dataset is locked to prevent accidental updating.
         """
     )
@@ -1020,7 +1020,7 @@ class EquipmentViewSet(viewsets.ModelViewSet):
         summary="View Units",
         description="""
 Units are scientific (typically SI) units which describe how data map to quantities in the world.
-Some Units are predefined (e.g. seconds, volts, amps, unitless quantities), 
+Some Units are predefined (e.g. seconds, volts, amps, unitless quantities),
 while others can be defined in experimental data.
 
 Searchable fields:
@@ -1033,7 +1033,7 @@ Searchable fields:
         summary="View a Unit",
         description="""
 Units are scientific (typically SI) units which describe how data map to quantities in the world.
-Some Units are predefined (e.g. seconds, volts, amps, unitless quantities), 
+Some Units are predefined (e.g. seconds, volts, amps, unitless quantities),
 while others can be defined in experimental data.
         """
     )
@@ -1123,7 +1123,7 @@ Data are presented as a dictionary of observations where keys are row numbers an
         summary="View Column data as a list",
         description="""
 View the TimeseriesData contents of the Column as a list.
-        
+
 Data are presented as a list of observation values ordered by row number.
         """
     )
@@ -1164,13 +1164,44 @@ class DataColumnViewSet(viewsets.ReadOnlyModelViewSet):
         return Response(TimeseriesDataListSerializer(column, context={'request': self.request}).data)
 
 
+@extend_schema_view(
+    list=extend_schema(
+        summary="View time-series range labels to which you have access",
+        description="""
+Labels marking blocks of contiguous time series data.
+
+Searchable fields:
+- label
+        """
+    ),
+    retrieve=extend_schema(
+        summary="View a specific label.",
+        description="""
+Labels marking blocks of contiguous time series data.
+        """
+    ),
+    create=extend_schema(
+        summary="Create a label.",
+        description="""
+Create a label with a description.
+        """
+    ),
+    destroy=extend_schema(
+        summary="Delete a label.",
+        description="""
+RangeLabels not used in any Dataset may be deleted.
+        """
+    )
+)
 class TimeseriesRangeLabelViewSet(viewsets.ModelViewSet):
     """
     TimeseriesRangeLabels mark contiguous observations using start and endpoints.
     """
     serializer_class = TimeseriesRangeLabelSerializer
-    queryset = TimeseriesRangeLabel.objects.all()
-    http_method_names = []  # TODO: implement TimeseriesRangeLabels
+    queryset = TimeseriesRangeLabel.objects.all().order_by('id')
+    filterset_fields = ['label', 'info']
+    search_fields = ['@label']
+    http_method_names = ['get', 'post', 'patch', 'delete', 'options']
 
 
 @extend_schema_view(
