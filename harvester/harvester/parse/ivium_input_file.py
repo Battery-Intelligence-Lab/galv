@@ -123,14 +123,39 @@ class IviumInputFile(InputFile):
         is_end_task = self._get_end_task_function(current_task)
         start_task_row = 0
         end_task_row = 0
+
+        prev_time = 0
         for row in self.load_data(self.file_path, column_names):
             end_task_row += 1
             if is_end_task(row):
+                time = float(row.get("test_time"))
+                mode = current_task.get("Mode")
+                if mode.casefold() == "ocp":
+                    experiment_label = "Rest "
+                else:
+                    if mode.casefold() == "cc":
+                        key = "amps"
+                        units = "A"
+                    else:
+                        key = "volts"
+                        units = "V"
+
+                    control = float(row.get(key))
+                    if control > 0:
+                        experiment_label = f"Charge "
+                    else:
+                        experiment_label = f"Discharge "
+
+                    experiment_label += f"at {control} {units} "
+                experiment_label += f"for {time - prev_time} seconds"
+                if prev_time > time:
+                    experiment_label = ""
+
                 yield (
-                    'task_{}_{}'.format(task_index, current_task['Mode']),
-                    (start_task_row, end_task_row)
+                    f"task_{task_index}_{mode}", (start_task_row, end_task_row), experiment_label
                 )
 
+                prev_time = time
                 task_index += 1
                 if task_index < len(self._file_metadata['Tasks']):
                     current_task = self._file_metadata['Tasks'][task_index]
