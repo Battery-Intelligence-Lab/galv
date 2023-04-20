@@ -8,31 +8,31 @@ Project Folder Structure
 
 Below is a tree diagram of the folder structure of this project and a short description of what is in each folder.
 
-|  ├── .env -- configuration environment variables for the server
-|  ├── [.env.secret] -- secret configuration environment varaibles for server
-|  ├── docker-compose.yml -- docker-compose file for production
-|  ├── docker-compose.dev.yml -- development docker-compose file. Symlink to docker-compose.override.yml for automatic inclusion.
-|  ├── docker-compose.test.yml -- docker-compose file for running Django tests
-|  ├── docker-compose.harvester.yml -- docker-compose file for running harvester instances. Production.
-|  ├── backend/ -- The Django backend
-|  │   ├── Dockerfile -- docker file for production and development
-|  │   ├── Dockerfile_test -- docker file for unit testing
-|  │   ├── requirements.txt -- Python library definition
-|  │   ├── requirements-test.txt -- Additional Python libraries required for unit testing
-|  │   ├── server.sh -- Initilisation shell script (waits on database, then launches Django)
-|  │   ├── config/ -- Django configuration files
-|  │   ├── galvanalyser/ -- Django application
-|  │   └── tests/ -- unit tests for backend
-|  ├── docs/ -- documentation
-|  ├── frontend/ -- The react frontend code
-|  │   ├── Dockerfile -- docker file for production
-|  │   ├── Dockerfile_dev -- docker file for development
-|  │   └── src/ -- source code for react components and app
-|  └── harvester/ -- The react frontend code
-|      ├── Dockerfile -- docker file for production and development
-|      ├── harvester/ -- harvester code
-|      │   └── parse/ -- code for parsing specific battery cycling data files
-|      └── test/ -- unit tests for harvester
+|  ├ .env -- configuration environment variables for the server
+|  ├ [.env.secret] -- secret configuration environment varaibles for server
+|  ├ docker-compose.yml -- docker-compose file for production
+|  ├ docker-compose.dev.yml -- development docker-compose file. Symlink to docker-compose.override.yml for automatic inclusion.
+|  ├ docker-compose.test.yml -- docker-compose file for running Django tests
+|  ├ docker-compose.harvester.yml -- docker-compose file for running harvester instances. Production.
+|  ├ backend/ -- The Django backend
+|  │   ├ Dockerfile -- docker file for production and development
+|  │   ├ Dockerfile_test -- docker file for unit testing
+|  │   ├ requirements.txt -- Python library definition
+|  │   ├ requirements-test.txt -- Additional Python libraries required for unit testing
+|  │   ├ server.sh -- Initilisation shell script (waits on database, then launches Django)
+|  │   ├ config/ -- Django configuration files
+|  │   ├ galvanalyser/ -- Django application
+|  │   └ tests/ -- unit tests for backend
+|  ├ docs/ -- documentation
+|  ├ frontend/ -- The react frontend code
+|  │   ├ Dockerfile -- docker file for production
+|  │   ├ Dockerfile_dev -- docker file for development
+|  │   └ src/ -- source code for react components and app
+|  └ harvester/ -- The react frontend code
+|      ├ Dockerfile -- docker file for production and development
+|      ├ harvester/ -- harvester code
+|      │   └ parse/ -- code for parsing specific battery cycling data files
+|      └ test/ -- unit tests for harvester
 
 ********************************************************************************
 Running
@@ -60,6 +60,11 @@ can edit all the code in the frontend and backend files, and this will automatic
 compile and restart the dockerised frontend and backend servers appropriately, useful in 
 development. Additionally, the development configuration includes a Harvester instance so that 
 you do not have to create Harvesters in an additional step.
+
+You may wish to edit the `.env` file to change the `FRONTEND_PORT`.
+If you do so, remember to change the `BACKEND_CORS_ALLOWED_ORIGINS` to include the new port.
+You will have to rebuild the frontend container for port changes to take effect
+(otherwise they'll change for Django but not for the frontend).
 
 ********************************************************************************
 Testing

@@ -69,6 +69,8 @@ jobs:
     env:
       POSTGRES_PASSWORD: "galvanalyser"
       DJANGO_SECRET_KEY: "long-and-insecure-key-12345"
+      BACKEND_CORS_ALLOWED_ORIGINS: "http://localhost"
+      BACKEND_HOSTNAME: "localhost"
     steps:
       - uses: actions/checkout@v3
 
@@ -76,6 +78,8 @@ jobs:
         run: |
           echo "POSTGRES_PASSWORD=$POSTGRES_PASSWORD" > .env.secret
           echo "DJANGO_SECRET_KEY=$DJANGO_SECRET_KEY" >> .env.secret
+          echo "BACKEND_CORS_ALLOWED_ORIGINS=$BACKEND_CORS_ALLOWED_ORIGINS" >> .env.secret
+          echo "BACKEND_HOSTNAME=$BACKEND_HOSTNAME" >> .env.secret
 
       - name: Build the stack
         run: docker-compose -f docker-compose.test.yml up -d --build app_test
