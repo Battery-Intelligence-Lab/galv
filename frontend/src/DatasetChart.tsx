@@ -6,6 +6,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import Grid from "@mui/material/Grid";
 import Typography from "@mui/material/Typography";
 import Stack from "@mui/material/Stack";
+import TextField from "@mui/material/TextField";
 
 export type UnitFields = {
   url: string;
@@ -29,7 +30,7 @@ export type ColumnFields = {
 }
 
 export type DatasetChartProps = {
-  dataset: DatasetFields
+  dataset: DatasetFields;
 }
 
 export type ColumnDataFields<T extends string | number> = {
@@ -47,8 +48,7 @@ const TEST_TIME_COLUMN = "Time"
 const VOLTAGE_COLUMN = "Volts"
 const AMPS_COLUMN = "Amps"
 
-
-export default function DatasetChart(props: DatasetChartProps) {
+function Chart(props: DatasetChartProps & {filter: string}) {
   const [columns, setColumns] = useState<ColumnFields[]>([])
   const [keyColumns, setKeyColumns] =
     useState<keyColumnMap>({time: undefined, amps: undefined, volts: undefined})
@@ -85,7 +85,7 @@ export default function DatasetChart(props: DatasetChartProps) {
       })
       .then(() => {
       })
-  }, [props.dataset])
+  }, [props.dataset, props.filter])
 
   useEffect(() => {
     if (loadingColumnData.length)
@@ -105,7 +105,7 @@ export default function DatasetChart(props: DatasetChartProps) {
 
   const fetchColumnData = (col: ColumnFields) => {
     setLoadingColumnData(prevState => [...prevState.filter(i => i !== col.id), col.id])
-    return Connection.fetch<ColumnDataFields<number>>(col.data_list)
+    return Connection.fetch<ColumnDataFields<number>>(`${col.data_list}?${props.filter}`, {}, true)
       .then(r => {console.log(r); return r})
       .then(response => response.content)
       .then(data => {
@@ -170,13 +170,7 @@ export default function DatasetChart(props: DatasetChartProps) {
   })
 
   return (
-    <Grid
-      sx={{ height: 300, width: '100%' }}
-      container
-      direction="row"
-      justifyContent="center"
-      alignItems="center"
-    >
+    <Fragment>
       <Grid item>
         <Stack
           spacing={4}
@@ -241,6 +235,69 @@ export default function DatasetChart(props: DatasetChartProps) {
               />
           </Grid>
       }
+    </Fragment>
+  )
+
+}
+
+export default function DatasetChart(props: DatasetChartProps) {
+  const [filterMin, setFilterMin] = useState<number>(0)
+  const [filterMod, setFilterMod] = useState<number>(100)
+  const [filterMax, setFilterMax] = useState<number|undefined>(2000)
+  const [filter, setFilter] = useState<string>(get_filter_str())
+
+  function get_filter_str() {
+    const max = filterMax === undefined ? '' : `&max=${filterMax}`
+    const mod = filterMod === undefined ? '' : `&mod=${filterMod}`
+    return `min=${filterMin}${max}${mod}`
+  }
+
+  useEffect(
+    () => setFilter(get_filter_str()),
+    [filterMin, filterMax, filterMod]
+  )
+
+  return (
+    <Grid
+      sx={{ height: 300, width: '100%' }}
+      container
+      direction="row"
+      justifyContent="center"
+      alignItems="center"
+    >
+      <Chart dataset={props.dataset} filter={filter}/>
+      <Grid item>
+        <Stack
+          spacing={4}
+          direction="row"
+          alignItems="center"
+        >
+          <TextField
+            name="filter_min"
+            label="Start at record"
+            type={"number"}
+            value={filterMin}
+            onChange={e => setFilterMin(parseInt(e.target.value))}
+          />
+          <TextField
+            name="filter_max"
+            label="End at record"
+            type={"number"}
+            value={filterMax}
+            onChange={e => {
+              const v = parseInt(e.target.value)
+              setFilterMax(v? v : undefined)
+            }}
+          />
+          <TextField
+            name="filter_mod"
+            label="Show every Nth record"
+            type={"number"}
+            value={filterMod}
+            onChange={e => setFilterMod(parseInt(e.target.value))}
+          />
+        </Stack>
+      </Grid>
     </Grid>
   )
 

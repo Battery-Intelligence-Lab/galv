@@ -1117,6 +1117,8 @@ Searchable fields:
 View the TimeseriesData contents of the Column.
 
 Data are presented as a dictionary of observations where keys are row numbers and values are observation values.
+
+Can be filtered with querystring parameters `min` and `max`, and `mod` (modulo) by specifying a sample number.
         """
     ),
     data_listformat=extend_schema(
@@ -1125,6 +1127,8 @@ Data are presented as a dictionary of observations where keys are row numbers an
 View the TimeseriesData contents of the Column as a list.
 
 Data are presented as a list of observation values ordered by row number.
+
+Can be filtered with querystring parameters `min` and `max`, and `mod` (modulo) by specifying a sample number.
         """
     )
 )
