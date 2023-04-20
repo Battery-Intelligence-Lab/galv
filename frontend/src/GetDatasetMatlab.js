@@ -23,6 +23,9 @@ export default function GetDatasetMatlab({dataset}) {
 % Downloads all data for all columns for the dataset and reads them
 % into a struct object. Data are under data{x}.columns.data.
 %
+% SPDX-License-Identifier: BSD-2-Clause
+% Copyright  (c) 2020-2023, The Chancellor, Masters and Scholars of the University
+% of Oxford, and the 'Galvanalyser' Developers. All rights reserved.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % login to galvanalyser > Generate API Token
