@@ -128,16 +128,16 @@ class InputFile:
             raise
 
     def load_data(self, file_path, available_desired_columns):
-        raise UnsupportedFileTypeError
+        raise UnsupportedFileTypeError()
 
     def get_data_labels(self):
-        raise UnsupportedFileTypeError
+        raise UnsupportedFileTypeError()
 
     def get_file_column_to_standard_column_mapping(self):
         """
             returns map of file column name strings to column id numbers
         """
-        raise UnsupportedFileTypeError
+        raise UnsupportedFileTypeError()
 
     def load_metadata(self):
-        raise UnsupportedFileTypeError
+        raise UnsupportedFileTypeError()

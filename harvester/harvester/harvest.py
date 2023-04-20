@@ -224,6 +224,7 @@ def import_file(core_path: str, file_path: str) -> bool:
             'task': 'import',
             'status': 'in_progress',
             'data': [v for v in column_data.values()],
+            'labels': tuple(input_file.get_data_labels()),
             'test_date': serialize_datetime(core_metadata['Date of Test'])
         })
         if report is None:

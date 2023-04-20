@@ -61,23 +61,46 @@ class BiologicMprInputFile(InputFile):
             3: 'Rest',
         }
         last_Ns_change = 1
+
+        column_names = self.mpr_file.data.dtype.names
+        time_col = next((i for i, c in enumerate(column_names) if c.startswith("time")), 3)
+        cont_col = next((i for i, c in enumerate(column_names) if c.startswith("control")), 4)
+        prev_time = 0
+
         for i in range(len(self.mpr_file.data)):
             last_mode = modes[i-1]
             last_Ns = self.mpr_file.data[i-1][Ns_index]
             Ns_change = Ns_changes[i]
             if Ns_change:
+                time = self.mpr_file.data[i][time_col]
+                mode_label = mode_labels.get(last_mode)
+                if mode_label.casefold() == "rest":
+                    experiment_label = "Rest "
+                else:
+                    control = self.mpr_file.data[i - 1][cont_col]
+                    if control > 0:
+                        experiment_label = "Charge "
+                    else:
+                        experiment_label = "Discharge "
+
+                    is_const_curr = mode_label.casefold() == "cc"
+                    experiment_label += f"at {control} {'mA' if is_const_curr else 'V'} "
+                experiment_label += f"for {time - prev_time} seconds"
+
                 if last_mode in mode_labels:
-                    yield (
-                        'Ns_{}_{}'.format(last_Ns,
-                                          mode_labels[last_mode]),
-                        (last_Ns_change, i-1)
+                    data_label = (
+                        f"Ns_{last_Ns}_{mode_label}", (last_Ns_change, i - 1), experiment_label
                     )
                 else:
-                    yield (
-                        'Ns_{}'.format(last_Ns),
-                        (last_Ns_change, i-1)
+                    data_label = (
+                        f"Ns_{last_Ns}", (last_Ns_change, i - 1), experiment_label
                     )
+
                 last_Ns_change = i
+                prev_time = time
+
+                yield data_label
+
 
     def load_metadata(self):
         file_path = self.file_path
