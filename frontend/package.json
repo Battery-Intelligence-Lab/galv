@@ -13,9 +13,9 @@
     "@mui/x-data-grid": "^5.17.12",
     "@nivo/core": "^0.80.0",
     "@nivo/line": "^0.80.0",
-    "@testing-library/jest-dom": "^5.11.4",
-    "@testing-library/react": "^11.1.0",
-    "@testing-library/user-event": "^12.1.10",
+    "@testing-library/jest-dom": "^5.16.5",
+    "@testing-library/react": "^14.0.0",
+    "@testing-library/user-event": "^14.4.3",
     "@types/jest": "^29.2.5",
     "@types/node": "^18.11.18",
     "@types/react": "^18.0.26",
@@ -37,7 +37,7 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "test": "react-scripts test",
+    "test": "react-scripts test --CI=true --watchAll=false",
     "eject": "react-scripts eject",
     "styleguide": "styleguidist server",
     "styleguide:build": "styleguidist build"

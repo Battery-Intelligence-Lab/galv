@@ -44,3 +44,19 @@ services:
      - "${GALVANALYSER_HARVESTER_TEST_PATH}:/usr/test_data"
     working_dir: /usr
     command: python -m unittest discover -s /usr/harvester/test
+
+  frontend_test:
+    build:
+      dockerfile: Dockerfile_dev
+      context: ./frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    working_dir: /app
+    command: >
+      bash -c "yarn start"
+    env_file:
+      - ./.env
+    restart: "no"
