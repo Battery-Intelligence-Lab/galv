@@ -37,7 +37,7 @@ const columns = [
 ]
 
 export default function CellList(props: CellDetailProps) {
-  const classes = useStyles();
+  const { classes } = useStyles();
 
   const addNewCell = (data: CellFields, context: RowGeneratorContext<CellFields>) => {
     context.mark_loading(true)

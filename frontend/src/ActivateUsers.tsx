@@ -18,7 +18,7 @@ const columns = [
 ]
 
 export default function ActivateUsers() {
-  const classes = useStyles();
+  const { classes } = useStyles();
 
   const activateUser = (user: User) => Connection.fetch(`${user.url}vouch_for/`);
 

@@ -47,7 +47,7 @@ export type DatasetFields = {
 }
 
 export default function Datasets() {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const [selected, setSelected] = useState<DatasetFields|null>(null)
 
   useEffect(() => {

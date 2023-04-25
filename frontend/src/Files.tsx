@@ -33,7 +33,7 @@ export type FileFields = {
 export type FilesProps = { path: MonitoredPathFields }
 
 export default function Files(props: FilesProps) {
-  const classes = useStyles();
+  const { classes } = useStyles();
 
   const forceReimport = (file: FileFields) => Connection.fetch(`${file.url}reimport/`)
 

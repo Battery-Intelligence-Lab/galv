@@ -134,7 +134,7 @@ function DatasetForm({ dataset, setDataset, cellData, userData, equipmentData })
 
 export default function DatasetDetail() {
   const { id } = useParams();
-  const classes = useStyles();
+  const { classes } = useStyles();
 
   const [cellData, setCellFamily] = useState([])
   const [equipmentData, setEquipmentData] = useState(null)

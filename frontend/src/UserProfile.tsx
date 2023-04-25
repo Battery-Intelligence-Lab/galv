@@ -15,7 +15,7 @@ import Alert from "@mui/material/Alert";
 import Snackbar from "@mui/material/Snackbar";
 
 export default function UserProfile() {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const [email, setEmail] = useState<string>(Connection.user?.email || '')
   const [password, setPassword] = useState<string>('')
   const [currentPassword, setCurrentPassword] = useState<string>('')

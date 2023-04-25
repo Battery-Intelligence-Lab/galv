@@ -41,7 +41,7 @@ const columns = [
 ]
 
 export default function Cells() {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const [selected, setSelected] = useState<CellFamilyFields|null>(null)
 
   const get_write_data: (data: CellFamilyFields) => Partial<CellFamilyFields> = (data) => {

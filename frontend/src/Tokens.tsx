@@ -51,7 +51,7 @@ const expiryOptions: {name: string, value: string}[] = [
 ]
 
 export default function Tokens() {
-  const classes = useStyles();
+  const { classes } = useStyles();
 
   const [newToken, setNewToken] = useState<string>('')
 
