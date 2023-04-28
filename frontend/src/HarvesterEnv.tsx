@@ -83,7 +83,7 @@ export default function HarvesterEnv(props: HarvesterEnvProps) {
                     name="path"
                     onChange={(event: BaseSyntheticEvent) => {
                       if (typeof event.target.value === "string") {
-                        setEnv({...Env, k: event.target.value})
+                        setEnv({...Env, [k]: event.target.value})
                       }
                     }}
                   />

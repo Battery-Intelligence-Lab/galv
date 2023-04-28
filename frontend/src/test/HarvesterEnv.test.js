@@ -51,6 +51,28 @@ describe('HarvesterEnv', () => {
         expect(screen.getAllByPlaceholderText(/VALUE/)).toHaveLength(2);
     });
 
+    it('sends update API call for editing variables', async () => {
+        // TODO currently doesn't work because of the auto-updating from HarvesterEnv
+        const new_value = 'new value'
+        await user.type(
+            screen.getByDisplayValue(mock_harvester.environment_variables.TMP_VAR),
+            `{Backspace>20}${new_value}`
+        )
+        await user.click(screen.getAllByTestId('SaveIcon')[0])
+
+        expect (mocked).toHaveBeenCalledWith(
+            'http://localhost:5000/harvesters/1/',
+            {
+                body: JSON.stringify({
+                    environment_variables: {
+                        TMP_VAR: new_value,
+                    }
+                }),
+                method: 'PATCH'
+            }
+        )
+    });
+
     it('sends update API call for new var', async () => {
         // TODO currently doesn't work because of the auto-updating from HarvesterEnv
         await user.type(screen.getByPlaceholderText(/NEW_VARIABLE/), 'TEST_OUTCOME')
