@@ -54,6 +54,7 @@ class ActionButtons extends Component<ActionButtonsProps, {}> {
             >
                 <Icon
                     component={SearchIcon}
+                    titleAccess="Inspect"
                     className={classes.infoIcon}
                     {...this.props.inspectIconProps}
                 />
@@ -67,6 +68,7 @@ class ActionButtons extends Component<ActionButtonsProps, {}> {
             >
                 <Icon
                     component={SaveIcon}
+                    titleAccess="Save"
                     className={classes.saveIcon}
                     {...this.props.saveIconProps}
                 />
@@ -81,6 +83,7 @@ class ActionButtons extends Component<ActionButtonsProps, {}> {
             >
                 <Icon
                     component={DeleteIcon}
+                    titleAccess="Delete"
                     className={classes.deleteIcon}
                     {...this.props.deleteIconProps}
                 />

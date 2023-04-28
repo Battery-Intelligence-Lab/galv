@@ -83,7 +83,7 @@ export default function HarvesterEnv(props: HarvesterEnvProps) {
                     name="path"
                     onChange={(event: BaseSyntheticEvent) => {
                       if (typeof event.target.value === "string") {
-                        updateEnv({...Env, k: event.target.value})
+                        setEnv({...Env, k: event.target.value})
                       }
                     }}
                   />
@@ -91,6 +91,7 @@ export default function HarvesterEnv(props: HarvesterEnvProps) {
                 <TableCell key={`${k}-delete`}>
                   <ActionButtons
                     classes={classes}
+                    onSave={() => updateEnv(Env)}
                     onDelete={() => {
                       const env = {...Env}
                       delete env[k]
