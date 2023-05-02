@@ -49,6 +49,7 @@ class ActionButtons extends Component<ActionButtonsProps, {}> {
         {
           this.props.onInspect !== undefined &&
             <IconButton
+                aria-label={"Inspect"}
                 onClick={this.props.onInspect}
                 {...this.props.inspectButtonProps}
             >
@@ -63,6 +64,7 @@ class ActionButtons extends Component<ActionButtonsProps, {}> {
         {
           this.props.onSave !== undefined &&
             <IconButton
+                aria-label={"Save"}
                 onClick={this.props.onSave}
                 {...this.props.saveButtonProps}
             >
@@ -77,6 +79,7 @@ class ActionButtons extends Component<ActionButtonsProps, {}> {
         {
           this.props.onDelete !== undefined &&
             <IconButton
+                aria-label={"Delete"}
                 onClick={this.props.onDelete}
                 sx={{marginLeft: 2}}
                 {...this.props.deleteButtonProps}

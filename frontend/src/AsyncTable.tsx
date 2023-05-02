@@ -116,17 +116,17 @@ class AsyncTable<T extends APIObject> extends Component<AsyncTableProps<T>, Asyn
 
   componentDidMount() {
     this.get_data(this.props.url)
-    console.log("Mounted AsyncTable", this)
+    // console.log("Mounted AsyncTable", this)
   }
 
   componentDidUpdate(prevProps: AsyncTableProps<T>) {
-    console.log("Updating AsyncTable...", this, prevProps)
+    // console.log("Updating AsyncTable...", this, prevProps)
     // Typical usage (don't forget to compare props):
     if (this.props.url !== prevProps.url)
       this.get_data(this.props.url)
     if (this.props.new_row_values !== prevProps.new_row_values)
       this.reset_new_row()
-    console.log("Updated AsyncTable", this)
+    // console.log("Updated AsyncTable", this)
   }
 
   reset_new_row = () => this.setState({new_row: this.props.new_row_values? this.new_row_template : null})
@@ -151,7 +151,7 @@ class AsyncTable<T extends APIObject> extends Component<AsyncTableProps<T>, Asyn
       url = this.props.url;
     Connection.fetchMany(url, {}, !use_cache)
       .then((res) => {
-        console.log(res)
+        // console.log(res)
         this.setState({
           row_data: res.map(r => r.content),
           loading: false,

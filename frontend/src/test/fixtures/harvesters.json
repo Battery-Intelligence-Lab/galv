@@ -1,0 +1,78 @@
+[
+  {
+    "url": "http://localhost:5000/harvesters/7/",
+    "id": 7,
+    "name": "h2",
+    "sleep_time": 10,
+    "last_check_in": null,
+    "user_sets": [
+      {
+        "url": "http://localhost:5000/groups/15/",
+        "id": 15,
+        "name": "Admins",
+        "description": "Administrators can change harvester properties, as well as any of the harvester's paths or datasets.",
+        "is_admin": true,
+        "users": [
+          {
+            "username": "admin",
+            "email": "",
+            "first_name": "",
+            "last_name": "",
+            "url": "http://localhost:5000/users/1/",
+            "id": 1,
+            "is_active": true,
+            "is_staff": true,
+            "is_superuser": true
+          }
+        ]
+      },
+      {
+        "url": "http://localhost:5000/groups/16/",
+        "id": 16,
+        "name": "Users",
+        "description": "Users can view harvester properties. They can also add monitored paths.",
+        "is_admin": false,
+        "users": []
+      }
+    ],
+    "environment_variables": {}
+  },
+  {
+    "url": "http://localhost:5000/harvesters/6/",
+    "id": 6,
+    "name": "harvey",
+    "sleep_time": 100,
+    "last_check_in": "2023-04-25T11:59:20.370875Z",
+    "user_sets": [
+      {
+        "url": "http://localhost:5000/groups/11/",
+        "id": 11,
+        "name": "Admins",
+        "description": "Administrators can change harvester properties, as well as any of the harvester's paths or datasets.",
+        "is_admin": true,
+        "users": [
+          {
+            "username": "admin",
+            "email": "",
+            "first_name": "",
+            "last_name": "",
+            "url": "http://localhost:5000/users/1/",
+            "id": 1,
+            "is_active": true,
+            "is_staff": true,
+            "is_superuser": true
+          }
+        ]
+      },
+      {
+        "url": "http://localhost:5000/groups/12/",
+        "id": 12,
+        "name": "Users",
+        "description": "Users can view harvester properties. They can also add monitored paths.",
+        "is_admin": false,
+        "users": []
+      }
+    ],
+    "environment_variables": {}
+  }
+]

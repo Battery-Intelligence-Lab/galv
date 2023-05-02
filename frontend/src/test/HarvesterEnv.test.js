@@ -52,7 +52,6 @@ describe('HarvesterEnv', () => {
     });
 
     it('sends update API call for editing variables', async () => {
-        // TODO currently doesn't work because of the auto-updating from HarvesterEnv
         const new_value = 'new value'
         await user.type(
             screen.getByDisplayValue(mock_harvester.environment_variables.TMP_VAR),
