@@ -73,6 +73,8 @@
         "users": []
       }
     ],
-    "environment_variables": {}
+    "environment_variables": {
+      "TMP_VAR": "tmp_val"
+    }
   }
 ]

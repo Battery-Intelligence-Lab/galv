@@ -1,0 +1,59 @@
+[
+  {
+    "url": "http://localhost:5000/monitored_paths/1/",
+    "id": 1,
+    "path": "/usr/test_data",
+    "stable_time": 60,
+    "harvester": "http://localhost:5000/harvesters/6/",
+    "user_sets": [
+      {
+        "url": "http://localhost:5000/groups/11/",
+        "id": 11,
+        "name": "Harvester admins",
+        "description": "Harvester administrators can alter any of the harvester's paths or datasets.",
+        "is_admin": true,
+        "users": [
+          {
+            "username": "admin",
+            "email": "",
+            "first_name": "",
+            "last_name": "",
+            "url": "http://localhost:5000/users/1/",
+            "id": 1,
+            "is_active": true,
+            "is_staff": true,
+            "is_superuser": true
+          }
+        ]
+      },
+      {
+        "url": "http://localhost:5000/groups/13/",
+        "id": 13,
+        "name": "Admins",
+        "description": "Administrators can change paths and their datasets.",
+        "is_admin": true,
+        "users": [
+          {
+            "username": "admin",
+            "email": "",
+            "first_name": "",
+            "last_name": "",
+            "url": "http://localhost:5000/users/1/",
+            "id": 1,
+            "is_active": true,
+            "is_staff": true,
+            "is_superuser": true
+          }
+        ]
+      },
+      {
+        "url": "http://localhost:5000/groups/14/",
+        "id": 14,
+        "name": "Users",
+        "description": "Users can monitored paths and their datasets.",
+        "is_admin": false,
+        "users": []
+      }
+    ]
+  }
+]

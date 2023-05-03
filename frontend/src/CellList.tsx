@@ -24,7 +24,7 @@ export type CellFields = {
   datasets: string[];
   in_use: boolean;
 }
-type CellDetailProps = {
+export type CellDetailProps = {
   family: CellFamilyFields,
   [key: string]: any
 }

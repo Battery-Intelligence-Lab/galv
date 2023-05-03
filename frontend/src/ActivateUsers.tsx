@@ -34,6 +34,7 @@ export default function ActivateUsers() {
             </Fragment>,
             <Fragment key="actions">
               <IconButton
+                aria-label="activate"
                 color="primary"
                 onClick={() => activateUser(user).then(() => context.refresh_all_rows(false))}
               >

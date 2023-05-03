@@ -8,8 +8,11 @@ import React from 'react';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import Connection from "../APIConnection";
-import Harvesters from '../Harvesters';
 import mock_harvester from './fixtures/harvesters.json';
+const Harvesters = jest.requireActual('../Harvesters').default;
+
+jest.mock('../HarvesterDetail')
+jest.mock('../HarvesterEnv')
 
 // Mock the APIConnection.fetch function from the APIConnection module
 // This is because we don't want to actually make API calls in our tests
@@ -17,30 +20,6 @@ import mock_harvester from './fixtures/harvesters.json';
 const mocked_fetch = jest.spyOn(Connection, 'fetch')
 const mocked_fetchMany = jest.spyOn(Connection, 'fetchMany')
 const mocked_login = jest.spyOn(Connection, 'login')
-
-// Mock the HarvesterEnv component because that is tested elsewhere
-jest.mock('../HarvesterEnv', () => {
-    return function DummyHarvesterEnv(props) {
-        return (
-            <div>
-                <p>HarvesterEnv</p>
-                <p>{JSON.stringify(props)}</p>
-            </div>
-        )
-    }
-})
-
-// Mock the HarvesterDetail (MonitoredPaths) component because that is tested elsewhere
-jest.mock('../HarvesterDetail', () => {
-    return function DummyHarvesterDetail(props) {
-        return (
-            <div>
-                <p>HarvesterDetail</p>
-                <p>{JSON.stringify(props)}</p>
-            </div>
-        )
-    }
-})
 
 it('Harvester has appropriate columns', async () => {
     mocked_fetchMany.mockResolvedValue([]);
@@ -76,10 +55,10 @@ describe('Harvester', () => {
         expect(await screen.findByDisplayValue(mock_harvester[0].name)).toBeInTheDocument();
     });
 
-    it('spawns a child components when the button is clicked', async () => {
+    it('spawns child components when the button is clicked', async () => {
         await act(async () => await user.click(screen.getAllByTestId(/SearchIcon/)[0]));
-        expect(screen.getByText(/HarvesterEnv/)).toBeInTheDocument();
-        expect(screen.getByText(/HarvesterDetail/)).toBeInTheDocument();
+        expect(await screen.findByText(/HarvesterDetail/)).toBeInTheDocument();
+        expect(await screen.findByText(/HarvesterEnv/)).toBeInTheDocument();
     });
 
     it('sends an update API call when saved', async () => {

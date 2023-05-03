@@ -8,19 +8,10 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import Connection from "../APIConnection";
-import HarvesterEnv from '../HarvesterEnv';
+import mock_harvesters from './fixtures/harvesters.json';
+const HarvesterEnv = jest.requireActual('../HarvesterEnv').default;
 
-var mock_harvester = {
-    name: 'test-harvester',
-    sleep_time: 10,
-    environment_variables: {
-        TMP_VAR: 'temporary value'
-    },
-    url: "http://localhost:5000/harvesters/1/",
-    id: 1,
-    last_check_in: null,
-    user_sets: []
-}
+var mock_harvester = mock_harvesters[1]
 // Mock the APIConnection.fetch function from the APIConnection module
 // This is because we don't want to actually make API calls in our tests
 // We just want to check that the correct calls are made
@@ -52,19 +43,20 @@ describe('HarvesterEnv', () => {
     });
 
     it('sends update API call for editing variables', async () => {
+        const key = Object.keys(mock_harvester.environment_variables)[0]
         const new_value = 'new value'
         await user.type(
-            screen.getByDisplayValue(mock_harvester.environment_variables.TMP_VAR),
+            screen.getByDisplayValue(mock_harvester.environment_variables[key]),
             `{Backspace>20}${new_value}`
         )
         await user.click(screen.getAllByTestId('SaveIcon')[0])
 
         expect (mocked).toHaveBeenCalledWith(
-            'http://localhost:5000/harvesters/1/',
+            mock_harvester.url,
             {
                 body: JSON.stringify({
                     environment_variables: {
-                        TMP_VAR: new_value,
+                        [key]: new_value,
                     }
                 }),
                 method: 'PATCH'
@@ -79,11 +71,11 @@ describe('HarvesterEnv', () => {
         await user.click(screen.getByTestId('AddIcon'))
 
         expect (mocked).toHaveBeenCalledWith(
-            'http://localhost:5000/harvesters/1/',
+            mock_harvester.url,
             {
                 body: JSON.stringify({
                     environment_variables: {
-                        TMP_VAR: 'temporary value',
+                        ...mock_harvester.environment_variables,
                         TEST_OUTCOME: 'success?'
                     }
                 }),
