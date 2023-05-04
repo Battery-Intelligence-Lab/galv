@@ -8,7 +8,7 @@ import {DatasetChartProps} from "../DatasetChart";
 export default function DummyDatasetChart(props: DatasetChartProps) {
   return (
     <div>
-      <p>DatasetChart</p>
+      <p>MockDatasetChart</p>
       <p>{JSON.stringify(props)}</p>
     </div>
   )

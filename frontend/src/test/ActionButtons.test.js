@@ -18,26 +18,26 @@ describe('ActionButtons', () => {
 
     it('defaults to disabled buttons', async () => {
         await act(async () => render(<ActionButtons />));
-        expect(screen.queryByLabelText(/^Inspect$/)).toBeNull();
-        expect(screen.queryByLabelText(/^Save$/)).toBeNull();
-        expect(screen.queryByLabelText(/^Delete$/)).toBeNull();
+        expect(screen.queryByRole('button', {label: /^Inspect$/})).toBeNull();
+        expect(screen.queryByRole('button', {label: /^Save$/})).toBeNull();
+        expect(screen.queryByRole('button', {label: /^Delete$/})).toBeNull();
     });
 
     it('calls the inspect function when clicked', async () => {
         await act(async () => render(<ActionButtons onInspect={mock_inspect} />));
-        await act(async () => await user.click(screen.getByLabelText(/^Inspect$/)));
+        await act(async () => await user.click(screen.queryByRole('button', {label: /^Inspect$/})));
         expect(mock_inspect).toHaveBeenCalled();
     });
 
     it('calls the save function when clicked', async () => {
         await act(async () => render(<ActionButtons onSave={mock_save} />));
-        await act(async () => await user.click(screen.getByLabelText(/^Save$/)));
+        await act(async () => await user.click(screen.queryByRole('button', {label: /^Save$/})));
         expect(mock_save).toHaveBeenCalled();
     });
 
     it('calls the delete function when clicked', async () => {
         await act(async () => render(<ActionButtons onDelete={mock_delete} />));
-        await act(async () => await user.click(screen.getByLabelText(/^Delete$/)));
+        await act(async () => await user.click(screen.queryByRole('button', {label: /^Delete$/})));
         expect(mock_delete).toHaveBeenCalled();
     });
 });

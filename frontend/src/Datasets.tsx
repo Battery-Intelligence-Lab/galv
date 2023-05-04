@@ -77,8 +77,6 @@ export default function Datasets() {
     {label: 'Actions', help: 'Inspect / Save dataset'}
   ]
 
-  const navigate = useNavigate();
-
   const [codeOpen, setCodeOpen] = React.useState(false);
 
   const handleCodeOpen = () => {

@@ -8,7 +8,7 @@ import {HarvesterDetailProps} from "../HarvesterDetail";
 export default function DummyHarvesterDetail(props: HarvesterDetailProps) {
   return (
     <div>
-      <p>HarvesterDetail</p>
+      <p>MockHarvesterDetail</p>
       <p>{JSON.stringify(props)}</p>
     </div>
   )

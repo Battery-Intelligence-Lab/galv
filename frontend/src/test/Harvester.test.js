@@ -24,11 +24,11 @@ const mocked_login = jest.spyOn(Connection, 'login')
 it('Harvester has appropriate columns', async () => {
     mocked_fetchMany.mockResolvedValue([]);
     await act(async () => render(<Harvesters />));
-    expect(screen.getByText(/ID/)).toBeInTheDocument();
-    expect(screen.getByText(/Name/)).toBeInTheDocument();
-    expect(screen.getByText(/Last Check In/)).toBeInTheDocument();
-    expect(screen.getByText(/Sleep Time \(s\)/)).toBeInTheDocument();
-    expect(screen.getByText(/Actions/)).toBeInTheDocument();
+    expect(screen.getAllByRole('columnheader').find(e => /ID/.test(e.textContent))).toBeInTheDocument();
+    expect(screen.getAllByRole('columnheader').find(e => /Name/.test(e.textContent))).toBeInTheDocument();
+    expect(screen.getAllByRole('columnheader').find(e => /Last Check In/.test(e.textContent))).toBeInTheDocument();
+    expect(screen.getAllByRole('columnheader').find(e => /Sleep Time \(s\)/.test(e.textContent))).toBeInTheDocument();
+    expect(screen.getAllByRole('columnheader').find(e => /Actions/.test(e.textContent))).toBeInTheDocument();
 })
 
 describe('Harvester', () => {
@@ -57,8 +57,8 @@ describe('Harvester', () => {
 
     it('spawns child components when the button is clicked', async () => {
         await act(async () => await user.click(screen.getAllByTestId(/SearchIcon/)[0]));
-        expect(await screen.findByText(/HarvesterDetail/)).toBeInTheDocument();
-        expect(await screen.findByText(/HarvesterEnv/)).toBeInTheDocument();
+        expect(await screen.findByText(/MockHarvesterDetail/)).toBeInTheDocument();
+        expect(await screen.findByText(/MockHarvesterEnv/)).toBeInTheDocument();
     });
 
     it('sends an update API call when saved', async () => {

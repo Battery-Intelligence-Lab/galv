@@ -30,9 +30,9 @@ describe('HarvesterEnv', () => {
     })
 
     it('has appropriate columns', () => {
-        expect(screen.getByText(/Variable/)).toBeInTheDocument();
-        expect(screen.getByText(/Value/)).toBeInTheDocument();
-        expect(screen.getByText(/Actions/)).toBeInTheDocument();
+        expect(screen.getAllByRole('columnheader').find(e => /Variable/.test(e.textContent))).toBeInTheDocument();
+        expect(screen.getAllByRole('columnheader').find(e => /Value/.test(e.textContent))).toBeInTheDocument();
+        expect(screen.getAllByRole('columnheader').find(e => /Actions/.test(e.textContent))).toBeInTheDocument();
 
         expect(screen.getByText(`${mock_harvester.name} - environment variables`)).toBeInTheDocument();
         expect(screen.getByText(`${Object.keys(mock_harvester.environment_variables)[0]}`)).toBeInTheDocument();

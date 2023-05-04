@@ -8,7 +8,7 @@ import {HarvesterEnvProps} from "../HarvesterEnv";
 export default function DummyHarvesterEnv(props: HarvesterEnvProps) {
   return (
     <div>
-      <p>HarvesterEnv</p>
+      <p>MockHarvesterEnv</p>
       <p>{JSON.stringify(props)}</p>
     </div>
   )

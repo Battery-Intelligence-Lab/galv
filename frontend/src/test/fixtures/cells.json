@@ -1,0 +1,11 @@
+[
+  {
+    "url": "http://localhost:5000/cells/1/",
+    "id": 1,
+    "uid": "abcd-0123-efgh-4567",
+    "display_name": "Special cell",
+    "family": "http://localhost:5000/cell_families/1/",
+    "datasets": [],
+    "in_use": false
+  }
+]

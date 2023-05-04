@@ -67,6 +67,7 @@ export default function CellList(props: CellDetailProps) {
             <Fragment>
               <TextField
                 name="uid"
+                label="UID"
                 value={cell.uid}
                 disabled={cell.in_use}
                 placeholder={`Serial number or other unique identifer`}
@@ -81,6 +82,7 @@ export default function CellList(props: CellDetailProps) {
             <Fragment>
               <TextField
                 name="display_name"
+                label="Display Name"
                 value={cell.display_name}
                 disabled={cell.in_use}
                 placeholder={`${props.family.name}_#`}

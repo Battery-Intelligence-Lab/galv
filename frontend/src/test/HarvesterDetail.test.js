@@ -27,9 +27,9 @@ const mocked_login = jest.spyOn(Connection, 'login')
 it('HarvesterDetail has appropriate columns', async () => {
     mocked_fetchMany.mockResolvedValue([]);
     await act(async () => render(<HarvesterDetail harvester={mock_harvester}/>));
-    expect(screen.getByText(/Stable Time \(s\)/)).toBeInTheDocument();
-    expect(screen.getByText(/Users/)).toBeInTheDocument();
-    expect(screen.getByText(/Actions/)).toBeInTheDocument();
+    expect(screen.getAllByRole('columnheader').find(e => /Stable Time \(s\)/.test(e.textContent))).toBeInTheDocument();
+    expect(screen.getAllByRole('columnheader').find(e => /Users/.test(e.textContent))).toBeInTheDocument();
+    expect(screen.getAllByRole('columnheader').find(e => /Actions/.test(e.textContent))).toBeInTheDocument();
 })
 
 describe('HarvesterDetail', () => {

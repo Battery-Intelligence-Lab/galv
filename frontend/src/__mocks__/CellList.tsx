@@ -8,7 +8,7 @@ import {CellDetailProps} from "../CellList";
 export default function DummyCellList(props: CellDetailProps) {
   return (
     <div>
-      <p>CellList</p>
+      <p>MockCellList</p>
       <p>{JSON.stringify(props)}</p>
     </div>
   )

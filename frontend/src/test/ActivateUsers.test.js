@@ -21,8 +21,8 @@ const mocked_fetchMany = jest.spyOn(Connection, 'fetchMany')
 it('ActivateUsers has appropriate columns', async () => {
     mocked_fetchMany.mockResolvedValue([]);
     await act(async () => render(<ActivateUsers />));
-    expect(screen.getByText(/Username/)).toBeInTheDocument();
-    expect(screen.getByText(/Activate/)).toBeInTheDocument();
+    expect(screen.getAllByRole('columnheader').find(e => /Username/.test(e.textContent))).toBeInTheDocument();
+    expect(screen.getAllByRole('columnheader').find(e => /Activate/.test(e.textContent))).toBeInTheDocument();
 })
 
 describe('ActivateUsers', () => {
@@ -43,11 +43,11 @@ describe('ActivateUsers', () => {
             false
         )
 
-        expect(screen.getByText(mock_users[0].username)).toBeInTheDocument();
+        expect(screen.getAllByRole('cell').find(e => e.textContent === mock_users[0].username)).toBeInTheDocument();
     });
 
     it('sends an API call when user is activated', async () => {
-        await user.click(screen.getAllByLabelText('activate')[0]);
+        await user.click(screen.getAllByRole('button', {label: 'activate'})[0]);
         expect(mocked_fetch).toHaveBeenCalledWith(`${mock_users[0].url}vouch_for/`)
         expect(mocked_fetchMany).toHaveBeenCalledTimes(2)
     });
