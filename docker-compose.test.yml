@@ -5,7 +5,7 @@
 version: "2"
 services:
 
-  postgres:
+  postgres_test:
     image: "postgres"
     stop_signal: SIGINT                 # Fast Shutdown mode
     ports:
@@ -34,7 +34,7 @@ services:
     env_file:
       - .env.secret
 
-  harvester:
+  harvester_test:
     build:
       dockerfile: Dockerfile
       context: ./harvester

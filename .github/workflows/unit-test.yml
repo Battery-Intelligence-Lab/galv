@@ -62,7 +62,7 @@ jobs:
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
 
       - name: Run tests
-        run: docker-compose -f docker-compose.test.yml up harvester
+        run: docker-compose -f docker-compose.test.yml up harvester_test
 
   test-backend:
     runs-on: ubuntu-latest
@@ -91,3 +91,19 @@ jobs:
 
       - name: Run tests
         run: docker-compose -f docker-compose.test.yml run --rm app_test bash -c "cd .. && ./server.sh"
+
+  test-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Build the stack
+        run: docker-compose -f docker-compose.test.yml up -d --build frontend_test
+
+      # Enable tmate debugging of manually-triggered workflows if the input option was provided
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
+
+      - name: Run tests
+        run: docker-compose -f docker-compose.test.yml run --rm frontend_test npm run test
