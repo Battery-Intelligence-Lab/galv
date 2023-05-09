@@ -54,7 +54,7 @@ jobs:
           key: ${{ steps.cache-restore.outputs.cache-primary-key }}
 
       - name: Build the stack
-        run: touch .env.secret && docker-compose -f docker-compose.test.yml build harvester
+        run: touch .env.secret && docker-compose -f docker-compose.test.yml build harvester_test
 
       # Enable tmate debugging of manually-triggered workflows if the input option was provided
       - name: Setup tmate session
@@ -62,7 +62,7 @@ jobs:
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
 
       - name: Run tests
-        run: docker-compose -f docker-compose.test.yml up harvester
+        run: docker-compose -f docker-compose.test.yml up harvester_test
 
   test-backend:
     runs-on: ubuntu-latest
@@ -80,6 +80,7 @@ jobs:
           echo "DJANGO_SECRET_KEY=$DJANGO_SECRET_KEY" >> .env.secret
           echo "BACKEND_CORS_ALLOWED_ORIGINS=$BACKEND_CORS_ALLOWED_ORIGINS" >> .env.secret
           echo "BACKEND_HOSTNAME=$BACKEND_HOSTNAME" >> .env.secret
+          echo "POSTGRES_HOST=postgres_test" >> .env.secret
 
       - name: Build the stack
         run: docker-compose -f docker-compose.test.yml up -d --build app_test
@@ -91,3 +92,22 @@ jobs:
 
       - name: Run tests
         run: docker-compose -f docker-compose.test.yml run --rm app_test bash -c "cd .. && ./server.sh"
+
+  test-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up secrets
+        run: touch .env.secret
+
+      - name: Build the stack
+        run: docker-compose -f docker-compose.test.yml build frontend_test
+
+      # Enable tmate debugging of manually-triggered workflows if the input option was provided
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
+
+      - name: Run tests
+        run: docker-compose -f docker-compose.test.yml run --rm frontend_test bash -c "./src/test/run_tests.sh"

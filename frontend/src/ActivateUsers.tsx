@@ -18,7 +18,7 @@ const columns = [
 ]
 
 export default function ActivateUsers() {
-  const classes = useStyles();
+  const { classes } = useStyles();
 
   const activateUser = (user: User) => Connection.fetch(`${user.url}vouch_for/`);
 
@@ -34,6 +34,7 @@ export default function ActivateUsers() {
             </Fragment>,
             <Fragment key="actions">
               <IconButton
+                aria-label="activate"
                 color="primary"
                 onClick={() => activateUser(user).then(() => context.refresh_all_rows(false))}
               >

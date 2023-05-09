@@ -30,7 +30,7 @@ const columns = [
 const string_fields = ['name', 'type'] as const
 
 export default function Equipment() {
-  const classes = useStyles();
+  const { classes } = useStyles();
 
   const get_write_data: (data: EquipmentFields) => Partial<EquipmentFields> = (data) => {
     return { name: data.name, type: data.type }
@@ -60,6 +60,7 @@ export default function Equipment() {
               {
                 equipment.in_use ? equipment[n] : <TextField
                   name={n}
+                  label={n}
                   value={equipment[n]}
                   InputProps={{
                     classes: {

@@ -31,7 +31,7 @@ export type HarvesterDetailProps = {
 
 export default function HarvesterDetail(props: HarvesterDetailProps) {
   const harvester = props.harvester
-  const classes = useStyles();
+  const { classes } = useStyles();
 
   const [selected, setSelected] = useState<MonitoredPathFields|null>(null)
 

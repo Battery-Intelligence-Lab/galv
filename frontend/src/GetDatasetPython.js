@@ -1,6 +1,6 @@
 import React, {useState, useEffect} from "react";
 import SyntaxHighlighter from 'react-syntax-highlighter';
-import { docco } from 'react-syntax-highlighter/dist/esm/styles/hljs';
+import { docco } from 'react-syntax-highlighter/dist/cjs/styles/hljs';
 import Typography from '@mui/material/Typography';
 import Connection from "./APIConnection";
 import {CircularProgress} from "@mui/material";

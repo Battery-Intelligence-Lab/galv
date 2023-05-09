@@ -2,7 +2,7 @@
 // Copyright  (c) 2020-2023, The Chancellor, Masters and Scholars of the University
 // of Oxford, and the 'Galvanalyser' Developers. All rights reserved.
 
-import { makeStyles } from '@mui/styles'
+import { makeStyles } from 'tss-react/mui'
 import React, {useState, useRef, FormEvent, Fragment} from "react";
 import Button from '@mui/material/Button';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -18,40 +18,42 @@ import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
 
-const useStyles = makeStyles((theme) => ({
-  paper: {
-    marginTop: theme.spacing(8),
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-  },
-  icon: {
-    margin: theme.spacing(1),
-    width: theme.spacing(7),
-    height: theme.spacing(10),
-  },
-  form: {
-    width: '100%', // Fix IE 11 issue.
-    marginTop: theme.spacing(1),
-  },
-  submit: {
-    margin: theme.spacing(3, 0, 2),
-  },
-  textActive: {
-    backgroundColor: theme.palette.primary.main,
-    color: theme.palette.common.white,
-    textAlign: 'center',
-    cursor: 'pointer',
-  },
-  textInactive: {
-    textAlign: 'center',
-    cursor: 'pointer',
+const useStyles = makeStyles()((theme) => {
+  return {
+    paper: {
+      marginTop: theme.spacing(8),
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+    },
+    icon: {
+      margin: theme.spacing(1),
+      width: theme.spacing(7),
+      height: theme.spacing(10),
+    },
+    form: {
+      width: '100%', // Fix IE 11 issue.
+      marginTop: theme.spacing(1),
+    },
+    submit: {
+      margin: theme.spacing(3, 0, 2),
+    },
+    textActive: {
+      backgroundColor: theme.palette.primary.main,
+      color: theme.palette.common.white,
+      textAlign: 'center',
+      cursor: 'pointer',
+    },
+    textInactive: {
+      textAlign: 'center',
+      cursor: 'pointer',
+    }
   }
-}));
+});
 
 
 export default function Login() {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const [createdUser, setCreatedUser] = useState<User|null>(null)
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')

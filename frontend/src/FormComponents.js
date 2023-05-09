@@ -35,7 +35,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 //export function FormDateTimeField({control, name, defaultValue, label, ...rest}) {
-//  const classes = useStyles();
+//  const { classes } = useStyles();
 //  return (
 //    <Controller
 //        control={control}
@@ -55,7 +55,7 @@ const useStyles = makeStyles((theme) => ({
 //}
 
 export function FormTextField({control, name, defaultValue, label, ...rest}) {
-  const classes = useStyles();
+  const { classes } = useStyles();
   return (
     <Controller
         control={control}
@@ -74,7 +74,7 @@ export function FormTextField({control, name, defaultValue, label, ...rest}) {
 }
 
 export function FormMultiSelectField({control, name, defaultValue, label, options, ...rest}) {
-  const classes = useStyles();
+  const { classes } = useStyles();
   return (
     <FormControl className={classes.formInput}>
     <InputLabel id={name.concat('-select-label')}>
@@ -115,7 +115,7 @@ export function FormMultiSelectField({control, name, defaultValue, label, option
 }
 
 export function FormAutocompleteField({control, name, defaultValue, label, options, ...rest}) {
-  const classes = useStyles();
+  const { classes } = useStyles();
 
   return (
     <Controller
@@ -139,7 +139,7 @@ export function FormAutocompleteField({control, name, defaultValue, label, optio
 }
 
 export function FormSelectField({control, name, defaultValue, label, options, ...rest}) {
-  const classes = useStyles();
+  const { classes } = useStyles();
   return (
     <FormControl className={classes.formInput}>
     <InputLabel id={name.concat('-select-label')}>

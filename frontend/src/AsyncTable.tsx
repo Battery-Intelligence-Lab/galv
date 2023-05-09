@@ -13,7 +13,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import Tooltip, {TooltipProps} from "@mui/material/Tooltip";
 import Typography, {TypographyProps} from "@mui/material/Typography";
 import TableHead from "@mui/material/TableHead";
-import useStyles from "./UseStyles";
+import { withStyles } from "tss-react/mui";
 
 export type Column = {
   label: string;
@@ -49,7 +49,7 @@ type CompleteHeading = {
 }
 
 export type AsyncTableProps<T extends APIObject> = {
-  classes: ReturnType<typeof useStyles>;
+  classes: Record<any, string>;
   columns: Column[];
   row_generator: RowGenerator<T>;
   url: string;
@@ -92,7 +92,7 @@ export const NEW_ROW_ID = -1
  *
  * This class abstracts away a lot of repetitive table-building code.
  */
-export default class AsyncTable<T extends APIObject> extends Component<AsyncTableProps<T>, AsyncTableState> {
+class AsyncTable<T extends APIObject> extends Component<AsyncTableProps<T>, AsyncTableState> {
   state: AsyncTableState = {
     row_data: [],
     new_row: null,
@@ -100,11 +100,14 @@ export default class AsyncTable<T extends APIObject> extends Component<AsyncTabl
     loading_rows: [],
     changed_rows: []
   }
+  classes: Record<any, string>;
+
 
   constructor(props: AsyncTableProps<T>) {
     super(props)
     if (props.new_row_values !== undefined)
       this.state.new_row = this.new_row_template
+    this.classes = withStyles.getClasses(this.props);
   }
 
   get new_row_template() {
@@ -113,17 +116,17 @@ export default class AsyncTable<T extends APIObject> extends Component<AsyncTabl
 
   componentDidMount() {
     this.get_data(this.props.url)
-    console.log("Mounted AsyncTable", this)
+    // console.log("Mounted AsyncTable", this)
   }
 
   componentDidUpdate(prevProps: AsyncTableProps<T>) {
-    console.log("Updating AsyncTable...", this, prevProps)
+    // console.log("Updating AsyncTable...", this, prevProps)
     // Typical usage (don't forget to compare props):
     if (this.props.url !== prevProps.url)
       this.get_data(this.props.url)
     if (this.props.new_row_values !== prevProps.new_row_values)
       this.reset_new_row()
-    console.log("Updated AsyncTable", this)
+    // console.log("Updated AsyncTable", this)
   }
 
   reset_new_row = () => this.setState({new_row: this.props.new_row_values? this.new_row_template : null})
@@ -148,7 +151,7 @@ export default class AsyncTable<T extends APIObject> extends Component<AsyncTabl
       url = this.props.url;
     Connection.fetchMany(url, {}, !use_cache)
       .then((res) => {
-        console.log(res)
+        // console.log(res)
         this.setState({
           row_data: res.map(r => r.content),
           loading: false,
@@ -266,14 +269,14 @@ export default class AsyncTable<T extends APIObject> extends Component<AsyncTabl
         {...this.props.columns[i].contentTableCellProps}
         className={[
           this.props.columns[i].contentTableCellProps?.className,
-          row_index === NEW_ROW_ID? this.props.classes.newTableCell : undefined
+          row_index === NEW_ROW_ID? this.classes.newTableCell : undefined
         ].filter(n => n !== undefined).join(' ')}
         key={`cell-${i}`}
       >{cell}</TableCell>
     )
     return <TableRow
       key={`row-${row_index}`}
-      className={row_index === NEW_ROW_ID? this.props.classes.newTableRow : undefined}
+      className={row_index === NEW_ROW_ID? this.classes.newTableRow : undefined}
     >{cells}</TableRow>
   }
 
@@ -319,3 +322,15 @@ export default class AsyncTable<T extends APIObject> extends Component<AsyncTabl
     )
   }
 }
+
+export type AsyncTableType<T extends APIObject> = typeof AsyncTable<T>
+
+const StyledAsyncTable = withStyles(
+  AsyncTable,
+  (theme, props) => ({
+    newTableRow: {},
+    newTableCell: {},
+  })
+)
+
+export default StyledAsyncTable

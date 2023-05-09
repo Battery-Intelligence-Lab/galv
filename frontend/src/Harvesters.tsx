@@ -10,7 +10,7 @@ import Container from '@mui/material/Container';
 import HarvesterDetail from './HarvesterDetail';
 import Connection from "./APIConnection";
 import {UserSet} from "./UserRoleSet";
-import AsyncTable, {Column} from "./AsyncTable";
+import AsyncTable, {Column, type AsyncTableType} from "./AsyncTable";
 import useStyles from "./UseStyles";
 import ActionButtons from "./ActionButtons";
 import HarvesterEnv from "./HarvesterEnv";
@@ -29,7 +29,7 @@ export type HarvesterFields = HarvesterWriteableFields & {
 }
 
 export default function Harvesters() {
-  const classes = useStyles();
+  const { classes } = useStyles();
 
   const [selected, setSelected] = useState<HarvesterFields|null>(null)
   const userIsAdmin = (harvester: HarvesterFields) =>
@@ -58,7 +58,7 @@ export default function Harvesters() {
     {label: 'Actions', help: 'Inspect / Add / Save / Delete harvester path information'}
   ]
 
-  const table = useRef<AsyncTable<HarvesterFields>|null>(null)
+  const table = useRef<InstanceType<typeof AsyncTable<HarvesterFields>>| null>(null)
   const refreshTable = () => {
     if (table.current !== null)
       return table.current.update_all(true)

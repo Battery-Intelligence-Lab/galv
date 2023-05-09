@@ -26,7 +26,7 @@ export type HarvesterEnvProps = {
 
 export default function HarvesterEnv(props: HarvesterEnvProps) {
   const harvester = props.harvester
-  const classes = useStyles();
+  const { classes } = useStyles();
   const [Env, setEnv] = useState<{[key: string]: string}>(props.harvester.environment_variables)
   const [newKey, setNewKey] = useState<string|undefined>()
   const [newValue, setNewValue] = useState<string>("")
@@ -50,7 +50,7 @@ export default function HarvesterEnv(props: HarvesterEnvProps) {
   return (
     <Paper className={classes.paper} key={`${harvester.id}_paths`}>
       <Typography variant='h5' p={1}>
-        {harvester.name} - monitored paths
+        {harvester.name} - environment variables
       </Typography>
       <Table>
         <TableHead>
@@ -83,7 +83,7 @@ export default function HarvesterEnv(props: HarvesterEnvProps) {
                     name="path"
                     onChange={(event: BaseSyntheticEvent) => {
                       if (typeof event.target.value === "string") {
-                        updateEnv({...Env, k: event.target.value})
+                        setEnv({...Env, [k]: event.target.value})
                       }
                     }}
                   />
@@ -91,6 +91,7 @@ export default function HarvesterEnv(props: HarvesterEnvProps) {
                 <TableCell key={`${k}-delete`}>
                   <ActionButtons
                     classes={classes}
+                    onSave={() => updateEnv(Env)}
                     onDelete={() => {
                       const env = {...Env}
                       delete env[k]
@@ -112,7 +113,7 @@ export default function HarvesterEnv(props: HarvesterEnvProps) {
                 placeholder="NEW_VARIABLE"
                 helperText="Required"
                 value={newKey === undefined? "" : newKey}
-                name="path"
+                name="variable"
                 error={newKey !== undefined && !newKey.length}
                 onChange={(event) => setNewKey(event.target.value)}
               />
@@ -126,7 +127,7 @@ export default function HarvesterEnv(props: HarvesterEnvProps) {
                 }}
                 placeholder="VALUE"
                 value={newValue}
-                name="path"
+                name="value"
                 onChange={(event) => setNewValue(event.target.value)}
               />
             </TableCell>

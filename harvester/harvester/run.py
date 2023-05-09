@@ -85,15 +85,17 @@ def run():
 
 
 def run_cycle():
+    sleep_time = 10
     while True:
         try:
             run()
-            sleep_time = get_setting('sleep_time')
-            if sleep_time is None:
-                sleep_time = 10
-            time.sleep(sleep_time)
         except BaseException as e:
             logger.error(e)
+        try:
+            sleep_time = get_setting('sleep_time')
+        except BaseException as e:
+            logger.error(e)
+        time.sleep(sleep_time)
 
 
 if __name__ == "__main__":

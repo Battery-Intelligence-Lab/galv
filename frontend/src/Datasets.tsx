@@ -47,7 +47,7 @@ export type DatasetFields = {
 }
 
 export default function Datasets() {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const [selected, setSelected] = useState<DatasetFields|null>(null)
 
   useEffect(() => {
@@ -76,8 +76,6 @@ export default function Datasets() {
     {label: 'Equipment', help: 'Equipment used to generate the dataset'},
     {label: 'Actions', help: 'Inspect / Save dataset'}
   ]
-
-  const navigate = useNavigate();
 
   const [codeOpen, setCodeOpen] = React.useState(false);
 

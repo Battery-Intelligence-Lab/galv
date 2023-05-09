@@ -33,7 +33,7 @@ export type FileFields = {
 export type FilesProps = { path: MonitoredPathFields }
 
 export default function Files(props: FilesProps) {
-  const classes = useStyles();
+  const { classes } = useStyles();
 
   const forceReimport = (file: FileFields) => Connection.fetch(`${file.url}reimport/`)
 
@@ -77,7 +77,9 @@ export default function Files(props: FilesProps) {
             <Fragment>{file_state(file)}</Fragment>,
             <Fragment>{file.datasets.length}</Fragment>,
             <Fragment>
-              <IconButton onClick={() => forceReimport(file).then(context.refresh)}>
+              <IconButton
+                aria-label={"Re-import"}
+                onClick={() => forceReimport(file).then(context.refresh)}>
                 <RefreshIcon className={classes.refreshIcon} />
               </IconButton>
             </Fragment>

@@ -10,10 +10,10 @@ import SearchIcon from "@mui/icons-material/Search";
 import SaveIcon from "@mui/icons-material/Save";
 import DeleteIcon from "@mui/icons-material/Delete";
 import {SvgIconProps} from "@mui/material/SvgIcon"
-import useStyles from "./UseStyles";
+import { withStyles } from "tss-react/mui";
 
 export type ActionButtonsProps = {
-  classes: ReturnType<typeof useStyles>;
+  classes: Record<any, string>;
   onInspect?: () => void;
   onSave?: () => void;
   onDelete?: () => void;
@@ -41,19 +41,22 @@ export type ActionButtonsProps = {
  * The wrapper element is a <Stack direction="row"> element and
  * can be customised with the wrapperElementProps prop.
  */
-export default class ActionButtons extends Component<ActionButtonsProps, {}> {
+class ActionButtons extends Component<ActionButtonsProps, {}> {
   render() {
+    const classes = withStyles.getClasses(this.props);
     return (
       <Stack direction="row" {...this.props.wrapperElementProps}>
         {
           this.props.onInspect !== undefined &&
             <IconButton
+                aria-label={"Inspect"}
                 onClick={this.props.onInspect}
                 {...this.props.inspectButtonProps}
             >
                 <Icon
                     component={SearchIcon}
-                    className={this.props.classes.infoIcon}
+                    titleAccess="Inspect"
+                    className={classes.infoIcon}
                     {...this.props.inspectIconProps}
                 />
             </IconButton>
@@ -61,12 +64,14 @@ export default class ActionButtons extends Component<ActionButtonsProps, {}> {
         {
           this.props.onSave !== undefined &&
             <IconButton
+                aria-label={"Save"}
                 onClick={this.props.onSave}
                 {...this.props.saveButtonProps}
             >
                 <Icon
                     component={SaveIcon}
-                    className={this.props.classes.saveIcon}
+                    titleAccess="Save"
+                    className={classes.saveIcon}
                     {...this.props.saveIconProps}
                 />
             </IconButton>
@@ -74,13 +79,15 @@ export default class ActionButtons extends Component<ActionButtonsProps, {}> {
         {
           this.props.onDelete !== undefined &&
             <IconButton
+                aria-label={"Delete"}
                 onClick={this.props.onDelete}
                 sx={{marginLeft: 2}}
                 {...this.props.deleteButtonProps}
             >
                 <Icon
                     component={DeleteIcon}
-                    className={this.props.classes.deleteIcon}
+                    titleAccess="Delete"
+                    className={classes.deleteIcon}
                     {...this.props.deleteIconProps}
                 />
             </IconButton>
@@ -89,3 +96,14 @@ export default class ActionButtons extends Component<ActionButtonsProps, {}> {
     )
   }
 }
+
+const StyledActionButtons = withStyles(
+  ActionButtons,
+  (theme, props) => ({
+    infoIcon: {},
+    saveIcon: {},
+    deleteIcon: {}
+  })
+)
+
+export default StyledActionButtons

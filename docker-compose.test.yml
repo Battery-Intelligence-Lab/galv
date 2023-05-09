@@ -5,7 +5,7 @@
 version: "2"
 services:
 
-  postgres:
+  postgres_test:
     image: "postgres"
     stop_signal: SIGINT                 # Fast Shutdown mode
     ports:
@@ -22,7 +22,7 @@ services:
       dockerfile: Dockerfile-test
       context: backend
     depends_on:
-      - postgres
+      - postgres_test
     ports:
       - "5005:5005"
     volumes:
@@ -34,7 +34,7 @@ services:
     env_file:
       - .env.secret
 
-  harvester:
+  harvester_test:
     build:
       dockerfile: Dockerfile
       context: ./harvester
@@ -44,3 +44,18 @@ services:
      - "${GALVANALYSER_HARVESTER_TEST_PATH}:/usr/test_data"
     working_dir: /usr
     command: python -m unittest discover -s /usr/harvester/test
+
+  frontend_test:
+    build:
+      dockerfile: Dockerfile_dev
+      context: ./frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+    working_dir: /app
+    command: >
+      bash -c "yarn start"
+    env_file:
+      - ./.env
+    restart: "no"
