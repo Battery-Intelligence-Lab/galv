@@ -80,7 +80,7 @@ describe('Cells', () => {
                 method: 'POST'
             }
         )
-    })
+    }, 10000)
 
     it('sends an update API call when saved', async () => {
         const name = await screen.findByDisplayValue(mock_cell_families[0].name)

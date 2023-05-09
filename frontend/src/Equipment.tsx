@@ -60,6 +60,7 @@ export default function Equipment() {
               {
                 equipment.in_use ? equipment[n] : <TextField
                   name={n}
+                  label={n}
                   value={equipment[n]}
                   InputProps={{
                     classes: {

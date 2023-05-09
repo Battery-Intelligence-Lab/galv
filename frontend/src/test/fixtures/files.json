@@ -1,0 +1,72 @@
+[
+  {
+    "url": "http://localhost:5000/files/5/",
+    "id": 5,
+    "monitored_path": "http://localhost:5000/monitored_paths/1/",
+    "relative_path": "TPG1+-+Cell+15+-+002.txt",
+    "state": "IMPORTED",
+    "last_observed_time": "2023-03-07T17:27:59.917092Z",
+    "last_observed_size": 140480746,
+    "errors": [],
+    "datasets": [
+      "http://localhost:5000/datasets/5/"
+    ],
+    "upload_info": null
+  },
+  {
+    "url": "http://localhost:5000/files/4/",
+    "id": 4,
+    "monitored_path": "http://localhost:5000/monitored_paths/1/",
+    "relative_path": "Jie_OCV1_C01.mpr",
+    "state": "IMPORTED",
+    "last_observed_time": "2023-03-07T17:27:59.583763Z",
+    "last_observed_size": 561846,
+    "errors": [],
+    "datasets": [
+      "http://localhost:5000/datasets/4/"
+    ],
+    "upload_info": null
+  },
+  {
+    "url": "http://localhost:5000/files/3/",
+    "id": 3,
+    "monitored_path": "http://localhost:5000/monitored_paths/1/",
+    "relative_path": "Ivium_Cell+1.idf",
+    "state": "IMPORTED",
+    "last_observed_time": "2023-03-07T17:27:59.334608Z",
+    "last_observed_size": 6655242,
+    "errors": [],
+    "datasets": [
+      "http://localhost:5000/datasets/3/"
+    ],
+    "upload_info": null
+  },
+  {
+    "url": "http://localhost:5000/files/2/",
+    "id": 2,
+    "monitored_path": "http://localhost:5000/monitored_paths/1/",
+    "relative_path": "CCCV -exp1_C01.mpr",
+    "state": "IMPORTED",
+    "last_observed_time": "2023-03-07T17:27:59.067177Z",
+    "last_observed_size": 5804677,
+    "errors": [],
+    "datasets": [
+      "http://localhost:5000/datasets/2/"
+    ],
+    "upload_info": null
+  },
+  {
+    "url": "http://localhost:5000/files/1/",
+    "id": 1,
+    "monitored_path": "http://localhost:5000/monitored_paths/1/",
+    "relative_path": "adam_3_C05.mpr",
+    "state": "IMPORTED",
+    "last_observed_time": "2023-03-07T17:27:58.775698Z",
+    "last_observed_size": 3420493,
+    "errors": [],
+    "datasets": [
+      "http://localhost:5000/datasets/1/"
+    ],
+    "upload_info": null
+  }
+]
