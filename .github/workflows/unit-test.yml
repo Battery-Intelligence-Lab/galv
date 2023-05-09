@@ -68,7 +68,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       POSTGRES_PASSWORD: "galvanalyser"
-      POSTGRES_HOST: "postgres_test"
       DJANGO_SECRET_KEY: "long-and-insecure-key-12345"
       BACKEND_CORS_ALLOWED_ORIGINS: "http://localhost"
       BACKEND_HOSTNAME: "localhost"
@@ -83,7 +82,7 @@ jobs:
           echo "BACKEND_HOSTNAME=$BACKEND_HOSTNAME" >> .env.secret
 
       - name: Build the stack
-        run: docker-compose -f docker-compose.test.yml up -d --build app_test
+        run: docker-compose -f docker-compose.test.yml up -e POSTGRES_HOST=postgres_test -d --build app_test
 
       # Enable tmate debugging of manually-triggered workflows if the input option was provided
       - name: Setup tmate session
@@ -91,7 +90,7 @@ jobs:
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
 
       - name: Run tests
-        run: docker-compose -f docker-compose.test.yml run --rm app_test bash -c "cd .. && ./server.sh"
+        run: docker-compose -f docker-compose.test.yml run -e POSTGRES_HOST=postgres_test --rm app_test bash -c "cd .. && ./server.sh"
 
   test-frontend:
     runs-on: ubuntu-latest
@@ -110,4 +109,4 @@ jobs:
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
 
       - name: Run tests
-        run: docker-compose -f docker-compose.test.yml run --rm frontend_test yarn-install && npm run test
+        run: docker-compose -f docker-compose.test.yml run --rm frontend_test yarn install && npm run test
