@@ -54,7 +54,7 @@ jobs:
           key: ${{ steps.cache-restore.outputs.cache-primary-key }}
 
       - name: Build the stack
-        run: touch .env.secret && docker-compose -f docker-compose.test.yml build harvester
+        run: touch .env.secret && docker-compose -f docker-compose.test.yml build harvester_test
 
       # Enable tmate debugging of manually-triggered workflows if the input option was provided
       - name: Setup tmate session
@@ -96,6 +96,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+
+      - name: Set up secrets
+        run: touch .env.secret
 
       - name: Build the stack
         run: docker-compose -f docker-compose.test.yml up -d --build frontend_test

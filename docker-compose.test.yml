@@ -22,7 +22,7 @@ services:
       dockerfile: Dockerfile-test
       context: backend
     depends_on:
-      - postgres
+      - postgres_test
     ports:
       - "5005:5005"
     volumes:
