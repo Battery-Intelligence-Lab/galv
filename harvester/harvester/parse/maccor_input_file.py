@@ -229,6 +229,7 @@ class MaccorInputFile(InputFile):
         non_numeric_value = {column: None for column in non_numeric_columns}
         non_numeric_start = {column: 0 for column in non_numeric_columns}
         non_numeric_value_counts = {column: {} for column in non_numeric_columns}
+        prev_time = 0
         for row_idx, row in enumerate(data_generator, 1):
             rec_no = int(row.get("Rec#", row_idx))
 
@@ -297,12 +298,36 @@ class MaccorInputFile(InputFile):
                     # value has changed, end range
                     count = non_numeric_value_counts[column].get(prev_val, -1) + 1
                     non_numeric_value_counts[column][prev_val] = count
+
+                    if column.casefold() == "state" and prev_val in ("R", "C", "D"):
+                        if prev_val == "R":
+                            experiment_label = "Rest "
+                        else:
+                            if prev_val == "C":
+                                experiment_label = "Charge "
+                            else:
+                                experiment_label = "Discharge "
+
+                            # TODO this part probably not quite right, need to determine charge / discharge
+                            #      rates more systematically from row data
+                            curr = row.get("Amps")
+                            if curr is not None and (curr_v := abs(float(curr)) > 0):
+                                experiment_label += f"at {curr_v} A "
+                            else:
+                                volt = row.get("Volts", 0)
+                                experiment_label += f"at {abs(float(volt))} V "
+
+                        experiment_label += f"for {float(row.get('TestTime')) - prev_time} seconds"
+                    else:
+                        experiment_label = ""
+
                     yield f"{column}_{prev_val}_{count}", (
                         non_numeric_start[column],
                         rec_no + 1,
-                    )
+                    ), experiment_label
                     non_numeric_value[column] = col_val
                     non_numeric_start[column] = rec_no
+                    prev_time = float(row.get("TestTime"))
 
         # return any partial ranges
         if cyc_no_start is not None:
