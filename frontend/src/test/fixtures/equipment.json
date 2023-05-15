@@ -1,6 +1,6 @@
 [
   {
-    "url": "http://localhost:5000/equipment/1/",
+    "url": "http://api.localhost/equipment/1/",
     "id": 1,
     "name": "Truckload of kit",
     "type": "Multipurpose",

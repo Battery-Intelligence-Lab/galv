@@ -62,7 +62,7 @@ development. Additionally, the development configuration includes a Harvester in
 you do not have to create Harvesters in an additional step.
 
 You may wish to edit the `.env` file to change the `FRONTEND_PORT`.
-If you do so, remember to change the `BACKEND_CORS_ALLOWED_ORIGINS` to include the new port.
+If you do so, remember to change the `FRONTEND_VIRTUAL_HOST` to include the new port.
 You will have to rebuild the frontend container for port changes to take effect
 (otherwise they'll change for Django but not for the frontend).
 

@@ -1,6 +1,6 @@
 [
   {
-    "url": "http://localhost:5000/cell_families/2/",
+    "url": "http://api.localhost/cell_families/2/",
     "id": 2,
     "name": "Supercell v2",
     "form_factor": "Big",
@@ -14,7 +14,7 @@
     "in_use": false
   },
   {
-    "url": "http://localhost:5000/cell_families/1/",
+    "url": "http://api.localhost/cell_families/1/",
     "id": 1,
     "name": "Supercell",
     "form_factor": "Big",
@@ -25,7 +25,7 @@
     "nominal_cell_weight": 20.0,
     "manufacturer": "SuperCorp",
     "cells": [
-      "http://localhost:5000/cells/1/"
+      "http://api.localhost/cells/1/"
     ],
     "in_use": true
   }

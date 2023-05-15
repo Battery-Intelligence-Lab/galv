@@ -9,18 +9,12 @@ Galvanalyser server
 ==================================================================================
 
 Once set up, the Galvanalyser server instance should not need attending to.
-
-You may wish to provide a proxy server for it, especially if it is to be
-open to the web. A proxy server such as `nginx <https://www.nginx.com/>`_
-will provide simple proxy services, allowing you to abstract SSL and other
-layers away from the Galvanalyser server instance. 
-If running a proxy, bear in mind that Galvanalyser requires the following
-ports to be exposed:
-
-* 80 HTTP web frontend
-* 5000 HTTP REST API
-
-These ports can be changed in the ``docker-compose.yml`` file.
+To set it up, all you need to do is change the .env file's VIRTUAL_HOST_ROOT
+and LETSENCRYPT_EMAIL variables to your domain name and email.
+When you've verified that it works, you can also set LETSENCRYPT_TEST to false
+to generate real SSL certificates that you do not need to manually accept.
+It exposes two webservers: the frontend on the main domain and the backend on its
+``api`` subdomain.
 
 .. _user-accounts:
 
@@ -70,7 +64,7 @@ REST API
 
 Endpoints are written as absolute paths starting from the Galvanalyser server
 address, so to reach the ``/harvesters/`` endpoint for a Galvanalyser server
-located at ``http://localhost``, you would go to ``http://localhost/harvesters/``.
+located at ``http://api.localhost``, you would go to ``http://api.localhost/harvesters/``.
 
 API Spec
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

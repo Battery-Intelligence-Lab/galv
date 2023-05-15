@@ -122,7 +122,7 @@ class ResponseCache {
  * canonical URL and indirectly with a parent URL.
  */
 export class APIConnection {
-  url: string = 'http://localhost:5000/'.toLowerCase()
+  url: string = 'http://api.localhost/'.toLowerCase()
   user: User | null = null
   cache_expiry_time = 60_000 // 1 minute
   results: ResponseCache

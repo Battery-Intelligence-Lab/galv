@@ -2,6 +2,8 @@
 # Copyright  (c) 2020-2023, The Chancellor, Masters and Scholars of the University
 # of Oxford, and the 'Galvanalyser' Developers. All rights reserved.
 
+# docker-compose automatically loads contents of .env so we can refer to those here
+
 version: "2"
 services:
   app:
@@ -11,11 +13,12 @@ services:
       context: backend
     depends_on:
       - postgres
-    ports:
-      - "5000:5000"
     volumes:
-     - ./backend:/usr/app
+     - ./.static_files:/static
     working_dir: /usr/app
+    environment:
+      VIRTUAL_HOST: "api.${VIRTUAL_HOST_ROOT}"
+      FRONTEND_VIRTUAL_HOST: "http://${VIRTUAL_HOST_ROOT},https://${VIRTUAL_HOST_ROOT}"
     env_file:
      - ./.env
      - ./.env.secret
@@ -27,12 +30,10 @@ services:
     build:
       dockerfile: Dockerfile
       context: ./frontend
-      args:
-        FRONTEND_PORT: ${FRONTEND_PORT?80}
     depends_on:
       - app
-    ports:
-      - "${FRONTEND_PORT?80}:${FRONTEND_PORT?80}"
+    environment:
+        VIRTUAL_HOST: "${VIRTUAL_HOST_ROOT}"
     env_file:
      - ./.env
     restart: unless-stopped
@@ -40,8 +41,8 @@ services:
   postgres:
     image: "postgres"
     stop_signal: SIGINT                 # Fast Shutdown mode
-    ports:
-      - "5433:5433"
+    expose:
+        - 5433
     volumes:
       - "${GALVANALYSER_DATA_PATH}:/var/lib/postgresql/data"
     env_file:
@@ -49,3 +50,44 @@ services:
       - ./.env.secret
     restart: unless-stopped
     command: -p 5433
+
+  nginx-proxy:
+    build: nginx-proxy
+    container_name: nginx-proxy
+    restart: always
+    ports:
+      - "443:443"
+      - "80:80"
+    environment:
+      TRUST_DOWNSTREAM_PROXY: "true"
+    volumes:
+      - ./.static_files:/app/static
+      - ./.certs:/etc/nginx/certs
+      - ./.html:/usr/share/nginx/html
+      - vhost:/etc/nginx/vhost.d
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+    depends_on:
+      - app
+      - frontend
+
+  nginx-proxy-acme-companion:
+    image: nginxproxy/acme-companion
+    env_file:
+      - .env
+    environment:
+      NGINX_PROXY_CONTAINER: "nginx-proxy"
+      LETSENCRYPT_HOST: "${VIRTUAL_HOST_ROOT}"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./.certs:/etc/nginx/certs
+      - ./.html:/usr/share/nginx/html
+      - vhost:/etc/nginx/vhost.d
+      - acme:/etc/acme.sh
+    depends_on:
+      - nginx-proxy
+
+volumes:
+#  certs:
+#  html:
+  vhost:
+  acme:

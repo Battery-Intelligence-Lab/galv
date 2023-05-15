@@ -138,10 +138,9 @@ Next, launch the harvester container, specifying the Harvester's docker-compose 
 This will launch into an interactive shell which will guide you through the Harvester setup process.
 
 First, you'll be asked for the Galvanalyser server URL.
-If you're running on the same server as the Galvanalyser server, this will be ``http://app:5000``,
+If you're running on the same server as the Galvanalyser server, this will be ``http://app``,
 otherwise it will be the path you entered above to connect to the web frontend, 
-but with the port set to 5000. So if you went to ``http://example.com:80`` (or just ``http://example.com``),
-go to ``http://example.com:5000``.
+but using the ``api`` subdomain. So if you went to ``http://example.com``, go to ``http://api.example.com``.
 
 Next, you'll be asked to specify a name for the new Harvester. 
 

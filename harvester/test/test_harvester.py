@@ -19,7 +19,7 @@ class ConfigResponse:
 
     def json(self):
         return {
-            "url": "http://app:5000/harvesters/1/",
+            "url": "http://app/harvesters/1/",
             "id": 1,
             "api_key": "galv_hrv_x",
             "name": "Test Harvester",
@@ -85,57 +85,57 @@ class ConfigResponse:
                 {
                     "id": 2,
                     "name": "Sample Number",
-                    "unit": "http://app:5000/units/1/"
+                    "unit": "http://app/units/1/"
                 },
                 {
                     "id": 3,
                     "name": "Time",
-                    "unit": "http://app:5000/units/2/"
+                    "unit": "http://app/units/2/"
                 },
                 {
                     "id": 4,
                     "name": "Volts",
-                    "unit": "http://app:5000/units/3/"
+                    "unit": "http://app/units/3/"
                 },
                 {
                     "id": 5,
                     "name": "Amps",
-                    "unit": "http://app:5000/units/4/"
+                    "unit": "http://app/units/4/"
                 },
                 {
                     "id": 6,
                     "name": "Energy Capacity",
-                    "unit": "http://app:5000/units/5/"
+                    "unit": "http://app/units/5/"
                 },
                 {
                     "id": 7,
                     "name": "Charge Capacity",
-                    "unit": "http://app:5000/units/6/"
+                    "unit": "http://app/units/6/"
                 },
                 {
                     "id": 8,
                     "name": "Temperature",
-                    "unit": "http://app:5000/units/7/"
+                    "unit": "http://app/units/7/"
                 },
                 {
                     "id": 9,
                     "name": "Step Time",
-                    "unit": "http://app:5000/units/8/"
+                    "unit": "http://app/units/8/"
                 },
                 {
                     "id": 10,
                     "name": "Impedence Magnitude",
-                    "unit": "http://app:5000/units/9/"
+                    "unit": "http://app/units/9/"
                 },
                 {
                     "id": 11,
                     "name": "Impedence Phase",
-                    "unit": "http://app:5000/units/10/"
+                    "unit": "http://app/units/10/"
                 },
                 {
                     "id": 12,
                     "name": "Frequency",
-                    "unit": "http://app:5000/units/11/"
+                    "unit": "http://app/units/11/"
                 }
             ],
             "max_upload_bytes": 2621440

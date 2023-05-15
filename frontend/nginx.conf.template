@@ -14,7 +14,7 @@ events { }
 
 http {
    server {
-    listen ${FRONTEND_PORT};
+    listen 80;
 
     # redirect 404 errors to homepage to avoid weird behaviour navigating directly to React-routed pages
     error_page 404 =200 /;
