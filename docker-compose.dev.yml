@@ -28,7 +28,7 @@ services:
      - ./frontend:/app
     working_dir: /app
     environment:
-      REACT_APP_FORCE_HTTP: "true"
+      FORCE_HTTP: "true"
     command: >
       bash -c "
         yarn install && 

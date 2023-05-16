@@ -14,6 +14,7 @@ ENV NODE_OPTIONS=--openssl-legacy-provider
 RUN yarn install
 
 COPY . /app
+RUN ["/bin/sh", "-c", "./inject_envvars.sh"]
 RUN yarn build
 
 FROM nginx:alpine

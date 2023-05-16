@@ -2,6 +2,8 @@
 // Copyright  (c) 2020-2023, The Chancellor, Masters and Scholars of the University
 // of Oxford, and the 'Galvanalyser' Developers. All rights reserved.
 
+import {API_ROOT} from "./conf.json"
+
 export type User = {
   url: string;
   id: number;
@@ -122,7 +124,7 @@ class ResponseCache {
  * canonical URL and indirectly with a parent URL.
  */
 export class APIConnection {
-  url: string = `http${process.env.REACT_APP_FORCE_HTTP? '' : 's'}://api.${process.env.REACT_APP_VIRTUAL_HOST_ROOT}/`.toLowerCase()
+  url: string = API_ROOT.toLowerCase()
   user: User | null = null
   cache_expiry_time = 60_000 // 1 minute
   results: ResponseCache
