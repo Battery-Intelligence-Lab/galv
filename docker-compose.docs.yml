@@ -25,6 +25,8 @@ services:
     env_file:
      - ./.env
      - ./.env.secret
+    environment:
+      FRONTEND_VIRTUAL_HOST: "http://localhost"
     restart: unless-stopped
     command: ./server.sh
 
