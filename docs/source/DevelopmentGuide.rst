@@ -95,6 +95,16 @@ The Django backend has Django Rest Framework tests, using ``FactoryBoy`` and ``F
 
   docker-compose -f docker-compose.test.yml run --rm app_test python manage.py test
 
+
+Frontend unit tests
+================================================================================
+
+Frontend unit tests are run with ``Jest``.
+
+.. code-block:: bash
+
+	docker-compose -f docker-compose.test.yml run --rm frontend npm test
+
 ********************************************************************************
 Components and Technology
 ********************************************************************************

@@ -16,8 +16,8 @@ services:
       context: backend
     depends_on:
       - postgres
-    ports:
-      - "5000:5000"
+    expose:
+      - 80
     volumes:
 # local volume allows us to copy generated ER diagram easily
       - ./backend:/usr/app
