@@ -4,7 +4,7 @@
     "email": "admin@example.com",
     "first_name": "",
     "last_name": "",
-    "url": "http://localhost:5000/users/1/",
+    "url": "http://api.localhost/users/1/",
     "id": 1,
     "is_active": true,
     "is_staff": true,

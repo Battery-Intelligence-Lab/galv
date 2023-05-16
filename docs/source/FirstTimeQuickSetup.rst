@@ -44,7 +44,17 @@ Setup environment variables
 The Galvanalyser project uses two ``.env`` files, ``.env`` and ``.env.secret``.
 
 You will already have a ``.env`` file in the repository you cloned, with sensible defaults.
-If you wish to change where the database is saved, however, you can change the first entry
+
+If you're running a **production deployment**, you will want to set the value of the
+``VIRTUAL_HOST_ROOT`` to your domain name, e.g. ``VIRTUAL_HOST_ROOT=example.com``.
+This will serve the Galvanalyser web application from the root of your domain,
+e.g. at ``http://example.com/``; and the API from the subdomain, e.g. ``http://api.example.com``.
+You will likely also want to enable HTTPS, for which we use LetsEncrypt to generate SSL certificates.
+By default, the staging (test) server is used, which generates certificates that are not trusted by browsers.
+When your production setup appears to work correctly, you can switch to fetching real certificates
+by setting ``LETSENCRYPT_TEST=false`` and restarting the nginx-proxy container.
+
+If you wish to change where the database is saved, you can change the first entry
 in ``.env``, ``GALVANALYSER_DATA_PATH`` to the directory where you want the postgres database.
 
 Create ``.env.secret``
@@ -138,10 +148,9 @@ Next, launch the harvester container, specifying the Harvester's docker-compose 
 This will launch into an interactive shell which will guide you through the Harvester setup process.
 
 First, you'll be asked for the Galvanalyser server URL.
-If you're running on the same server as the Galvanalyser server, this will be ``http://app:5000``,
+If you're running on the same server as the Galvanalyser server, this will be ``http://app``,
 otherwise it will be the path you entered above to connect to the web frontend, 
-but with the port set to 5000. So if you went to ``http://example.com:80`` (or just ``http://example.com``),
-go to ``http://example.com:5000``.
+but using the ``api`` subdomain. So if you went to ``http://example.com``, go to ``http://api.example.com``.
 
 Next, you'll be asked to specify a name for the new Harvester. 
 

@@ -20,3 +20,4 @@ WORKDIR /usr/app
 COPY requirements.txt /requirements.txt
 RUN pip install -r /requirements.txt
 COPY . /usr/app
+RUN cp -rf /usr/local/lib/python3.10/site-packages/rest_framework/static/* /static

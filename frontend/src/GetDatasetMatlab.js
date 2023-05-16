@@ -11,7 +11,7 @@ export default function GetDatasetMatlab({dataset}) {
   let domain = window.location.href.split('/')[2];
   domain = domain.split(':')[0]
 
-  const host = `http://${domain}:5000`
+  const host = `http://api.${domain}`
   const codeString = `%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % 
 % galvanalyser REST API access

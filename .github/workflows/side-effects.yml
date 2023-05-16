@@ -40,7 +40,7 @@ jobs:
           echo "POSTGRES_PASSWORD=$POSTGRES_PASSWORD" > .env.secret
           echo "DJANGO_SECRET_KEY=$DJANGO_SECRET_KEY" >> .env.secret
           echo "django-extensions==3.2.1" >> backend/requirements.txt
-          sed -i "s+'rest_framework',+'rest_framework', 'django_extensions',+g" backend/backend_django/config/settings.py
+          sed -i "s+'rest_framework',+'rest_framework', 'django_extensions',+g" backend/backend_django/config/settings_prod.py
 
       - name: Create Entity Relationship Diagram
         run: |

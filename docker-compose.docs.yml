@@ -16,8 +16,8 @@ services:
       context: backend
     depends_on:
       - postgres
-    ports:
-      - "5000:5000"
+    expose:
+      - 80
     volumes:
 # local volume allows us to copy generated ER diagram easily
       - ./backend:/usr/app
@@ -25,6 +25,8 @@ services:
     env_file:
      - ./.env
      - ./.env.secret
+    environment:
+      FRONTEND_VIRTUAL_HOST: "http://localhost"
     restart: unless-stopped
     command: ./server.sh
 

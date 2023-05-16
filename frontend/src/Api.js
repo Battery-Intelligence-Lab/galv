@@ -2,7 +2,7 @@
 // Copyright  (c) 2020-2023, The Chancellor, Masters and Scholars of the University
 // of Oxford, and the 'Galvanalyser' Developers. All rights reserved.
 
-export const url = 'http://localhost:5000/';
+export const url = 'http://api.localhost/';
 const headers = {
       'Accept': 'application/json',
       'Content-Type': 'application/json'

@@ -4,7 +4,7 @@
     "email": "",
     "first_name": "",
     "last_name": "",
-    "url": "http://localhost:5000/inactive_users/2/",
+    "url": "http://api.localhost/inactive_users/2/",
     "id": 2,
     "is_active": false,
     "is_staff": false,
