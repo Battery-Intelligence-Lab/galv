@@ -8,4 +8,4 @@ fi
 RUNTIME_CONF="{
   \"API_ROOT\": \"$API_ROOT\"
 }"
-echo $RUNTIME_CONF > ./src/config.json
+echo $RUNTIME_CONF > ./src/conf.json
