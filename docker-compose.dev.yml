@@ -27,6 +27,8 @@ services:
     volumes:
      - ./frontend:/app
     working_dir: /app
+    environment:
+      FORCE_HTTP: "true"
     command: >
       bash -c "
         yarn install && 
