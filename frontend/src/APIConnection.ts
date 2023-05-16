@@ -122,7 +122,7 @@ class ResponseCache {
  * canonical URL and indirectly with a parent URL.
  */
 export class APIConnection {
-  url: string = `http${process.env.FORCE_HTTP? '' : 's'}://api.${process.env.VIRTUAL_HOST}/`.toLowerCase()
+  url: string = `http${process.env.REACT_APP_FORCE_HTTP? '' : 's'}://api.${process.env.REACT_APP_VIRTUAL_HOST_ROOT}/`.toLowerCase()
   user: User | null = null
   cache_expiry_time = 60_000 // 1 minute
   results: ResponseCache
