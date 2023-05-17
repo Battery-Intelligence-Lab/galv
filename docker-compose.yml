@@ -18,6 +18,7 @@ services:
     working_dir: /usr/app
     environment:
       VIRTUAL_HOST: "api.${VIRTUAL_HOST_ROOT}"
+      LETSENCRYPT_HOST: "api.${VIRTUAL_HOST_ROOT}"
       FRONTEND_VIRTUAL_HOST: "http://${VIRTUAL_HOST_ROOT},https://${VIRTUAL_HOST_ROOT}"
     env_file:
      - ./.env
@@ -36,6 +37,7 @@ services:
       - app
     environment:
         VIRTUAL_HOST: "${VIRTUAL_HOST_ROOT}"
+        LETSENCRYPT_HOST: "${VIRTUAL_HOST_ROOT}"
     env_file:
      - ./.env
     restart: unless-stopped
@@ -78,7 +80,6 @@ services:
       - .env
     environment:
       NGINX_PROXY_CONTAINER: "nginx-proxy"
-      LETSENCRYPT_HOST: "${VIRTUAL_HOST_ROOT}"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./.certs:/etc/nginx/certs
