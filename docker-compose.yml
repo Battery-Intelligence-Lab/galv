@@ -30,6 +30,8 @@ services:
     build:
       dockerfile: Dockerfile
       context: ./frontend
+      args:
+        VIRTUAL_HOST_ROOT: "${VIRTUAL_HOST_ROOT}"  # Required to inject API root into conf.json
     depends_on:
       - app
     environment:

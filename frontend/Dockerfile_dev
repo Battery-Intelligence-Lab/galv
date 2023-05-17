@@ -4,6 +4,8 @@
 
 FROM node:lts@sha256:132309f5136555725debd57b711eb4b329fff22a00588834dbec391a3f9782cf
 
+ARG VIRTUAL_HOST_ROOT="localhost"
+
 RUN mkdir -p /app
 WORKDIR /app
 COPY . /app
@@ -15,4 +17,8 @@ ENV NODE_OPTIONS=--openssl-legacy-provider
 ENV PORT=80
 
 RUN yarn install
+
+ENV VIRTUAL_HOST_ROOT=$VIRTUAL_HOST_ROOT
+# NB in dev mode we use a volume for the source code, and inject_envvars.sh won't override
+# the contents of conf.json.
 RUN ["/bin/sh", "-c", "./inject_envvars.sh"]
