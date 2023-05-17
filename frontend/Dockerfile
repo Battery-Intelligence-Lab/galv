@@ -4,6 +4,9 @@
 
 FROM node:lts@sha256:132309f5136555725debd57b711eb4b329fff22a00588834dbec391a3f9782cf as build
 
+ARG VIRTUAL_HOST_ROOT="localhost"
+ARG FORCE_HTTP=""
+
 RUN mkdir -p /app
 WORKDIR /app
 COPY package.json yarn.lock /app/
@@ -14,6 +17,9 @@ ENV NODE_OPTIONS=--openssl-legacy-provider
 RUN yarn install
 
 COPY . /app
+ENV VIRTUAL_HOST_ROOT=$VIRTUAL_HOST_ROOT
+ENV FORCE_HTTP=$FORCE_HTTP
+RUN ["/bin/sh", "-c", "./inject_envvars.sh"]
 RUN yarn build
 
 FROM nginx:alpine

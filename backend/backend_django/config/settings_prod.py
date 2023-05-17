@@ -39,7 +39,10 @@ CORS_ALLOW_HEADERS = list(corsheaders.defaults.default_headers) + [
 ]
 CORS_ALLOWED_ORIGINS = os.environ.get("FRONTEND_VIRTUAL_HOST", "").split(",")
 CORS_ALLOW_CREDENTIALS = True
-CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS
+CSRF_TRUSTED_ORIGINS = [
+    *CORS_ALLOWED_ORIGINS,
+    f'https://{os.environ.get("VIRTUAL_HOST")}'
+]
 
 CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_SECURE = True
