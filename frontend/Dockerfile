@@ -5,7 +5,7 @@
 FROM node:lts@sha256:132309f5136555725debd57b711eb4b329fff22a00588834dbec391a3f9782cf as build
 
 ARG VIRTUAL_HOST_ROOT="localhost"
-ARG FORCE_HTTP="false"
+ARG FORCE_HTTP=""
 
 RUN mkdir -p /app
 WORKDIR /app
