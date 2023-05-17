@@ -102,6 +102,7 @@ const useStyles = makeStyles()((theme) => {
     },
     drawerPaper: {
       position: 'relative',
+      paddingTop: 20,
       whiteSpace: 'nowrap',
       width: drawerWidth,
       transition: theme.transitions.create('width', {
@@ -120,7 +121,10 @@ const useStyles = makeStyles()((theme) => {
         width: theme.spacing(9),
       },
     },
-    appBarSpacer: {},//theme.mixins.toolbar,
+    appBarSpacer: {
+      paddingTop: 44,
+      //theme.mixins.toolbar,
+    },
     content: {
       flexGrow: 1,
       height: '100vh',
