@@ -1214,13 +1214,13 @@ class TimeseriesRangeLabelViewSet(viewsets.ModelViewSet):
 
 @extend_schema_view(
     list=extend_schema(
-        summary="View Users awaiting activation",
+        summary="View Users awaiting approval",
         description="""
 Users can be created freely, but cannot use the API until they are approved by an existing user account.
         """
     ),
     retrieve=extend_schema(
-        summary="View a User awaiting activation",
+        summary="View a User awaiting approval",
         description="""
 Users can be created freely, but cannot use the API until they are approved by an existing user account.
         """

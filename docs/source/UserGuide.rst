@@ -105,7 +105,7 @@ relevant to them.
 Datasets page
 --------------------------------------------------------------------
 
-When first successfully logging in with an active account, the user will land
+When first successfully logging in with an (approved) account, the user will land
 on the Datasets page.
 This page lists information about any :ref:`datasets` that have been
 imported from files in a :ref:`Monitored path <monitored-paths>` that the user

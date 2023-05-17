@@ -14,7 +14,7 @@ import {
   matchPath,
 } from "react-router-dom";
 import Login from "./Login"
-import ActivateUsers from "./ActivateUsers"
+import ApproveUsers from "./ApproveUsers"
 import Harvesters from "./Harvesters"
 import Cells from "./Cells"
 import SpeedIcon from '@mui/icons-material/Speed';
@@ -230,7 +230,7 @@ export default function Core() {
         <ListItemIcon>
           <GroupAddIcon/>
         </ListItemIcon>
-        <ListItemText primary="Activate Users" />
+        <ListItemText primary="Approve Users" />
       </ListItem>
     </Stack>
   );
@@ -310,7 +310,7 @@ export default function Core() {
         <Route path={cellsPath} element={Cells()} />
         <Route path={equipmentPath} element={Equipment()} />
         <Route path={harvestersPath} element={Harvesters()} />
-        <Route path={usersPath} element={ActivateUsers()} />
+        <Route path={usersPath} element={ApproveUsers()} />
         <Route path={profilePath} element={UserProfile()} />
         <Route path={tokenPath} element={Tokens()} />
         <Route index element={Datasets()} />

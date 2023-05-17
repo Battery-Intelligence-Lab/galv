@@ -119,7 +119,7 @@ You'll see that you get a message telling you that the account
 needs to be approved by an existing account.
 
 * Refresh the page, and login using the _superuser_ credentials.
-* Once logged in, go to the bottom tab in the menu (Activate Users), and click the button next to your new user account
+* Once logged in, go to the bottom tab in the menu (Approve Users), and click the button next to your new user account
 * Now, click the logout button in the top right, and log back in with your new user account
 
 **************************************************************************************
@@ -155,7 +155,7 @@ but using the ``api`` subdomain. So if you went to ``http://example.com``, go to
 Next, you'll be asked to specify a name for the new Harvester. 
 
 Each Harvester needs at least one administrator.
-You'll be given a list of active user accounts, and will select one to be the 
+You'll be given a list of (approved) user accounts, and will select one to be the
 Harvester administrator. 
 If you're following this guide, you'll see the Django superuser account and the
 regular user account you just created.

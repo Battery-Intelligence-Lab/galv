@@ -9,7 +9,7 @@ import React from 'react';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import Connection from "../APIConnection";
-import ActivateUsers from "../ActivateUsers";
+import ApproveUsers from "../ApproveUsers";
 import mock_users from './fixtures/inactive_users.json';
 
 // Mock the APIConnection.fetch function from the APIConnection module
@@ -18,14 +18,14 @@ import mock_users from './fixtures/inactive_users.json';
 const mocked_fetch = jest.spyOn(Connection, 'fetch')
 const mocked_fetchMany = jest.spyOn(Connection, 'fetchMany')
 
-it('ActivateUsers has appropriate columns', async () => {
+it('ApproveUsers has appropriate columns', async () => {
     mocked_fetchMany.mockResolvedValue([]);
-    await act(async () => render(<ActivateUsers />));
+    await act(async () => render(<ApproveUsers />));
     expect(screen.getAllByRole('columnheader').find(e => /Username/.test(e.textContent))).toBeInTheDocument();
-    expect(screen.getAllByRole('columnheader').find(e => /Activate/.test(e.textContent))).toBeInTheDocument();
+    expect(screen.getAllByRole('columnheader').find(e => /Approve/.test(e.textContent))).toBeInTheDocument();
 })
 
-describe('ActivateUsers', () => {
+describe('ApproveUsers', () => {
     let container;
     const user = userEvent.setup();
 
@@ -33,7 +33,7 @@ describe('ActivateUsers', () => {
         mocked_fetchMany.mockResolvedValue(mock_users.map(u => ({content: u})));
         mocked_fetch.mockResolvedValue(null)
         let container
-        await act(async () => container = render(<ActivateUsers />).container);
+        await act(async () => container = render(<ApproveUsers />).container);
     })
 
     it('has appropriate values', async () => {
@@ -46,8 +46,8 @@ describe('ActivateUsers', () => {
         expect(screen.getAllByRole('cell').find(e => e.textContent === mock_users[0].username)).toBeInTheDocument();
     });
 
-    it('sends an API call when user is activated', async () => {
-        await user.click(screen.getAllByRole('button', {label: 'activate'})[0]);
+    it('sends an API call when user is approved', async () => {
+        await user.click(screen.getAllByRole('button', {label: 'approve'})[0]);
         expect(mocked_fetch).toHaveBeenCalledWith(`${mock_users[0].url}vouch_for/`)
         expect(mocked_fetchMany).toHaveBeenCalledTimes(2)
     });
