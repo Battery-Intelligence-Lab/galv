@@ -24,11 +24,11 @@ services:
     build:
       dockerfile: Dockerfile_dev
       context: ./frontend
+      args:
+        FORCE_HTTP: "true"
     volumes:
      - ./frontend:/app
     working_dir: /app
-    environment:
-      FORCE_HTTP: "true"
     command: >
       bash -c "
         yarn install && 

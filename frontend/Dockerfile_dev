@@ -5,6 +5,7 @@
 FROM node:lts@sha256:132309f5136555725debd57b711eb4b329fff22a00588834dbec391a3f9782cf
 
 ARG VIRTUAL_HOST_ROOT="localhost"
+ARG FORCE_HTTP="true"
 
 RUN mkdir -p /app
 WORKDIR /app
@@ -19,6 +20,7 @@ ENV PORT=80
 RUN yarn install
 
 ENV VIRTUAL_HOST_ROOT=$VIRTUAL_HOST_ROOT
+ENV FORCE_HTTP=$FORCE_HTTP
 # NB in dev mode we use a volume for the source code, and inject_envvars.sh won't override
 # the contents of conf.json.
 RUN ["/bin/sh", "-c", "./inject_envvars.sh"]
