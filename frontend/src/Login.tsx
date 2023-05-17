@@ -121,12 +121,12 @@ export default function Login() {
       {`The user '${createdUser?.username}' has been created, but is currently inactive.`}
     </Typography>
     <Typography>
-      New users need to be activated by an existing user before they are
+      New users need to be approved by an existing user before they are
       able to use the system.
     </Typography>
     <Typography>
-      To activate a user, log in to Galvanalyser as an active user and
-      select the appropriate inactive user from the 'users' tab on the left.
+      To approve a user, log in to Galvanalyser as an active user and
+      select the appropriate unapproved user from the 'users' tab on the left.
     </Typography>
     <Button
       fullWidth
@@ -225,11 +225,11 @@ export default function Login() {
     </form>
     {registerMode && <Box>
         <Typography>
-            New users will need to be activated by an existing user before they are
+            New users will need to be approved by an existing user before they are
             able to use the system.
         </Typography>
         <Typography>
-            To activate a user, log in to Galvanalyser and
+            To approve a user, log in to Galvanalyser and
             select the appropriate user from the 'users' tab on the left.
         </Typography>
     </Box>}

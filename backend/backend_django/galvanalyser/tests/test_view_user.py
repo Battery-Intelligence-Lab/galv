@@ -79,9 +79,9 @@ class UserTests(APITestCase):
         self.assertEqual(response.json()['is_active'], False)
         print("OK")
 
-    def test_activate(self):
+    def test_approve_user(self):
         self.client.force_login(self.user)
-        print("Test Inactive User list")
+        print("Test Unapproved User list")
         url = reverse('inactive_user-list')
         response = self.client.get(url, **self.headers)
         json = response.json()
@@ -89,7 +89,7 @@ class UserTests(APITestCase):
         self.assertEqual(len(json), 1)
         self.assertEqual(json[0]['username'], self.non_user_inactive.username)
         print("OK")
-        print("Test Inactive User activate")
+        print("Test Unapproved User approval")
         url = reverse('inactive_user-vouch-for', args=(self.non_user_inactive.id,))
         response = self.client.get(url, **self.headers)
         json = response.json()

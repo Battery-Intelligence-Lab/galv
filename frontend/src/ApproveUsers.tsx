@@ -14,13 +14,13 @@ import IconButton from "@mui/material/IconButton";
 
 const columns = [
   {label: 'Username'},
-  {label: 'Activate', help: 'Authorize a user to access Galvanalyser'}
+  {label: 'Approve', help: 'Authorize a user to access Galvanalyser'}
 ]
 
-export default function ActivateUsers() {
+export default function ApproveUsers() {
   const { classes } = useStyles();
 
-  const activateUser = (user: User) => Connection.fetch(`${user.url}vouch_for/`);
+  const approveUser = (user: User) => Connection.fetch(`${user.url}vouch_for/`);
 
   return (
     <Container maxWidth="lg" className={classes.container}>
@@ -34,9 +34,9 @@ export default function ActivateUsers() {
             </Fragment>,
             <Fragment key="actions">
               <IconButton
-                aria-label="activate"
+                aria-label="approve"
                 color="primary"
-                onClick={() => activateUser(user).then(() => context.refresh_all_rows(false))}
+                onClick={() => approveUser(user).then(() => context.refresh_all_rows(false))}
               >
                 <HowToRegIcon />
               </IconButton>
