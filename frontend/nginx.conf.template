@@ -18,6 +18,7 @@ http {
 
     # redirect 404 errors to homepage to avoid weird behaviour navigating directly to React-routed pages
     error_page 404 =200 /;
+    client_max_body_size 100M
 
     # serve the static files
     location / {

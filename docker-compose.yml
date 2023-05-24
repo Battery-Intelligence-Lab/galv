@@ -64,6 +64,7 @@ services:
       - "80:80"
     environment:
       TRUST_DOWNSTREAM_PROXY: "true"
+      DEFAULT_HOST: "${VIRTUAL_HOST_ROOT}"
     volumes:
       - ./.static_files:/app/static
       - ./.certs:/etc/nginx/certs

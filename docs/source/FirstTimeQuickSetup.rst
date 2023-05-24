@@ -142,8 +142,8 @@ Next, launch the harvester container, specifying the Harvester's docker-compose 
 
 .. code-block:: shell
 
-	docker-compose -f docker-compose.harvester.yml run harvester
-
+	docker-compose -f docker-compose.harvester.yml run harvester bash
+	python start.py
 
 This will launch into an interactive shell which will guide you through the Harvester setup process.
 
@@ -195,8 +195,8 @@ A template SystemD service file is included in the repository root directory
 ``galvanalyser.service`` that can be used to automatically start the system on Linux servers.
 
 
-If Harvesters go down, they can be restarted by overriding the launch command:
+If Harvesters go down, they can be restarted.
 .. code-block:: shell
 
-	docker-compose -f docker-compose.harvester.yml run --entrypoint "python start.py --restart" harvester
+	docker-compose -f docker-compose.harvester.yml run harvester python start.py --restart
 
