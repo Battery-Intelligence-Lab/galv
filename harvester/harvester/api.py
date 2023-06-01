@@ -34,6 +34,14 @@ def report_harvest_result(
             },
             json=data
         )
+        try:
+            out.json()
+        except json.JSONDecodeError:
+            error_text = out.text[:100].replace("\n", "\\n")
+            if len(out.text) > 100:
+                error_text += "..."
+            logger.error(f"Server returned invalid JSON (HTTP {out.status_code}): {error_text}")
+            return None
     except BaseException as e:
         logger.error(e)
         out = None
