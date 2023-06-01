@@ -1,6 +1,6 @@
 ---
 name: Bug report
-about: Create a report to help us improve liionsden
+about: Create a report to help us improve Galvanalyser
 title: ''
 labels: bug
 assignees: ''
