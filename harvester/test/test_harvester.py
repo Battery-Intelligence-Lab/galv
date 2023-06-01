@@ -188,6 +188,8 @@ class TestHarvester(unittest.TestCase):
     @patch('harvester.harvester.run.import_file')
     @patch('harvester.harvester.run.logger')
     def test_harvest_path(self, mock_logger, mock_import, mock_report):
+        # Create an unparsable file in the test set
+        Path(os.path.join(get_test_file_path(), 'unparsable.foo')).touch(exist_ok=True)
         mock_logger.error = fail
         mock_report.return_value = JSONResponse(200, {'state': 'STABLE'})
         mock_import.return_value = True

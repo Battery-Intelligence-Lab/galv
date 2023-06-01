@@ -50,6 +50,26 @@ def serialize_datetime(v):
     return v
 
 
+def get_import_file_handler(file_path: str):
+    """
+        Get the handler for the given file by iterating through parsers until one hits
+    """
+    for input_file_cls in registered_input_files:
+        try:
+            logger.debug('Tried input reader {}'.format(input_file_cls))
+            input_file = input_file_cls(
+                file_path=file_path,
+                standard_units=get_standard_units(),
+                standard_columns=get_standard_columns()
+            )
+        except Exception as e:
+            logger.debug('...failed with: ', type(e), e)
+        else:
+            logger.debug('...succeeded...')
+            return input_file
+    raise UnsupportedFileTypeError
+
+
 def import_file(core_path: str, file_path: str) -> bool:
     """
         Attempts to import a given file
@@ -70,22 +90,7 @@ def import_file(core_path: str, file_path: str) -> bool:
         # TODO handle rows in the dataset and access tables with no
         # corresponding data since the import might fail while reading the data
         # anyway
-        input_file = None
-        for input_file_cls in registered_input_files:
-            try:
-                logger.debug('Tried input reader {}'.format(input_file_cls))
-                input_file = input_file_cls(
-                    file_path=full_file_path,
-                    standard_units=default_units,
-                    standard_columns=default_column_ids
-                )
-            except Exception as e:
-                logger.debug('...failed with: ', type(e), e)
-            else:
-                logger.debug('...succeeded...')
-                break
-        if input_file is None:
-            raise UnsupportedFileTypeError
+        input_file = get_import_file_handler(file_path=full_file_path)
 
         # Send metadata
         core_metadata, extra_metadata = input_file.load_metadata()

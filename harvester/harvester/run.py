@@ -4,9 +4,11 @@
 
 import os.path
 import time
+
+from .parse.exceptions import UnsupportedFileTypeError
 from .settings import get_logger, get_setting
 from .api import report_harvest_result, update_config
-from .harvest import import_file
+from .harvest import import_file, get_import_file_handler
 
 logger = get_logger(__file__)
 
@@ -40,6 +42,11 @@ def harvest_path(path: os.PathLike):
             for filename in filenames:
                 full_path = os.path.join(dir_path, filename)
                 core_path, file_path = split_path(path, full_path)
+                try:
+                    get_import_file_handler(full_path)
+                except UnsupportedFileTypeError:
+                    logger.debug(f"Skipping unsupported file {file_path}")
+                    continue
                 try:
                     logger.info(f"Reporting stats for {file_path}")
                     result = report_harvest_result(
