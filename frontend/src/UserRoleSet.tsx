@@ -15,6 +15,7 @@ import Avatar from "@mui/material/Avatar";
 import Popover from "@mui/material/Popover";
 import Chip from "@mui/material/Chip";
 import Stack from "@mui/material/Stack";
+import Box from "@mui/material/Box";
 
 export type UserSet = {
   id: number;
@@ -58,10 +59,9 @@ function AddUserButton(props: AddUserButtonProps) {
   const handleChange = (event: React.SyntheticEvent, value: any) => {
     handleClose()
     console.log(value)
-    const user_url = value.url;
     Connection.fetch(
       `${props.user_set.url}add/`,
-      {method: 'POST', body: JSON.stringify({user: user_url})}
+      {method: 'POST', body: JSON.stringify({user: value.id})}
     )
       .then(() => props.set_last_updated(new Date()))
   }
@@ -95,15 +95,17 @@ function AddUserButton(props: AddUserButtonProps) {
           horizontal: 'right',
         }}
       >
-        <Autocomplete
-          disablePortal
-          id={`user-select-${props.user_set.id}`}
-          options={users_to_include.map(u => ({label: u.username, id: u.id}))}
-          sx={{ width: 300 }}
-          onChange={handleChange}
-          isOptionEqualToValue={((option, value) => option.id === value.id)}
-          renderInput={(params) => <TextField {...params} label="Select user" />}
-        />
+        <Box sx={{height: 200}}>
+          <Autocomplete
+            disablePortal
+            id={`user-select-${props.user_set.id}`}
+            options={users_to_include.map(u => ({label: u.username, id: u.id}))}
+            sx={{ width: 300 }}
+            onChange={handleChange}
+            isOptionEqualToValue={((option, value) => option.id === value.id)}
+            renderInput={(params) => <TextField {...params} label="Select user" />}
+          />
+        </Box>
       </Popover>
     </div>
   );
@@ -125,10 +127,10 @@ export default class UserRoleSet extends Component<UserSetProps, UserSetState> {
       .then(r => this.setState({all_users: r}))
   }
 
-  handleDelete(user_url: string, group_url: string) {
+  handleDelete(user_id: number, group_url: string) {
     Connection.fetch(
       `${group_url}remove/`,
-      {method: 'POST', body: JSON.stringify({user: user_url})}
+      {method: 'POST', body: JSON.stringify({user: user_id})}
     ).then(() => this.props.set_last_updated(new Date()))
   }
 
@@ -174,7 +176,7 @@ export default class UserRoleSet extends Component<UserSetProps, UserSetState> {
           else if (editable)
             return <Chip
               key={`user_set-${u.id}_${usr.id}`}
-              onDelete={() => this.handleDelete(usr.url, u.url)}
+              onDelete={() => this.handleDelete(usr.id, u.url)}
               avatar={<Avatar alt={usr.username}/>}
               label={<Typography noWrap>{usr.username}</Typography>}
               size={'small'}
