@@ -41,6 +41,8 @@ from .models import Harvester, \
     DataColumnType, \
     DataColumnStringKeys, \
     DataColumn, \
+    UnsupportedTimeseriesDataTypeError, \
+    get_timeseries_handler_by_type, \
     TimeseriesRangeLabel, \
     FileState, \
     VouchFor, \
@@ -526,6 +528,14 @@ class HarvesterViewSet(viewsets.ModelViewSet):
                             if 'last_sample_no' in core_metadata:
                                 defaults['json_data']['last_sample_no'] = core_metadata['last_sample_no']
                             defaults['json_data'] = {**defaults['json_data'], **extra_metadata}
+                            # TODO> we should receive column metadata here which we can validate for types
+                            # validate column metadata types
+                            for c in cols:
+                                try:
+                                    get_timeseries_handler_by_type(type=type(c.get("sample_data")))
+                                except UnsupportedTimeseriesDataTypeError:
+                                    # complain
+                                    return error_response(f'Unsupported Timeseries data type {type(c.get("sample_data"))} for column {c["name"]}')
 
                             dataset, _ = Dataset.objects.get_or_create(
                                 defaults=defaults,
@@ -566,31 +576,23 @@ class HarvesterViewSet(viewsets.ModelViewSet):
                                         type=column_type,
                                         dataset=dataset
                                     )
-                                # Create a value map for string data
-                                if 'value_map' in column_data:
-                                    time_value_rm = time.time()
-                                    DataColumnStringKeys.objects.filter(column=column).delete()
-                                    time_value_add = checkpoint('deleted existing value map', time_value_rm)
-                                    DataColumnStringKeys.objects.bulk_create(
-                                        [DataColumnStringKeys(string=k, key=v, column=column)
-                                         for k, v in column_data['value_map'].items()]
-                                    )
-                                    checkpoint('created value map', time_value_add)
 
                                 time_ts_prep = time.time()
+                                # TODO> insert values using timeseries data handler
+                                # insert values
+                                try:
+                                    handler = get_timeseries_handler_by_type(type(column_data['values'][0]))
+                                except UnsupportedTimeseriesDataTypeError:
+                                    return error_response(f'Unsupported variable type {type(column_data["values"][0])} in column {column_data["column_name"]}')
+                                try:
+                                    timeseries = handler.objects.get_or_create(column=column)
+                                    data = timeseries.values if timeseries.values is not None else []
+                                    data = [*data, *column_data["values"]]
+                                    timeseries.values = data
+                                    timeseries.save()
+                                except Exception as e:
+                                    return error_response(f"Error saving column {column_data['column_name']}. {type(e)}: {e.args[0]}")
                                 from django.db import connection
-
-                                rows = []
-                                for s, v in column_data['values'].items():
-                                    rows.append(f"{int(s)}\t{column.id}\t{int(v)}")
-
-                                iter_file = IteratorFile(rows.__iter__())
-                                time_ts_add = checkpoint('prepared ts objects', time_ts_prep)
-                                with connection.cursor() as cursor:
-                                    cursor.copy_expert(
-                                        'COPY timeseries_data FROM STDIN',
-                                        iter_file
-                                    )
                                 checkpoint('created timeseries data', time_ts_add)
                                 checkpoint('column complete', time_col_start)
 

@@ -90,9 +90,17 @@ def import_file(core_path: str, file_path: str) -> bool:
         # TODO handle rows in the dataset and access tables with no
         # corresponding data since the import might fail while reading the data
         # anyway
+
+        # TODO> update approach
+        # 1. Get a column data which specifies data type
+        # 2. Type check each column in each row
+        # 3. Package column data into arrays of N values of the same type representing N rows in dataset
+        #    - Pad with None where values are missing/invalid? Or fail loudly?
+        # 4. Send column packages to the server
         input_file = get_import_file_handler(file_path=full_file_path)
 
         # Send metadata
+        # TODO> should include a column data type map of some kind
         core_metadata, extra_metadata = input_file.load_metadata()
         report = report_harvest_result(
             path=core_path,
