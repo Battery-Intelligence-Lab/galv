@@ -21,8 +21,6 @@ from .serializers import HarvesterSerializer, \
     DataUnitSerializer, \
     DataColumnSerializer, \
     DataColumnTypeSerializer, \
-    TimeseriesDataSerializer, \
-    TimeseriesDataListSerializer, \
     TimeseriesRangeLabelSerializer, \
     UserSerializer, \
     GroupSerializer, \
@@ -39,7 +37,9 @@ from .models import Harvester, \
     Equipment, \
     DataUnit, \
     DataColumnType, \
-    DataColumnStringKeys, \
+    TimeseriesDataFloat, \
+    TimeseriesDataInt, \
+    TimeseriesDataStr, \
     DataColumn, \
     UnsupportedTimeseriesDataTypeError, \
     get_timeseries_handler_by_type, \
@@ -52,6 +52,7 @@ from django.contrib.auth.models import User, Group
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.core import validators
+from django.http import StreamingHttpResponse
 from rest_framework import viewsets, serializers, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -61,7 +62,6 @@ from knox.views import LogoutAllView as KnoxLogoutAllView
 from knox.models import AuthToken
 from rest_framework.authentication import BasicAuthentication
 from drf_spectacular.utils import extend_schema, extend_schema_view, inline_serializer, OpenApiResponse
-from .utils import IteratorFile
 import json
 import time
 import logging
@@ -528,14 +528,6 @@ class HarvesterViewSet(viewsets.ModelViewSet):
                             if 'last_sample_no' in core_metadata:
                                 defaults['json_data']['last_sample_no'] = core_metadata['last_sample_no']
                             defaults['json_data'] = {**defaults['json_data'], **extra_metadata}
-                            # TODO> we should receive column metadata here which we can validate for types
-                            # validate column metadata types
-                            for c in cols:
-                                try:
-                                    get_timeseries_handler_by_type(type=type(c.get("sample_data")))
-                                except UnsupportedTimeseriesDataTypeError:
-                                    # complain
-                                    return error_response(f'Unsupported Timeseries data type {type(c.get("sample_data"))} for column {c["name"]}')
 
                             dataset, _ = Dataset.objects.get_or_create(
                                 defaults=defaults,
@@ -578,22 +570,27 @@ class HarvesterViewSet(viewsets.ModelViewSet):
                                     )
 
                                 time_ts_prep = time.time()
-                                # TODO> insert values using timeseries data handler
-                                # insert values
+                                # get timeseries handler
                                 try:
-                                    handler = get_timeseries_handler_by_type(type(column_data['values'][0]))
+                                    sample_data = column_data.get('sample_data')
+                                except KeyError:
+                                    return error_response(f"Could not find sample data for column {column.name}")
+                                try:
+                                    handler = get_timeseries_handler_by_type(type(sample_data))
                                 except UnsupportedTimeseriesDataTypeError:
-                                    return error_response(f'Unsupported variable type {type(column_data["values"][0])} in column {column_data["column_name"]}')
+                                    return error_response(
+                                        f'Unsupported variable type {type(sample_data)} in column {column.name}'
+                                    )
                                 try:
-                                    timeseries = handler.objects.get_or_create(column=column)
+                                    # insert values
+                                    timeseries, _ = handler.objects.get_or_create(column=column)
                                     data = timeseries.values if timeseries.values is not None else []
                                     data = [*data, *column_data["values"]]
                                     timeseries.values = data
                                     timeseries.save()
                                 except Exception as e:
                                     return error_response(f"Error saving column {column_data['column_name']}. {type(e)}: {e.args[0]}")
-                                from django.db import connection
-                                checkpoint('created timeseries data', time_ts_add)
+                                checkpoint('created timeseries data', time_ts_prep)
                                 checkpoint('column complete', time_col_start)
 
                             checkpoint('complete', time_start)
@@ -1156,22 +1153,31 @@ class DataColumnViewSet(viewsets.ReadOnlyModelViewSet):
         return DataColumn.objects.filter(dataset_id__in=datasets_ids).order_by('-dataset_id', '-id')
 
     @action(methods=['GET'], detail=True)
-    def data(self, request, pk: int = None):
+    def values(self, request, pk: int = None):
         """
         Fetch the data for this column in an 'observations' dictionary of record_id: observed_value pairs.
         """
         column = get_object_or_404(DataColumn, id=pk)
         self.check_object_permissions(self.request, column)
-        return Response(TimeseriesDataSerializer(column, context={'request': self.request}).data)
+        handlers = [TimeseriesDataFloat, TimeseriesDataInt, TimeseriesDataStr]
+        for handler in handlers:
+            if handler.objects.filter(column=column).exists():
+                values = handler.objects.get(column=column).values
+                # Handle querystring parameters
+                if 'min' in request.query_params:
+                    values = values[int(request.query_params['min']):]
+                if 'max' in request.query_params:
+                    values = values[:int(request.query_params['max'])]
+                if 'mod' in request.query_params:
+                    values = values[::int(request.query_params['mod'])]
 
-    @action(methods=['GET'], detail=True)
-    def data_listformat(self, request, pk: int = None):
-        """
-        Fetch the data for this column in an 'observations' dictionary of record_id: observed_value pairs.
-        """
-        column = get_object_or_404(DataColumn, id=pk)
-        self.check_object_permissions(self.request, column)
-        return Response(TimeseriesDataListSerializer(column, context={'request': self.request}).data)
+                print(len(values))
+                def stream():
+                    for v in values:
+                        print(f"{column.name}: yeilding {v}")
+                        yield v
+                return StreamingHttpResponse(stream())
+        return error_response('No data found for this column.', 404)
 
 
 @extend_schema_view(

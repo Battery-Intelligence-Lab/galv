@@ -29,8 +29,7 @@ export type ColumnFields = {
   type_name: string;
   description: string;
   unit: UnitFields;
-  data: string;
-  data_list: string;
+  values: string;
 }
 
 export type DatasetChartProps = {
@@ -107,16 +106,23 @@ function Chart(props: DatasetChartProps & {filter: string}) {
 
   const [selectedColumns, setSelectedColumns] = useState<ColumnFields[]>([])
 
-  const fetchColumnData = (col: ColumnFields) => {
+  const fetchColumnData = async (col: ColumnFields) => {
     setLoadingColumnData(prevState => [...prevState.filter(i => i !== col.id), col.id])
-    return Connection.fetch<ColumnDataFields<number>>(`${col.data_list}?${props.filter}`, {}, true)
-      .then(r => {console.log(r); return r})
-      .then(response => response.content)
-      .then(data => {
-          setTimeseries(prevState => ({...prevState, [col.id]: data.observations}))
-          setLoadingColumnData(prevState => prevState.filter(i => i !== col.id))
-        }
-      )
+    const data: number[] = []
+    const response = await Connection.fetchRaw<ReadableStream>(`${col.values}?${props.filter}`, {});
+    const reader = response.getReader();
+    let _done = false;
+
+    while (!_done) {
+      const {done, value} = await reader.read();
+      _done = done;
+      if (done) break;
+      data.push(...value);
+      console.log(col, value, data.length)
+    }
+    console.log(col, data)
+    setTimeseries(prevState => ({...prevState, [col.id]: data}))
+    setLoadingColumnData(prevState => prevState.filter(i => i !== col.id))
   }
 
   const handleLegendClick = (datum: Datum) => {
@@ -245,9 +251,9 @@ function Chart(props: DatasetChartProps & {filter: string}) {
 }
 
 export default function DatasetChart(props: DatasetChartProps) {
-  const [filterMin, setFilterMin] = useState<number>(0)
-  const [filterMod, setFilterMod] = useState<number>(100)
-  const [filterMax, setFilterMax] = useState<number|undefined>(2000)
+  const [filterMin, setFilterMin] = useState<number>(0)//(0)
+  const [filterMod, setFilterMod] = useState<number>(1)//(100)
+  const [filterMax, setFilterMax] = useState<number|undefined>(3)//(2000)
   const [filter, setFilter] = useState<string>(get_filter_str())
 
   function get_filter_str() {

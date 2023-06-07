@@ -495,66 +495,6 @@ class TimeseriesRangeLabelSerializer(serializers.HyperlinkedModelSerializer):
         extra_kwargs = augment_extra_kwargs()
 
 
-class TimeseriesDataSerializer(serializers.Serializer):
-    id = serializers.IntegerField(help_text="Auto-assigned object identifier")
-    url = serializers.CharField(help_text=url_help_text)
-    observations = serializers.DictField(help_text="row_number:value dictionary of observations")
-
-    def get_where_clause(self, instance):
-        request = self.context['request']
-        try:
-            min = f"AND sample >= {int(request.query_params['min'])} "
-        except:
-            min = ""
-        try:
-            max = f"AND sample <= {int(request.query_params['max'])} "
-        except:
-            max = ""
-        try:
-            mod = f"AND MOD(sample, {int(request.query_params['mod'])}) = 1 "
-        except:
-            mod = ""
-        return f"WHERE column_id={instance.id} {min}{max}{mod}"
-
-    def to_representation(self, instance):
-        with connection.cursor() as cur:
-            cur.execute(f"SELECT sample, value FROM timeseries_data {self.get_where_clause(instance)} ORDER BY sample")
-            data = cur.fetchall()
-        keys = DataColumnStringKeys.objects.filter(column_id=instance.id)
-        if keys.exists():
-            key_map = {k.key: k.string for k in keys}
-            obs = {x[0]: key_map[x[1]] for x in data}
-        else:
-            obs = {x[0]: x[1] for x in data}
-        return {
-            'id': instance.id,
-            'url': self.context['request'].build_absolute_uri(reverse('datacolumn-data', args=(instance.id,))),
-            'observations': obs
-        }
-
-
-class TimeseriesDataListSerializer(TimeseriesDataSerializer):
-    observations = serializers.ListField(help_text="List of observation values ordered by row number")
-
-    def to_representation(self, instance):
-        with connection.cursor() as cur:
-            cur.execute(f"SELECT value FROM timeseries_data {self.get_where_clause(instance)} ORDER BY sample")
-            data = cur.fetchall()
-        keys = DataColumnStringKeys.objects.filter(column_id=instance.id)
-        if keys.exists():
-            key_map = {k.key: k.string for k in keys}
-            obs = [key_map[x[0]] for x in data]
-        else:
-            obs = [x[0] for x in data]
-        return {
-            'id': instance.id,
-            'url': self.context['request'].build_absolute_uri(
-                reverse('datacolumn-data-listformat', args=(instance.id,))
-            ),
-            'observations': obs
-        }
-
-
 class DataColumnTypeSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = DataColumnType
@@ -572,8 +512,7 @@ class DataColumnSerializer(serializers.HyperlinkedModelSerializer):
     type_name = serializers.SerializerMethodField(help_text=get_model_field(DataColumnType, 'name').help_text)
     description = serializers.SerializerMethodField(help_text=get_model_field(DataColumnType, 'description').help_text)
     unit = serializers.SerializerMethodField(help_text=get_model_field(DataColumnType, 'unit').help_text)
-    data = serializers.SerializerMethodField(help_text="Dictionary of row_number:value observations")
-    data_list = serializers.SerializerMethodField(help_text="List of observation values ordered by row number")
+    values = serializers.SerializerMethodField(help_text="Column values")
 
     def uri(self, rel_url: str) -> str:
         return self.context['request'].build_absolute_uri(rel_url)
@@ -597,11 +536,8 @@ class DataColumnSerializer(serializers.HyperlinkedModelSerializer):
     def get_unit(self, instance):
         return DataUnitSerializer(instance.type.unit, context=self.context).data
 
-    def get_data(self, instance) -> str:
-        return self.uri(reverse('datacolumn-data', args=(instance.id,)))
-
-    def get_data_list(self, instance) -> str:
-        return self.uri(reverse('datacolumn-data-listformat', args=(instance.id,)))
+    def get_values(self, instance) -> str:
+        return self.uri(reverse('datacolumn-values', args=(instance.id,)))
 
     class Meta:
         model = DataColumn
@@ -614,8 +550,7 @@ class DataColumnSerializer(serializers.HyperlinkedModelSerializer):
             'type_name',
             'description',
             'unit',
-            'data',
-            'data_list'
+            'values',
         ]
         read_only_fields = fields
         extra_kwargs = augment_extra_kwargs()
