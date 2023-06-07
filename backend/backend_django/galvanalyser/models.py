@@ -382,6 +382,7 @@ class TimeseriesData(models.Model):
         on_delete=models.CASCADE,
         help_text="Column whose data are listed"
     )
+    values = None
 
     def __str__(self):
         if not self.values:
@@ -395,15 +396,15 @@ class TimeseriesData(models.Model):
 
 
 class TimeseriesDataFloat(TimeseriesData):
-    values = ArrayField(models.FloatField(null=True), help_text="Row values (floats) for Column")
+    values = ArrayField(models.FloatField(null=True), null=True, help_text="Row values (floats) for Column")
 
 
 class TimeseriesDataInt(TimeseriesData):
-    values = ArrayField(models.IntegerField(null=True), help_text="Row values (integers) for Column")
+    values = ArrayField(models.IntegerField(null=True), null=True, help_text="Row values (integers) for Column")
 
 
 class TimeseriesDataStr(TimeseriesData):
-    values = ArrayField(models.TextField(null=True), help_text="Row values (str) for Column")
+    values = ArrayField(models.TextField(null=True), null=True, help_text="Row values (str) for Column")
 
 
 class UnsupportedTimeseriesDataTypeError(TypeError):

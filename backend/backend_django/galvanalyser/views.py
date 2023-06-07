@@ -528,14 +528,6 @@ class HarvesterViewSet(viewsets.ModelViewSet):
                             if 'last_sample_no' in core_metadata:
                                 defaults['json_data']['last_sample_no'] = core_metadata['last_sample_no']
                             defaults['json_data'] = {**defaults['json_data'], **extra_metadata}
-                            # TODO> we should receive column metadata here which we can validate for types
-                            # validate column metadata types
-                            for c in cols:
-                                try:
-                                    get_timeseries_handler_by_type(type=type(c.get("sample_data")))
-                                except UnsupportedTimeseriesDataTypeError:
-                                    # complain
-                                    return error_response(f'Unsupported Timeseries data type {type(c.get("sample_data"))} for column {c["name"]}')
 
                             dataset, _ = Dataset.objects.get_or_create(
                                 defaults=defaults,
@@ -578,22 +570,27 @@ class HarvesterViewSet(viewsets.ModelViewSet):
                                     )
 
                                 time_ts_prep = time.time()
-                                # TODO> insert values using timeseries data handler
-                                # insert values
+                                # get timeseries handler
                                 try:
-                                    handler = get_timeseries_handler_by_type(type(column_data['values'][0]))
+                                    sample_data = column_data.get('sample_data')
+                                except KeyError:
+                                    return error_response(f"Could not find sample data for column {column.name}")
+                                try:
+                                    handler = get_timeseries_handler_by_type(type(sample_data))
                                 except UnsupportedTimeseriesDataTypeError:
-                                    return error_response(f'Unsupported variable type {type(column_data["values"][0])} in column {column_data["column_name"]}')
+                                    return error_response(
+                                        f'Unsupported variable type {type(sample_data)} in column {column.name}'
+                                    )
                                 try:
-                                    timeseries = handler.objects.get_or_create(column=column)
+                                    # insert values
+                                    timeseries, _ = handler.objects.get_or_create(column=column)
                                     data = timeseries.values if timeseries.values is not None else []
                                     data = [*data, *column_data["values"]]
                                     timeseries.values = data
                                     timeseries.save()
                                 except Exception as e:
                                     return error_response(f"Error saving column {column_data['column_name']}. {type(e)}: {e.args[0]}")
-                                from django.db import connection
-                                checkpoint('created timeseries data', time_ts_add)
+                                checkpoint('created timeseries data', time_ts_prep)
                                 checkpoint('column complete', time_col_start)
 
                             checkpoint('complete', time_start)
