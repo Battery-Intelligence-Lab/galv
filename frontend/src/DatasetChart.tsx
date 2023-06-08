@@ -111,16 +111,21 @@ function Chart(props: DatasetChartProps & {filter: string}) {
     const data: number[] = []
     const response = await Connection.fetchRaw<ReadableStream>(`${col.values}?${props.filter}`, {});
     const reader = response.getReader();
+    const decoder = new TextDecoder();
     let _done = false;
 
     while (!_done) {
       const {done, value} = await reader.read();
       _done = done;
       if (done) break;
-      data.push(...value);
-      console.log(col, value, data.length)
+      try {
+        const decoded = decoder.decode(value).split("\n").filter(s => s.length);
+        data.push(...decoded.map(d => Number(d)));
+        // console.log(`Parsed ${decoded.length} values from ${decoded}: ${decoded.map(d => Number(d))}`)
+      } catch (e) {
+        console.warn(`Failed to parse value '${value}'`)
+      }
     }
-    console.log(col, data)
     setTimeseries(prevState => ({...prevState, [col.id]: data}))
     setLoadingColumnData(prevState => prevState.filter(i => i !== col.id))
   }
@@ -251,9 +256,9 @@ function Chart(props: DatasetChartProps & {filter: string}) {
 }
 
 export default function DatasetChart(props: DatasetChartProps) {
-  const [filterMin, setFilterMin] = useState<number>(0)//(0)
-  const [filterMod, setFilterMod] = useState<number>(1)//(100)
-  const [filterMax, setFilterMax] = useState<number|undefined>(3)//(2000)
+  const [filterMin, setFilterMin] = useState<number>(0)
+  const [filterMod, setFilterMod] = useState<number>(100)
+  const [filterMax, setFilterMax] = useState<number|undefined>(2000)
   const [filter, setFilter] = useState<string>(get_filter_str())
 
   function get_filter_str() {

@@ -1114,22 +1114,12 @@ Searchable fields:
 - type__name (Column Type name)
         """
     ),
-    data=extend_schema(
-        summary="View Column data",
+    values=extend_schema(
+        summary="View Column data as newline-separated stream of values",
         description="""
 View the TimeseriesData contents of the Column.
 
-Data are presented as a dictionary of observations where keys are row numbers and values are observation values.
-
-Can be filtered with querystring parameters `min` and `max`, and `mod` (modulo) by specifying a sample number.
-        """
-    ),
-    data_listformat=extend_schema(
-        summary="View Column data as a list",
-        description="""
-View the TimeseriesData contents of the Column as a list.
-
-Data are presented as a list of observation values ordered by row number.
+Data are presented as a stream of values separated by newlines.
 
 Can be filtered with querystring parameters `min` and `max`, and `mod` (modulo) by specifying a sample number.
         """
@@ -1171,11 +1161,10 @@ class DataColumnViewSet(viewsets.ReadOnlyModelViewSet):
                 if 'mod' in request.query_params:
                     values = values[::int(request.query_params['mod'])]
 
-                print(len(values))
                 def stream():
                     for v in values:
-                        print(f"{column.name}: yeilding {v}")
                         yield v
+                        yield '\n'.encode('utf-8')
                 return StreamingHttpResponse(stream())
         return error_response('No data found for this column.', 404)
 
