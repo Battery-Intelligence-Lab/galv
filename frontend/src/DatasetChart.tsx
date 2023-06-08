@@ -256,9 +256,9 @@ function Chart(props: DatasetChartProps & {filter: string}) {
 }
 
 export default function DatasetChart(props: DatasetChartProps) {
-  const [filterMin, setFilterMin] = useState<number>(0)//(0)
-  const [filterMod, setFilterMod] = useState<number>(1)//(100)
-  const [filterMax, setFilterMax] = useState<number|undefined>(3)//(2000)
+  const [filterMin, setFilterMin] = useState<number>(0)
+  const [filterMod, setFilterMod] = useState<number>(100)
+  const [filterMax, setFilterMax] = useState<number|undefined>(2000)
   const [filter, setFilter] = useState<string>(get_filter_str())
 
   function get_filter_str() {
