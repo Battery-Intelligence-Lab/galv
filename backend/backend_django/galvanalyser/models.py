@@ -368,7 +368,7 @@ def _timeseries_column_field():
 
 def _timeseries_str(self):
     if not self.values:
-        raise UnsupportedTimeseriesDataTypeError('Cannot use unspecified base class TimeseriesData')
+        return f"{self.column_id}: []"
     if len(self.values) > 5:
         return f"{self.column_id}: [{','.join(self.values[:5])}...]"
     return f"{self.column_id}: [{','.join(self.values)}]"
