@@ -271,6 +271,13 @@ export class APIConnection {
       })
   }
 
+  async fetchRaw<T>(url: string, options?: any): Promise<T> {
+    url = clean_url(url, this.url)
+    const newOptions = this._prepare_fetch_headers(url, options);
+    return fetch(url, newOptions)
+      .then((response) => response.body as T)
+  }
+
   async fetchMany<T extends SingleAPIResponse>(url: string, options?: any, ignore_cache: boolean = true): Promise<CachedAPIResponse<T>[]> {
     url = clean_url(url, this.url)
     const newOptions = this._prepare_fetch_headers(url, options);

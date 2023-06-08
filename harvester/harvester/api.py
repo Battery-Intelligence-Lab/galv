@@ -4,6 +4,7 @@
 
 import os
 import json
+from .utils import NpEncoder
 import requests
 from .settings import get_setting, get_settings, get_settings_file, get_logger, update_envvars
 import time
@@ -26,13 +27,14 @@ def report_harvest_result(
         data['path'] = path
         if file is not None:
             data['file'] = file
-        logger.debug(f"{get_setting('url')}report/; {json.dumps(data)}")
+        logger.debug(f"{get_setting('url')}report/; {json.dumps(data, cls=NpEncoder)}")
         out = requests.post(
             f"{get_setting('url')}report/",
             headers={
                 'Authorization': f"Harvester {get_setting('api_key')}"
             },
-            json=data
+            # encode then decode to ensure np values are converted to standard types
+            json=json.loads(json.dumps(data, cls=NpEncoder))
         )
         try:
             out.json()
@@ -64,21 +66,21 @@ def update_config():
             all_keys = [*new.keys(), *old.keys()]
             for key in all_keys:
                 if key in old.keys() and key in new.keys():
-                    if json.dumps(old[key]) == json.dumps(new[key]):
+                    if json.dumps(old[key], cls=NpEncoder) == json.dumps(new[key], cls=NpEncoder):
                         continue
                     logger.info(f"Updating value for setting '{key}'")
-                    logger.info(f"Old value: {json.dumps(old[key])}")
-                    logger.info(f"New value: {json.dumps(new[key])}")
+                    logger.info(f"Old value: {json.dumps(old[key], cls=NpEncoder)}")
+                    logger.info(f"New value: {json.dumps(new[key], cls=NpEncoder)}")
                     dirty = True
                 if key in old.keys():
                     logger.info(f"Updating value for setting '{key}'")
-                    logger.info(f"Old value: {json.dumps(old[key])}")
+                    logger.info(f"Old value: {json.dumps(old[key], cls=NpEncoder)}")
                     logger.info(f"New value: [not set]")
                     dirty = True
                 if key in new.keys():
                     logger.info(f"Updating value for setting '{key}'")
                     logger.info(f"Old value: [not set]")
-                    logger.info(f"New value: {json.dumps(new[key])}")
+                    logger.info(f"New value: {json.dumps(new[key], cls=NpEncoder)}")
                     dirty = True
 
             if dirty:

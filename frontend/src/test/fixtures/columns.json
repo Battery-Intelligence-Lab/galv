@@ -14,8 +14,7 @@
       "symbol": "",
       "description": "A value with no units"
     },
-    "data": "http://api.localhost/columns/52/data/",
-    "data_list": "http://api.localhost/columns/52/data_listformat/"
+        "values": "http://api.localhost/columns/52/values/"
   },
   {
     "id": 51,
@@ -32,8 +31,7 @@
       "symbol": "",
       "description": "A value with no units"
     },
-    "data": "http://api.localhost/columns/51/data/",
-    "data_list": "http://api.localhost/columns/51/data_listformat/"
+        "values": "http://api.localhost/columns/51/values/"
   },
   {
     "id": 50,
@@ -50,8 +48,7 @@
       "symbol": "°c",
       "description": "Temperature in Centigrade"
     },
-    "data": "http://api.localhost/columns/50/data/",
-    "data_list": "http://api.localhost/columns/50/data_listformat/"
+        "values": "http://api.localhost/columns/50/values/"
   },
   {
     "id": 49,
@@ -68,8 +65,7 @@
       "symbol": "",
       "description": "A value with no units"
     },
-    "data": "http://api.localhost/columns/49/data/",
-    "data_list": "http://api.localhost/columns/49/data_listformat/"
+        "values": "http://api.localhost/columns/49/values/"
   },
   {
     "id": 48,
@@ -86,8 +82,7 @@
       "symbol": "",
       "description": "A value with no units"
     },
-    "data": "http://api.localhost/columns/48/data/",
-    "data_list": "http://api.localhost/columns/48/data_listformat/"
+        "values": "http://api.localhost/columns/48/values/"
   },
   {
     "id": 47,
@@ -104,8 +99,7 @@
       "symbol": "",
       "description": "A value with no units"
     },
-    "data": "http://api.localhost/columns/47/data/",
-    "data_list": "http://api.localhost/columns/47/data_listformat/"
+        "values": "http://api.localhost/columns/47/values/"
   },
   {
     "id": 46,
@@ -122,8 +116,7 @@
       "symbol": "V",
       "description": "Voltage"
     },
-    "data": "http://api.localhost/columns/46/data/",
-    "data_list": "http://api.localhost/columns/46/data_listformat/"
+        "values": "http://api.localhost/columns/46/values/"
   },
   {
     "id": 45,
@@ -140,8 +133,7 @@
       "symbol": "A",
       "description": "Current"
     },
-    "data": "http://api.localhost/columns/45/data/",
-    "data_list": "http://api.localhost/columns/45/data_listformat/"
+        "values": "http://api.localhost/columns/45/values/"
   },
   {
     "id": 44,
@@ -158,8 +150,7 @@
       "symbol": "Wh",
       "description": "Energy in Watt-Hours"
     },
-    "data": "http://api.localhost/columns/44/data/",
-    "data_list": "http://api.localhost/columns/44/data_listformat/"
+        "values": "http://api.localhost/columns/44/values/"
   },
   {
     "id": 43,
@@ -176,8 +167,7 @@
       "symbol": "Ah",
       "description": "Charge in Amp-Hours"
     },
-    "data": "http://api.localhost/columns/43/data/",
-    "data_list": "http://api.localhost/columns/43/data_listformat/"
+        "values": "http://api.localhost/columns/43/values/"
   },
   {
     "id": 42,
@@ -194,8 +184,7 @@
       "symbol": "W",
       "description": "Power in Watts"
     },
-    "data": "http://api.localhost/columns/42/data/",
-    "data_list": "http://api.localhost/columns/42/data_listformat/"
+        "values": "http://api.localhost/columns/42/values/"
   },
   {
     "id": 41,
@@ -212,8 +201,7 @@
       "symbol": "s",
       "description": "Time in seconds"
     },
-    "data": "http://api.localhost/columns/41/data/",
-    "data_list": "http://api.localhost/columns/41/data_listformat/"
+        "values": "http://api.localhost/columns/41/values/"
   },
   {
     "id": 40,
@@ -230,8 +218,7 @@
       "symbol": "",
       "description": "A value with no units"
     },
-    "data": "http://api.localhost/columns/40/data/",
-    "data_list": "http://api.localhost/columns/40/data_listformat/"
+        "values": "http://api.localhost/columns/40/values/"
   },
   {
     "id": 39,
@@ -248,8 +235,7 @@
       "symbol": "",
       "description": "A value with no units"
     },
-    "data": "http://api.localhost/columns/39/data/",
-    "data_list": "http://api.localhost/columns/39/data_listformat/"
+        "values": "http://api.localhost/columns/39/values/"
   },
   {
     "id": 38,
@@ -266,8 +252,7 @@
       "symbol": "Ah",
       "description": "Charge in Amp-Hours"
     },
-    "data": "http://api.localhost/columns/38/data/",
-    "data_list": "http://api.localhost/columns/38/data_listformat/"
+        "values": "http://api.localhost/columns/38/values/"
   },
   {
     "id": 37,
@@ -284,8 +269,7 @@
       "symbol": "Wh",
       "description": "Energy in Watt-Hours"
     },
-    "data": "http://api.localhost/columns/37/data/",
-    "data_list": "http://api.localhost/columns/37/data_listformat/"
+        "values": "http://api.localhost/columns/37/values/"
   },
   {
     "id": 36,
@@ -302,8 +286,7 @@
       "symbol": "",
       "description": "A value with no units"
     },
-    "data": "http://api.localhost/columns/36/data/",
-    "data_list": "http://api.localhost/columns/36/data_listformat/"
+        "values": "http://api.localhost/columns/36/values/"
   },
   {
     "id": 35,
@@ -320,8 +303,7 @@
       "symbol": "",
       "description": "A value with no units"
     },
-    "data": "http://api.localhost/columns/35/data/",
-    "data_list": "http://api.localhost/columns/35/data_listformat/"
+        "values": "http://api.localhost/columns/35/values/"
   },
   {
     "id": 34,
@@ -338,8 +320,7 @@
       "symbol": "A",
       "description": "Current"
     },
-    "data": "http://api.localhost/columns/34/data/",
-    "data_list": "http://api.localhost/columns/34/data_listformat/"
+        "values": "http://api.localhost/columns/34/values/"
   },
   {
     "id": 33,
@@ -356,8 +337,7 @@
       "symbol": "V",
       "description": "Voltage"
     },
-    "data": "http://api.localhost/columns/33/data/",
-    "data_list": "http://api.localhost/columns/33/data_listformat/"
+        "values": "http://api.localhost/columns/33/values/"
   },
   {
     "id": 32,
@@ -374,8 +354,7 @@
       "symbol": "",
       "description": "A value with no units"
     },
-    "data": "http://api.localhost/columns/32/data/",
-    "data_list": "http://api.localhost/columns/32/data_listformat/"
+        "values": "http://api.localhost/columns/32/values/"
   },
   {
     "id": 31,
@@ -392,8 +371,7 @@
       "symbol": "s",
       "description": "Time in seconds"
     },
-    "data": "http://api.localhost/columns/31/data/",
-    "data_list": "http://api.localhost/columns/31/data_listformat/"
+        "values": "http://api.localhost/columns/31/values/"
   },
   {
     "id": 30,
@@ -410,8 +388,7 @@
       "symbol": "",
       "description": "A value with no units"
     },
-    "data": "http://api.localhost/columns/30/data/",
-    "data_list": "http://api.localhost/columns/30/data_listformat/"
+        "values": "http://api.localhost/columns/30/values/"
   },
   {
     "id": 29,
@@ -428,8 +405,7 @@
       "symbol": "",
       "description": "A value with no units"
     },
-    "data": "http://api.localhost/columns/29/data/",
-    "data_list": "http://api.localhost/columns/29/data_listformat/"
+        "values": "http://api.localhost/columns/29/values/"
   },
   {
     "id": 28,
@@ -446,8 +422,7 @@
       "symbol": "",
       "description": "A value with no units"
     },
-    "data": "http://api.localhost/columns/28/data/",
-    "data_list": "http://api.localhost/columns/28/data_listformat/"
+        "values": "http://api.localhost/columns/28/values/"
   },
   {
     "id": 27,
@@ -464,8 +439,7 @@
       "symbol": "V",
       "description": "Voltage"
     },
-    "data": "http://api.localhost/columns/27/data/",
-    "data_list": "http://api.localhost/columns/27/data_listformat/"
+        "values": "http://api.localhost/columns/27/values/"
   },
   {
     "id": 26,
@@ -482,8 +456,7 @@
       "symbol": "A",
       "description": "Current"
     },
-    "data": "http://api.localhost/columns/26/data/",
-    "data_list": "http://api.localhost/columns/26/data_listformat/"
+        "values": "http://api.localhost/columns/26/values/"
   },
   {
     "id": 25,
@@ -500,8 +473,7 @@
       "symbol": "s",
       "description": "Time in seconds"
     },
-    "data": "http://api.localhost/columns/25/data/",
-    "data_list": "http://api.localhost/columns/25/data_listformat/"
+        "values": "http://api.localhost/columns/25/values/"
   },
   {
     "id": 24,
@@ -518,8 +490,7 @@
       "symbol": "",
       "description": "A value with no units"
     },
-    "data": "http://api.localhost/columns/24/data/",
-    "data_list": "http://api.localhost/columns/24/data_listformat/"
+        "values": "http://api.localhost/columns/24/values/"
   },
   {
     "id": 23,
@@ -536,8 +507,7 @@
       "symbol": "Ah",
       "description": "Charge in Amp-Hours"
     },
-    "data": "http://api.localhost/columns/23/data/",
-    "data_list": "http://api.localhost/columns/23/data_listformat/"
+        "values": "http://api.localhost/columns/23/values/"
   },
   {
     "id": 22,
@@ -554,8 +524,7 @@
       "symbol": "Wh",
       "description": "Energy in Watt-Hours"
     },
-    "data": "http://api.localhost/columns/22/data/",
-    "data_list": "http://api.localhost/columns/22/data_listformat/"
+        "values": "http://api.localhost/columns/22/values/"
   },
   {
     "id": 21,
@@ -572,8 +541,7 @@
       "symbol": "",
       "description": "A value with no units"
     },
-    "data": "http://api.localhost/columns/21/data/",
-    "data_list": "http://api.localhost/columns/21/data_listformat/"
+        "values": "http://api.localhost/columns/21/values/"
   },
   {
     "id": 20,
@@ -590,8 +558,7 @@
       "symbol": "",
       "description": "A value with no units"
     },
-    "data": "http://api.localhost/columns/20/data/",
-    "data_list": "http://api.localhost/columns/20/data_listformat/"
+        "values": "http://api.localhost/columns/20/values/"
   },
   {
     "id": 19,
@@ -608,8 +575,7 @@
       "symbol": "A",
       "description": "Current"
     },
-    "data": "http://api.localhost/columns/19/data/",
-    "data_list": "http://api.localhost/columns/19/data_listformat/"
+        "values": "http://api.localhost/columns/19/values/"
   },
   {
     "id": 18,
@@ -626,8 +592,7 @@
       "symbol": "V",
       "description": "Voltage"
     },
-    "data": "http://api.localhost/columns/18/data/",
-    "data_list": "http://api.localhost/columns/18/data_listformat/"
+        "values": "http://api.localhost/columns/18/values/"
   },
   {
     "id": 17,
@@ -644,8 +609,7 @@
       "symbol": "",
       "description": "A value with no units"
     },
-    "data": "http://api.localhost/columns/17/data/",
-    "data_list": "http://api.localhost/columns/17/data_listformat/"
+        "values": "http://api.localhost/columns/17/values/"
   },
   {
     "id": 16,
@@ -662,8 +626,7 @@
       "symbol": "s",
       "description": "Time in seconds"
     },
-    "data": "http://api.localhost/columns/16/data/",
-    "data_list": "http://api.localhost/columns/16/data_listformat/"
+        "values": "http://api.localhost/columns/16/values/"
   },
   {
     "id": 15,
@@ -680,8 +643,7 @@
       "symbol": "",
       "description": "A value with no units"
     },
-    "data": "http://api.localhost/columns/15/data/",
-    "data_list": "http://api.localhost/columns/15/data_listformat/"
+        "values": "http://api.localhost/columns/15/values/"
   },
   {
     "id": 14,
@@ -698,8 +660,7 @@
       "symbol": "",
       "description": "A value with no units"
     },
-    "data": "http://api.localhost/columns/14/data/",
-    "data_list": "http://api.localhost/columns/14/data_listformat/"
+        "values": "http://api.localhost/columns/14/values/"
   },
   {
     "id": 13,
@@ -716,8 +677,7 @@
       "symbol": "",
       "description": "A value with no units"
     },
-    "data": "http://api.localhost/columns/13/data/",
-    "data_list": "http://api.localhost/columns/13/data_listformat/"
+        "values": "http://api.localhost/columns/13/values/"
   },
   {
     "id": 12,
@@ -734,8 +694,7 @@
       "symbol": "",
       "description": "A value with no units"
     },
-    "data": "http://api.localhost/columns/12/data/",
-    "data_list": "http://api.localhost/columns/12/data_listformat/"
+        "values": "http://api.localhost/columns/12/values/"
   },
   {
     "id": 11,
@@ -752,8 +711,7 @@
       "symbol": "Ah",
       "description": "Charge in Amp-Hours"
     },
-    "data": "http://api.localhost/columns/11/data/",
-    "data_list": "http://api.localhost/columns/11/data_listformat/"
+        "values": "http://api.localhost/columns/11/values/"
   },
   {
     "id": 10,
@@ -770,8 +728,7 @@
       "symbol": "Wh",
       "description": "Energy in Watt-Hours"
     },
-    "data": "http://api.localhost/columns/10/data/",
-    "data_list": "http://api.localhost/columns/10/data_listformat/"
+        "values": "http://api.localhost/columns/10/values/"
   },
   {
     "id": 9,
@@ -788,8 +745,7 @@
       "symbol": "",
       "description": "A value with no units"
     },
-    "data": "http://api.localhost/columns/9/data/",
-    "data_list": "http://api.localhost/columns/9/data_listformat/"
+        "values": "http://api.localhost/columns/9/values/"
   },
   {
     "id": 8,
@@ -806,8 +762,7 @@
       "symbol": "",
       "description": "A value with no units"
     },
-    "data": "http://api.localhost/columns/8/data/",
-    "data_list": "http://api.localhost/columns/8/data_listformat/"
+        "values": "http://api.localhost/columns/8/values/"
   },
   {
     "id": 7,
@@ -824,8 +779,7 @@
       "symbol": "A",
       "description": "Current"
     },
-    "data": "http://api.localhost/columns/7/data/",
-    "data_list": "http://api.localhost/columns/7/data_listformat/"
+        "values": "http://api.localhost/columns/7/values/"
   },
   {
     "id": 6,
@@ -842,8 +796,7 @@
       "symbol": "V",
       "description": "Voltage"
     },
-    "data": "http://api.localhost/columns/6/data/",
-    "data_list": "http://api.localhost/columns/6/data_listformat/"
+        "values": "http://api.localhost/columns/6/values/"
   },
   {
     "id": 5,
@@ -860,8 +813,7 @@
       "symbol": "",
       "description": "A value with no units"
     },
-    "data": "http://api.localhost/columns/5/data/",
-    "data_list": "http://api.localhost/columns/5/data_listformat/"
+        "values": "http://api.localhost/columns/5/values/"
   },
   {
     "id": 4,
@@ -878,8 +830,7 @@
       "symbol": "s",
       "description": "Time in seconds"
     },
-    "data": "http://api.localhost/columns/4/data/",
-    "data_list": "http://api.localhost/columns/4/data_listformat/"
+        "values": "http://api.localhost/columns/4/values/"
   },
   {
     "id": 3,
@@ -896,8 +847,7 @@
       "symbol": "",
       "description": "A value with no units"
     },
-    "data": "http://api.localhost/columns/3/data/",
-    "data_list": "http://api.localhost/columns/3/data_listformat/"
+        "values": "http://api.localhost/columns/3/values/"
   },
   {
     "id": 2,
@@ -914,8 +864,7 @@
       "symbol": "",
       "description": "A value with no units"
     },
-    "data": "http://api.localhost/columns/2/data/",
-    "data_list": "http://api.localhost/columns/2/data_listformat/"
+        "values": "http://api.localhost/columns/2/values/"
   },
   {
     "id": 1,
@@ -932,7 +881,6 @@
       "symbol": "",
       "description": "A value with no units"
     },
-    "data": "http://api.localhost/columns/1/data/",
-    "data_list": "http://api.localhost/columns/1/data_listformat/"
+        "values": "http://api.localhost/columns/1/values/"
   }
 ]

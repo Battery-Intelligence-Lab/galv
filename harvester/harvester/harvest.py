@@ -3,14 +3,14 @@
 # of Oxford, and the 'Galvanalyser' Developers. All rights reserved.
 
 import datetime
-import json
 import os
 import time
-
-import dateutil
 import sys
-from .parse.exceptions import UnsupportedFileTypeError
+import json
 
+from .utils import NpEncoder
+
+from .parse.exceptions import UnsupportedFileTypeError
 from .parse.ivium_input_file import IviumInputFile
 from .parse.biologic_input_file import BiologicMprInputFile
 from .parse.maccor_input_file import (
@@ -94,6 +94,10 @@ def import_file(core_path: str, file_path: str) -> bool:
 
         # Send metadata
         core_metadata, extra_metadata = input_file.load_metadata()
+        # append sample_data to extra_metadata so the server can identify the data type
+        for column, props in extra_metadata.items():
+            if not props.get('sample_data'):
+                props['sample_data'] = 1.0 if props.get('is_numeric') else '1'
         report = report_harvest_result(
             path=core_path,
             file=file_path,
@@ -122,11 +126,8 @@ def import_file(core_path: str, file_path: str) -> bool:
         column_data = {}
         if len(columns):
             mapping = {c.get('name'): c.get('id') for c in columns}
-            value_map = {c.get('name'): c.get('keymap') for c in columns if len(c.get('keymap'))}
         else:
             mapping = input_file.get_file_column_to_standard_column_mapping()
-            value_map = {}
-        next_key = 0
         # limit size of requests. 1kb/column is an arbitrary buffer size.
         size = 0
         max_size = max_upload_size
@@ -141,7 +142,10 @@ def import_file(core_path: str, file_path: str) -> bool:
         generator = input_file.load_data(input_file.file_path, columns_with_data)
         start = time.process_time()
         new_row = {}
+        sample_data = {}
         for i, r in enumerate(generator):
+            if i == 0:
+                sample_data = r
             if int(r.get(record_number_column, i)) <= start_row:
                 continue
             # Data are stored up in rows and shipped out when
@@ -149,7 +153,7 @@ def import_file(core_path: str, file_path: str) -> bool:
             # size limit.
             # If sent, sent data are wiped from column_data.
             # New row data are added to column_data below.
-            size += sys.getsizeof(json.dumps(new_row))
+            size += sys.getsizeof(json.dumps(new_row, cls=NpEncoder))
             if size > max_size:
                 if start_row == i:
                     logger.error(f"Row too large to upload {len(r.keys())} columns, size={sys.getsizeof(r)}")
@@ -174,42 +178,25 @@ def import_file(core_path: str, file_path: str) -> bool:
                         logger.error(f"API Error: {report.status_code}")
                     return False
                 for k in column_data.keys():
-                    column_data[k]['values'] = {}
+                    column_data[k]['values'] = []
                 start = time.process_time()
                 size = 0
 
             if i > 0:
                 for k, v in new_row.items():
-                    column_data[k]['values'][record_number] = v
+                    column_data[k]['values'].append(v)
 
-            record_number = int(r.get(record_number_column, i))
             new_row = {}
 
             for k, v in r.items():
                 if k == record_number_column:
                     continue
                 if k in column_data:
-                    # Numeric data are stored directly
-                    try:
-                        new_row[k] = int(v)
-                    except ValueError:
-                        try:
-                            new_row[k] = float(v)
-                        # Timestamps are stored using float conversion
-                        except ValueError:
-                            try:
-                                new_row[k] = dateutil.parser.parse(v).timestamp()
-                            # Strings are mapped to integer values using a value map which is also sent to the database
-                            except ValueError:
-                                if 'value_map' in column_data[k] and v in column_data[k]['value_map']:
-                                    new_row[k] = column_data[k]['value_map'][v]
-                                else:
-                                    if 'value_map' in column_data[k]:
-                                        column_data[k]['value_map'][v] = next_key
-                                    else:
-                                        column_data[k]['value_map'] = {v: next_key}
-                                    new_row[k] = next_key
-                                    next_key += 1
+                    # # Timestamps are stored using float conversion
+                    # try:
+                    #     new_row[k] = dateutil.parser.parse(v).timestamp()
+                    # except ValueError:
+                    new_row[k] = v
                 else:
                     column_data[k] = {}
                     if k in mapping:
@@ -220,9 +207,8 @@ def import_file(core_path: str, file_path: str) -> bool:
                             column_data[k]['unit_symbol'] = input_file.column_info[k].get('unit')
                         else:
                             column_data[k]['unit_id'] = default_units['Unitless']
-                    if k in value_map:
-                        column_data[k]['value_map'] = value_map[k]
-                    column_data[k]['values'] = {}
+                    column_data[k]['values'] = []
+                    column_data[k]['sample_data'] = sample_data[k]
 
         # Send data
         report = report_harvest_result(path=core_path, file=file_path, content={

@@ -1,7 +1,9 @@
 # SPDX-License-Identifier: BSD-2-Clause
 # Copyright  (c) 2020-2023, The Chancellor, Masters and Scholars of the University
 # of Oxford, and the 'Galvanalyser' Developers. All rights reserved.
+from typing import Type
 
+from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.contrib.auth.models import User, Group
 from knox.models import AuthToken
@@ -374,28 +376,49 @@ class DataColumnStringKeys(models.Model):
 
 
 class TimeseriesData(models.Model):
-    sample = models.PositiveBigIntegerField(
-        null=False,
-        help_text="Row number"
+    column = models.OneToOneField(
+        to=DataColumn,
+        related_name='values',
+        on_delete=models.CASCADE,
+        help_text="Column whose data are listed"
     )
-    column_id = models.PositiveIntegerField(
-        null=False,
-        help_text="Column whose data are represented"
-    )
-    value = models.FloatField(
-        null=False,
-        help_text="Cell value for Column on this row"
-    )
-
-    class Meta:
-        managed = False
-        db_table = "timeseries_data"
+    values = None
 
     def __str__(self):
-        return f"{self.column_id}[{self.sample}]: {self.value}"
+        if not self.values:
+            raise UnsupportedTimeseriesDataTypeError('Cannot use unspecified base class TimeseriesData')
+        if len(self.values) > 5:
+            return f"{self.column_id}: [{','.join(self.values[:5])}...]"
+        return f"{self.column_id}: [{','.join(self.values)}]"
 
     def __repr__(self):
         return str(self)
+
+
+class TimeseriesDataFloat(TimeseriesData):
+    values = ArrayField(models.FloatField(null=True), null=True, help_text="Row values (floats) for Column")
+
+
+class TimeseriesDataInt(TimeseriesData):
+    values = ArrayField(models.IntegerField(null=True), null=True, help_text="Row values (integers) for Column")
+
+
+class TimeseriesDataStr(TimeseriesData):
+    values = ArrayField(models.TextField(null=True), null=True, help_text="Row values (str) for Column")
+
+
+class UnsupportedTimeseriesDataTypeError(TypeError):
+    pass
+
+
+def get_timeseries_handler_by_type(type: type) -> Type[TimeseriesDataFloat | TimeseriesDataStr | TimeseriesDataInt]:
+    if type == float:
+        return TimeseriesDataFloat
+    if type == str:
+        return TimeseriesDataStr
+    if type == int:
+        return TimeseriesDataInt
+    raise UnsupportedTimeseriesDataTypeError
 
 
 class TimeseriesRangeLabel(models.Model):

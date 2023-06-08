@@ -21,8 +21,6 @@ from .serializers import HarvesterSerializer, \
     DataUnitSerializer, \
     DataColumnSerializer, \
     DataColumnTypeSerializer, \
-    TimeseriesDataSerializer, \
-    TimeseriesDataListSerializer, \
     TimeseriesRangeLabelSerializer, \
     UserSerializer, \
     GroupSerializer, \
@@ -39,8 +37,12 @@ from .models import Harvester, \
     Equipment, \
     DataUnit, \
     DataColumnType, \
-    DataColumnStringKeys, \
+    TimeseriesDataFloat, \
+    TimeseriesDataInt, \
+    TimeseriesDataStr, \
     DataColumn, \
+    UnsupportedTimeseriesDataTypeError, \
+    get_timeseries_handler_by_type, \
     TimeseriesRangeLabel, \
     FileState, \
     VouchFor, \
@@ -50,6 +52,7 @@ from django.contrib.auth.models import User, Group
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.core import validators
+from django.http import StreamingHttpResponse
 from rest_framework import viewsets, serializers, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -59,7 +62,6 @@ from knox.views import LogoutAllView as KnoxLogoutAllView
 from knox.models import AuthToken
 from rest_framework.authentication import BasicAuthentication
 from drf_spectacular.utils import extend_schema, extend_schema_view, inline_serializer, OpenApiResponse
-from .utils import IteratorFile
 import json
 import time
 import logging
@@ -566,32 +568,29 @@ class HarvesterViewSet(viewsets.ModelViewSet):
                                         type=column_type,
                                         dataset=dataset
                                     )
-                                # Create a value map for string data
-                                if 'value_map' in column_data:
-                                    time_value_rm = time.time()
-                                    DataColumnStringKeys.objects.filter(column=column).delete()
-                                    time_value_add = checkpoint('deleted existing value map', time_value_rm)
-                                    DataColumnStringKeys.objects.bulk_create(
-                                        [DataColumnStringKeys(string=k, key=v, column=column)
-                                         for k, v in column_data['value_map'].items()]
-                                    )
-                                    checkpoint('created value map', time_value_add)
 
                                 time_ts_prep = time.time()
-                                from django.db import connection
-
-                                rows = []
-                                for s, v in column_data['values'].items():
-                                    rows.append(f"{int(s)}\t{column.id}\t{int(v)}")
-
-                                iter_file = IteratorFile(rows.__iter__())
-                                time_ts_add = checkpoint('prepared ts objects', time_ts_prep)
-                                with connection.cursor() as cursor:
-                                    cursor.copy_expert(
-                                        'COPY timeseries_data FROM STDIN',
-                                        iter_file
+                                # get timeseries handler
+                                try:
+                                    sample_data = column_data.get('sample_data')
+                                except KeyError:
+                                    return error_response(f"Could not find sample data for column {column.name}")
+                                try:
+                                    handler = get_timeseries_handler_by_type(type(sample_data))
+                                except UnsupportedTimeseriesDataTypeError:
+                                    return error_response(
+                                        f'Unsupported variable type {type(sample_data)} in column {column.name}'
                                     )
-                                checkpoint('created timeseries data', time_ts_add)
+                                try:
+                                    # insert values
+                                    timeseries, _ = handler.objects.get_or_create(column=column)
+                                    data = timeseries.values if timeseries.values is not None else []
+                                    data = [*data, *column_data["values"]]
+                                    timeseries.values = data
+                                    timeseries.save()
+                                except Exception as e:
+                                    return error_response(f"Error saving column {column_data['column_name']}. {type(e)}: {e.args[0]}")
+                                checkpoint('created timeseries data', time_ts_prep)
                                 checkpoint('column complete', time_col_start)
 
                             checkpoint('complete', time_start)
@@ -1115,22 +1114,12 @@ Searchable fields:
 - type__name (Column Type name)
         """
     ),
-    data=extend_schema(
-        summary="View Column data",
+    values=extend_schema(
+        summary="View Column data as newline-separated stream of values",
         description="""
 View the TimeseriesData contents of the Column.
 
-Data are presented as a dictionary of observations where keys are row numbers and values are observation values.
-
-Can be filtered with querystring parameters `min` and `max`, and `mod` (modulo) by specifying a sample number.
-        """
-    ),
-    data_listformat=extend_schema(
-        summary="View Column data as a list",
-        description="""
-View the TimeseriesData contents of the Column as a list.
-
-Data are presented as a list of observation values ordered by row number.
+Data are presented as a stream of values separated by newlines.
 
 Can be filtered with querystring parameters `min` and `max`, and `mod` (modulo) by specifying a sample number.
         """
@@ -1154,22 +1143,30 @@ class DataColumnViewSet(viewsets.ReadOnlyModelViewSet):
         return DataColumn.objects.filter(dataset_id__in=datasets_ids).order_by('-dataset_id', '-id')
 
     @action(methods=['GET'], detail=True)
-    def data(self, request, pk: int = None):
+    def values(self, request, pk: int = None):
         """
         Fetch the data for this column in an 'observations' dictionary of record_id: observed_value pairs.
         """
         column = get_object_or_404(DataColumn, id=pk)
         self.check_object_permissions(self.request, column)
-        return Response(TimeseriesDataSerializer(column, context={'request': self.request}).data)
+        handlers = [TimeseriesDataFloat, TimeseriesDataInt, TimeseriesDataStr]
+        for handler in handlers:
+            if handler.objects.filter(column=column).exists():
+                values = handler.objects.get(column=column).values
+                # Handle querystring parameters
+                if 'min' in request.query_params:
+                    values = values[int(request.query_params['min']):]
+                if 'max' in request.query_params:
+                    values = values[:int(request.query_params['max'])]
+                if 'mod' in request.query_params:
+                    values = values[::int(request.query_params['mod'])]
 
-    @action(methods=['GET'], detail=True)
-    def data_listformat(self, request, pk: int = None):
-        """
-        Fetch the data for this column in an 'observations' dictionary of record_id: observed_value pairs.
-        """
-        column = get_object_or_404(DataColumn, id=pk)
-        self.check_object_permissions(self.request, column)
-        return Response(TimeseriesDataListSerializer(column, context={'request': self.request}).data)
+                def stream():
+                    for v in values:
+                        yield v
+                        yield '\n'.encode('utf-8')
+                return StreamingHttpResponse(stream())
+        return error_response('No data found for this column.', 404)
 
 
 @extend_schema_view(

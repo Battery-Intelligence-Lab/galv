@@ -29,8 +29,7 @@ export type ColumnFields = {
   type_name: string;
   description: string;
   unit: UnitFields;
-  data: string;
-  data_list: string;
+  values: string;
 }
 
 export type DatasetChartProps = {
@@ -107,16 +106,28 @@ function Chart(props: DatasetChartProps & {filter: string}) {
 
   const [selectedColumns, setSelectedColumns] = useState<ColumnFields[]>([])
 
-  const fetchColumnData = (col: ColumnFields) => {
+  const fetchColumnData = async (col: ColumnFields) => {
     setLoadingColumnData(prevState => [...prevState.filter(i => i !== col.id), col.id])
-    return Connection.fetch<ColumnDataFields<number>>(`${col.data_list}?${props.filter}`, {}, true)
-      .then(r => {console.log(r); return r})
-      .then(response => response.content)
-      .then(data => {
-          setTimeseries(prevState => ({...prevState, [col.id]: data.observations}))
-          setLoadingColumnData(prevState => prevState.filter(i => i !== col.id))
-        }
-      )
+    const data: number[] = []
+    const response = await Connection.fetchRaw<ReadableStream>(`${col.values}?${props.filter}`, {});
+    const reader = response.getReader();
+    const decoder = new TextDecoder();
+    let _done = false;
+
+    while (!_done) {
+      const {done, value} = await reader.read();
+      _done = done;
+      if (done) break;
+      try {
+        const decoded = decoder.decode(value).split("\n").filter(s => s.length);
+        data.push(...decoded.map(d => Number(d)));
+        // console.log(`Parsed ${decoded.length} values from ${decoded}: ${decoded.map(d => Number(d))}`)
+      } catch (e) {
+        console.warn(`Failed to parse value '${value}'`)
+      }
+    }
+    setTimeseries(prevState => ({...prevState, [col.id]: data}))
+    setLoadingColumnData(prevState => prevState.filter(i => i !== col.id))
   }
 
   const handleLegendClick = (datum: Datum) => {
