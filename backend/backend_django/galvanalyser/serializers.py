@@ -24,7 +24,6 @@ from .models import Harvester, \
     DataColumnType, \
     DataColumn, \
     TimeseriesRangeLabel, \
-    DataColumnStringKeys, \
     KnoxAuthToken
 from django.db import connection
 from django.utils import timezone
@@ -360,18 +359,13 @@ class ObservedFileSerializer(serializers.HyperlinkedModelSerializer):
         if not self.context.get('with_upload_info'):
             return None
         try:
+            last_record = 0
             columns = DataColumn.objects.filter(dataset__file=instance)
             column_data = []
             for c in columns:
-                keys = DataColumnStringKeys.objects.filter(column=c).order_by('key')
-                column_data.append({
-                    'name': c.name,
-                    'id': c.id,
-                    'keymap': [{'key': k.key, 'value': k.string} for k in keys]
-                })
-            with connection.cursor() as cur:
-                cur.execute(f"SELECT sample FROM timeseries_data WHERE column_id={columns.first().id} ORDER BY sample DESC LIMIT 1")
-                last_record = cur.fetchone()[0]
+                column_data.append({'name': c.name, 'id': c.id})
+                if c.official_sample_counter:
+                    last_record = c.values[:-1] if len(c.values) > 0 else 0
             return {
                 'columns': column_data,
                 'last_record_number': last_record
@@ -508,7 +502,6 @@ class DataColumnSerializer(serializers.HyperlinkedModelSerializer):
     """
     name = serializers.SerializerMethodField(help_text=get_model_field(DataColumn, 'name').help_text)
     dataset = serializers.SerializerMethodField(help_text=get_model_field(DataColumn, 'dataset').help_text)
-    is_numeric = serializers.SerializerMethodField(help_text="true for numeric columns, false for string columns")
     type_name = serializers.SerializerMethodField(help_text=get_model_field(DataColumnType, 'name').help_text)
     description = serializers.SerializerMethodField(help_text=get_model_field(DataColumnType, 'description').help_text)
     unit = serializers.SerializerMethodField(help_text=get_model_field(DataColumnType, 'unit').help_text)
@@ -522,9 +515,6 @@ class DataColumnSerializer(serializers.HyperlinkedModelSerializer):
 
     def get_dataset(self, instance) -> str:
         return self.uri(reverse('dataset-detail', args=(instance.dataset.id,)))
-
-    def get_is_numeric(self, instance) -> bool:
-        return not DataColumnStringKeys.objects.filter(column_id=instance.id).exists()
 
     def get_type_name(self, instance) -> str:
         return instance.type.name
@@ -546,9 +536,10 @@ class DataColumnSerializer(serializers.HyperlinkedModelSerializer):
             'url',
             'name',
             'dataset',
-            'is_numeric',
+            'data_type',
             'type_name',
             'description',
+            'official_sample_counter',
             'unit',
             'values',
         ]

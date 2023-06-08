@@ -545,11 +545,17 @@ class HarvesterViewSet(viewsets.ModelViewSet):
                                 time_col_start = time.time()
                                 logger.warning(f"Column {column_data.get('column_name', column_data.get('column_id'))}")
                                 try:
+                                    data_type = column_data.get('data_type')
+                                except KeyError:
+                                    return error_response(f"Could not find sample data for column {column_data}")
+                                try:
                                     column_type = DataColumnType.objects.get(id=column_data['column_id'])
                                     column, _ = DataColumn.objects.get_or_create(
                                         name=column_type.name,
+                                        data_type=data_type,
                                         type=column_type,
-                                        dataset=dataset
+                                        dataset=dataset,
+                                        official_sample_counter=column_data.get('official_sample_counter', False)
                                     )
                                 except KeyError:
                                     if 'unit_id' in column_data:
@@ -565,21 +571,19 @@ class HarvesterViewSet(viewsets.ModelViewSet):
                                         )
                                     column, _ = DataColumn.objects.get_or_create(
                                         name=column_data['column_name'],
+                                        data_type=data_type,
                                         type=column_type,
-                                        dataset=dataset
+                                        dataset=dataset,
+                                        official_sample_counter=column_data.get('official_sample_counter', False)
                                     )
 
                                 time_ts_prep = time.time()
                                 # get timeseries handler
                                 try:
-                                    sample_data = column_data.get('sample_data')
-                                except KeyError:
-                                    return error_response(f"Could not find sample data for column {column.name}")
-                                try:
-                                    handler = get_timeseries_handler_by_type(type(sample_data))
+                                    handler = get_timeseries_handler_by_type(column.data_type)
                                 except UnsupportedTimeseriesDataTypeError:
                                     return error_response(
-                                        f'Unsupported variable type {type(sample_data)} in column {column.name}'
+                                        f'Unsupported variable type {column.data_type} in column {column.name}'
                                     )
                                 try:
                                     # insert values
@@ -765,6 +769,9 @@ class ObservedFileViewSet(viewsets.ModelViewSet):
             self.check_object_permissions(self.request, file)
         except ObservedFile.DoesNotExist:
             return error_response('Requested file not found')
+        TimeseriesDataFloat.objects.filter(column__dataset__file=file).delete()
+        TimeseriesDataInt.objects.filter(column__dataset__file=file).delete()
+        TimeseriesDataStr.objects.filter(column__dataset__file=file).delete()
         file.state = FileState.RETRY_IMPORT
         file.save()
         return Response(self.get_serializer(file, context={'request': request}).data)

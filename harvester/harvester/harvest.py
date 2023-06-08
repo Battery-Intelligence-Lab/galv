@@ -94,10 +94,6 @@ def import_file(core_path: str, file_path: str) -> bool:
 
         # Send metadata
         core_metadata, extra_metadata = input_file.load_metadata()
-        # append sample_data to extra_metadata so the server can identify the data type
-        for column, props in extra_metadata.items():
-            if not props.get('sample_data'):
-                props['sample_data'] = 1.0 if props.get('is_numeric') else '1'
         report = report_harvest_result(
             path=core_path,
             file=file_path,
@@ -123,7 +119,6 @@ def import_file(core_path: str, file_path: str) -> bool:
         columns = upload_info.get('columns')
 
         # Figure out column data
-        column_data = {}
         if len(columns):
             mapping = {c.get('name'): c.get('id') for c in columns}
         else:
@@ -135,18 +130,25 @@ def import_file(core_path: str, file_path: str) -> bool:
         start_row = last_uploaded_record if last_uploaded_record is not None else 0
         # Find out if there's a Sample number column, otherwise we use the row number
         record_number_column = [k for k, v in mapping.items() if v == default_column_ids['Sample Number']]
-        record_number_column = record_number_column[0] if len(record_number_column) else None
+        if len(record_number_column):
+            record_number_column = record_number_column[0]
+            column_data = {}
+        else:
+            record_number_column = None
+            column_data = {"Sample Number": {
+                "column_id": default_column_ids["Sample Number"],
+                "official_sample_counter": True,
+                "values": []
+            }}
+
         # TODO: is this actually determined correctly? Seems there are actually lots of data columns we miss??
         # Anyway, leaving this as instructed because everyone's happy with it as is.
         columns_with_data = [c for c in input_file.column_info.keys() if input_file.column_info[c].get('has_data')]
         generator = input_file.load_data(input_file.file_path, columns_with_data)
         start = time.process_time()
         new_row = {}
-        sample_data = {}
         for i, r in enumerate(generator):
-            if i == 0:
-                sample_data = r
-            if int(r.get(record_number_column, i)) <= start_row:
+            if start_row > 0 and int(r.get(record_number_column, i)) <= start_row:
                 continue
             # Data are stored up in rows and shipped out when
             # adding the current row would exceed the server data
@@ -186,18 +188,11 @@ def import_file(core_path: str, file_path: str) -> bool:
                 for k, v in new_row.items():
                     column_data[k]['values'].append(v)
 
-            new_row = {}
+            # Make sure we send record numbers to the server
+            new_row = {"Sample Number": i} if record_number_column is None else {}
 
             for k, v in r.items():
-                if k == record_number_column:
-                    continue
-                if k in column_data:
-                    # # Timestamps are stored using float conversion
-                    # try:
-                    #     new_row[k] = dateutil.parser.parse(v).timestamp()
-                    # except ValueError:
-                    new_row[k] = v
-                else:
+                if k not in column_data:
                     column_data[k] = {}
                     if k in mapping:
                         column_data[k]['column_id'] = mapping[k]
@@ -208,7 +203,19 @@ def import_file(core_path: str, file_path: str) -> bool:
                         else:
                             column_data[k]['unit_id'] = default_units['Unitless']
                     column_data[k]['values'] = []
-                    column_data[k]['sample_data'] = sample_data[k]
+                    if k == record_number_column:
+                        sample_counters = [k for k, v in column_data.items() if v.get('official_sample_counter')]
+                        if len(sample_counters) > 0:
+                            logger.error(f"Cannot set more than one official_sample_counter column ({[*sample_counters, k]})")
+                            return False
+                        column_data[k]['official_sample_counter'] = True
+                new_row[k] = v
+
+            if i == 1:
+                # Determine data types from first row via json serialization
+                types_row = json.loads(json.dumps(new_row, cls=NpEncoder))
+                for k in column_data.keys():
+                    column_data[k]['data_type'] = type(types_row[k]).__name__
 
         # Send data
         report = report_harvest_result(path=core_path, file=file_path, content={

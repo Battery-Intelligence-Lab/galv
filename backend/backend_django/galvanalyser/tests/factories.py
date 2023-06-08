@@ -18,7 +18,6 @@ from galvanalyser.models import Harvester, \
     Equipment, \
     DataUnit, \
     DataColumnType, \
-    DataColumnStringKeys, \
     DataColumn, \
     TimeseriesData, \
     TimeseriesRangeLabel, \
