@@ -83,7 +83,7 @@ acquire the files from the remote repository.
 
 .. code-block:: bash
 
-  docker-compose run --rm harvester cd /usr && python -m unittest discover -s /usr/harvester/test
+  docker-compose -f docker-compose.test.yml run --rm harvester_test
 
 
 Backend unit tests
@@ -103,7 +103,7 @@ Frontend unit tests are run with ``Jest``.
 
 .. code-block:: bash
 
-	docker-compose -f docker-compose.test.yml run --rm frontend npm test
+	docker-compose -f docker-compose.test.yml run --rm frontend_test npm test
 
 ********************************************************************************
 Components and Technology
