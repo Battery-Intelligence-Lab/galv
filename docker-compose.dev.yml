@@ -42,9 +42,9 @@ services:
     environment:
       DJANGO_SETTINGS: "dev"
 
-#  nginx-proxy:
-#    restart: "no"
-#    entrypoint: [ "echo", "Service nginx-proxy disabled in development mode" ]
+  postgres:
+    ports:
+      - "5432:5432"
 
   nginx-proxy-acme-companion:
     restart: "no"

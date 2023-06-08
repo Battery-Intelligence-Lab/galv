@@ -27,7 +27,9 @@ export type ColumnFields = {
   dataset: string;
   is_numeric: boolean;
   type_name: string;
+  data_type: string;
   description: string;
+  official_sample_counter: boolean;
   unit: UnitFields;
   values: string;
 }
@@ -65,7 +67,6 @@ function Chart(props: DatasetChartProps & {filter: string}) {
       .then(columns => {
         const cols = columns
           .map(c => c.content)
-          .filter(c => c.is_numeric)
           .sort((arg1, arg2) => {
             const priority_cols = [VOLTAGE_COLUMN, AMPS_COLUMN]
             const args = [arg1, arg2].map(a => priority_cols.includes(a.type_name)? a.id + 1000 : a.id)
@@ -75,7 +76,7 @@ function Chart(props: DatasetChartProps & {filter: string}) {
         const time = cols.find(c => c.type_name === TEST_TIME_COLUMN)
         const volts = cols.find(c => c.type_name === VOLTAGE_COLUMN)
         const amps = cols.find(c => c.type_name === AMPS_COLUMN)
-        setColumns(cols)
+        setColumns(cols.filter(c => !c.official_sample_counter))
         setKeyColumns({time, volts, amps})
         if (time)
           fetchColumnData(time)

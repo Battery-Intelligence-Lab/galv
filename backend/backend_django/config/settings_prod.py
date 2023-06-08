@@ -106,7 +106,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': 'postgres',
         'HOST': os.environ.get('POSTGRES_HOST', 'postgres'),
-        'PORT': os.environ.get('POSTGRES_PORT', 5433),
+        'PORT': os.environ.get('POSTGRES_PORT', 5432),
         'USER': 'postgres',
         'PASSWORD': os.environ.get('POSTGRES_PASSWORD'),
         'TEST': {'NAME': f"test_galvanalyser"}

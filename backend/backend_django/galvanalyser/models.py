@@ -344,6 +344,8 @@ class DataColumn(models.Model):
         on_delete=models.CASCADE,
         help_text="Column Type which this Column instantiates"
     )
+    official_sample_counter = models.BooleanField(default=False)
+    data_type = models.TextField(null=False, help_text="Type of the data in this column")
     name = models.TextField(null=False, help_text="Column title e.g. in .tsv file headers")
 
     def __str__(self):
@@ -352,71 +354,64 @@ class DataColumn(models.Model):
     class Meta:
         unique_together = [['dataset', 'name']]
 
+# Timeseries data comes in different types, so we need to store them separately.
+# These helper functions reduce redundancy in the code that creates the models.
 
-class DataColumnStringKeys(models.Model):
-    """
-    String values are not allowed in TimeseriesData,
-    so instead we store integer keys whose string values
-    can be looked up in this table.
-    """
-    column = models.ForeignKey(
+
+def _timeseries_column_field():
+    return models.OneToOneField(
         to=DataColumn,
-        related_name='string_keys',
-        on_delete=models.CASCADE,
-        help_text="Column whose string values are mapped"
-    )
-    key = models.PositiveBigIntegerField(
-        null=False,
-        help_text="Value in the Column's TimeseriesData"
-    )
-    string = models.TextField(null=False, help_text="String to be substituted for key value")
-
-    class Meta:
-        unique_together = [['column', 'key', 'string']]
-
-
-class TimeseriesData(models.Model):
-    column = models.OneToOneField(
-        to=DataColumn,
-        related_name='values',
         on_delete=models.CASCADE,
         help_text="Column whose data are listed"
     )
-    values = None
-
-    def __str__(self):
-        if not self.values:
-            raise UnsupportedTimeseriesDataTypeError('Cannot use unspecified base class TimeseriesData')
-        if len(self.values) > 5:
-            return f"{self.column_id}: [{','.join(self.values[:5])}...]"
-        return f"{self.column_id}: [{','.join(self.values)}]"
-
-    def __repr__(self):
-        return str(self)
 
 
-class TimeseriesDataFloat(TimeseriesData):
+def _timeseries_str(self):
+    if not self.values:
+        return f"{self.column_id}: []"
+    if len(self.values) > 5:
+        return f"{self.column_id}: [{','.join(self.values[:5])}...]"
+    return f"{self.column_id}: [{','.join(self.values)}]"
+
+
+def _timeseries_repr(self):
+    return str(self)
+
+
+class TimeseriesDataFloat(models.Model):
+    column = _timeseries_column_field()
     values = ArrayField(models.FloatField(null=True), null=True, help_text="Row values (floats) for Column")
+    __str__ = _timeseries_str
+    __repr__ = _timeseries_repr
 
 
-class TimeseriesDataInt(TimeseriesData):
+class TimeseriesDataInt(models.Model):
+    column = _timeseries_column_field()
     values = ArrayField(models.IntegerField(null=True), null=True, help_text="Row values (integers) for Column")
+    __str__ = _timeseries_str
+    __repr__ = _timeseries_repr
 
 
-class TimeseriesDataStr(TimeseriesData):
+class TimeseriesDataStr(models.Model):
+    column = _timeseries_column_field()
     values = ArrayField(models.TextField(null=True), null=True, help_text="Row values (str) for Column")
+    __str__ = _timeseries_str
+    __repr__ = _timeseries_repr
 
 
 class UnsupportedTimeseriesDataTypeError(TypeError):
     pass
 
 
-def get_timeseries_handler_by_type(type: type) -> Type[TimeseriesDataFloat | TimeseriesDataStr | TimeseriesDataInt]:
-    if type == float:
+def get_timeseries_handler_by_type(data_type: str) -> Type[TimeseriesDataFloat | TimeseriesDataStr | TimeseriesDataInt]:
+    """
+    Returns the appropriate TimeseriesData model for the given data type.
+    """
+    if data_type == "float":
         return TimeseriesDataFloat
-    if type == str:
+    if data_type == "str":
         return TimeseriesDataStr
-    if type == int:
+    if data_type == "int":
         return TimeseriesDataInt
     raise UnsupportedTimeseriesDataTypeError
 

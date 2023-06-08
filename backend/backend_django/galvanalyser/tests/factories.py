@@ -18,9 +18,7 @@ from galvanalyser.models import Harvester, \
     Equipment, \
     DataUnit, \
     DataColumnType, \
-    DataColumnStringKeys, \
     DataColumn, \
-    TimeseriesData, \
     TimeseriesRangeLabel, \
     FileState
 from django.contrib.auth.models import User, Group

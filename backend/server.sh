@@ -18,7 +18,7 @@ python manage.py collectstatic --noinput
 >&2 echo "Waiting for Postgres to start"
 
 while [ $PGUP -ne 0 ]; do
-  pg_isready -d "postgresql://postgres:galvanalyser@${POSTGRES_HOST:-postgres}:${POSTGRES_PORT:-5433}/postgres"
+  pg_isready -d "postgresql://postgres:galvanalyser@${POSTGRES_HOST:-postgres}:${POSTGRES_PORT:-5432}/postgres"
   PGUP=$?
   >&2 echo "Postgres is unavailable - sleeping"
   sleep 1
