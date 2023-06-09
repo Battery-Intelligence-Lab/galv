@@ -29,8 +29,8 @@ export default function GetDatasetMatlab({dataset}) {
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % login to galvanalyser > Generate API Token
-token = '${token}';
-apiURL = '${host}/datasets';
+token = '4244dc4e49acf8eebe4ea134d37d789f9cb1e359c9b09ca3e862288ddfb6831b';
+apiURL = 'http://api.galvanalyser.oxrse.uk/datasets';
 options = weboptions('HeaderFields', {'Authorization' ['Bearer ' token]});
 
 % Datasets can be referenced by name or by id. 
@@ -38,7 +38,7 @@ options = weboptions('HeaderFields', {'Authorization' ['Bearer ' token]});
 % You can add in additional dataset_names or dataset_ids to also
 % fetch the contents of those datasets.
 dataset_names = [];
-dataset_ids = [${dataset.id}]; % add additional dataset ids here if required
+dataset_ids = [3, 4]; % add additional dataset ids here if required
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -51,7 +51,7 @@ end
 dataset_ids = string(dataset_ids(:));
 dataset_ids = unique(dataset_ids);
 
-data = {};
+data(1, length(dataset_ids)) = struct();
 
 for i = 1:length(dataset_ids)
     d = dataset_ids(i);
@@ -59,15 +59,22 @@ for i = 1:length(dataset_ids)
     % get data
     dsURL = strcat(apiURL, '/', d, '/');
     meta = webread(dsURL, options);
+
+    col_data = {};
     
     % append column data in columns
     for c = 1:length(meta.columns)
-        cURL = strjoin([dsURL, meta.columns(c).id], '/');
+        cURL = meta.columns{c};
         stream = webread(cURL, options);
-        meta.columns(c).data = stream;
+        meta.column_details{c} = stream;
+        column_content = webread(stream.values, options);
+        % drop final newline
+        column_content = regexprep(column_content, '\n$', '');
+        column_content = strsplit(column_content, '\n');
+        column_content = arrayfun(@(c) str2num(c{1}), column_content);
+        col_data{c} = column_content;
     end
-    
-    data{i} = meta;
+    data(i).columns = col_data;
 end`
 
   return (
