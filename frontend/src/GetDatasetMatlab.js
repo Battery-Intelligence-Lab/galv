@@ -11,7 +11,7 @@ export default function GetDatasetMatlab({dataset}) {
   let domain = window.location.href.split('/')[2];
   domain = domain.split(':')[0]
 
-  const host = `http://api.${domain}`
+  const host = Connection.url || `${window.location.protocol}//api.${domain}/`;
   const codeString = `%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % 
 % galvanalyser REST API access
@@ -29,8 +29,8 @@ export default function GetDatasetMatlab({dataset}) {
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % login to galvanalyser > Generate API Token
-token = '4244dc4e49acf8eebe4ea134d37d789f9cb1e359c9b09ca3e862288ddfb6831b';
-apiURL = 'http://api.galvanalyser.oxrse.uk/datasets';
+token = '${token}';
+apiURL = '${host}datasets';
 options = weboptions('HeaderFields', {'Authorization' ['Bearer ' token]});
 
 % Datasets can be referenced by name or by id. 
