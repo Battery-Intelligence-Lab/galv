@@ -43,12 +43,15 @@ if [ -z "${DJANGO_TEST}" ]; then
     >&2 echo "Launching dev server"
     python manage.py runserver 0.0.0.0:80
   else
-    >&2 echo "Launching production server with gunicorn"
+    WORKERS_PER_CPU=${GUNICORN_WORKERS_PER_CPU:-2}
+    WORKERS=$(expr $WORKERS_PER_CPU \* $(grep -c ^processor /proc/cpuinfo))
+    >&2 echo "Launching production server with gunicorn ($WORKERS workers [${WORKERS_PER_CPU} per CPU])"
     gunicorn config.wsgi \
       --env DJANGO_SETTINGS_MODULE=config.settings \
       --bind 0.0.0.0:80 \
       --access-logfile - \
-      --error-logfile -
+      --error-logfile - \
+      --workers=$WORKERS
   fi
 else
   python manage.py test --noinput
