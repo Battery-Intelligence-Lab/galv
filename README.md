@@ -45,7 +45,9 @@ The schema can be downloaded from the [documentation page](https://Battery-Intel
 A diagram of the logical structure of the system is shown below. The arrows indicate the 
 direction of data flow.
 
-<img src="docs/source/img/GalvanalyserStructure.PNG" alt="Data flows from battery cycling machines to Galvanalyser Harvesters, then to the Galvanalyser server and REST API. Metadata can be updated and data read using the web client, and data can be downloaded by the Python client." width="600" />
+<p align="center">
+    <img src="docs/source/img/GalvanalyserStructure.PNG" alt="Data flows from battery cycling machines to Galvanalyser Harvesters, then to the     Galvanalyser server and REST API. Metadata can be updated and data read using the web client, and data can be downloaded by the Python client." width="600" />
+</p>
 
 
 ## Project documentation
