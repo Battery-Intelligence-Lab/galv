@@ -2,29 +2,30 @@
 # Copyright  (c) 2020-2023, The Chancellor, Masters and Scholars of the University
 # of Oxford, and the 'Galvanalyser' Developers. All rights reserved.
 
-worker_processes 1;
-
-user nobody nogroup;
-# 'user nobody nobody;' for systems with 'nobody' as a group instead
 error_log  /var/log/nginx/error.log warn;
-pid /var/run/nginx.pid;
 
-events { }
+server {
+    listen       80;
+    server_name  localhost;
 
-
-http {
-   server {
-    listen 80;
-
-    # redirect 404 errors to homepage to avoid weird behaviour navigating directly to React-routed pages
-    error_page 404 =200 /;
     client_max_body_size 100M;
 
-    # serve the static files
+    access_log  /var/log/nginx/access.log  main;
+    error_log /var/log/nginx/error.log debug;
+
     location / {
-      root /usr/share/nginx/html;
+        root   /usr/share/nginx/html;
+        index  index.html index.htm;
+				# Serve index for any route that doesn't have a file extension (e.g. /devices)
+				# https://stackoverflow.com/a/45599233
+        try_files $uri $uri/ /index.html;
     }
 
-   }
-}
+    #error_page  404              /404.html;
 
+    # redirect server error pages to the static page /50x.html
+    error_page   500 502 503 504  /50x.html;
+    location = /50x.html {
+        root   /usr/share/nginx/html;
+    }
+}

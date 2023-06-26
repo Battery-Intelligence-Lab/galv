@@ -24,7 +24,7 @@ RUN yarn build
 
 FROM nginx:alpine
 COPY --from=build /app/build /usr/share/nginx/html
-COPY --from=build /app/nginx.conf.template /nginx.conf.template
+COPY --from=build /app/nginx.conf.template /etc/nginx/conf.d/custom.conf
 
 EXPOSE 80
 CMD ["/bin/sh" , "-c" , "exec nginx -g 'daemon off;'"]
