@@ -5,9 +5,3 @@ location /django_static/ {
   alias /app/static/;
   add_header Access-Control-Allow-Origin *;
 }
-
-# Serve index for any route that doesn't have a file extension (e.g. /devices)
-# https://stackoverflow.com/a/45599233
-location / {
-  try_files $uri $uri/ /index.html;
-}
