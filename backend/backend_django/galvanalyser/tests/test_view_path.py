@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: BSD-2-Clause
 # Copyright  (c) 2020-2023, The Chancellor, Masters and Scholars of the University
 # of Oxford, and the 'Galvanalyser' Developers. All rights reserved.
-
+import json
 import unittest
 from django.urls import reverse
 from rest_framework import status
@@ -77,17 +77,17 @@ class MonitoredPathTests(APITestCase):
         url = reverse('monitoredpath-detail', args=(path.id,))
         print("Test update rejected - authorisation")
         self.client.force_login(self.user)
-        body = {'path': path.path, 'stable_time': 100}
+        body = {'path': path.path, 'regex': None, 'stable_time': 100}
         self.assertEqual(
-            self.client.patch(url, body).status_code,
+            self.client.patch(url, json.dumps(body)).status_code,
             status.HTTP_404_NOT_FOUND
         )
         print("OK")
         print("Test update okay")
         self.client.force_login(self.admin_user)
-        body = {'path': path.path, 'regex': 'null', 'stable_time': 1}
+        body = {'path': path.path, 'regex': None, 'stable_time': 1}
         self.assertEqual(
-            self.client.patch(url, body).status_code,
+            self.client.patch(url, json.dumps(body)).status_code,
             status.HTTP_200_OK
         )
         self.assertEqual(
