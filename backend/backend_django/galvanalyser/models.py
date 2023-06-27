@@ -94,6 +94,12 @@ class MonitoredPath(models.Model):
         help_text="Harvester with access to this directory"
     )
     path = models.TextField(help_text="Directory location on Harvester")
+    regex = models.TextField(
+        null=True,
+        help_text="""
+    Python.re regular expression to filter files by, 
+    applied to full file name starting from this Path's directory"""
+    )
     stable_time = models.PositiveSmallIntegerField(
         default=60,
         help_text="Number of seconds files must remain stable to be processed"

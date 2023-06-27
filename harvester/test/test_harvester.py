@@ -27,7 +27,8 @@ class ConfigResponse:
             "monitored_paths": [
                 {
                     "path": get_test_file_path(),
-                    "stable_time": 0
+                    "stable_time": 0,
+                    "regex": "^(?!.*\\.skip$).*$",
                 }
             ],
             "standard_units": [
@@ -190,6 +191,7 @@ class TestHarvester(unittest.TestCase):
     def test_harvest_path(self, mock_logger, mock_import, mock_report):
         # Create an unparsable file in the test set
         Path(os.path.join(get_test_file_path(), 'unparsable.foo')).touch(exist_ok=True)
+        Path(os.path.join(get_test_file_path(), 'skipped_by_regex.skip')).touch(exist_ok=True)
         mock_logger.error = fail
         mock_report.return_value = JSONResponse(200, {'state': 'STABLE'})
         mock_import.return_value = True

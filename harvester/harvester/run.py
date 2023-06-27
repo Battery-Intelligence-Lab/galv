@@ -3,6 +3,7 @@
 # of Oxford, and the 'Galvanalyser' Developers. All rights reserved.
 
 import os.path
+import re
 import time
 
 from .parse.exceptions import UnsupportedFileTypeError
@@ -32,16 +33,23 @@ def harvest():
     logger.debug(paths)
 
     for path in paths:
-        harvest_path(path.get('path'))
+        harvest_path(path.get('path'), path.get('regex'))
 
 
-def harvest_path(path: os.PathLike):
-    logger.info(f"Harvesting from {path}")
+def harvest_path(path: os.PathLike, regex_str: str = None):
+    if regex_str is not None:
+        logger.info(f"Harvesting from {path} with regex {regex_str}")
+    else:
+        logger.info(f"Harvesting from {path}")
     try:
+        regex = re.compile(regex_str) if regex_str is not None else None
         for (dir_path, dir_names, filenames) in os.walk(path):
             for filename in filenames:
                 full_path = os.path.join(dir_path, filename)
                 core_path, file_path = split_path(path, full_path)
+                if regex is not None and not regex.match(file_path):
+                    logger.debug(f"Skipping {file_path} as it does not match regex {regex}")
+                    continue
                 try:
                     get_import_file_handler(full_path)
                 except UnsupportedFileTypeError:
