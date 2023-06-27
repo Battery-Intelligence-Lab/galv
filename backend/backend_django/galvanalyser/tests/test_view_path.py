@@ -26,7 +26,7 @@ class MonitoredPathTests(APITestCase):
         self.user = UserFactory.create(username='test_paths_user')
         self.user.groups.add(self.harvester.user_group)
         self.admin_user = UserFactory.create(username='test_paths_admin')
-        self.admin_user.groups.add(self.path.admin_group)
+        self.admin_user.groups.add(self.harvester.admin_group)
 
     def test_create(self):
         self.client.force_login(self.non_user)
@@ -73,6 +73,7 @@ class MonitoredPathTests(APITestCase):
 
     def test_update(self):
         path = MonitoredPathFactory.create(path=self.path, harvester=self.harvester)
+        self.admin_user.groups.add(path.admin_group)
         url = reverse('monitoredpath-detail', args=(path.id,))
         print("Test update rejected - authorisation")
         self.client.force_login(self.user)
