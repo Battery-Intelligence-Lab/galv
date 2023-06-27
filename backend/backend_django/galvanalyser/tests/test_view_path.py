@@ -85,7 +85,7 @@ class MonitoredPathTests(APITestCase):
         print("OK")
         print("Test update okay")
         self.client.force_login(self.admin_user)
-        body = {'path': path.path, 'stable_time': 1}
+        body = {'path': path.path, 'regex': 'null', 'stable_time': 1}
         self.assertEqual(
             self.client.patch(url, body).status_code,
             status.HTTP_200_OK
