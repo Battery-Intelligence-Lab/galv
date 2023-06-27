@@ -27,7 +27,7 @@ class ObservedFileTests(APITestCase):
         self.user = UserFactory.create(username='test_user')
         self.admin_user = UserFactory.create(username='test_user_admin')
         self.user.groups.add(self.harvester.user_group)
-        self.admin_user.groups.add(self.harvester.admin_group)
+        self.admin_user.groups.add(self.path.admin_group)
         self.url = reverse('observedfile-detail', args=(self.files[0].id,))
 
     def test_view(self):
