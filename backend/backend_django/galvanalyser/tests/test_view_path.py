@@ -76,7 +76,7 @@ class MonitoredPathTests(APITestCase):
         url = reverse('monitoredpath-detail', args=(path.id,))
         print("Test update rejected - authorisation")
         self.client.force_login(self.user)
-        body = {'path': path.path, 'regex': None, 'stable_time': 100}
+        body = {'path': path.path, 'stable_time': 100}
         self.assertEqual(
             self.client.patch(url, body).status_code,
             status.HTTP_404_NOT_FOUND
@@ -84,7 +84,7 @@ class MonitoredPathTests(APITestCase):
         print("OK")
         print("Test update okay")
         self.client.force_login(self.admin_user)
-        body = {'path': path.path, 'regex': None, 'stable_time': 1}
+        body = {'path': path.path, 'stable_time': 1}
         self.assertEqual(
             self.client.patch(url, body).status_code,
             status.HTTP_200_OK
