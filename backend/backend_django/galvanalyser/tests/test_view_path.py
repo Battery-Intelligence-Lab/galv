@@ -77,26 +77,26 @@ class MonitoredPathTests(APITestCase):
         url = reverse('monitoredpath-detail', args=(path.id,))
         print("Test update rejected - authorisation")
         self.client.force_login(self.user)
-        body = {'path': path.path, 'regex': None, 'stable_time': 100}
+        body = {'path': path.path, 'regex': '^abc', 'stable_time': 100}
         self.assertEqual(
-            self.client.patch(url, json.dumps(body)).status_code,
+            self.client.patch(url, body).status_code,
             status.HTTP_404_NOT_FOUND
         )
         print("OK")
         print("Test update okay")
         self.client.force_login(self.admin_user)
-        body = {'path': path.path, 'regex': None, 'stable_time': 1}
+        body = {'path': path.path, 'regex': '^abc', 'stable_time': 1}
         self.assertEqual(
-            self.client.patch(url, json.dumps(body)).status_code,
+            self.client.patch(url, body).status_code,
             status.HTTP_200_OK
         )
         self.assertEqual(
             MonitoredPath.objects.get(path=path.path, harvester__id=self.harvester.id).stable_time,
-            1
+            body.get('stable_time')
         )
         self.assertEqual(
             MonitoredPath.objects.get(path=path.path, harvester__id=self.harvester.id).regex,
-            None
+            body.get('regex')
         )
         print("OK")
 
