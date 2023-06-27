@@ -692,8 +692,7 @@ class MonitoredPathViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return MonitoredPath.objects.filter(
             Q(user_group__in=self.request.user.groups.all()) |
-            Q(admin_group__in=self.request.user.groups.all()) |
-            Q(harvester__admin_group__in=self.request.user.groups.all())
+            Q(admin_group__in=self.request.user.groups.all())
         ).order_by('-id')
 
 
@@ -758,8 +757,7 @@ class ObservedFileViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return ObservedFile.objects.filter(
             Q(monitored_path__user_group__in=self.request.user.groups.all()) |
-            Q(monitored_path__admin_group__in=self.request.user.groups.all()) |
-            Q(monitored_path__harvester__admin_group__in=self.request.user.groups.all())
+            Q(monitored_path__admin_group__in=self.request.user.groups.all())
         ).order_by('-last_observed_time', '-id')
 
     @action(detail=True, methods=['GET'])
@@ -822,8 +820,7 @@ class DatasetViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return Dataset.objects.filter(
             Q(file__monitored_path__user_group__in=self.request.user.groups.all()) |
-            Q(file__monitored_path__admin_group__in=self.request.user.groups.all()) |
-            Q(file__monitored_path__harvester__admin_group__in=self.request.user.groups.all())
+            Q(file__monitored_path__admin_group__in=self.request.user.groups.all())
         ).order_by('-date', '-id')
 
 
@@ -861,8 +858,7 @@ class HarvestErrorViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         return HarvestError.objects.filter(
             Q(path__user_group__in=self.request.user.groups.all()) |
-            Q(path__admin_group__in=self.request.user.groups.all()) |
-            Q(harvester__admin_group__in=self.request.user.groups.all())
+            Q(path__admin_group__in=self.request.user.groups.all())
         ).order_by('-timestamp')
 
 
@@ -1144,8 +1140,7 @@ class DataColumnViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         datasets_ids = [d.id for d in Dataset.objects.filter(
             Q(file__monitored_path__user_group__in=self.request.user.groups.all()) |
-            Q(file__monitored_path__admin_group__in=self.request.user.groups.all()) |
-            Q(file__monitored_path__harvester__admin_group__in=self.request.user.groups.all())
+            Q(file__monitored_path__admin_group__in=self.request.user.groups.all())
         ).only('id')]
         return DataColumn.objects.filter(dataset_id__in=datasets_ids).order_by('-dataset_id', '-id')
 
