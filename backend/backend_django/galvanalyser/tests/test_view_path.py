@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: BSD-2-Clause
 # Copyright  (c) 2020-2023, The Chancellor, Masters and Scholars of the University
 # of Oxford, and the 'Galvanalyser' Developers. All rights reserved.
-
+import json
 import unittest
 from django.urls import reverse
 from rest_framework import status
@@ -48,6 +48,7 @@ class MonitoredPathTests(APITestCase):
         self.client.force_login(self.user)
         body = {
             'path': self.path,
+            'regex': '.*',
             'harvester': reverse('harvester-detail', args=(self.harvester.id,)),
             'stable_time': 60
         }
@@ -72,10 +73,11 @@ class MonitoredPathTests(APITestCase):
 
     def test_update(self):
         path = MonitoredPathFactory.create(path=self.path, harvester=self.harvester)
+        self.admin_user.groups.add(path.admin_group)
         url = reverse('monitoredpath-detail', args=(path.id,))
         print("Test update rejected - authorisation")
         self.client.force_login(self.user)
-        body = {'path': path.path, 'stable_time': 100}
+        body = {'path': path.path, 'regex': '^abc', 'stable_time': 100}
         self.assertEqual(
             self.client.patch(url, body).status_code,
             status.HTTP_404_NOT_FOUND
@@ -83,14 +85,18 @@ class MonitoredPathTests(APITestCase):
         print("OK")
         print("Test update okay")
         self.client.force_login(self.admin_user)
-        body = {'path': path.path, 'stable_time': 1}
+        body = {'path': path.path, 'regex': '^abc', 'stable_time': 1}
         self.assertEqual(
             self.client.patch(url, body).status_code,
             status.HTTP_200_OK
         )
         self.assertEqual(
             MonitoredPath.objects.get(path=path.path, harvester__id=self.harvester.id).stable_time,
-            1
+            body.get('stable_time')
+        )
+        self.assertEqual(
+            MonitoredPath.objects.get(path=path.path, harvester__id=self.harvester.id).regex,
+            body.get('regex')
         )
         print("OK")
 

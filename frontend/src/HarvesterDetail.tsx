@@ -22,6 +22,7 @@ export type MonitoredPathFields = {
   harvester: number;
   stable_time: number;
   path: string;
+  regex: string;
   user_sets: UserSet[];
 }
 export type HarvesterDetailProps = {
@@ -42,13 +43,14 @@ export default function HarvesterDetail(props: HarvesterDetailProps) {
   const deletePath = (data: MonitoredPathFields) => Connection.fetch(data.url, {method: 'DELETE'})
 
   const updatePath = (data: MonitoredPathFields) => {
-    const insert_data = {path: data.path, stable_time: data.stable_time}
+    const insert_data = {path: data.path, regex: data.regex, stable_time: data.stable_time}
     return Connection.fetch(data.url, {body: JSON.stringify(insert_data), method: 'PATCH'})
       .then(r => r.content)
   };
 
   const columns = [
     {label: 'Path', help: 'Directory to watch'},
+    {label: 'RegEx', help: 'Python.re regular expression applied to filename after Path. Matching files will be imported'},
     {label: 'Stable Time (s)', help: 'Seconds files must remain unchanged to be considered stable and imported'},
     {label: 'Users', help: 'Users with access to this path\'s datasets'},
     {label: 'Actions', help: 'Inspect / Save / Delete monitored path (imported datasets will remain)'},
@@ -74,6 +76,19 @@ export default function HarvesterDetail(props: HarvesterDetailProps) {
               placeholder="/new/directory/path"
               value={row.path}
               name="path"
+              onChange={context.update}
+            />
+          </Fragment>,
+          <Fragment>
+            <TextField
+              InputProps={{
+                classes: {
+                  input: classes.resize,
+                }
+              }}
+              placeholder=".*"
+              value={row.regex}
+              name="regex"
               onChange={context.update}
             />
           </Fragment>,

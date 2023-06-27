@@ -75,6 +75,7 @@ class MonitoredPathFactory(factory.django.DjangoModelFactory):
         )
 
     path = factory.LazyAttribute(lambda x: os.path.dirname(x.p))
+    regex = ".*"
     harvester = factory.SubFactory(HarvesterFactory)
 
     @factory.post_generation

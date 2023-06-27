@@ -290,6 +290,13 @@ class MonitoredPathSerializer(serializers.HyperlinkedModelSerializer):
         except (TypeError, ValueError, AssertionError):
             raise ValidationError(f"stable_time value '{value}' is not a positive integer")
 
+    def validate_regex(self, value):
+        try:
+            re.compile(value)
+            return value
+        except BaseException as e:
+            raise ValidationError(f"Invalid regex: {e.__context__}")
+
     def validate(self, attrs):
         # Verify user is allowed to create/modify paths
         if self.instance is not None:
@@ -308,7 +315,7 @@ class MonitoredPathSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = MonitoredPath
-        fields = ['url', 'id', 'path', 'stable_time', 'harvester', 'user_sets']
+        fields = ['url', 'id', 'path', 'regex', 'stable_time', 'harvester', 'user_sets']
         read_only_fields = ['url', 'id', 'harvester', 'user_sets']
         extra_kwargs = augment_extra_kwargs()
 
