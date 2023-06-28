@@ -77,8 +77,8 @@ describe('HarvesterDetail', () => {
             {
                 body: JSON.stringify({
                     harvester: mock_harvester.url,
-                    regex: '^[^T]',
                     path: new_path,
+                    regex: '^[^T]',
                     stable_time: new_stable_time.toString(),
                 }),
                 method: 'POST'
