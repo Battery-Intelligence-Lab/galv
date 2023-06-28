@@ -245,6 +245,14 @@ It is a good idea to use `Docker's volume mounting <https://docs.docker.com/stor
 to provide easily reachable paths to the Harvester which can then be 
 registered as Monitored paths.
 
+Monitored paths have a `Python Regular Expression <https://docs.python.org/3/library/re.html>`_
+that is used to match files in the directory (the default is ``.*``).
+The expression is applied to the filename after the Monitored path itself.
+If your Monitored path is ``/data`` and your regular expression is ``^[a-z]+\.csv$``,
+then the Harvester will match files like ``/data/abc.csv`` and ``/data/def.csv``.
+The Monitored path regex can be used to group files with particular extensions,
+with a particular format to their names, or to identify subdirectories
+(although the subdirectories could be added as separate Monitored paths).
 
 .. _datasets:
 
