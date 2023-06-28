@@ -17,8 +17,7 @@ import useStyles from "./UseStyles";
 export type FileFields = {
   url: string;
   id: number;
-  monitored_path: string;
-  relative_path: string;
+  path: string;
   state: string;
   last_observed_time: string;
   last_observed_size: number;
@@ -67,7 +66,7 @@ export default function Files(props: FilesProps) {
           key="files"
           columns={columns}
           row_generator={(file, context) => [
-            <Fragment>{file.relative_path}</Fragment>,
+            <Fragment>{file.path}</Fragment>,
             <Fragment>{file.last_observed_size}</Fragment>,
             <Fragment>{
               Intl.DateTimeFormat('en-GB', datetimeOptions).format(

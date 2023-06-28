@@ -52,7 +52,7 @@ describe('Files', () => {
             false
         )
 
-        expect(await screen.findByText(mock_files[0].relative_path)).toBeInTheDocument();
+        expect(await screen.findByText(mock_files[0].path)).toBeInTheDocument();
     });
 
     it('sends an API call when reimported', async () => {

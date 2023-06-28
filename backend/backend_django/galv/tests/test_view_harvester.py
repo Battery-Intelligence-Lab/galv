@@ -215,17 +215,17 @@ class HarvesterTests(GalvTestCase):
         print("Test error with new file")
         response = self.client.post(
             url,
-            {'status': 'error', 'error': 'test', 'path': path, 'file': 'new/file.ext'},
+            {'status': 'error', 'error': 'test', 'path': path + 'new/file.ext'},
             **headers
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        f = ObservedFile.objects.get(relative_path='new/file.ext', monitored_path__id=paths[0].id)
-        HarvestError.objects.get(harvester__id=harvester.id, path__id=paths[0].id, file__id=f.id)
+        f = ObservedFile.objects.get(path=path + '/new/file.ext', harvester_id=harvester.id)
+        HarvestError.objects.get(harvester__id=harvester.id, file__id=f.id)
         print("OK")
         print("Test error with existing file")
         response = self.client.post(
             url,
-            {'status': 'error', 'error': 'test', 'path': path, 'file': f.relative_path},
+            {'status': 'error', 'error': 'test', 'path': path + 'new/file.ext'},
             **headers
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)

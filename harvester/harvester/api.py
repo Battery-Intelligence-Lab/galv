@@ -15,7 +15,6 @@ logger = get_logger(__file__)
 def report_harvest_result(
         path: os.PathLike|str,
         content=None,
-        file: os.PathLike|str = None,
         error: BaseException = None
 ):
     start = time.time()

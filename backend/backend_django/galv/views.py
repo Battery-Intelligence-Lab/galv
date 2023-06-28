@@ -3,6 +3,7 @@
 # of Oxford, and the 'Galv' Developers. All rights reserved.
 
 import datetime
+import re
 
 import knox.auth
 import os
@@ -439,10 +440,10 @@ class HarvesterViewSet(viewsets.ModelViewSet):
         if request.data.get('status') is None:
             return error_response('Badly formatted request')
         try:
-            path = MonitoredPath.objects.get(path=request.data['path'], harvester=harvester)
-        except MonitoredPath.DoesNotExist:
-            return error_response('Unrecognized path')
-        except KeyError:
+            path = request.data.get('path')
+            if request.data.get('status') != 'error':
+                assert path is not None
+        except AssertionError:
             return error_response('Harvester report must specify a path')
         if request.data['status'] == 'error':
             error = request.data.get('error')
@@ -451,14 +452,12 @@ class HarvesterViewSet(viewsets.ModelViewSet):
                     error = json.dumps(error)
                 except json.JSONDecodeError:
                     error = str(error)
-            file_rel_path = request.data.get('file')
-            if file_rel_path:
+            if path:
                 HarvestError.objects.create(
                     harvester=harvester,
-                    path=path,
                     file=ObservedFile.objects.get_or_create(
-                        monitored_path=path,
-                        relative_path=file_rel_path,
+                        harvester=harvester,
+                        path=path,
                         defaults={'state': FileState.IMPORT_FAILED}
                     )[0],
                     error=str(error)
@@ -466,7 +465,6 @@ class HarvesterViewSet(viewsets.ModelViewSet):
             else:
                 HarvestError.objects.create(
                     harvester=harvester,
-                    path=path,
                     error=str(error)
                 )
             return Response({})
@@ -478,7 +476,7 @@ class HarvesterViewSet(viewsets.ModelViewSet):
             if content['task'] == 'file_size':
                 # Harvester is reporting the size of a file
                 # Update our database record and return a file status
-                file, _ = ObservedFile.objects.get_or_create(monitored_path=path, relative_path=request.data['file'])
+                file, _ = ObservedFile.objects.get_or_create(harvester=harvester, path=path)
 
                 if content.get('size') is None:
                     return error_response('file_size task requires content to include size field')
@@ -504,7 +502,7 @@ class HarvesterViewSet(viewsets.ModelViewSet):
                 return Response(ObservedFileSerializer(file, context={'request': self.request}).data)
             elif content['task'] == 'import':
                 try:
-                    file = ObservedFile.objects.get(monitored_path=path, relative_path=request.data['file'])
+                    file = ObservedFile.objects.get(harvester=harvester, path=path)
                 except ObservedFile.DoesNotExist:
                     return error_response("ObservedFile does not exist")
                 if content['status'] in ['begin', 'in_progress', 'complete']:
@@ -660,12 +658,9 @@ Alter the path to the monitored directory,
 or the time for which files need to be stable before being imported.
         """
     ),
-    destroy=extend_schema(
-        summary="Delete a Path",
-        description="""
-Stop a directory from being monitored by a Harvester.
-This will not delete datasets imported from Files in this Path.
-        """
+    files=extend_schema(
+        summary="List of files matched by this Path",
+        description="Fetch files matched by this Path's path and RegEx."
     )
 )
 class MonitoredPathViewSet(viewsets.ModelViewSet):
@@ -681,7 +676,7 @@ class MonitoredPathViewSet(viewsets.ModelViewSet):
     filterset_fields = ['path', 'harvester__id', 'harvester__name']
     search_fields = ['@path']
     queryset = MonitoredPath.objects.none().order_by('-id')
-    http_method_names = ['get', 'post', 'patch', 'delete', 'options']
+    http_method_names = ['get', 'post', 'patch', 'options']
 
     def get_serializer_class(self):
         if self.request.method.lower() == "post":
@@ -694,6 +689,19 @@ class MonitoredPathViewSet(viewsets.ModelViewSet):
             Q(user_group__in=self.request.user.groups.all()) |
             Q(admin_group__in=self.request.user.groups.all())
         ).order_by('-id')
+
+    def files(self, response, *args, **kwargs):
+        try:
+            path = self.queryset.get(id=kwargs.get('pk'))
+        except MonitoredPath.DoesNotExist:
+            return error_response("Path does not exist.", 404)
+        path_matches = ObservedFile.objects.filter(path__startswith=path.path)
+        if not path.regex:
+            out = path_matches
+        else:
+            regex = re.compile(path.regex)
+            out = [p for p in path_matches if re.search(regex, p)]
+        return Response(ObservedFileSerializer(out, many=True).data)
 
 
 @extend_schema_view(
@@ -712,8 +720,7 @@ You can see all files on any Path on which you are an Administrator or User.
 Harvester Administrators have access to all Files on the Harvester's Paths.
 
 Searchable fields:
-- monitored_path__path
-- relative_path
+- path
 - state
         """
     ),
@@ -748,8 +755,8 @@ class ObservedFileViewSet(viewsets.ModelViewSet):
     of imported files.
     """
     serializer_class = ObservedFileSerializer
-    filterset_fields = ['monitored_path__id', 'relative_path', 'state']
-    search_fields = ['@monitored_path__path', '@relative_path', 'state']
+    filterset_fields = ['harvester__id', 'path', 'state']
+    search_fields = ['@path', 'state']
     queryset = ObservedFile.objects.none().order_by('-last_observed_time', '-id')
     http_method_names = ['get', 'options']
 

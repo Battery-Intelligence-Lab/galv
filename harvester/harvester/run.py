@@ -33,8 +33,10 @@ def harvest():
     logger.debug(paths)
 
     for path in paths:
-        harvest_path(path.get('path'), path.get('regex'))
-
+        if path.get('active'):
+            harvest_path(path.get('path'), path.get('regex'))
+        else:
+            logger.info(f"Skipping inactive path {path.get('path')} {path.get('regex')}")
 
 def harvest_path(path: os.PathLike, regex_str: str = None):
     if regex_str is not None:
@@ -58,8 +60,7 @@ def harvest_path(path: os.PathLike, regex_str: str = None):
                 try:
                     logger.info(f"Reporting stats for {file_path}")
                     result = report_harvest_result(
-                        path=core_path,
-                        file=file_path,
+                        path=full_path,
                         content={
                             'task': 'file_size',
                             'size': os.stat(full_path).st_size
@@ -71,27 +72,25 @@ def harvest_path(path: os.PathLike, regex_str: str = None):
                         logger.info(f"Server assigned status '{status}'")
                         if status in ['STABLE', 'RETRY IMPORT']:
                             logger.info(f"Parsing file {file_path}")
-                            if import_file(core_path, file_path):
+                            if import_file(full_path):
                                 report_harvest_result(
-                                    path=core_path,
-                                    file=file_path,
+                                    path=full_path,
                                     content={'task': 'import', 'status': 'complete'}
                                 )
                                 logger.info(f"Successfully parsed file {file_path}")
                             else:
                                 logger.warn(f"FAILED parsing file {file_path}")
                                 report_harvest_result(
-                                    path=path,
-                                    file=file_path,
+                                    path=full_path,
                                     content={'task': 'import', 'status': 'failed'}
                                 )
                 except BaseException as e:
                     logger.error(e)
-                    report_harvest_result(path=path, file=file_path, error=e)
+                    report_harvest_result(path=full_path, error=e)
         logger.info(f"Completed directory walking of {path}")
     except BaseException as e:
         logger.error(e)
-        report_harvest_result(path=path, error=e)
+        report_harvest_result(error=e)
 
 
 def run():

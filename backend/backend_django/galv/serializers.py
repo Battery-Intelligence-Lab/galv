@@ -259,28 +259,13 @@ class MonitoredPathSerializer(serializers.HyperlinkedModelSerializer):
         except BaseException as e:
             raise ValidationError(f"Invalid path: {e.__context__}")
         abs_path = os.path.abspath(value)
-        if self.instance is not None:
-            harvester = self.instance.harvester
-        else:
+        if self.instance is None:
             try:
                 pk = resolve(urlparse(self.initial_data['harvester']).path).kwargs['pk']
-                harvester = Harvester.objects.get(id=pk)
+                Harvester.objects.get(id=pk)
             except BaseException:
                 raise ValidationError("Harvester not found")
-        all_paths = MonitoredPath.objects.filter(harvester=harvester)
-        for p in all_paths:
-            if self.instance is None or p.id != self.instance.id:
-                other_abs_path = os.path.abspath(p.path)
-                if abs_path.startswith(other_abs_path):
-                    if abs_path == os.path.abspath(p.path):
-                        raise ValidationError(f"Path already exists on harvester")
-                    raise ValidationError(f"Path is a subpath of existing path {p.path}")
-                if other_abs_path.startswith(abs_path):
-                    raise ValidationError((
-                        f"Path is a parent of existing path {p.path}. "
-                        f"Delete that path before creating this one."
-                    ))
-        return value
+        return abs_path
 
     def validate_stable_time(self, value):
         try:
@@ -315,7 +300,7 @@ class MonitoredPathSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = MonitoredPath
-        fields = ['url', 'id', 'path', 'regex', 'stable_time', 'harvester', 'user_sets']
+        fields = ['url', 'id', 'path', 'regex', 'stable_time', 'active', 'harvester', 'user_sets']
         read_only_fields = ['url', 'id', 'harvester', 'user_sets']
         extra_kwargs = augment_extra_kwargs()
 
@@ -353,13 +338,19 @@ class MonitoredPathCreateSerializer(MonitoredPathSerializer):
 
     class Meta:
         model = MonitoredPath
-        fields = ['path', 'stable_time', 'harvester']
-        extra_metadata = {'stable_time': {'required': False}}
+        fields = ['path', 'regex', 'stable_time', 'harvester']
+        extra_metadata = {
+            'regex': {'required': False},
+            'stable_time': {'required': False},
+        }
 
 
 class ObservedFileSerializer(serializers.HyperlinkedModelSerializer):
     upload_info = serializers.SerializerMethodField(
         help_text="Metadata required for harvester program to resume file parsing"
+    )
+    monitored_paths = serializers.SerializerMethodField(
+        help_text="Monitored paths that include this file"
     )
 
     def get_upload_info(self, instance) -> dict | None:
@@ -383,13 +374,12 @@ class ObservedFileSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = ObservedFile
         fields = [
-            'url', 'id',
-            'monitored_path', 'relative_path',
+            'url', 'id', 'harvester', 'path',
             'state', 'last_observed_time', 'last_observed_size', 'errors',
             'datasets', 'upload_info'
         ]
         read_only_fields = [
-            'url', 'id', 'monitored_path', 'relative_path',
+            'url', 'id', 'harvester', 'path',
             'last_observed_time', 'last_observed_size', 'datasets',
             'errors'
         ]

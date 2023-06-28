@@ -93,7 +93,7 @@ class MonitoredPath(models.Model):
         null=True,
         help_text="Harvester with access to this directory"
     )
-    path = models.TextField(help_text="Directory location on Harvester")
+    path = models.TextField(editable=False, help_text="Directory location on Harvester")
     regex = models.TextField(
         null=True,
         help_text="""
@@ -104,6 +104,7 @@ class MonitoredPath(models.Model):
         default=60,
         help_text="Number of seconds files must remain stable to be processed"
     )
+    active = models.BooleanField(default=True, null=False)
     admin_group = models.ForeignKey(
         to=Group,
         on_delete=models.CASCADE,
@@ -123,17 +124,16 @@ class MonitoredPath(models.Model):
         return self.path
 
     class Meta:
-        unique_together = [['harvester', 'path']]
+        unique_together = [['harvester', 'path', 'regex']]
 
 
 class ObservedFile(models.Model):
-    monitored_path = models.ForeignKey(
-        to=MonitoredPath,
-        related_name='files',
+    path = models.TextField(help_text="Absolute file path")
+    harvester = models.ForeignKey(
+        to=Harvester,
         on_delete=models.CASCADE,
-        help_text="Harvester directory Path where file is located"
+        help_text="Harvester that harvested the File"
     )
-    relative_path = models.TextField(help_text="File path from Harvester directory Path")
     last_observed_size = models.PositiveBigIntegerField(
         null=False,
         default=0,
@@ -151,10 +151,10 @@ class ObservedFile(models.Model):
     )
 
     def __str__(self):
-        return self.relative_path
+        return self.path
 
     class Meta:
-        unique_together = [['monitored_path', 'relative_path']]
+        unique_together = [['path', 'harvester']]
 
 
 class HarvestError(models.Model):
@@ -163,11 +163,6 @@ class HarvestError(models.Model):
         related_name='paths',
         on_delete=models.CASCADE,
         help_text="Harvester which reported the error"
-    )
-    path = models.ForeignKey(
-        to=MonitoredPath,
-        on_delete=models.DO_NOTHING,
-        help_text="Path to data directory where error originated"
     )
     file = models.ForeignKey(
         to=ObservedFile,
