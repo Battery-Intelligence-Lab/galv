@@ -65,7 +65,7 @@ describe('HarvesterDetail', () => {
         const new_stable_time = 100
         await act(async () => {
             await user.type(screen.getAllByPlaceholderText(/path$/)[1], new_path);
-            await user.type(screen.getAllByPlaceholderText(".*")[1], '^[[^T]');
+            await user.type(screen.getAllByPlaceholderText(".*")[1], '{Backspace>5}^[[^T]');
             await user.type(screen.getAllByDisplayValue(
                 mock_paths[0].stable_time)[1],
                 `{Backspace>10}${new_stable_time.toString()}`
