@@ -65,6 +65,7 @@ describe('HarvesterDetail', () => {
         const new_stable_time = 100
         await act(async () => {
             await user.type(screen.getAllByPlaceholderText(/path$/)[1], new_path);
+            await user.type(screen.getAllByPlaceholderText(".*")[1], '^[^T]');
             await user.type(screen.getAllByDisplayValue(
                 mock_paths[0].stable_time)[1],
                 `{Backspace>10}${new_stable_time.toString()}`
@@ -76,6 +77,7 @@ describe('HarvesterDetail', () => {
             {
                 body: JSON.stringify({
                     harvester: mock_harvester.url,
+                    regex: '^[^T]',
                     path: new_path,
                     stable_time: new_stable_time.toString(),
                 }),
