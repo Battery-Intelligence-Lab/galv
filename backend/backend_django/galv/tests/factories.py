@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: BSD-2-Clause
 # Copyright  (c) 2020-2023, The Chancellor, Masters and Scholars of the University
-# of Oxford, and the 'Galvanalyser' Developers. All rights reserved.
+# of Oxford, and the 'Galv' Developers. All rights reserved.
 
 import os
 
@@ -8,7 +8,7 @@ import factory
 import faker
 import django.conf.global_settings
 from django.utils import timezone
-from galvanalyser.models import Harvester, \
+from galv.models import Harvester, \
     HarvestError, \
     MonitoredPath, \
     ObservedFile, \

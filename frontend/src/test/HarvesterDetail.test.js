@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-2-Clause
 // Copyright  (c) 2020-2023, The Chancellor, Masters and Scholars of the University
-// of Oxford, and the 'Galvanalyser' Developers. All rights reserved.
+// of Oxford, and the 'Galv' Developers. All rights reserved.
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -65,6 +65,7 @@ describe('HarvesterDetail', () => {
         const new_stable_time = 100
         await act(async () => {
             await user.type(screen.getAllByPlaceholderText(/path$/)[1], new_path);
+            await user.type(screen.getAllByPlaceholderText(".*")[1], '{Backspace>5}^[[^T]');
             await user.type(screen.getAllByDisplayValue(
                 mock_paths[0].stable_time)[1],
                 `{Backspace>10}${new_stable_time.toString()}`
@@ -77,6 +78,7 @@ describe('HarvesterDetail', () => {
                 body: JSON.stringify({
                     harvester: mock_harvester.url,
                     path: new_path,
+                    regex: '^[^T]',
                     stable_time: new_stable_time.toString(),
                 }),
                 method: 'POST'

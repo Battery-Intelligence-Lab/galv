@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-2-Clause
 // Copyright  (c) 2020-2023, The Chancellor, Masters and Scholars of the University
-// of Oxford, and the 'Galvanalyser' Developers. All rights reserved.
+// of Oxford, and the 'Galv' Developers. All rights reserved.
 
 import React, {useState, Fragment} from 'react';
 import TextField from '@mui/material/TextField';
@@ -37,7 +37,12 @@ export default function HarvesterDetail(props: HarvesterDetailProps) {
   const [selected, setSelected] = useState<MonitoredPathFields|null>(null)
 
   const addNewPath = (data: MonitoredPathFields) => {
-    const insert_data = {harvester: harvester.url, path: data.path, stable_time: data.stable_time}
+    const insert_data = {
+      harvester: harvester.url,
+      path: data.path,
+      regex: data.regex,
+      stable_time: data.stable_time
+    }
     return Connection.fetch('monitored_paths/', {body: JSON.stringify(insert_data), method: 'POST'})
   };
   const deletePath = (data: MonitoredPathFields) => Connection.fetch(data.url, {method: 'DELETE'})
@@ -133,7 +138,7 @@ export default function HarvesterDetail(props: HarvesterDetailProps) {
           </Fragment>
         ]}
         url={`monitored_paths/?harvester__id=${harvester.id}`}
-        new_row_values={{path: "", stable_time: 60}}
+        new_row_values={{path: "", regex: ".*", stable_time: 60}}
         styles={classes}
       />
       {selected !== null && <Files path={selected} />}

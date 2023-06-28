@@ -21,7 +21,7 @@ Below is a tree diagram of the folder structure of this project and a short desc
 |  │   ├ requirements-test.txt -- Additional Python libraries required for unit testing
 |  │   ├ server.sh -- Initilisation shell script (waits on database, then launches Django)
 |  │   ├ config/ -- Django configuration files
-|  │   ├ galvanalyser/ -- Django application
+|  │   ├ galv/ -- Django application
 |  │   └ tests/ -- unit tests for backend
 |  ├ docs/ -- documentation
 |  ├ frontend/ -- The react frontend code
@@ -77,7 +77,7 @@ Harvester unit tests
 ================================================================================
 
 The test-suite runs over a set of battery tester files in the directory specified by 
-``GALVANALYSER_HARVESTER_TEST_PATH``.
+``GALV_HARVESTER_TEST_PATH``.
 To access the test-suite, contact Martin who can provide the necessary credentials to
 acquire the files from the remote repository.
 
@@ -153,41 +153,41 @@ There are tweaks to the basic Django systems for:
 
 * providing an unmanaged database table for Timeseries data
 
-  * table created in ``backend/backend_django/galvanalyser/management/commands/init_db.py``
+  * table created in ``backend/backend_django/galv/management/commands/init_db.py``
 
     * called in ``backend/server.sh``
-    * unmanaged model included in ``backend/backend_django/galvanalyser/models.py``
+    * unmanaged model included in ``backend/backend_django/galv/models.py``
 
 * prefilling the database with default columns and units
 
-  * ``backend/backend_django/galvanalyser/fixtures/`` contains fixture files
+  * ``backend/backend_django/galv/fixtures/`` contains fixture files
 
     * loaded in ``backend/server.sh``
 
 * creating superuser account
 
-  * created by ``backend/backend_django/galvanalyser/management/commands/create_superuser.py``
+  * created by ``backend/backend_django/galv/management/commands/create_superuser.py``
 
     * called in ``backend/server.sh``
     * configuration via ``.env.secret``'s ``DJANGO_SUPERUSER_PASSWORD`` entry
 
 * providing custom permission mechanisms for Harvesters and Cell/Cell Family/Equipment
 
-  * code in ``backend/backend_django/galvanalyser/permissions.py``
+  * code in ``backend/backend_django/galv/permissions.py``
 
-    *  used in ``backend/backend_django/galvanalyser/views.py``
+    *  used in ``backend/backend_django/galv/views.py``
 
 * extending ``drf-spectacular`` to play nicely with ``django-rest-knox``
 
-  * code in ``backend/backend_django/galvanalyser/schema.py``
+  * code in ``backend/backend_django/galv/schema.py``
 
 * providing a mechanism for yielding data rapidly into the database via SQL's COPY directive
 
-  * code in ``backend/backend_django/galvanalyser/utils.py``
+  * code in ``backend/backend_django/galv/utils.py``
 
 Additionally, there are some tricks here and there in 
-``backend/backend_django/galvanalyser/serializers.py`` and
-``backend/backend_django/galvanalyser/models.py``.
+``backend/backend_django/galv/serializers.py`` and
+``backend/backend_django/galv/models.py``.
 It's hard to say what's counterintuitive off the bat, however,
 so if something confuses you and you figure it out, please document it here!
 

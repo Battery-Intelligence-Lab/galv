@@ -1,17 +1,17 @@
 # SPDX-License-Identifier: BSD-2-Clause
 # Copyright  (c) 2020-2023, The Chancellor, Masters and Scholars of the University
-# of Oxford, and the 'Galvanalyser' Developers. All rights reserved.
+# of Oxford, and the 'Galv' Developers. All rights reserved.
 
 import unittest
 from django.urls import reverse
 from rest_framework import status
 import logging
 
-from .utils import GalvanalyserTestCase
+from .utils import GalvTestCase
 from .factories import UserFactory, \
     HarvesterFactory, \
     MonitoredPathFactory
-from galvanalyser.models import Harvester, \
+from galv.models import Harvester, \
     HarvesterEnvVar, \
     HarvestError, \
     MonitoredPath, \
@@ -23,7 +23,7 @@ logger = logging.getLogger(__file__)
 logger.setLevel(logging.INFO)
 
 
-class HarvesterTests(GalvanalyserTestCase):
+class HarvesterTests(GalvTestCase):
     def test_create(self):
         url = reverse('harvester-list')
         user_id = 1

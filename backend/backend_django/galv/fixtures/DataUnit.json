@@ -1,7 +1,7 @@
 [
     {
         "pk": 1,
-        "model": "galvanalyser.DataUnit",
+        "model": "galv.DataUnit",
         "fields": {
             "name": "Unitless",
             "symbol": "",
@@ -11,7 +11,7 @@
     },
     {
         "pk": 2,
-        "model": "galvanalyser.DataUnit",
+        "model": "galv.DataUnit",
         "fields": {
             "name": "Time",
             "symbol": "s",
@@ -21,7 +21,7 @@
     },
     {
         "pk": 3,
-        "model": "galvanalyser.DataUnit",
+        "model": "galv.DataUnit",
         "fields": {
             "name": "Volts",
             "symbol": "V",
@@ -31,7 +31,7 @@
     },
     {
         "pk": 4,
-        "model": "galvanalyser.DataUnit",
+        "model": "galv.DataUnit",
         "fields": {
             "name": "Amps",
             "symbol": "A",
@@ -41,7 +41,7 @@
     },
     {
         "pk": 5,
-        "model": "galvanalyser.DataUnit",
+        "model": "galv.DataUnit",
         "fields": {
             "name": "Energy",
             "symbol": "Wh",
@@ -51,7 +51,7 @@
     },
     {
         "pk": 6,
-        "model": "galvanalyser.DataUnit",
+        "model": "galv.DataUnit",
         "fields": {
             "name": "Charge",
             "symbol": "Ah",
@@ -61,7 +61,7 @@
     },
     {
         "pk": 7,
-        "model": "galvanalyser.DataUnit",
+        "model": "galv.DataUnit",
         "fields": {
             "name": "Temperature",
             "symbol": "°c",
@@ -71,7 +71,7 @@
     },
     {
         "pk": 8,
-        "model": "galvanalyser.DataUnit",
+        "model": "galv.DataUnit",
         "fields": {
             "name": "Power",
             "symbol": "W",
@@ -81,7 +81,7 @@
     },
     {
         "pk": 9,
-        "model": "galvanalyser.DataUnit",
+        "model": "galv.DataUnit",
         "fields": {
             "name": "Ohm",
             "symbol": "Ω",
@@ -91,7 +91,7 @@
     },
     {
         "pk": 10,
-        "model": "galvanalyser.DataUnit",
+        "model": "galv.DataUnit",
         "fields": {
             "name": "Degrees",
             "symbol": "°",
@@ -101,7 +101,7 @@
     },
     {
         "pk": 11,
-        "model": "galvanalyser.DataUnit",
+        "model": "galv.DataUnit",
         "fields": {
             "name": "Frequency",
             "symbol": "Hz",

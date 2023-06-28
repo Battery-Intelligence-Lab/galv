@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: BSD-2-Clause
 # Copyright  (c) 2020-2023, The Chancellor, Masters and Scholars of the University
-# of Oxford, and the 'Galvanalyser' Developers. All rights reserved.
+# of Oxford, and the 'Galv' Developers. All rights reserved.
 
 import unittest
 from django.urls import reverse
@@ -10,7 +10,7 @@ import logging
 import base64
 
 from .factories import UserFactory
-from galvanalyser.models import VouchFor
+from galv.models import VouchFor
 from django.contrib.auth.models import User
 
 logger = logging.getLogger(__file__)

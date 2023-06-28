@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: BSD-2-Clause
 # Copyright  (c) 2020-2023, The Chancellor, Masters and Scholars of the University
-# of Oxford, and the 'Galvanalyser' Developers. All rights reserved.
+# of Oxford, and the 'Galv' Developers. All rights reserved.
 
 import unittest
 from django.urls import reverse
@@ -8,16 +8,16 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 import logging
 
-from galvanalyser.models import KnoxAuthToken
+from galv.models import KnoxAuthToken
 
-from .utils import GalvanalyserTestCase
+from .utils import GalvTestCase
 from .factories import UserFactory
 
 logger = logging.getLogger(__file__)
 logger.setLevel(logging.INFO)
 
 
-class TokenTests(GalvanalyserTestCase):
+class TokenTests(GalvTestCase):
     def setUp(self):
         self.user = UserFactory.create(username='test_user')
         self.other_user = UserFactory.create(username='test_user_other')

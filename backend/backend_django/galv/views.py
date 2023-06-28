@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: BSD-2-Clause
 # Copyright  (c) 2020-2023, The Chancellor, Masters and Scholars of the University
-# of Oxford, and the 'Galvanalyser' Developers. All rights reserved.
+# of Oxford, and the 'Galv' Developers. All rights reserved.
 
 import datetime
 
@@ -379,7 +379,7 @@ class HarvesterViewSet(viewsets.ModelViewSet):
     When Harvesters communicate with the API they do so using special Harvester API Keys.
     These provide access to the report and configuration endpoints.
 
-    Harvesters are created by a separate software package available within Galvanalyser.
+    Harvesters are created by a separate software package available within Galv.
     """
     permission_classes = [HarvesterAccess]
     filterset_fields = ['name']
@@ -624,7 +624,7 @@ class HarvesterViewSet(viewsets.ModelViewSet):
         description="""
 A Path refers to a directory accessible by a Harvester in which
 data files will reside. Those files will be scanned periodically by the Harvester,
-becoming ObservedFiles once they are reported to Galvanalyser by the Harvester.
+becoming ObservedFiles once they are reported to Galv by the Harvester.
 
 Paths can be created or updated by a Harvester's admins and users, as
 well as any users who have been given explicit permissions to edit the MonitoredPath.
@@ -638,7 +638,7 @@ Searchable fields:
         description="""
 A Path refers to a directory accessible by a Harvester in which
 data files will reside. Those files will be scanned periodically by the Harvester,
-becoming ObservedFiles once they are reported to Galvanalyser by the Harvester.
+becoming ObservedFiles once they are reported to Galv by the Harvester.
         """
     ),
     create=extend_schema(
@@ -646,7 +646,7 @@ becoming ObservedFiles once they are reported to Galvanalyser by the Harvester.
         description="""
 Register a new directory on for a Harvester to crawl.
 Files in that directory will be scanned periodically by the Harvester,
-becoming ObservedFiles once they are reported to Galvanalyser by the Harvester.
+becoming ObservedFiles once they are reported to Galv by the Harvester.
         """,
         request=MonitoredPathCreateSerializer(),
         responses={
@@ -672,7 +672,7 @@ class MonitoredPathViewSet(viewsets.ModelViewSet):
     """
     A MonitoredPath refers to a directory accessible by a Harvester in which
     data files will reside. Those files will be scanned periodically by the Harvester,
-    becoming ObservedFiles once they are reported to Galvanalyser by the Harvester.
+    becoming ObservedFiles once they are reported to Galv by the Harvester.
 
     MonitoredPaths can be created or updated by a Harvester's admins and users, as
     well as any users who have been given explicit permissions to edit the MonitoredPath.
@@ -702,7 +702,7 @@ class MonitoredPathViewSet(viewsets.ModelViewSet):
         description="""
 Files are files in a directory marked as a monitored Path for a Harvester.
 
-They are reported to Galvanalyser by the harvester program.
+They are reported to Galv by the harvester program.
 An File will have file metadata (size, modification time), and a
 status representing its import state. It may be linked to HarvestErrors
 encountered while importing the file, and/or to Datasets representing the content
@@ -740,7 +740,7 @@ harvester program to rerun the import process when it next scans the file.
 class ObservedFileViewSet(viewsets.ModelViewSet):
     """
     ObservedFiles are files that exist (or have existed) in a MonitoredPath and have
-    been reported to Galvanalyser by the Harvester.
+    been reported to Galv by the Harvester.
 
     An ObservedFile instance will have file metadata (size, modification time), and a
     status representing its import state. It may be linked to HarvestErrors
@@ -807,7 +807,7 @@ class DatasetViewSet(viewsets.ModelViewSet):
     """
     A Dataset contains structured data from an ObservedFile.
 
-    Datasets are decomposed within Galvanalyser into columns and datapoints,
+    Datasets are decomposed within Galv into columns and datapoints,
     providing an ability flexibly handle any kind of tabular data.
     """
     serializer_class = DatasetSerializer
@@ -1061,7 +1061,7 @@ class DataUnitViewSet(viewsets.ReadOnlyModelViewSet):
 Column Types are generic Column templates. They hold the metadata for a Column,
 while the individual Column instances link Column Types to the TimeseriesData they contain.
 
-Some Column Types are innately recognised by Galvanalyser and its harvester parsers,
+Some Column Types are innately recognised by Galv and its harvester parsers,
 while others can be defined by the parsers during data processing.
 
 Searchable fields:
@@ -1075,7 +1075,7 @@ Searchable fields:
 Column Types are generic Column templates. They hold the metadata for a Column,
 while the individual Column instances link Column Types to the TimeseriesData they contain.
 
-Some Column Types are innately recognised by Galvanalyser and its harvester parsers,
+Some Column Types are innately recognised by Galv and its harvester parsers,
 while others can be defined by the parsers during data processing.
 
 Searchable fields:

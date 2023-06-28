@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: BSD-2-Clause
 # Copyright  (c) 2020-2023, The Chancellor, Masters and Scholars of the University
-# of Oxford, and the 'Galvanalyser' Developers. All rights reserved.
+# of Oxford, and the 'Galv' Developers. All rights reserved.
 
 version: "2"
 services:
@@ -13,7 +13,7 @@ services:
     volumes:
      - ./harvester:/usr/harvester
      - ./.harvester:/harvester_files
-     - "${GALVANALYSER_HARVESTER_TEST_PATH}:/usr/test_data"
+     - "${GALV_HARVESTER_TEST_PATH}:/usr/test_data"
     working_dir: /usr/harvester
     restart: unless-stopped
     command: python start.py --name "harvey" --url http://app/ --user_id 1 --run_foreground --restart
@@ -59,8 +59,8 @@ services:
 #        - postgres
 #      volumes:
 #       - ./backend:/usr/app
-#       - "${GALVANALYSER_HARVESTER_BASE_PATH}:/usr/data"
-#       - "${GALVANALYSER_HARVESTER_TEST_PATH}:/usr/test_data"
+#       - "${GALV_HARVESTER_BASE_PATH}:/usr/data"
+#       - "${GALV_HARVESTER_TEST_PATH}:/usr/test_data"
 #       - "${CELERY_LOG_DIR}:/var/log/celery"
 #      working_dir: /usr/app
 #      env_file:
