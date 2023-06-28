@@ -2,13 +2,13 @@
 Galvalanyser User Guide
 ######################################################################################
 
-For help on setting up the Galvanalyser server and Harvesters, see the
+For help on setting up the Galv server and Harvesters, see the
 :doc:`FirstTimeQuickSetup` guide.
 
-Galvanalyser server
+Galv server
 ==================================================================================
 
-Once set up, the Galvanalyser server instance should not need attending to.
+Once set up, the Galv server instance should not need attending to.
 To set it up, all you need to do is change the .env file's VIRTUAL_HOST_ROOT
 and LETSENCRYPT_EMAIL variables to your domain name and email.
 When you've verified that it works, you can also set LETSENCRYPT_TEST to false
@@ -62,8 +62,8 @@ datasets are using them.
 REST API
 -------------------------------------------------------------------------------
 
-Endpoints are written as absolute paths starting from the Galvanalyser server
-address, so to reach the ``/harvesters/`` endpoint for a Galvanalyser server
+Endpoints are written as absolute paths starting from the Galv server
+address, so to reach the ``/harvesters/`` endpoint for a Galv server
 located at ``http://api.localhost``, you would go to ``http://api.localhost/harvesters/``.
 
 API Spec
@@ -217,7 +217,7 @@ This provides read-only access to datasets and their metadata,
 and allows you to write reproducible analysis scripts that do not require local
 storage to run their analyses.
 
-You can download the latest Python API client :download:`here <resources/galvanalyser-client-python.zip>`.
+You can download the latest Python API client :download:`here <resources/galv-client-python.zip>`.
 
 .. _harvesters:
 
@@ -228,11 +228,11 @@ Harvesters are standalone programs that run continually in Docker containers.
 Each Harvester has a set of directories called :ref:`monitored-paths`
 that it watches for changes.
 When files appear in those paths, the Harvester reports the size to the 
-Galvanalyser server.
+Galv server.
 If the file size has been stable for long enough, the Harvester will attempt
-to import the dataset, sending its metadata and parsed data to the Galvanalyser server.
+to import the dataset, sending its metadata and parsed data to the Galv server.
 
-At the beginning of each cycle, the Harvester checks in with the Galvanalyser
+At the beginning of each cycle, the Harvester checks in with the Galv
 server and updates its configuration if it has been changed.
 
 .. _monitored-paths:
@@ -253,9 +253,9 @@ Datasets
 
 Files that are stable for long enough are parsed by the Harvester.
 If the file is suitable for parsing, its metadata will be sent to the
-Galvanalyser server and a Dataset will be constructed to house the data.
+Galv server and a Dataset will be constructed to house the data.
 
-The file's data will then be extracted into Galvanalyser's column-value format
+The file's data will then be extracted into Galv's column-value format
 and sent to the server.
 The column-value format means that column metadata is abstracted away,
 allowing every column to be stored as a series of numbers.

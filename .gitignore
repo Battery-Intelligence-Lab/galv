@@ -2,10 +2,10 @@
 .vscode
 .venv
 .removed
-galvanalyser/protobuf
-galvanalyser/webapp/assets/protobuf
-libs/galvanalyser-js-protobufs
-galvanalyser-protobuf.js
+galv/protobuf
+galv/webapp/assets/protobuf
+libs/galv-js-protobufs
+galv-protobuf.js
 webstack/.env
 .pnpm-store
 *.egg-info
@@ -28,8 +28,8 @@ backend/backend_django/django_celery_beat.schedulersDatabaseScheduler
 *.pptx
 
 docker-compose.override.yml
-backend/backend_django/galvanalyser/migrations/*.py
-!backend/backend_django/galvanalyser/migrations/__init__.py
+backend/backend_django/galv/migrations/*.py
+!backend/backend_django/galv/migrations/__init__.py
 
 docs/build/
 

@@ -1,5 +1,5 @@
 [Unit]
-Description=Galvanalyser service with docker compose
+Description=Galv service with docker compose
 Requires=docker.service
 After=docker.service
 

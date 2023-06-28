@@ -27,27 +27,27 @@ Installation instructions for ``git`` for all major OSs can be found
 `here <https://git-scm.com/book/en/v2/Getting-Started-Installing-Git>`_.
 
 
-Get the galvanalyser source code
+Get the galv source code
 =======================================================================================
 
-First you will need to clone the galvanalyser repository using ``git``:
+First you will need to clone the galv repository using ``git``:
 
 .. code-block:: bash
 
-	git clone https://gitlab.com/battery-intelligence-lab/galvanalyser-project/galvanalyser.git
-	cd galvanalyser
+	git clone https://gitlab.com/battery-intelligence-lab/galv-project/galv.git
+	cd galv
 
 
 Setup environment variables
 =======================================================================================
 
-The Galvanalyser project uses two ``.env`` files, ``.env`` and ``.env.secret``.
+The Galv project uses two ``.env`` files, ``.env`` and ``.env.secret``.
 
 You will already have a ``.env`` file in the repository you cloned, with sensible defaults.
 
 If you're running a **production deployment**, you will want to set the value of the
 ``VIRTUAL_HOST_ROOT`` to your domain name, e.g. ``VIRTUAL_HOST_ROOT=example.com``.
-This will serve the Galvanalyser web application from the root of your domain,
+This will serve the Galv web application from the root of your domain,
 e.g. at ``http://example.com/``; and the API from the subdomain, e.g. ``http://api.example.com``.
 You will likely also want to enable HTTPS, for which we use LetsEncrypt to generate SSL certificates.
 By default, the staging (test) server is used, which generates certificates that are not trusted by browsers.
@@ -55,7 +55,7 @@ When your production setup appears to work correctly, you can switch to fetching
 by setting ``LETSENCRYPT_TEST=false`` and restarting the nginx-proxy container.
 
 If you wish to change where the database is saved, you can change the first entry
-in ``.env``, ``GALVANALYSER_DATA_PATH`` to the directory where you want the postgres database.
+in ``.env``, ``GALV_DATA_PATH`` to the directory where you want the postgres database.
 
 Create ``.env.secret``
 =======================================================================================
@@ -83,10 +83,10 @@ you can also specify DJANGO_SUPERUSER_USERNAME.
 	vi .env.secret  # could also use nano, emacs, etc.
 
 
-Build docker images (only when upgrading to a new version of galvanalyser)
+Build docker images (only when upgrading to a new version of galv)
 =======================================================================================
 
-If you have previously installed and run galvanalyser you might already have old docker 
+If you have previously installed and run galv you might already have old docker
 images already built. To rebuild the images, run the following command:
 
 .. code-block:: bash
@@ -94,10 +94,10 @@ images already built. To rebuild the images, run the following command:
 	docker-compose build
 
 **************************************************************************************
-Running Galvanalyser
+Running Galv
 **************************************************************************************
 
-You can run the galvanalyser server and web application frontend using the following 
+You can run the galv server and web application frontend using the following
 ``docker-compose`` command from the root folder of the repository.
 
 .. code-block:: bash
@@ -105,7 +105,7 @@ You can run the galvanalyser server and web application frontend using the follo
 	docker-compose up
 
 Now view the 'localhost' IP address `http://127.0.0.1/ <http://127.0.0.1/>`_ in your
-browser and you should see the Galvanalyser login page. 
+browser and you should see the Galv login page.
 This is the web frontend.
 If you wish to use the frontend from another machine, 
 use the IP address or URL of the server instead.
@@ -126,16 +126,16 @@ needs to be approved by an existing account.
 Setting up a Harvester
 **************************************************************************************
 
-Harvesters are set up using a part of the code of the main Galvanalyser repository.
+Harvesters are set up using a part of the code of the main Galv repository.
 The first step, then, is to log onto the machine that will run the harvesters and 
 clone the repository again.
-If you are using the same server for the harvester and the rest of Galvanalyser, 
+If you are using the same server for the harvester and the rest of Galv,
 you can skip this step.
 
 .. code-block:: bash
 
-	git clone https://gitlab.com/battery-intelligence-lab/galvanalyser-project/galvanalyser.git
-	cd galvanalyser
+	git clone https://gitlab.com/battery-intelligence-lab/galv-project/galv.git
+	cd galv
 
 
 Next, launch the harvester container, specifying the Harvester's docker-compose configuration file:
@@ -147,8 +147,8 @@ Next, launch the harvester container, specifying the Harvester's docker-compose 
 
 This will launch into an interactive shell which will guide you through the Harvester setup process.
 
-First, you'll be asked for the Galvanalyser server URL.
-If you're running on the same server as the Galvanalyser server, this will be ``http://app``,
+First, you'll be asked for the Galv server URL.
+If you're running on the same server as the Galv server, this will be ``http://app``,
 otherwise it will be the path you entered above to connect to the web frontend, 
 but using the ``api`` subdomain. So if you went to ``http://example.com``, go to ``http://api.example.com``.
 
@@ -163,7 +163,7 @@ Select the regular user account.
 You can add other administrators and users to the Harvester using the web frontend later.
 
 When an administrator has been selected the Harvester will register itself with
-the Galvanalyser server and begin to monitor for data files. 
+the Galv server and begin to monitor for data files.
 Of course, it currently has no directories to monitor, so the last step is to
 go to the web frontend and configure at least one monitored path for the Harvester.
 
@@ -192,7 +192,7 @@ To start the server side system again after it has been stopped simply run
 ``docker-compose up`` in the root folder.
 
 A template SystemD service file is included in the repository root directory 
-``galvanalyser.service`` that can be used to automatically start the system on Linux servers.
+``galv.service`` that can be used to automatically start the system on Linux servers.
 
 
 If Harvesters go down, they can be restarted.

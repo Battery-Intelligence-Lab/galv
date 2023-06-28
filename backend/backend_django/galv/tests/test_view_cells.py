@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: BSD-2-Clause
 # Copyright  (c) 2020-2023, The Chancellor, Masters and Scholars of the University
-# of Oxford, and the 'Galvanalyser' Developers. All rights reserved.
+# of Oxford, and the 'Galv' Developers. All rights reserved.
 
 import unittest
 from django.urls import reverse
@@ -9,7 +9,7 @@ from rest_framework.test import APITestCase
 import logging
 
 from .factories import CellFamilyFactory, CellFactory
-from galvanalyser.models import CellFamily, Cell
+from galv.models import CellFamily, Cell
 
 logger = logging.getLogger(__file__)
 logger.setLevel(logging.INFO)

@@ -1,7 +1,7 @@
 #!/bin/sh
 # SPDX-License-Identifier: BSD-2-Clause
 # Copyright  (c) 2020-2023, The Chancellor, Masters and Scholars of the University
-# of Oxford, and the 'Galvanalyser' Developers. All rights reserved.
+# of Oxford, and the 'Galv' Developers. All rights reserved.
 
 # init.sh
 
@@ -18,7 +18,7 @@ python manage.py collectstatic --noinput
 >&2 echo "Waiting for Postgres to start"
 
 while [ $PGUP -ne 0 ]; do
-  pg_isready -d "postgresql://postgres:galvanalyser@${POSTGRES_HOST:-postgres}:${POSTGRES_PORT:-5432}/postgres"
+  pg_isready -d "postgresql://postgres:galv@${POSTGRES_HOST:-postgres}:${POSTGRES_PORT:-5432}/postgres"
   PGUP=$?
   >&2 echo "Postgres is unavailable - sleeping"
   sleep 1
@@ -33,8 +33,8 @@ python manage.py init_db
 python manage.py create_superuser
 
 >&2 echo "... populating database"
-python manage.py loaddata galvanalyser/fixtures/DataUnit.json
-python manage.py loaddata galvanalyser/fixtures/DataColumnType.json
+python manage.py loaddata galv/fixtures/DataUnit.json
+python manage.py loaddata galv/fixtures/DataColumnType.json
 
 >&2 echo "Initialisation complete - starting server"
 

@@ -1,7 +1,7 @@
 [
     {
         "pk": 1,
-        "model": "galvanalyser.DataColumnType",
+        "model": "galv.DataColumnType",
         "fields": {
             "name": "Unknown",
             "description": "unknown column type",
@@ -10,7 +10,7 @@
     },
     {
         "pk": 2,
-        "model": "galvanalyser.DataColumnType",
+        "model": "galv.DataColumnType",
         "fields": {
             "name": "Sample Number",
             "description": "The sample or record number. Is increased by one each time a test machine records a reading. Usually counts from 1 at the start of a test",
@@ -20,7 +20,7 @@
     },
     {
         "pk": 3,
-        "model": "galvanalyser.DataColumnType",
+        "model": "galv.DataColumnType",
         "fields": {
             "name": "Time",
             "description": "The time in seconds since the test run began.",
@@ -30,7 +30,7 @@
     },
     {
         "pk": 4,
-        "model": "galvanalyser.DataColumnType",
+        "model": "galv.DataColumnType",
         "fields": {
             "name": "Volts",
             "description": "The voltage of the cell.",
@@ -40,7 +40,7 @@
     },
     {
         "pk": 5,
-        "model": "galvanalyser.DataColumnType",
+        "model": "galv.DataColumnType",
         "fields": {
             "name": "Amps",
             "description": "The current current.",
@@ -50,7 +50,7 @@
     },
     {
         "pk": 6,
-        "model": "galvanalyser.DataColumnType",
+        "model": "galv.DataColumnType",
         "fields": {
             "name": "Energy Capacity",
             "description": "The Energy Capacity.",
@@ -60,7 +60,7 @@
     },
     {
         "pk": 7,
-        "model": "galvanalyser.DataColumnType",
+        "model": "galv.DataColumnType",
         "fields": {
             "name": "Charge Capacity",
             "description": "The Charge Capacity.",
@@ -70,7 +70,7 @@
     },
     {
         "pk": 8,
-        "model": "galvanalyser.DataColumnType",
+        "model": "galv.DataColumnType",
         "fields": {
             "name": "Temperature",
             "description": "The temperature.",
@@ -80,7 +80,7 @@
     },
     {
         "pk": 9,
-        "model": "galvanalyser.DataColumnType",
+        "model": "galv.DataColumnType",
         "fields": {
             "name": "Step Time",
             "description": "The time in seconds since the current step began.",
@@ -90,7 +90,7 @@
     },
     {
         "pk": 10,
-        "model": "galvanalyser.DataColumnType",
+        "model": "galv.DataColumnType",
         "fields": {
             "name": "Impedence Magnitude",
             "description": "The magnitude of the impedence (EIS).",
@@ -100,7 +100,7 @@
     },
     {
         "pk": 11,
-        "model": "galvanalyser.DataColumnType",
+        "model": "galv.DataColumnType",
         "fields": {
             "name": "Impedence Phase",
             "description": "The phase of the impedence (EIS).",
@@ -110,7 +110,7 @@
     },
     {
         "pk": 12,
-        "model": "galvanalyser.DataColumnType",
+        "model": "galv.DataColumnType",
         "fields": {
             "name": "Frequency",
             "description": "The frequency of the input EIS voltage signal.",

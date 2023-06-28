@@ -1,4 +1,4 @@
-# Galvanalyser Testing Strategy
+# Galv Testing Strategy
 
 ## Unit Testing
 

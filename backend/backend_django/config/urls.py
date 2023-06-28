@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: BSD-2-Clause
 # Copyright  (c) 2020-2023, The Chancellor, Masters and Scholars of the University
-# of Oxford, and the 'Galvanalyser' Developers. All rights reserved.
+# of Oxford, and the 'Galv' Developers. All rights reserved.
 
 """backend_django URL Configuration
 
@@ -21,7 +21,7 @@ from django.contrib import admin
 from django.urls import include, path
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 from rest_framework import routers
-from galvanalyser import views
+from galv import views
 
 router = routers.DefaultRouter()
 

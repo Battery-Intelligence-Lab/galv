@@ -6,7 +6,7 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = 'Galvanalyser'
+project = 'Galv'
 copyright = '2023, Oxford RSE'
 author = 'Oxford RSE'
 release = '2.0.0'

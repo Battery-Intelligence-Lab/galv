@@ -14,7 +14,7 @@ export default function GetDatasetMatlab({dataset}) {
   const host = Connection.url || `${window.location.protocol}//api.${domain}/`;
   const codeString = `%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % 
-% galvanalyser REST API access
+% galv REST API access
 %   - Matt Jaquiery (Oxford RSE) <matt.jaquiery@dtc.ox.ac.uk>
 %
 % 2022-11-21
@@ -25,10 +25,10 @@ export default function GetDatasetMatlab({dataset}) {
 %
 % SPDX-License-Identifier: BSD-2-Clause
 % Copyright  (c) 2020-2023, The Chancellor, Masters and Scholars of the University
-% of Oxford, and the 'Galvanalyser' Developers. All rights reserved.
+% of Oxford, and the 'Galv' Developers. All rights reserved.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% login to galvanalyser > Generate API Token
+% login to galv > Generate API Token
 token = '${token}';
 apiURL = '${host}datasets';
 options = weboptions('HeaderFields', {'Authorization' ['Bearer ' token]});

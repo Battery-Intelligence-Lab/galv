@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: BSD-2-Clause
 # Copyright  (c) 2020-2023, The Chancellor, Masters and Scholars of the University
-# of Oxford, and the 'Galvanalyser' Developers. All rights reserved.
+# of Oxford, and the 'Galv' Developers. All rights reserved.
 
 """
 Django settings for backend_django project.
@@ -62,7 +62,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'django_filters',
     'knox',
-    'galvanalyser.apps.GalvanalyserConfig',
+    'galv.apps.GalvConfig',
     'drf_spectacular',
 ]
 
@@ -109,7 +109,7 @@ DATABASES = {
         'PORT': os.environ.get('POSTGRES_PORT', 5432),
         'USER': 'postgres',
         'PASSWORD': os.environ.get('POSTGRES_PASSWORD'),
-        'TEST': {'NAME': f"test_galvanalyser"}
+        'TEST': {'NAME': f"test_galv"}
     }
 }
 
@@ -160,7 +160,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 
 REST_FRAMEWORK = {
-    # 'DEFAULT_PAGINATION_CLASS': 'galvanalyser.pagination.Unpaginatable',
+    # 'DEFAULT_PAGINATION_CLASS': 'galv.pagination.Unpaginatable',
     # 'PAGE_SIZE': 10,
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'knox.auth.TokenAuthentication',
@@ -172,7 +172,7 @@ REST_FRAMEWORK = {
 }
 REST_KNOX = {
     'SECURE_HASH_ALGORITHM': 'cryptography.hazmat.primitives.hashes.SHA512',
-    'USER_SERIALIZER': 'galvanalyser.serializers.UserSerializer',
+    'USER_SERIALIZER': 'galv.serializers.UserSerializer',
     'AUTO_REFRESH': True,
     'AUTH_HEADER_PREFIX': 'Bearer',
     'TOKEN_LIMIT_PER_USER': 20

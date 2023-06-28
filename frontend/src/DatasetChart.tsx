@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-2-Clause
 // Copyright  (c) 2020-2023, The Chancellor, Masters and Scholars of the University
-// of Oxford, and the 'Galvanalyser' Developers. All rights reserved.
+// of Oxford, and the 'Galv' Developers. All rights reserved.
 
 import React, { useEffect, useState, Fragment } from "react";
 import { ResponsiveLine, Datum } from '@nivo/line'
@@ -48,7 +48,7 @@ type keyColumnMap = {
   [column_name in "time" | "volts" | "amps"]: ColumnFields | undefined;
 };
 
-// These values come from the fixtures injected into Galvanalyser's backend
+// These values come from the fixtures injected into Galv's backend
 const TEST_TIME_COLUMN = "Time"
 const VOLTAGE_COLUMN = "Volts"
 const AMPS_COLUMN = "Amps"

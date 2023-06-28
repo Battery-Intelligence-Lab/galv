@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-2-Clause
 // Copyright  (c) 2020-2023, The Chancellor, Masters and Scholars of the University
-// of Oxford, and the 'Galvanalyser' Developers. All rights reserved.
+// of Oxford, and the 'Galv' Developers. All rights reserved.
 
 import { makeStyles } from 'tss-react/mui'
 import React, {useState, useRef, FormEvent, Fragment} from "react";
@@ -11,7 +11,7 @@ import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
 import { useNavigate } from "react-router-dom";
-import { ReactComponent as GalvanalyserIcon} from './Galvanalyser-icon.svg';
+import { ReactComponent as GalvIcon} from './Galv-icon.svg';
 import Connection, {User} from "./APIConnection";
 import Grid from "@mui/material/Grid";
 import Box from "@mui/material/Box";
@@ -125,7 +125,7 @@ export default function Login() {
       able to use the system.
     </Typography>
     <Typography>
-      To approve a user, log in to Galvanalyser as an active user and
+      To approve a user, log in to Galv as an active user and
       select the appropriate unapproved user from the 'users' tab on the left.
     </Typography>
     <Button
@@ -229,7 +229,7 @@ export default function Login() {
             able to use the system.
         </Typography>
         <Typography>
-            To approve a user, log in to Galvanalyser and
+            To approve a user, log in to Galv and
             select the appropriate user from the 'users' tab on the left.
         </Typography>
     </Box>}
@@ -239,7 +239,7 @@ export default function Login() {
     <Container component="main" maxWidth="xs">
       <CssBaseline />
       <div className={classes.paper}>
-        <GalvanalyserIcon className={classes.icon} />
+        <GalvIcon className={classes.icon} />
         {createdUser !== null? createdUserContent : formContent}
       </div>
     </Container>

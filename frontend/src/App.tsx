@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-2-Clause
 // Copyright  (c) 2020-2023, The Chancellor, Masters and Scholars of the University
-// of Oxford, and the 'Galvanalyser' Developers. All rights reserved.
+// of Oxford, and the 'Galv' Developers. All rights reserved.
 
 import React from "react";
 import {
@@ -42,7 +42,7 @@ import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ListItem from '@mui/material/ListItem';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
-import { ReactComponent as GalvanalyserLogo } from './Galvanalyser-logo.svg';
+import { ReactComponent as GalvLogo } from './Galv-logo.svg';
 import Connection, {APIMessage} from "./APIConnection";
 import Stack from "@mui/material/Stack";
 import Tokens from "./Tokens";
@@ -87,7 +87,7 @@ const useStyles = makeStyles()((theme) => {
         duration: theme.transitions.duration.enteringScreen,
       }),
     },
-    galvanalyserLogo: {
+    galvLogo: {
       height: '40px'
     },
     menuButton: {
@@ -251,7 +251,7 @@ export default function Core() {
           >
             <MenuIcon />
           </IconButton>
-          <GalvanalyserLogo className={classes.galvanalyserLogo}/>
+          <GalvLogo className={classes.galvLogo}/>
           <Typography component="h1" variant="h6" color="inherit" noWrap className={classes.title}>
           </Typography>
 

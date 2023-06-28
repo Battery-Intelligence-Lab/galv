@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: BSD-2-Clause
 # Copyright  (c) 2020-2023, The Chancellor, Masters and Scholars of the University
-# of Oxford, and the 'Galvanalyser' Developers. All rights reserved.
+# of Oxford, and the 'Galv' Developers. All rights reserved.
 
 import click
 import re
@@ -37,7 +37,7 @@ def append_slash(url: str) -> str:
 
 
 def get_url() -> str:
-    click.echo("Enter the URL for the Galvanalyser server you wish to connect to.")
+    click.echo("Enter the URL for the Galv server you wish to connect to.")
     url = input("API URL: ")
     return append_slash(url)
 
