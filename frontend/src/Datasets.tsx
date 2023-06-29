@@ -264,69 +264,68 @@ export default function Datasets() {
               />
             </Fragment>
           ]}
-          url={`datasets/`}
-          styles={classes}
-        />
-      </Paper>
-      {selected !== null &&
-          <React.Fragment>
-              <Button
+          subrow={
+            <Stack spacing={1} justifyContent="center" alignItems="center">
+              <Stack spacing={1} justifyContent="center" alignItems="center" direction="row">
+                <Button
                   variant="contained" onClick={handleCodeOpen}
                   className={classes.button}
-              >
+                >
                   API Code (Python)
-              </Button>
-              <Dialog
+                </Button>
+                <Dialog
                   fullWidth={true}
                   maxWidth={'md'}
                   open={codeOpen}
                   onClose={handleCodeClose}
-              >
+                >
                   <DialogTitle>
-                    {`API Code (Python) for dataset "${selected.name}"`}
+                    {`API Code (Python) for dataset "${selected?.name}"`}
                   </DialogTitle>
                   <DialogContent>
-                      <GetDatasetPython dataset={selected} />
+                    <GetDatasetPython dataset={selected} />
                   </DialogContent>
                   <DialogActions>
-                      <Button onClick={handleCodeClose} color="primary" autoFocus>
-                          Close
-                      </Button>
+                    <Button onClick={handleCodeClose} color="primary" autoFocus>
+                      Close
+                    </Button>
                   </DialogActions>
-              </Dialog>
-          </React.Fragment>
-      }
-      {selected !== null &&
-          <React.Fragment>
-              <Button
-                  variant="contained" onClick={handleMatlabCodeOpen}
-                  className={classes.button}
-              >
-                  API Code (MATLAB)
-              </Button>
-              <Dialog
-                  fullWidth={true}
-                  maxWidth={'md'}
-                  open={codeMatlabOpen}
-                  onClose={handleMatlabCodeClose}
-              >
-                  <DialogTitle>
-                    {`API Code (MATLAB) for dataset "${selected.name}"`}
-                  </DialogTitle>
-                  <DialogContent>
+                </Dialog>
+                <React.Fragment>
+                  <Button
+                    variant="contained" onClick={handleMatlabCodeOpen}
+                    className={classes.button}
+                  >
+                    API Code (MATLAB)
+                  </Button>
+                  <Dialog
+                    fullWidth={true}
+                    maxWidth={'md'}
+                    open={codeMatlabOpen}
+                    onClose={handleMatlabCodeClose}
+                  >
+                    <DialogTitle>
+                      {`API Code (MATLAB) for dataset "${selected?.name}"`}
+                    </DialogTitle>
+                    <DialogContent>
                       <GetDatasetMatlab dataset={selected} />
-                  </DialogContent>
-                  <DialogActions>
+                    </DialogContent>
+                    <DialogActions>
                       <Button onClick={handleMatlabCodeClose} color="primary" autoFocus>
-                          Close
+                        Close
                       </Button>
-                  </DialogActions>
-              </Dialog>
-          </React.Fragment>
-      }
-      {
-        selected !== null && <DatasetChart dataset={selected}/>
-      }
+                    </DialogActions>
+                  </Dialog>
+                </React.Fragment>
+              </Stack>
+              {selected !== null && <DatasetChart dataset={selected}/>}
+            </Stack>
+          }
+          subrow_inclusion_rule={(dataset) => selected !== null && dataset.id === selected.id}
+          url={`datasets/`}
+          styles={classes}
+        />
+      </Paper>
     </Container>
   );
 }

@@ -137,11 +137,12 @@ export default function HarvesterDetail(props: HarvesterDetailProps) {
             />
           </Fragment>
         ]}
+        subrow={selected === null? undefined : <Files path={selected} />}
+        subrow_inclusion_rule={row => selected !== null && row.id === selected.id}
         url={`monitored_paths/?harvester__id=${harvester.id}`}
         new_row_values={{path: "", regex: ".*", stable_time: 60}}
         styles={classes}
       />
-      {selected !== null && <Files path={selected} />}
     </Paper>
   );
 }

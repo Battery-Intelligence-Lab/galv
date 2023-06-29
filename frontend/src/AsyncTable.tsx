@@ -14,6 +14,7 @@ import Tooltip, {TooltipProps} from "@mui/material/Tooltip";
 import Typography, {TypographyProps} from "@mui/material/Typography";
 import TableHead from "@mui/material/TableHead";
 import { withStyles } from "tss-react/mui";
+import {type GridCellParams} from "@mui/x-data-grid";
 
 export type Column = {
   label: string;
@@ -52,6 +53,8 @@ export type AsyncTableProps<T extends APIObject> = {
   classes: Record<any, string>;
   columns: Column[];
   row_generator: RowGenerator<T>;
+  subrow?: JSX.Element;
+  subrow_inclusion_rule?: (row_data: T) => boolean;
   url: string;
   new_row_values?: Partial<T>;
   styles?: any;
@@ -91,6 +94,11 @@ export const NEW_ROW_ID = -1
  * - Refreshing a row uses the row's `url` property to know where to look
  *
  * This class abstracts away a lot of repetitive table-building code.
+ *
+ * Subrows are used to display additional information about a row. They are
+ * displayed when the subrow_inclusion_rule returns true for a row. The
+ * usual use case for these is including another element such as a Harvester's
+ * Monitored Paths.
  */
 class AsyncTable<T extends APIObject> extends Component<AsyncTableProps<T>, AsyncTableState> {
   state: AsyncTableState = {
@@ -280,6 +288,12 @@ class AsyncTable<T extends APIObject> extends Component<AsyncTableProps<T>, Asyn
     >{cells}</TableRow>
   }
 
+  get_subrow = (row: T, row_index: number, row_contents: (ReactElement|JSX.Element)[]) => {
+    return (<TableRow key={`row-${row_index}-subrow`}>
+        <TableCell colSpan={row_contents.length}>{this.props.subrow}</TableCell>
+      </TableRow>)
+  }
+
   row_data_to_tablerow = (row: T, row_index: number) => {
     try {
       if (!row)
@@ -294,7 +308,10 @@ class AsyncTable<T extends APIObject> extends Component<AsyncTableProps<T>, Asyn
       const row_contents = this.props.row_generator(row, this.row_conversion_context(row, is_new_row))
       if(!row_contents)
         return null
-      return this.wrap_cells_in_row(row_contents, row_index)
+      const row_element = this.wrap_cells_in_row(row_contents, row_index)
+      if (this.props.subrow_inclusion_rule && this.props.subrow_inclusion_rule(row))
+        return [row_element, this.get_subrow(row, row_index, row_contents)]
+      return row_element
     } catch(e) {
       console.info('Error constructing table row:', e)
       return null

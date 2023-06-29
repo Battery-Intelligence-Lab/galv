@@ -14,6 +14,7 @@ import AsyncTable, {Column, type AsyncTableType} from "./AsyncTable";
 import useStyles from "./UseStyles";
 import ActionButtons from "./ActionButtons";
 import HarvesterEnv from "./HarvesterEnv";
+import Stack from "@mui/material/Stack";
 
 export type HarvesterWriteableFields = {
   name: string;
@@ -124,11 +125,16 @@ export default function Harvesters() {
               />
             </Fragment>,
           ]}
+          subrow={
+            selected === null ? undefined : <Stack spacing={1}>
+              <HarvesterDetail harvester={selected} />
+              <HarvesterEnv harvester={selected} refreshCallback={refreshTable} />
+            </Stack>
+          }
+          subrow_inclusion_rule={row => selected !== null && row.id === selected.id}
           url="harvesters/mine"
         />}
       </Paper>
-      {selected !== null && <HarvesterDetail harvester={selected} />}
-      {selected !== null && <HarvesterEnv harvester={selected} refreshCallback={refreshTable} />}
     </Container>
   );
 }

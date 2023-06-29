@@ -10,6 +10,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import Grid from "@mui/material/Grid";
 import Typography from "@mui/material/Typography";
 import Stack from "@mui/material/Stack";
+import Box from "@mui/material/Box";
 import TextField from "@mui/material/TextField";
 
 export type UnitFields = {
@@ -187,70 +188,69 @@ function Chart(props: DatasetChartProps & {filter: string}) {
 
   return (
     <Fragment>
-      <Grid item>
-        <Stack
-          spacing={4}
-          direction="row"
-          alignItems="center"
-        >
-          {textHeader}
-        </Stack>
-      </Grid>
-      {renderChart &&
-          <Grid item sx={{height: '100%', width: '100%'}}>
-              <ResponsiveLine
-                  data={chart_data}
-                  margin={{ top: 50, right: 160, bottom: 50, left: 60 }}
-                  enablePoints={false}
-                  xScale={{ type: 'linear' }}
-                  yScale={{ type: 'linear', min: 'auto', max: 'auto'}}
-                  axisLeft={{
-                    legend: 'measurement',
-                    legendOffset: -40,
-                    legendPosition: 'middle'
-                  }}
-                  axisBottom={{
-                    tickSize: 5,
-                    tickPadding: 5,
-                    tickRotation: 0,
-                    format: '.2f',
-                    legend: 'time',
-                    legendOffset: 36,
-                    legendPosition: 'middle'
-                  }}
-                  colors={{ scheme: 'category10' }}
-                  lineWidth={2}
-                  legends={[
-                    {
-                      anchor: 'bottom-right',
-                      direction: 'column',
-                      justify: false,
-                      translateX: 140,
-                      translateY: 0,
-                      itemsSpacing: 2,
-                      itemDirection: 'left-to-right',
-                      itemWidth: 80,
-                      itemHeight: 12,
-                      itemOpacity: 0.75,
-                      symbolSize: 12,
-                      symbolShape: 'circle',
-                      symbolBorderColor: 'rgba(0, 0, 0, .5)',
-                      effects: [
-                        {
-                          on: 'hover',
-                          style: {
-                            itemBackground: 'rgba(0, 0, 0, .03)',
-                            itemOpacity: 1
-                          }
+      <Stack
+        sx={{ width: '100%' }}
+        spacing={4}
+        direction="row"
+        alignItems="center"
+        justifyContent="center"
+      >
+        {textHeader}
+      </Stack>
+      <Box sx={{ height: 500, width: '95%' }}>
+        {renderChart &&
+            <ResponsiveLine
+                data={chart_data}
+                margin={{ top: 50, right: 160, bottom: 50, left: 60 }}
+                enablePoints={false}
+                xScale={{ type: 'linear' }}
+                yScale={{ type: 'linear', min: 'auto', max: 'auto'}}
+                axisLeft={{
+                  legend: 'measurement',
+                  legendOffset: -40,
+                  legendPosition: 'middle'
+                }}
+                axisBottom={{
+                  tickSize: 5,
+                  tickPadding: 5,
+                  tickRotation: 0,
+                  format: '.2f',
+                  legend: 'time',
+                  legendOffset: 36,
+                  legendPosition: 'middle'
+                }}
+                colors={{ scheme: 'category10' }}
+                lineWidth={2}
+                legends={[
+                  {
+                    anchor: 'bottom-right',
+                    direction: 'column',
+                    justify: false,
+                    translateX: 140,
+                    translateY: 0,
+                    itemsSpacing: 2,
+                    itemDirection: 'left-to-right',
+                    itemWidth: 80,
+                    itemHeight: 12,
+                    itemOpacity: 0.75,
+                    symbolSize: 12,
+                    symbolShape: 'circle',
+                    symbolBorderColor: 'rgba(0, 0, 0, .5)',
+                    effects: [
+                      {
+                        on: 'hover',
+                        style: {
+                          itemBackground: 'rgba(0, 0, 0, .03)',
+                          itemOpacity: 1
                         }
-                      ],
-                      onClick: handleLegendClick,
-                    }
-                  ]}
-
-              />
-          </Grid>
-      }
+                      }
+                    ],
+                    onClick: handleLegendClick,
+                  }
+                ]}
+            />
+        }
+      </Box>
     </Fragment>
   )
 
@@ -274,47 +274,40 @@ export default function DatasetChart(props: DatasetChartProps) {
   )
 
   return (
-    <Grid
-      sx={{ height: 300, width: '100%' }}
-      container
-      direction="row"
-      justifyContent="center"
-      alignItems="center"
-    >
+    <Stack spacing={1} sx={{width: '100%'}} justifyContent="center" alignItems="center">
       <Chart dataset={props.dataset} filter={filter}/>
-      <Grid item>
-        <Stack
-          spacing={4}
-          direction="row"
-          alignItems="center"
-        >
-          <TextField
-            name="filter_min"
-            label="Start at record"
-            type={"number"}
-            value={filterMin}
-            onChange={e => setFilterMin(parseInt(e.target.value))}
-          />
-          <TextField
-            name="filter_max"
-            label="End at record"
-            type={"number"}
-            value={filterMax}
-            onChange={e => {
-              const v = parseInt(e.target.value)
-              setFilterMax(v? v : undefined)
-            }}
-          />
-          <TextField
-            name="filter_mod"
-            label="Show every Nth record"
-            type={"number"}
-            value={filterMod}
-            onChange={e => setFilterMod(parseInt(e.target.value))}
-          />
-        </Stack>
-      </Grid>
-    </Grid>
+      <Stack
+        spacing={4}
+        direction="row"
+        alignItems="center"
+        justifyContent="center"
+      >
+        <TextField
+          name="filter_min"
+          label="Start at record"
+          type={"number"}
+          value={filterMin}
+          onChange={e => setFilterMin(parseInt(e.target.value))}
+        />
+        <TextField
+          name="filter_max"
+          label="End at record"
+          type={"number"}
+          value={filterMax}
+          onChange={e => {
+            const v = parseInt(e.target.value)
+            setFilterMax(v? v : undefined)
+          }}
+        />
+        <TextField
+          name="filter_mod"
+          label="Show every Nth record"
+          type={"number"}
+          value={filterMod}
+          onChange={e => setFilterMod(parseInt(e.target.value))}
+        />
+      </Stack>
+    </Stack>
   )
 
 }
