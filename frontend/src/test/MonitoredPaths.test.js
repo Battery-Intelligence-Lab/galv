@@ -15,7 +15,7 @@ jest.mock('../Files')
 jest.mock('../UserRoleSet')
 
 var mock_harvester = mock_harvesters[1]
-const HarvesterDetail = jest.requireActual('../HarvesterDetail').default;
+const HarvesterDetail = jest.requireActual('../MonitoredPaths').default;
 
 // Mock the APIConnection.fetch function from the APIConnection module
 // This is because we don't want to actually make API calls in our tests
@@ -24,7 +24,7 @@ const mocked_fetch = jest.spyOn(Connection, 'fetch')
 const mocked_fetchMany = jest.spyOn(Connection, 'fetchMany')
 const mocked_login = jest.spyOn(Connection, 'login')
 
-it('HarvesterDetail has appropriate columns', async () => {
+it('MonitoredPaths has appropriate columns', async () => {
     mocked_fetchMany.mockResolvedValue([]);
     await act(async () => render(<HarvesterDetail harvester={mock_harvester}/>));
     expect(screen.getAllByRole('columnheader').find(e => /Stable Time \(s\)/.test(e.textContent))).toBeInTheDocument();
@@ -32,7 +32,7 @@ it('HarvesterDetail has appropriate columns', async () => {
     expect(screen.getAllByRole('columnheader').find(e => /Actions/.test(e.textContent))).toBeInTheDocument();
 })
 
-describe('HarvesterDetail', () => {
+describe('MonitoredPaths', () => {
     let container;
     const user = userEvent.setup();
 

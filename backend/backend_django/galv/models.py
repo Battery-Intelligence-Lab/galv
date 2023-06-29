@@ -93,7 +93,7 @@ class MonitoredPath(models.Model):
         null=True,
         help_text="Harvester with access to this directory"
     )
-    path = models.TextField(editable=False, help_text="Directory location on Harvester")
+    path = models.TextField(help_text="Directory location on Harvester")
     regex = models.TextField(
         null=True,
         help_text="""

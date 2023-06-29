@@ -7,9 +7,9 @@ import TextField from '@mui/material/TextField';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
-import HarvesterDetail from './HarvesterDetail';
+import MonitoredPaths from './MonitoredPaths';
 import Connection from "./APIConnection";
-import {UserSet} from "./UserRoleSet";
+import UserRoleSet, {UserSet} from "./UserRoleSet";
 import AsyncTable, {Column, type AsyncTableType} from "./AsyncTable";
 import useStyles from "./UseStyles";
 import ActionButtons from "./ActionButtons";
@@ -56,6 +56,7 @@ export default function Harvesters() {
     {label: 'Name', help: 'Harvester name'},
     {label: 'Last Check In', help: 'Datetime of last harvester run that successfully contacted the database'},
     {label: 'Sleep Time (s)', help: 'Time harvester waits after completing a cycle before beginning the next'},
+    {label: 'Users', help: 'Users with access to this path\'s datasets'},
     {label: 'Actions', help: 'Inspect / Add / Save / Delete harvester path information'}
   ]
 
@@ -113,6 +114,14 @@ export default function Harvesters() {
                 </TextField> : <Typography>{row.sleep_time}</Typography>
               }
             </Fragment>,
+            context.is_new_row? <Fragment key="users" /> : <Fragment>
+              <UserRoleSet
+                key={`userroleset-${row.id}`}
+                user_sets={row.user_sets}
+                last_updated={new Date()}
+                set_last_updated={() => context.refresh_all_rows(false)}
+              />
+            </Fragment>,
             <Fragment key="actions">
               <ActionButtons
                 classes={classes}
@@ -127,7 +136,7 @@ export default function Harvesters() {
           ]}
           subrow={
             selected === null ? undefined : <Stack spacing={1}>
-              <HarvesterDetail harvester={selected} />
+              <MonitoredPaths harvester={selected} />
               <HarvesterEnv harvester={selected} refreshCallback={refreshTable} />
             </Stack>
           }

@@ -11,7 +11,7 @@ import Connection from "../APIConnection";
 import mock_harvester from './fixtures/harvesters.json';
 const Harvesters = jest.requireActual('../Harvesters').default;
 
-jest.mock('../HarvesterDetail')
+jest.mock('../MonitoredPaths')
 jest.mock('../HarvesterEnv')
 
 // Mock the APIConnection.fetch function from the APIConnection module

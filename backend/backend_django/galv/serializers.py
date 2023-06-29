@@ -25,7 +25,7 @@ from .models import Harvester, \
     DataColumn, \
     TimeseriesRangeLabel, \
     KnoxAuthToken
-from django.db import connection
+from .utils import get_monitored_paths
 from django.utils import timezone
 from django.contrib.auth.models import User, Group
 from django.conf.global_settings import DATA_UPLOAD_MAX_MEMORY_SIZE
@@ -224,18 +224,11 @@ class MonitoredPathSerializer(serializers.HyperlinkedModelSerializer):
 
     @extend_schema_field(UserSetSerializer(many=True))
     def get_user_sets(self, instance):
-        group_ids = [instance.harvester.admin_group.id, instance.admin_group.id, instance.user_group.id]
+        group_ids = [instance.admin_group.id, instance.user_group.id]
         return UserSetSerializer(
             Group.objects.filter(id__in=group_ids).order_by('id'),
             context={
                 'request': self.context.get('request'),
-                instance.harvester.admin_group.id: {
-                    'name': 'Harvester admins',
-                    'description': (
-                        'Harvester administrators can alter any of the harvester\'s paths or datasets.'
-                    ),
-                    'is_admin': True
-                },
                 instance.admin_group.id: {
                     'name': 'Admins',
                     'description': (
@@ -246,7 +239,7 @@ class MonitoredPathSerializer(serializers.HyperlinkedModelSerializer):
                 instance.user_group.id: {
                     'name': 'Users',
                     'description': (
-                        'Users can monitored paths and their datasets.'
+                        'Users can view monitored paths and edit their datasets.'
                     )
                 }
             },
@@ -309,17 +302,20 @@ class MonitoredPathCreateSerializer(MonitoredPathSerializer):
 
     def create(self, validated_data):
         stable_time = validated_data.get('stable_time', 60)
+        regex = validated_data.get('regex', '.*')
         # Create Path
         try:
             monitored_path = MonitoredPath.objects.create(
                 path=validated_data['path'],
                 harvester=validated_data['harvester'],
-                stable_time=stable_time
+                stable_time=stable_time,
+                regex=regex
             )
         except (TypeError, ValueError):
             monitored_path = MonitoredPath.objects.create(
                 path=validated_data['path'],
-                harvester=validated_data['harvester']
+                harvester=validated_data['harvester'],
+                regex=regex
             )
         # Create user/admin groups
         monitored_path.admin_group = Group.objects.create(
@@ -348,9 +344,6 @@ class MonitoredPathCreateSerializer(MonitoredPathSerializer):
 class ObservedFileSerializer(serializers.HyperlinkedModelSerializer):
     upload_info = serializers.SerializerMethodField(
         help_text="Metadata required for harvester program to resume file parsing"
-    )
-    monitored_paths = serializers.SerializerMethodField(
-        help_text="Monitored paths that include this file"
     )
 
     def get_upload_info(self, instance) -> dict | None:
@@ -456,9 +449,16 @@ class DatasetSerializer(serializers.HyperlinkedModelSerializer):
 
     @extend_schema_field(UserSetSerializer(many=True))
     def get_user_sets(self, instance):
-        return MonitoredPathSerializer(
-            instance.file.monitored_path, context={'request': self.context.get('request')}
-        ).data.get('user_sets')
+        monitored_paths = get_monitored_paths(instance.file.path, instance.file.harvester)
+        user_sets = []
+        ids = []
+        for mp in monitored_paths:
+            sets = MonitoredPathSerializer(mp, context=self.context).data.get('user_sets')
+            sets = [{**s, 'name': f"MonitoredPath_{mp.id}-{s['name']}"} for s in sets]
+            sets = [s for s in sets if s['id'] not in ids]
+            ids += [s['id'] for s in sets]
+            user_sets = [user_sets, *sets]
+        return user_sets
 
     class Meta:
         model = Dataset
@@ -589,6 +589,7 @@ class HarvesterConfigSerializer(HarvesterSerializer):
     standard_columns = serializers.SerializerMethodField(help_text="Column Types recognised by the initial database")
     max_upload_bytes = serializers.SerializerMethodField(help_text="Maximum upload size (bytes)")
     deleted_environment_variables = serializers.SerializerMethodField(help_text="Envvars to unset")
+    monitored_paths = MonitoredPathSerializer(many=True, read_only=True, help_text="Directories to harvest")
 
     @extend_schema_field(DataUnitSerializer(many=True))
     def get_standard_units(self, instance):

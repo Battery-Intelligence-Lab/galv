@@ -3,9 +3,9 @@
 // of Oxford, and the 'Galv' Developers. All rights reserved.
 
 import React from "react";
-import {HarvesterDetailProps} from "../HarvesterDetail";
+import {MonitoredPathProps} from "../MonitoredPaths";
 
-export default function DummyHarvesterDetail(props: HarvesterDetailProps) {
+export default function DummyHarvesterDetail(props: MonitoredPathProps) {
   return (
     <div>
       <p>MockHarvesterDetail</p>

@@ -44,6 +44,16 @@ type AddUserButtonProps = {
   [key: string]: any
 }
 
+export const user_in_sets = (sets: UserSet[]) => {
+  if (Connection.user === null)
+    return false
+  for (const set of sets) {
+    if (set.users.find(u => u.id === Connection.user?.id))
+      return true
+  }
+  return false
+}
+
 function AddUserButton(props: AddUserButtonProps) {
   const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(null);
 

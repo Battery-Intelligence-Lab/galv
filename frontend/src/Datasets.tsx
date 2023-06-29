@@ -36,6 +36,7 @@ import DatasetChart from "./DatasetChart";
 export type DatasetFields = {
   url: string;
   id: number;
+  file: string;
   name: string;
   type: string;
   date: string;

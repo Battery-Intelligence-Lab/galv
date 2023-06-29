@@ -70,10 +70,11 @@ def get_import_file_handler(file_path: str):
     raise UnsupportedFileTypeError
 
 
-def import_file(path: str) -> bool:
+def import_file(path: str, monitored_path: dict) -> bool:
     """
         Attempts to import a given file
     """
+    monitored_path_id = monitored_path.get('id')
     default_column_ids = get_standard_columns()
     default_units = get_standard_units()
     max_upload_size = get_setting('max_upload_bytes')
@@ -95,6 +96,7 @@ def import_file(path: str) -> bool:
         core_metadata, extra_metadata = input_file.load_metadata()
         report = report_harvest_result(
             path=path,
+            monitored_path_id=monitored_path_id,
             content={
                 'task': 'import',
                 'status': 'begin',
@@ -162,7 +164,10 @@ def import_file(path: str) -> bool:
                 logger.info(f"Read took {time.process_time() - start}")
                 nth_part += 1
                 start_row = i
-                report = report_harvest_result(path=path, content={
+                report = report_harvest_result(
+                    path=path,
+                    monitored_path_id=monitored_path_id,
+                    content={
                     'task': 'import',
                     'status': 'in_progress',
                     'data': [v for v in column_data.values()],
@@ -216,7 +221,10 @@ def import_file(path: str) -> bool:
                     column_data[k]['data_type'] = type(types_row[k]).__name__
 
         # Send data
-        report = report_harvest_result(path=path, content={
+        report = report_harvest_result(
+            path=path,
+            monitored_path_id=monitored_path_id,
+            content={
             'task': 'import',
             'status': 'in_progress',
             'data': [v for v in column_data.values()],
@@ -236,6 +244,10 @@ def import_file(path: str) -> bool:
         logger.info("File successfully imported")
     except Exception as e:
         logger.error(e)
-        report_harvest_result(path=path, error=e)
+        report_harvest_result(
+            path=path,
+            monitored_path_id=monitored_path_id,
+            error=e
+        )
         return False
     return True

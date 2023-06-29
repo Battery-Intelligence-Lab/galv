@@ -14,6 +14,7 @@ logger = get_logger(__file__)
 
 def report_harvest_result(
         path: os.PathLike|str,
+        monitored_path_id: int,
         content=None,
         error: BaseException = None
 ):
@@ -24,8 +25,7 @@ def report_harvest_result(
         else:
             data = {'status': 'success', 'content': content}
         data['path'] = path
-        if file is not None:
-            data['file'] = file
+        data['monitored_path_id'] = monitored_path_id
         logger.debug(f"{get_setting('url')}report/; {json.dumps(data, cls=NpEncoder)}")
         out = requests.post(
             f"{get_setting('url')}report/",

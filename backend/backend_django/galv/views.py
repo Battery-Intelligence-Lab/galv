@@ -49,6 +49,7 @@ from .models import Harvester, \
     VouchFor, \
     KnoxAuthToken
 from .permissions import HarvesterAccess, ReadOnlyIfInUse
+from .utils import get_files_from_path
 from django.contrib.auth.models import User, Group
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -445,6 +446,15 @@ class HarvesterViewSet(viewsets.ModelViewSet):
                 assert path is not None
         except AssertionError:
             return error_response('Harvester report must specify a path')
+        try:
+            monitored_path_id = request.data.get('monitored_path_id')
+            if request.data.get('status') != 'error':
+                assert monitored_path_id is not None
+            monitored_path = MonitoredPath.objects.get(id=monitored_path_id)
+        except AssertionError:
+            return error_response('Harvester report must specify a monitored_path_id')
+        except MonitoredPath.DoesNotExist:
+            return error_response('Harvester report must specify a valid monitored_path_id', 404)
         if request.data['status'] == 'error':
             error = request.data.get('error')
             if not isinstance(error, str):
@@ -492,7 +502,7 @@ class HarvesterViewSet(viewsets.ModelViewSet):
                     file.last_observed_time = timezone.now()
                 else:
                     # Recent changes
-                    if file.last_observed_time + timezone.timedelta(seconds=path.stable_time) > timezone.now():
+                    if file.last_observed_time + timezone.timedelta(seconds=monitored_path.stable_time) > timezone.now():
                         file.state = FileState.UNSTABLE
                     # Stable file -- already imported?
                     elif file.state not in [FileState.IMPORTED, FileState.IMPORT_FAILED]:
@@ -690,18 +700,13 @@ class MonitoredPathViewSet(viewsets.ModelViewSet):
             Q(admin_group__in=self.request.user.groups.all())
         ).order_by('-id')
 
-    def files(self, response, *args, **kwargs):
+    @action(detail=True, methods=['get'])
+    def files(self, request, pk: int = None):
         try:
-            path = self.queryset.get(id=kwargs.get('pk'))
+            path = MonitoredPath.objects.get(id=pk)
         except MonitoredPath.DoesNotExist:
             return error_response("Path does not exist.", 404)
-        path_matches = ObservedFile.objects.filter(path__startswith=path.path)
-        if not path.regex:
-            out = path_matches
-        else:
-            regex = re.compile(path.regex)
-            out = [p for p in path_matches if re.search(regex, p)]
-        return Response(ObservedFileSerializer(out, many=True).data)
+        return Response(ObservedFileSerializer(get_files_from_path(path), many=True, context={'request': request}).data)
 
 
 @extend_schema_view(
@@ -762,10 +767,16 @@ class ObservedFileViewSet(viewsets.ModelViewSet):
 
     # Access restrictions
     def get_queryset(self):
-        return ObservedFile.objects.filter(
-            Q(monitored_path__user_group__in=self.request.user.groups.all()) |
-            Q(monitored_path__admin_group__in=self.request.user.groups.all())
-        ).order_by('-last_observed_time', '-id')
+        user_paths = MonitoredPath.objects.filter(
+            Q(user_group__in=self.request.user.groups.all()) |
+            Q(admin_group__in=self.request.user.groups.all())
+        )
+        files = set()
+        for path in user_paths:
+            files = {*files, *get_files_from_path(path)}
+
+        ids = [file.id for file in files]
+        return ObservedFile.objects.filter(id__in=ids).order_by('-last_observed_time', '-id')
 
     @action(detail=True, methods=['GET'])
     def reimport(self, request, pk: int = None):
@@ -825,10 +836,15 @@ class DatasetViewSet(viewsets.ModelViewSet):
 
     # Access restrictions
     def get_queryset(self):
-        return Dataset.objects.filter(
-            Q(file__monitored_path__user_group__in=self.request.user.groups.all()) |
-            Q(file__monitored_path__admin_group__in=self.request.user.groups.all())
-        ).order_by('-date', '-id')
+        user_paths = MonitoredPath.objects.filter(
+            Q(user_group__in=self.request.user.groups.all()) |
+            Q(admin_group__in=self.request.user.groups.all())
+        )
+        files = set()
+        for path in user_paths:
+            files = {*files, *get_files_from_path(path)}
+
+        return Dataset.objects.filter(file__in=files).order_by('-date', '-id')
 
 
 @extend_schema_view(
@@ -1145,11 +1161,14 @@ class DataColumnViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = DataColumn.objects.none().order_by('-dataset_id', '-id')
 
     def get_queryset(self):
-        datasets_ids = [d.id for d in Dataset.objects.filter(
-            Q(file__monitored_path__user_group__in=self.request.user.groups.all()) |
-            Q(file__monitored_path__admin_group__in=self.request.user.groups.all())
-        ).only('id')]
-        return DataColumn.objects.filter(dataset_id__in=datasets_ids).order_by('-dataset_id', '-id')
+        user_paths = MonitoredPath.objects.filter(
+            Q(user_group__in=self.request.user.groups.all()) |
+            Q(admin_group__in=self.request.user.groups.all())
+        )
+        files = set()
+        for path in user_paths:
+            files = {*files, *get_files_from_path(path)}
+        return DataColumn.objects.filter(dataset__file__in=files).order_by('-dataset_id', '-id')
 
     @action(methods=['GET'], detail=True)
     def values(self, request, pk: int = None):
