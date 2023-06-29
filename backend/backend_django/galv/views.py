@@ -450,7 +450,9 @@ class HarvesterViewSet(viewsets.ModelViewSet):
             monitored_path_id = request.data.get('monitored_path_id')
             if request.data.get('status') != 'error':
                 assert monitored_path_id is not None
-            monitored_path = MonitoredPath.objects.get(id=monitored_path_id)
+                monitored_path = MonitoredPath.objects.get(id=monitored_path_id)
+            else:
+                monitored_path = MonitoredPath.objects.get(id=monitored_path_id) if monitored_path_id else None
         except AssertionError:
             return error_response('Harvester report must specify a monitored_path_id')
         except MonitoredPath.DoesNotExist:
@@ -873,7 +875,7 @@ class HarvestErrorViewSet(viewsets.ReadOnlyModelViewSet):
     MonitoredPaths or the importing or inspection of ObservedFiles.
     """
     serializer_class = HarvestErrorSerializer
-    filterset_fields = ['file', 'path', 'harvester']
+    filterset_fields = ['file', 'harvester']
     search_fields = ['@error']
     queryset = HarvestError.objects.none().order_by('-timestamp')
 

@@ -22,8 +22,8 @@ logger.setLevel(logging.INFO)
 class ObservedFileTests(APITestCase):
     def setUp(self):
         self.harvester = HarvesterFactory.create(name='Test Files')
-        self.path = MonitoredPathFactory.create(harvester=self.harvester)
-        self.files = ObservedFileFactory.create_batch(size=5, monitored_path=self.path)
+        self.path = MonitoredPathFactory.create(harvester=self.harvester, path="/")
+        self.files = ObservedFileFactory.create_batch(size=5)
         self.user = UserFactory.create(username='test_user')
         self.admin_user = UserFactory.create(username='test_user_admin')
         self.user.groups.add(self.harvester.user_group)

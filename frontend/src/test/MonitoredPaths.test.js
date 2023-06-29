@@ -12,7 +12,7 @@ import mock_paths from './fixtures/monitored_paths.json';
 import mock_harvesters from './fixtures/harvesters.json';
 
 jest.mock('../Files')
-jest.mock('../UserRoleSet')
+jest.mock('../UserRoleSet', () => ({user_in_sets: () => true}))
 
 var mock_harvester = mock_harvesters[1]
 const HarvesterDetail = jest.requireActual('../MonitoredPaths').default;

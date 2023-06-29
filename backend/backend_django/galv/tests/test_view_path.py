@@ -91,11 +91,11 @@ class MonitoredPathTests(APITestCase):
             status.HTTP_200_OK
         )
         self.assertEqual(
-            MonitoredPath.objects.get(path=path.path, harvester__id=self.harvester.id).stable_time,
+            MonitoredPath.objects.get(path=path.path, harvester=self.harvester).stable_time,
             body.get('stable_time')
         )
         self.assertEqual(
-            MonitoredPath.objects.get(path=path.path, harvester__id=self.harvester.id).regex,
+            MonitoredPath.objects.get(path=path.path, harvester=self.harvester).regex,
             body.get('regex')
         )
         print("OK")
