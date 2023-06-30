@@ -2,6 +2,8 @@
 # Copyright  (c) 2020-2023, The Chancellor, Masters and Scholars of the University
 # of Oxford, and the 'Galv' Developers. All rights reserved.
 
+from django.urls import resolve
+from urllib.parse import urlparse
 from django.db.models import Q
 from rest_framework import permissions
 from .models import Harvester, MonitoredPath
@@ -36,6 +38,30 @@ class HarvesterAccess(permissions.BasePermission):
         if request.method in permissions.SAFE_METHODS:
             return obj in user_harvesters or obj in admin_harvesters
         return obj in admin_harvesters
+
+
+class MonitoredPathAccess(permissions.BasePermission):
+    """
+    MonitoredPaths can be read by users in the user_group or admin_group.
+    MonitoredPaths can be edited by users in the admin_group.
+
+    MonitoredPaths can be created by users in the harvester's user_group and admin_group.
+    """
+    def has_object_permission(self, request, view, obj):
+        user_groups = request.user.groups.all()
+        if request.method in permissions.SAFE_METHODS:
+            return obj.user_group in user_groups or obj.admin_group in user_groups
+        return obj.admin_group in user_groups
+
+    def has_permission(self, request, view):
+        if request.method in permissions.SAFE_METHODS:
+            return True
+        user_groups = request.user.groups.all()
+        if view.action == 'create':
+            harvester_id = resolve(urlparse(request.data.get('harvester')).path).kwargs.get('pk')
+            harvester = Harvester.objects.get(id=harvester_id)
+            return harvester.user_group in user_groups or harvester.admin_group in user_groups
+        return True
 
 
 class ReadOnlyIfInUse(permissions.BasePermission):

@@ -48,7 +48,7 @@ from .models import Harvester, \
     FileState, \
     VouchFor, \
     KnoxAuthToken
-from .permissions import HarvesterAccess, ReadOnlyIfInUse
+from .permissions import HarvesterAccess, ReadOnlyIfInUse, MonitoredPathAccess
 from .utils import get_files_from_path
 from django.contrib.auth.models import User, Group
 from django.shortcuts import get_object_or_404
@@ -663,6 +663,14 @@ becoming ObservedFiles once they are reported to Galv by the Harvester.
             201: MonitoredPathSerializer()
         }
     ),
+    destroy=extend_schema(
+        summary="Delete a Path",
+        description="""
+Delete a directory from a Harvester's list of directories to crawl.
+Files in that directory will no longer be scanned periodically by the Harvester,
+and will no longer become ObservedFiles once they are reported to Galv by the Harvester.
+        """
+    ),
     partial_update=extend_schema(
         summary="Update a Path",
         description="""
@@ -688,7 +696,8 @@ class MonitoredPathViewSet(viewsets.ModelViewSet):
     filterset_fields = ['path', 'harvester__id', 'harvester__name']
     search_fields = ['@path']
     queryset = MonitoredPath.objects.none().order_by('-id')
-    http_method_names = ['get', 'post', 'patch', 'options']
+    http_method_names = ['get', 'post', 'patch', 'delete', 'options']
+    permission_classes = [MonitoredPathAccess]
 
     def get_serializer_class(self):
         if self.request.method.lower() == "post":
