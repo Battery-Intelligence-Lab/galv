@@ -5,7 +5,6 @@
 import React, {useState, Fragment, ReactElement, useEffect} from "react";
 import Container from '@mui/material/Container';
 import Button from '@mui/material/Button';
-import { useNavigate } from "react-router-dom";
 import GetDatasetPython from "./GetDatasetPython"
 import GetDatasetMatlab from "./GetDatasetMatlab"
 import Dialog from '@mui/material/Dialog';
@@ -52,11 +51,10 @@ export default function Datasets() {
   const [selected, setSelected] = useState<DatasetFields|null>(null)
 
   useEffect(() => {
-    console.log(`Dataset useEffect`)
     Connection.fetchMany<DatasetFields>('datasets/').catch(e => console.warn)
     Connection.fetchMany<CellFields>('cells/').catch(e => console.warn)
     Connection.fetchMany<EquipmentFields>('equipment/').catch(e => console.warn)
-  }, [Connection.user])
+  }, [])
 
   const updateRow = (data: DatasetFields, context: RowGeneratorContext<DatasetFields>) => {
     context.mark_loading(true)

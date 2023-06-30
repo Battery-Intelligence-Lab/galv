@@ -195,19 +195,18 @@ class HarvesterTests(GalvTestCase):
         self.assertEqual(self.client.post(url, {}, **headers).status_code, status.HTTP_400_BAD_REQUEST)
         print("OK")
         print("Test path missing")
-        self.assertEqual(self.client.post(url, {'status': 'error'}, **headers).status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(self.client.post(url, {'status': 'success'}, **headers).status_code, status.HTTP_400_BAD_REQUEST)
         print("OK")
         print("Test path invalid")
-        p = '123foo/123bar'
         self.assertEqual(
-            self.client.post(url, {'status': 'error', 'path': p}, **headers).status_code,
+            self.client.post(url, {'status': 'error', 'path': '/'}, **headers).status_code,
             status.HTTP_400_BAD_REQUEST
         )
         print("OK")
         print("Test path okay")
         path = paths[0].path
         self.assertEqual(
-            self.client.post(url, {'status': 'error', 'path': path}, **headers).status_code,
+            self.client.post(url, {'status': 'error', 'path': path + 'x/yz.ext', 'monitored_path_id': path.id}, **headers).status_code,
             status.HTTP_200_OK
         )
         HarvestError.objects.get(harvester__id=harvester.id, path__id=paths[0].id)
@@ -215,7 +214,7 @@ class HarvesterTests(GalvTestCase):
         print("Test error with new file")
         response = self.client.post(
             url,
-            {'status': 'error', 'error': 'test', 'path': path + 'new/file.ext'},
+            {'status': 'error', 'error': 'test', 'path': path + 'new/file.ext', 'monitored_path_id': path.id},
             **headers
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -225,12 +224,12 @@ class HarvesterTests(GalvTestCase):
         print("Test error with existing file")
         response = self.client.post(
             url,
-            {'status': 'error', 'error': 'test', 'path': path + 'new/file.ext'},
+            {'status': 'error', 'error': 'test', 'path': path + 'new/file.ext', 'monitored_path_id': path.id},
             **headers
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(
-            HarvestError.objects.filter(harvester__id=harvester.id, path__id=paths[0].id).count(),
+            HarvestError.objects.filter(harvester__id=harvester.id, file__path=path + '/new/file.ext').count(),
             3
         )
         print("OK")
@@ -249,10 +248,7 @@ class HarvesterTests(GalvTestCase):
         }
         response = self.client.post(url, body, **headers)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        f = ObservedFile.objects.get(
-            monitored_path__id=paths[0].id,
-            relative_path='a/new/file.ext'
-        )
+        f = ObservedFile.objects.get(path='a/new/file.ext', harvester_id=harvester.id)
         self.assertEqual(f.state, FileState.GROWING)
         print("OK")
         print("Test task import begin")

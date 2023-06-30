@@ -136,7 +136,7 @@ export class APIConnection {
       this.url = props.base_url
     if (props?.message_handlers)
       this.message_handlers = props.message_handlers
-    console.info(`Spawn API connection (${this.url})`)
+    // console.info(`Spawn API connection (${this.url})`)
     const local_user = window.localStorage.getItem('user')
     if (local_user)
       this.user = JSON.parse(local_user)

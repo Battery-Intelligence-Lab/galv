@@ -2,7 +2,7 @@
 // Copyright  (c) 2020-2023, The Chancellor, Masters and Scholars of the University
 // of Oxford, and the 'Galv' Developers. All rights reserved.
 
-import React, {SyntheticEvent, useState} from 'react';
+import React, {useState} from 'react';
 import TextField from '@mui/material/TextField';
 import Paper from '@mui/material/Paper';
 import Container from '@mui/material/Container';

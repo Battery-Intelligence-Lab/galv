@@ -2,7 +2,7 @@
 // Copyright  (c) 2020-2023, The Chancellor, Masters and Scholars of the University
 // of Oxford, and the 'Galv' Developers. All rights reserved.
 
-import Connection, {APIConnection, User} from './APIConnection'
+import Connection, {User} from './APIConnection'
 import React, {Component} from "react";
 import IconButton from "@mui/material/IconButton";
 import Autocomplete from "@mui/material/Autocomplete";

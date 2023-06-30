@@ -47,7 +47,7 @@ describe('Files', () => {
 
     it('has appropriate values', async () => {
         expect(mocked_fetchMany).toHaveBeenCalledWith(
-            `files/?monitored_path__id=${mock_monitored_path.id}`,
+            `${mock_monitored_path.url}files/`,
             {},
             false
         )

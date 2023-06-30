@@ -164,9 +164,7 @@ export default function Core() {
   const usersPath = "/users"
   const isUsersPath = matchPath({path: usersPath, end: true}, pathname) !== null
   const profilePath = "/profile"
-  const isProfilePath = matchPath({path: profilePath, end: true}, pathname) !== null
   const tokenPath = "/tokens"
-  const isTokenPath = matchPath({path: tokenPath, end: true}, pathname) !== null
 
   const [open, setOpen] = React.useState(false);
   const handleDrawerOpen = () => {

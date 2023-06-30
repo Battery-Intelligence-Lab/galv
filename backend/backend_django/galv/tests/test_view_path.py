@@ -20,7 +20,7 @@ logger.setLevel(logging.INFO)
 
 class MonitoredPathTests(APITestCase):
     def setUp(self):
-        self.path = 'path/to/data'
+        self.path = '/path/to/data'
         self.harvester = HarvesterFactory.create(name='Test Paths')
         self.non_user = UserFactory.create(username='test_paths')
         self.user = UserFactory.create(username='test_paths_user')

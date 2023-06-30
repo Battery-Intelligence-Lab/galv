@@ -10,7 +10,7 @@ import Container from '@mui/material/Container';
 import MonitoredPaths from './MonitoredPaths';
 import Connection from "./APIConnection";
 import UserRoleSet, {UserSet} from "./UserRoleSet";
-import AsyncTable, {Column, type AsyncTableType} from "./AsyncTable";
+import AsyncTable, {Column} from "./AsyncTable";
 import useStyles from "./UseStyles";
 import ActionButtons from "./ActionButtons";
 import HarvesterEnv from "./HarvesterEnv";
@@ -40,7 +40,6 @@ export default function Harvesters() {
       .includes(Connection.user.username)
 
   const updateHarvester = (data: HarvesterFields) => {
-    console.log('updateHarvester', data)
     const insert_data: Partial<HarvesterWriteableFields> = {
       name: data.name,
       sleep_time: data.sleep_time

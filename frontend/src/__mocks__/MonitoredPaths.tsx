@@ -8,7 +8,7 @@ import {MonitoredPathProps} from "../MonitoredPaths";
 export default function DummyHarvesterDetail(props: MonitoredPathProps) {
   return (
     <div>
-      <p>MockHarvesterDetail</p>
+      <p>MockMonitoredPaths</p>
       <p>{JSON.stringify(props)}</p>
     </div>
   )

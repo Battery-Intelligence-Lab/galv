@@ -385,7 +385,7 @@ class ObservedFileSerializer(serializers.HyperlinkedModelSerializer):
 class HarvestErrorSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = HarvestError
-        fields = ['url', 'id', 'harvester', 'path', 'file', 'error', 'timestamp']
+        fields = ['url', 'id', 'harvester', 'file', 'error', 'timestamp']
         extra_kwargs = augment_extra_kwargs()
 
 

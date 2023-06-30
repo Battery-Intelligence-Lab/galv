@@ -59,7 +59,7 @@ describe('Datasets', () => {
     });
 
     it('sends an update API call when saved', async () => {
-        const name = await screen.findByDisplayValue(mock_datasets[0].name)
+        const name = screen.getByDisplayValue(mock_datasets[0].name)
         await user.clear(name)
         await user.type(name, 'T')
         await user.click(await screen.getAllByRole('button').find(e => /^Save$/.test(e.textContent)))

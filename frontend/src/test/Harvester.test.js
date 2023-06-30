@@ -57,7 +57,7 @@ describe('Harvester', () => {
 
     it('spawns child components when the button is clicked', async () => {
         await act(async () => await user.click(screen.getAllByTestId(/SearchIcon/)[0]));
-        expect(await screen.findByText(/MockHarvesterDetail/)).toBeInTheDocument();
+        expect(await screen.findByText(/MockMonitoredPaths/)).toBeInTheDocument();
         expect(await screen.findByText(/MockHarvesterEnv/)).toBeInTheDocument();
     });
 

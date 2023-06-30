@@ -3,7 +3,9 @@
 // of Oxford, and the 'Galv' Developers. All rights reserved.
 
 import React from "react";
-import {UserSetProps} from "../UserRoleSet";
+import {UserSetProps, UserSet} from "../UserRoleSet";
+
+export const user_in_sets = (sets: UserSet[]) => true
 
 export default function DummyUserRoleSet(props: UserSetProps) {
   return (

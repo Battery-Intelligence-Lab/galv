@@ -7,32 +7,32 @@ import {CircularProgress} from "@mui/material";
 
 
 export default function GetDatasetPython({dataset}) {
-  const [token, setToken] = useState(Connection.user?.token || 'API_TOKEN');
-  const [columns, setColumns] = useState("")
-  const [code, setCode] = useState(<CircularProgress/>)
+    const token = Connection.user?.token;
+    const [columns, setColumns] = useState("")
+    const [code, setCode] = useState(<CircularProgress/>)
 
-  let domain = window.location.href.split('/')[2];
-  domain = domain.split(':')[0]
+    let domain = window.location.href.split('/')[2];
+    domain = domain.split(':')[0]
 
-  const host = `http://api.${domain}`
-  const setupEnvString = `pip install batteryclient numpy`
+    const host = `http://api.${domain}`
+    const setupEnvString = `pip install batteryclient numpy`
 
-  useEffect(() => {
-    Promise.all(dataset.columns.map(column =>
-        Connection.fetch(column)
-            .then(r => r.content)
-            .then(col => `      '${col.name}': ${col.id},`)
-    ))
-        .then(cols => setColumns(cols.join('\n')))
-  }, [dataset])
+    useEffect(() => {
+        Promise.all(dataset.columns.map(column =>
+            Connection.fetch(column)
+                .then(r => r.content)
+                .then(col => `      '${col.name}': ${col.id},`)
+        ))
+            .then(cols => setColumns(cols.join('\n')))
+    }, [dataset])
 
-  useEffect(() => {
-    if (!columns)
-      setCode(<CircularProgress/>)
-    else
-      setCode(
-          <SyntaxHighlighter language="python" style={docco}>{
-            `# SPDX-License-Identifier: BSD-2-Clause
+    useEffect(() => {
+        if (!columns)
+            setCode(<CircularProgress/>)
+        else
+            setCode(
+                <SyntaxHighlighter language="python" style={docco}>{
+                    `# SPDX-License-Identifier: BSD-2-Clause
 # Copyright  (c) 2020-2023, The Chancellor, Masters and Scholars of the University
 # of Oxford, and the 'Galv' Developers. All rights reserved.
 
@@ -70,25 +70,25 @@ ${columns}
         dtype=np.float32
       ) for column_name, column_id in column_ids.items()
     }`
-          }</SyntaxHighlighter>
-      )
-  }, [columns])
+                }</SyntaxHighlighter>
+            )
+    }, [columns, dataset.id, host, token])
 
-  return (
-      <React.Fragment>
-        <Typography>
-          Setup Dependencies
-        </Typography>
+    return (
+        <React.Fragment>
+            <Typography>
+                Setup Dependencies
+            </Typography>
 
-        <SyntaxHighlighter language="bash" style={docco}>
-          {setupEnvString}
-        </SyntaxHighlighter>
+            <SyntaxHighlighter language="bash" style={docco}>
+                {setupEnvString}
+            </SyntaxHighlighter>
 
-        <Typography>
-          Python Code
-        </Typography>
+            <Typography>
+                Python Code
+            </Typography>
 
-        {code}
-      </React.Fragment>
-  )
+            {code}
+        </React.Fragment>
+    )
 }
