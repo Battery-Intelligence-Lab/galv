@@ -62,7 +62,7 @@ export default function MonitoredPaths(props: MonitoredPathProps) {
   ]
 
   const can_edit_path = (row: MonitoredPathFields) => {
-    if (row?.user_sets) return user_in_sets([...harvester.user_sets, ...row.user_sets])
+    if (row?.user_sets) return user_in_sets([...harvester.user_sets, ...row.user_sets.filter(s => s.is_admin)])
     else return user_in_sets(harvester.user_sets)
   };
 
@@ -140,7 +140,7 @@ export default function MonitoredPaths(props: MonitoredPathProps) {
               }
               saveButtonProps={{disabled: !context.value_changed || !can_edit_path(row)}}
               saveIconProps={{component: context.is_new_row? AddIcon : SaveIcon}}
-              onDelete={() => window.confirm(`Delete ${row.path}?`) && deletePath(row).then(context.refresh)}
+              onDelete={() => window.confirm(`Delete ${row.path}?`) && deletePath(row).then(() => context.refresh_all_rows(false))}
               deleteButtonProps={{disabled: context.is_new_row || !can_edit_path(row)}}
             />
           </Fragment>
