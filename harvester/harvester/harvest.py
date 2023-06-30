@@ -70,19 +70,19 @@ def get_import_file_handler(file_path: str):
     raise UnsupportedFileTypeError
 
 
-def import_file(core_path: str, file_path: str) -> bool:
+def import_file(path: str, monitored_path: dict) -> bool:
     """
         Attempts to import a given file
     """
+    monitored_path_id = monitored_path.get('id')
     default_column_ids = get_standard_columns()
     default_units = get_standard_units()
     max_upload_size = get_setting('max_upload_bytes')
-    full_file_path = os.sep.join([core_path, file_path])
-    if not os.path.isfile(full_file_path):
-        logger.warn(f"{full_file_path} is not a file, skipping")
-        report_harvest_result(path=core_path, file=file_path, error=FileNotFoundError())
+    if not os.path.isfile(path):
+        logger.warn(f"{path} is not a file, skipping")
+        report_harvest_result(path=path, error=FileNotFoundError())
         return False
-    logger.info("Importing " + full_file_path)
+    logger.info("Importing " + path)
 
     try:
         # Attempt reading the file before updating the database to avoid
@@ -90,13 +90,13 @@ def import_file(core_path: str, file_path: str) -> bool:
         # TODO handle rows in the dataset and access tables with no
         # corresponding data since the import might fail while reading the data
         # anyway
-        input_file = get_import_file_handler(file_path=full_file_path)
+        input_file = get_import_file_handler(file_path=path)
 
         # Send metadata
         core_metadata, extra_metadata = input_file.load_metadata()
         report = report_harvest_result(
-            path=core_path,
-            file=file_path,
+            path=path,
+            monitored_path_id=monitored_path_id,
             content={
                 'task': 'import',
                 'status': 'begin',
@@ -164,7 +164,10 @@ def import_file(core_path: str, file_path: str) -> bool:
                 logger.info(f"Read took {time.process_time() - start}")
                 nth_part += 1
                 start_row = i
-                report = report_harvest_result(path=core_path, file=file_path, content={
+                report = report_harvest_result(
+                    path=path,
+                    monitored_path_id=monitored_path_id,
+                    content={
                     'task': 'import',
                     'status': 'in_progress',
                     'data': [v for v in column_data.values()],
@@ -218,7 +221,10 @@ def import_file(core_path: str, file_path: str) -> bool:
                     column_data[k]['data_type'] = type(types_row[k]).__name__
 
         # Send data
-        report = report_harvest_result(path=core_path, file=file_path, content={
+        report = report_harvest_result(
+            path=path,
+            monitored_path_id=monitored_path_id,
+            content={
             'task': 'import',
             'status': 'in_progress',
             'data': [v for v in column_data.values()],
@@ -238,6 +244,10 @@ def import_file(core_path: str, file_path: str) -> bool:
         logger.info("File successfully imported")
     except Exception as e:
         logger.error(e)
-        report_harvest_result(path=core_path, file=file_path, error=e)
+        report_harvest_result(
+            path=path,
+            monitored_path_id=monitored_path_id,
+            error=e
+        )
         return False
     return True

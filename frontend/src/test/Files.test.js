@@ -47,12 +47,12 @@ describe('Files', () => {
 
     it('has appropriate values', async () => {
         expect(mocked_fetchMany).toHaveBeenCalledWith(
-            `files/?monitored_path__id=${mock_monitored_path.id}`,
+            `${mock_monitored_path.url}files/`,
             {},
             false
         )
 
-        expect(await screen.findByText(mock_files[0].relative_path)).toBeInTheDocument();
+        expect(await screen.findByText(mock_files[0].path)).toBeInTheDocument();
     });
 
     it('sends an API call when reimported', async () => {

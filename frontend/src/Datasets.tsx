@@ -5,7 +5,6 @@
 import React, {useState, Fragment, ReactElement, useEffect} from "react";
 import Container from '@mui/material/Container';
 import Button from '@mui/material/Button';
-import { useNavigate } from "react-router-dom";
 import GetDatasetPython from "./GetDatasetPython"
 import GetDatasetMatlab from "./GetDatasetMatlab"
 import Dialog from '@mui/material/Dialog';
@@ -36,6 +35,7 @@ import DatasetChart from "./DatasetChart";
 export type DatasetFields = {
   url: string;
   id: number;
+  file: string;
   name: string;
   type: string;
   date: string;
@@ -51,11 +51,10 @@ export default function Datasets() {
   const [selected, setSelected] = useState<DatasetFields|null>(null)
 
   useEffect(() => {
-    console.log(`Dataset useEffect`)
     Connection.fetchMany<DatasetFields>('datasets/').catch(e => console.warn)
     Connection.fetchMany<CellFields>('cells/').catch(e => console.warn)
     Connection.fetchMany<EquipmentFields>('equipment/').catch(e => console.warn)
-  }, [Connection.user])
+  }, [])
 
   const updateRow = (data: DatasetFields, context: RowGeneratorContext<DatasetFields>) => {
     context.mark_loading(true)
@@ -264,69 +263,68 @@ export default function Datasets() {
               />
             </Fragment>
           ]}
-          url={`datasets/`}
-          styles={classes}
-        />
-      </Paper>
-      {selected !== null &&
-          <React.Fragment>
-              <Button
+          subrow={
+            <Stack spacing={1} justifyContent="center" alignItems="center">
+              <Stack spacing={1} justifyContent="center" alignItems="center" direction="row">
+                <Button
                   variant="contained" onClick={handleCodeOpen}
                   className={classes.button}
-              >
+                >
                   API Code (Python)
-              </Button>
-              <Dialog
+                </Button>
+                <Dialog
                   fullWidth={true}
                   maxWidth={'md'}
                   open={codeOpen}
                   onClose={handleCodeClose}
-              >
+                >
                   <DialogTitle>
-                    {`API Code (Python) for dataset "${selected.name}"`}
+                    {`API Code (Python) for dataset "${selected?.name}"`}
                   </DialogTitle>
                   <DialogContent>
-                      <GetDatasetPython dataset={selected} />
+                    <GetDatasetPython dataset={selected} />
                   </DialogContent>
                   <DialogActions>
-                      <Button onClick={handleCodeClose} color="primary" autoFocus>
-                          Close
-                      </Button>
+                    <Button onClick={handleCodeClose} color="primary" autoFocus>
+                      Close
+                    </Button>
                   </DialogActions>
-              </Dialog>
-          </React.Fragment>
-      }
-      {selected !== null &&
-          <React.Fragment>
-              <Button
-                  variant="contained" onClick={handleMatlabCodeOpen}
-                  className={classes.button}
-              >
-                  API Code (MATLAB)
-              </Button>
-              <Dialog
-                  fullWidth={true}
-                  maxWidth={'md'}
-                  open={codeMatlabOpen}
-                  onClose={handleMatlabCodeClose}
-              >
-                  <DialogTitle>
-                    {`API Code (MATLAB) for dataset "${selected.name}"`}
-                  </DialogTitle>
-                  <DialogContent>
+                </Dialog>
+                <React.Fragment>
+                  <Button
+                    variant="contained" onClick={handleMatlabCodeOpen}
+                    className={classes.button}
+                  >
+                    API Code (MATLAB)
+                  </Button>
+                  <Dialog
+                    fullWidth={true}
+                    maxWidth={'md'}
+                    open={codeMatlabOpen}
+                    onClose={handleMatlabCodeClose}
+                  >
+                    <DialogTitle>
+                      {`API Code (MATLAB) for dataset "${selected?.name}"`}
+                    </DialogTitle>
+                    <DialogContent>
                       <GetDatasetMatlab dataset={selected} />
-                  </DialogContent>
-                  <DialogActions>
+                    </DialogContent>
+                    <DialogActions>
                       <Button onClick={handleMatlabCodeClose} color="primary" autoFocus>
-                          Close
+                        Close
                       </Button>
-                  </DialogActions>
-              </Dialog>
-          </React.Fragment>
-      }
-      {
-        selected !== null && <DatasetChart dataset={selected}/>
-      }
+                    </DialogActions>
+                  </Dialog>
+                </React.Fragment>
+              </Stack>
+              {selected !== null && <DatasetChart dataset={selected}/>}
+            </Stack>
+          }
+          subrow_inclusion_rule={(dataset) => selected !== null && dataset.id === selected.id}
+          url={`datasets/`}
+          styles={classes}
+        />
+      </Paper>
     </Container>
   );
 }

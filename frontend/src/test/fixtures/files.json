@@ -2,8 +2,7 @@
   {
     "url": "http://api.localhost/files/5/",
     "id": 5,
-    "monitored_path": "http://api.localhost/monitored_paths/1/",
-    "relative_path": "TPG1+-+Cell+15+-+002.txt",
+    "path": "http://api.localhost/monitored_paths/1/TPG1+-+Cell+15+-+002.txt",
     "state": "IMPORTED",
     "last_observed_time": "2023-03-07T17:27:59.917092Z",
     "last_observed_size": 140480746,
@@ -16,8 +15,7 @@
   {
     "url": "http://api.localhost/files/4/",
     "id": 4,
-    "monitored_path": "http://api.localhost/monitored_paths/1/",
-    "relative_path": "Jie_OCV1_C01.mpr",
+    "path": "http://api.localhost/monitored_paths/1/Jie_OCV1_C01.mpr",
     "state": "IMPORTED",
     "last_observed_time": "2023-03-07T17:27:59.583763Z",
     "last_observed_size": 561846,
@@ -30,8 +28,7 @@
   {
     "url": "http://api.localhost/files/3/",
     "id": 3,
-    "monitored_path": "http://api.localhost/monitored_paths/1/",
-    "relative_path": "Ivium_Cell+1.idf",
+    "path": "http://api.localhost/monitored_paths/1/Ivium_Cell+1.idf",
     "state": "IMPORTED",
     "last_observed_time": "2023-03-07T17:27:59.334608Z",
     "last_observed_size": 6655242,
@@ -44,8 +41,7 @@
   {
     "url": "http://api.localhost/files/2/",
     "id": 2,
-    "monitored_path": "http://api.localhost/monitored_paths/1/",
-    "relative_path": "CCCV -exp1_C01.mpr",
+    "path": "http://api.localhost/monitored_paths/1/CCCV -exp1_C01.mpr",
     "state": "IMPORTED",
     "last_observed_time": "2023-03-07T17:27:59.067177Z",
     "last_observed_size": 5804677,
@@ -58,8 +54,7 @@
   {
     "url": "http://api.localhost/files/1/",
     "id": 1,
-    "monitored_path": "http://api.localhost/monitored_paths/1/",
-    "relative_path": "adam_3_C05.mpr",
+    "path": "http://api.localhost/monitored_paths/1/adam_3_C05.mpr",
     "state": "IMPORTED",
     "last_observed_time": "2023-03-07T17:27:58.775698Z",
     "last_observed_size": 3420493,

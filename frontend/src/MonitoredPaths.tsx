@@ -11,7 +11,7 @@ import SaveIcon from '@mui/icons-material/Save';
 import Connection from "./APIConnection";
 import Files from './Files'
 import {HarvesterFields} from "./Harvesters";
-import UserRoleSet, {UserSet} from "./UserRoleSet";
+import UserRoleSet, {user_in_sets, UserSet} from "./UserRoleSet";
 import AsyncTable from "./AsyncTable";
 import useStyles from "./UseStyles";
 import ActionButtons from "./ActionButtons";
@@ -25,12 +25,12 @@ export type MonitoredPathFields = {
   regex: string;
   user_sets: UserSet[];
 }
-export type HarvesterDetailProps = {
+export type MonitoredPathProps = {
   harvester: HarvesterFields,
   [key: string]: any
 }
 
-export default function HarvesterDetail(props: HarvesterDetailProps) {
+export default function MonitoredPaths(props: MonitoredPathProps) {
   const harvester = props.harvester
   const { classes } = useStyles();
 
@@ -61,6 +61,11 @@ export default function HarvesterDetail(props: HarvesterDetailProps) {
     {label: 'Actions', help: 'Inspect / Save / Delete monitored path (imported datasets will remain)'},
   ]
 
+  const can_edit_path = (row: MonitoredPathFields) => {
+    if (row?.user_sets) return user_in_sets([...harvester.user_sets, ...row.user_sets])
+    else return user_in_sets(harvester.user_sets)
+  };
+
   return (
     <Paper className={classes.paper} key={`${harvester.id}_paths`}>
       <Typography variant='h5' p={1}>
@@ -82,6 +87,7 @@ export default function HarvesterDetail(props: HarvesterDetailProps) {
               value={row.path}
               name="path"
               onChange={context.update}
+              disabled={!can_edit_path(row)}
             />
           </Fragment>,
           <Fragment>
@@ -95,6 +101,7 @@ export default function HarvesterDetail(props: HarvesterDetailProps) {
               value={row.regex}
               name="regex"
               onChange={context.update}
+              disabled={!can_edit_path(row)}
             />
           </Fragment>,
           <Fragment>
@@ -108,6 +115,7 @@ export default function HarvesterDetail(props: HarvesterDetailProps) {
               value={row.stable_time ? row.stable_time : ''}
               name="stable_time"
               onChange={context.update}
+              disabled={!can_edit_path(row)}
             >
             </TextField>
           </Fragment>,
@@ -130,18 +138,19 @@ export default function HarvesterDetail(props: HarvesterDetailProps) {
                   () => addNewPath(row).then(() => context.refresh_all_rows()) :
                   () => updatePath(row).then(context.refresh)
               }
-              saveButtonProps={{disabled: !context.value_changed}}
+              saveButtonProps={{disabled: !context.value_changed || !can_edit_path(row)}}
               saveIconProps={{component: context.is_new_row? AddIcon : SaveIcon}}
               onDelete={() => window.confirm(`Delete ${row.path}?`) && deletePath(row).then(context.refresh)}
-              deleteButtonProps={{disabled: context.is_new_row}}
+              deleteButtonProps={{disabled: context.is_new_row || !can_edit_path(row)}}
             />
           </Fragment>
         ]}
+        subrow={selected === null? undefined : <Files path={selected} />}
+        subrow_inclusion_rule={row => selected !== null && row.id === selected.id}
         url={`monitored_paths/?harvester__id=${harvester.id}`}
         new_row_values={{path: "", regex: ".*", stable_time: 60}}
         styles={classes}
       />
-      {selected !== null && <Files path={selected} />}
     </Paper>
   );
 }

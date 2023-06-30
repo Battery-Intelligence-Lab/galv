@@ -25,7 +25,7 @@ from .models import Harvester, \
     DataColumn, \
     TimeseriesRangeLabel, \
     KnoxAuthToken
-from django.db import connection
+from .utils import get_monitored_paths
 from django.utils import timezone
 from django.contrib.auth.models import User, Group
 from django.conf.global_settings import DATA_UPLOAD_MAX_MEMORY_SIZE
@@ -224,18 +224,11 @@ class MonitoredPathSerializer(serializers.HyperlinkedModelSerializer):
 
     @extend_schema_field(UserSetSerializer(many=True))
     def get_user_sets(self, instance):
-        group_ids = [instance.harvester.admin_group.id, instance.admin_group.id, instance.user_group.id]
+        group_ids = [instance.admin_group.id, instance.user_group.id]
         return UserSetSerializer(
             Group.objects.filter(id__in=group_ids).order_by('id'),
             context={
                 'request': self.context.get('request'),
-                instance.harvester.admin_group.id: {
-                    'name': 'Harvester admins',
-                    'description': (
-                        'Harvester administrators can alter any of the harvester\'s paths or datasets.'
-                    ),
-                    'is_admin': True
-                },
                 instance.admin_group.id: {
                     'name': 'Admins',
                     'description': (
@@ -246,7 +239,7 @@ class MonitoredPathSerializer(serializers.HyperlinkedModelSerializer):
                 instance.user_group.id: {
                     'name': 'Users',
                     'description': (
-                        'Users can monitored paths and their datasets.'
+                        'Users can view monitored paths and edit their datasets.'
                     )
                 }
             },
@@ -259,28 +252,13 @@ class MonitoredPathSerializer(serializers.HyperlinkedModelSerializer):
         except BaseException as e:
             raise ValidationError(f"Invalid path: {e.__context__}")
         abs_path = os.path.abspath(value)
-        if self.instance is not None:
-            harvester = self.instance.harvester
-        else:
+        if self.instance is None:
             try:
                 pk = resolve(urlparse(self.initial_data['harvester']).path).kwargs['pk']
-                harvester = Harvester.objects.get(id=pk)
+                Harvester.objects.get(id=pk)
             except BaseException:
                 raise ValidationError("Harvester not found")
-        all_paths = MonitoredPath.objects.filter(harvester=harvester)
-        for p in all_paths:
-            if self.instance is None or p.id != self.instance.id:
-                other_abs_path = os.path.abspath(p.path)
-                if abs_path.startswith(other_abs_path):
-                    if abs_path == os.path.abspath(p.path):
-                        raise ValidationError(f"Path already exists on harvester")
-                    raise ValidationError(f"Path is a subpath of existing path {p.path}")
-                if other_abs_path.startswith(abs_path):
-                    raise ValidationError((
-                        f"Path is a parent of existing path {p.path}. "
-                        f"Delete that path before creating this one."
-                    ))
-        return value
+        return abs_path
 
     def validate_stable_time(self, value):
         try:
@@ -315,7 +293,7 @@ class MonitoredPathSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = MonitoredPath
-        fields = ['url', 'id', 'path', 'regex', 'stable_time', 'harvester', 'user_sets']
+        fields = ['url', 'id', 'path', 'regex', 'stable_time', 'active', 'harvester', 'user_sets']
         read_only_fields = ['url', 'id', 'harvester', 'user_sets']
         extra_kwargs = augment_extra_kwargs()
 
@@ -324,17 +302,20 @@ class MonitoredPathCreateSerializer(MonitoredPathSerializer):
 
     def create(self, validated_data):
         stable_time = validated_data.get('stable_time', 60)
+        regex = validated_data.get('regex', '.*')
         # Create Path
         try:
             monitored_path = MonitoredPath.objects.create(
                 path=validated_data['path'],
                 harvester=validated_data['harvester'],
-                stable_time=stable_time
+                stable_time=stable_time,
+                regex=regex
             )
         except (TypeError, ValueError):
             monitored_path = MonitoredPath.objects.create(
                 path=validated_data['path'],
-                harvester=validated_data['harvester']
+                harvester=validated_data['harvester'],
+                regex=regex
             )
         # Create user/admin groups
         monitored_path.admin_group = Group.objects.create(
@@ -353,8 +334,11 @@ class MonitoredPathCreateSerializer(MonitoredPathSerializer):
 
     class Meta:
         model = MonitoredPath
-        fields = ['path', 'stable_time', 'harvester']
-        extra_metadata = {'stable_time': {'required': False}}
+        fields = ['path', 'regex', 'stable_time', 'harvester']
+        extra_metadata = {
+            'regex': {'required': False},
+            'stable_time': {'required': False},
+        }
 
 
 class ObservedFileSerializer(serializers.HyperlinkedModelSerializer):
@@ -383,13 +367,12 @@ class ObservedFileSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = ObservedFile
         fields = [
-            'url', 'id',
-            'monitored_path', 'relative_path',
+            'url', 'id', 'harvester', 'path',
             'state', 'last_observed_time', 'last_observed_size', 'errors',
             'datasets', 'upload_info'
         ]
         read_only_fields = [
-            'url', 'id', 'monitored_path', 'relative_path',
+            'url', 'id', 'harvester', 'path',
             'last_observed_time', 'last_observed_size', 'datasets',
             'errors'
         ]
@@ -402,7 +385,7 @@ class ObservedFileSerializer(serializers.HyperlinkedModelSerializer):
 class HarvestErrorSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = HarvestError
-        fields = ['url', 'id', 'harvester', 'path', 'file', 'error', 'timestamp']
+        fields = ['url', 'id', 'harvester', 'file', 'error', 'timestamp']
         extra_kwargs = augment_extra_kwargs()
 
 
@@ -466,9 +449,16 @@ class DatasetSerializer(serializers.HyperlinkedModelSerializer):
 
     @extend_schema_field(UserSetSerializer(many=True))
     def get_user_sets(self, instance):
-        return MonitoredPathSerializer(
-            instance.file.monitored_path, context={'request': self.context.get('request')}
-        ).data.get('user_sets')
+        monitored_paths = get_monitored_paths(instance.file.path, instance.file.harvester)
+        user_sets = []
+        ids = []
+        for mp in monitored_paths:
+            sets = MonitoredPathSerializer(mp, context=self.context).data.get('user_sets')
+            sets = [{**s, 'name': f"MonitoredPath_{mp.id}-{s['name']}"} for s in sets]
+            sets = [s for s in sets if s['id'] not in ids]
+            ids += [s['id'] for s in sets]
+            user_sets = [user_sets, *sets]
+        return user_sets
 
     class Meta:
         model = Dataset
@@ -599,6 +589,7 @@ class HarvesterConfigSerializer(HarvesterSerializer):
     standard_columns = serializers.SerializerMethodField(help_text="Column Types recognised by the initial database")
     max_upload_bytes = serializers.SerializerMethodField(help_text="Maximum upload size (bytes)")
     deleted_environment_variables = serializers.SerializerMethodField(help_text="Envvars to unset")
+    monitored_paths = MonitoredPathSerializer(many=True, read_only=True, help_text="Directories to harvest")
 
     @extend_schema_field(DataUnitSerializer(many=True))
     def get_standard_units(self, instance):

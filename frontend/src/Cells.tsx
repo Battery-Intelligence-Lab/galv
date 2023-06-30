@@ -203,13 +203,14 @@ export default function Cells() {
             name: '', manufacturer: '', form_factor: '', link_to_datasheet: '', anode_chemistry: '', cathode_chemistry: '',
             nominal_capacity: 0, nominal_cell_weight: 0, cells: []
           }}
+          subrow={selected === null? undefined : <CellList family={selected} />}
+          subrow_inclusion_rule={row => selected !== null && row.id === selected.id}
           url="cell_families/"
         />
         <Typography p={2} fontSize="small">
           Note: Cell families with cells cannot be changed.
         </Typography>
       </Paper>
-      {selected !== null && <CellList family={selected} />}
     </Container>
   );
 }

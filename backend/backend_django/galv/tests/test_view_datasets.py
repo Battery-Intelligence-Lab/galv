@@ -10,7 +10,7 @@ import logging
 
 from .factories import UserFactory, \
     HarvesterFactory, \
-    DatasetFactory
+    DatasetFactory, MonitoredPathFactory
 
 logger = logging.getLogger(__file__)
 logger.setLevel(logging.INFO)
@@ -19,11 +19,12 @@ logger.setLevel(logging.INFO)
 class DatasetTests(APITestCase):
     def setUp(self):
         self.harvester = HarvesterFactory.create(name='Test Dataset')
-        self.dataset = DatasetFactory.create(file__monitored_path__harvester=self.harvester)
+        self.dataset = DatasetFactory.create(file__harvester=self.harvester)
+        self.monitored_path = MonitoredPathFactory.create(harvester=self.harvester, path="/")
         self.user = UserFactory.create(username='test_user')
         self.admin_user = UserFactory.create(username='test_user_admin')
         self.user.groups.add(self.harvester.user_group)
-        self.admin_user.groups.add(self.dataset.file.monitored_path.admin_group)
+        self.admin_user.groups.add(self.monitored_path.admin_group)
         self.url = reverse('dataset-detail', args=(self.dataset.id,))
 
     def test_view(self):

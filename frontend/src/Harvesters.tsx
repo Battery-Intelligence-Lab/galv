@@ -7,13 +7,14 @@ import TextField from '@mui/material/TextField';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
-import HarvesterDetail from './HarvesterDetail';
+import MonitoredPaths from './MonitoredPaths';
 import Connection from "./APIConnection";
-import {UserSet} from "./UserRoleSet";
-import AsyncTable, {Column, type AsyncTableType} from "./AsyncTable";
+import UserRoleSet, {UserSet} from "./UserRoleSet";
+import AsyncTable, {Column} from "./AsyncTable";
 import useStyles from "./UseStyles";
 import ActionButtons from "./ActionButtons";
 import HarvesterEnv from "./HarvesterEnv";
+import Stack from "@mui/material/Stack";
 
 export type HarvesterWriteableFields = {
   name: string;
@@ -39,7 +40,6 @@ export default function Harvesters() {
       .includes(Connection.user.username)
 
   const updateHarvester = (data: HarvesterFields) => {
-    console.log('updateHarvester', data)
     const insert_data: Partial<HarvesterWriteableFields> = {
       name: data.name,
       sleep_time: data.sleep_time
@@ -55,6 +55,7 @@ export default function Harvesters() {
     {label: 'Name', help: 'Harvester name'},
     {label: 'Last Check In', help: 'Datetime of last harvester run that successfully contacted the database'},
     {label: 'Sleep Time (s)', help: 'Time harvester waits after completing a cycle before beginning the next'},
+    {label: 'Users', help: 'Users with access to this path\'s datasets'},
     {label: 'Actions', help: 'Inspect / Add / Save / Delete harvester path information'}
   ]
 
@@ -112,6 +113,14 @@ export default function Harvesters() {
                 </TextField> : <Typography>{row.sleep_time}</Typography>
               }
             </Fragment>,
+            context.is_new_row? <Fragment key="users" /> : <Fragment>
+              <UserRoleSet
+                key={`userroleset-${row.id}`}
+                user_sets={row.user_sets}
+                last_updated={new Date()}
+                set_last_updated={() => context.refresh_all_rows(false)}
+              />
+            </Fragment>,
             <Fragment key="actions">
               <ActionButtons
                 classes={classes}
@@ -124,11 +133,16 @@ export default function Harvesters() {
               />
             </Fragment>,
           ]}
+          subrow={
+            selected === null ? undefined : <Stack spacing={1}>
+              <MonitoredPaths harvester={selected} />
+              <HarvesterEnv harvester={selected} refreshCallback={refreshTable} />
+            </Stack>
+          }
+          subrow_inclusion_rule={row => selected !== null && row.id === selected.id}
           url="harvesters/mine"
         />}
       </Paper>
-      {selected !== null && <HarvesterDetail harvester={selected} />}
-      {selected !== null && <HarvesterEnv harvester={selected} refreshCallback={refreshTable} />}
     </Container>
   );
 }

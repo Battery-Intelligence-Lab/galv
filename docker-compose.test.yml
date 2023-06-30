@@ -30,6 +30,12 @@ services:
 #    command: tail -F anything
     env_file:
       - .env.secret
+    environment:
+      POSTGRES_PASSWORD: "galv"
+      DJANGO_SECRET_KEY: "long-and-insecure-key-12345"
+      FRONTEND_VIRTUAL_HOST: "http://localhost"
+      VIRTUAL_HOST: "localhost"
+      POSTGRES_HOST: "postgres_test"
 
   harvester_test:
     build:

@@ -90,10 +90,10 @@ class MonitoredPathFactory(factory.django.DjangoModelFactory):
 class ObservedFileFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = ObservedFile
-        django_get_or_create = ('monitored_path', 'relative_path',)
+        django_get_or_create = ('harvester', 'path')
 
-    relative_path = factory.Faker('file_name')
-    monitored_path = factory.SubFactory(MonitoredPathFactory)
+    path = factory.Faker('file_path')
+    harvester = factory.SubFactory(HarvesterFactory)
 
 
 class DatasetFactory(factory.django.DjangoModelFactory):

@@ -9,7 +9,7 @@ import Typography from "@mui/material/Typography";
 import Paper from '@mui/material/Paper';
 import AsyncTable from './AsyncTable';
 import Connection from "./APIConnection";
-import {MonitoredPathFields} from "./HarvesterDetail";
+import {MonitoredPathFields} from "./MonitoredPaths";
 import IconButton from "@mui/material/IconButton";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import useStyles from "./UseStyles";
@@ -17,8 +17,7 @@ import useStyles from "./UseStyles";
 export type FileFields = {
   url: string;
   id: number;
-  monitored_path: string;
-  relative_path: string;
+  path: string;
   state: string;
   last_observed_time: string;
   last_observed_size: number;
@@ -67,7 +66,7 @@ export default function Files(props: FilesProps) {
           key="files"
           columns={columns}
           row_generator={(file, context) => [
-            <Fragment>{file.relative_path}</Fragment>,
+            <Fragment>{file.path}</Fragment>,
             <Fragment>{file.last_observed_size}</Fragment>,
             <Fragment>{
               Intl.DateTimeFormat('en-GB', datetimeOptions).format(
@@ -84,7 +83,7 @@ export default function Files(props: FilesProps) {
               </IconButton>
             </Fragment>
           ]}
-          url={`files/?monitored_path__id=${props.path.id}`}
+          url={`${props.path.url}files/`}
           styles={classes}
         />
       </Paper>

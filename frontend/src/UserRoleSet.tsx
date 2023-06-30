@@ -2,7 +2,7 @@
 // Copyright  (c) 2020-2023, The Chancellor, Masters and Scholars of the University
 // of Oxford, and the 'Galv' Developers. All rights reserved.
 
-import Connection, {APIConnection, User} from './APIConnection'
+import Connection, {User} from './APIConnection'
 import React, {Component} from "react";
 import IconButton from "@mui/material/IconButton";
 import Autocomplete from "@mui/material/Autocomplete";
@@ -42,6 +42,16 @@ type AddUserButtonProps = {
   all_users: User[];
   set_last_updated: (date: Date) => void;
   [key: string]: any
+}
+
+export const user_in_sets = (sets: UserSet[]) => {
+  if (Connection.user === null)
+    return false
+  for (const set of sets) {
+    if (set.users.find(u => u.id === Connection.user?.id))
+      return true
+  }
+  return false
 }
 
 function AddUserButton(props: AddUserButtonProps) {

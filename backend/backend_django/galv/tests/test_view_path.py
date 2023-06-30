@@ -20,7 +20,7 @@ logger.setLevel(logging.INFO)
 
 class MonitoredPathTests(APITestCase):
     def setUp(self):
-        self.path = 'path/to/data'
+        self.path = '/path/to/data'
         self.harvester = HarvesterFactory.create(name='Test Paths')
         self.non_user = UserFactory.create(username='test_paths')
         self.user = UserFactory.create(username='test_paths_user')
@@ -91,11 +91,11 @@ class MonitoredPathTests(APITestCase):
             status.HTTP_200_OK
         )
         self.assertEqual(
-            MonitoredPath.objects.get(path=path.path, harvester__id=self.harvester.id).stable_time,
+            MonitoredPath.objects.get(path=path.path, harvester=self.harvester).stable_time,
             body.get('stable_time')
         )
         self.assertEqual(
-            MonitoredPath.objects.get(path=path.path, harvester__id=self.harvester.id).regex,
+            MonitoredPath.objects.get(path=path.path, harvester=self.harvester).regex,
             body.get('regex')
         )
         print("OK")
