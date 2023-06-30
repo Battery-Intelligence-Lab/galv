@@ -28,8 +28,8 @@ services:
     working_dir: /usr/app/backend_django
     command: ../server.sh
 #    command: tail -F anything
-#    env_file:
-#      - .env.secret
+    env_file:
+      - .env.secret
     environment:
       POSTGRES_PASSWORD: "galv"
       DJANGO_SECRET_KEY: "long-and-insecure-key-12345"

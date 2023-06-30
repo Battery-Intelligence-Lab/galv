@@ -74,8 +74,9 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-#      - name: Set up secrets
-#        run: |
+      - name: Set up secrets
+        run: |
+          touch .env.secret
 #          echo "POSTGRES_PASSWORD=$POSTGRES_PASSWORD" > .env.secret
 #          echo "DJANGO_SECRET_KEY=$DJANGO_SECRET_KEY" >> .env.secret
 #          echo "FRONTEND_VIRTUAL_HOST=$FRONTEND_VIRTUAL_HOST" >> .env.secret
