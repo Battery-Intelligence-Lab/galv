@@ -787,13 +787,10 @@ class ObservedFileViewSet(viewsets.ModelViewSet):
             files = {*files, *get_files_from_path(path)}
 
         ids = [file.id for file in files]
-        print(self.request.user.groups.all())
-        print(files)
         return ObservedFile.objects.filter(id__in=ids).order_by('-last_observed_time', '-id')
 
     @action(detail=True, methods=['GET'])
     def reimport(self, request, pk: int = None):
-        print(self.get_queryset())
         try:
             file = self.get_queryset().get(id=pk)
             self.check_object_permissions(self.request, file)

@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: BSD-2-Clause
 # Copyright  (c) 2020-2023, The Chancellor, Masters and Scholars of the University
 # of Oxford, and the 'Galv' Developers. All rights reserved.
-
-from django.urls import resolve
+from django.http import Http404
+from django.urls import resolve, Resolver404
 from urllib.parse import urlparse
 from django.db.models import Q
 from rest_framework import permissions
@@ -54,11 +54,12 @@ class MonitoredPathAccess(permissions.BasePermission):
         return obj.admin_group in user_groups
 
     def has_permission(self, request, view):
-        if request.method in permissions.SAFE_METHODS:
-            return True
-        user_groups = request.user.groups.all()
         if view.action == 'create':
-            harvester_id = resolve(urlparse(request.data.get('harvester')).path).kwargs.get('pk')
+            user_groups = request.user.groups.all()
+            try:
+                harvester_id = resolve(urlparse(request.data.get('harvester')).path).kwargs.get('pk')
+            except Resolver404:
+                raise Http404(f"Invalid harvester URL '{request.data.get('harvester')}'")
             harvester = Harvester.objects.get(id=harvester_id)
             return harvester.user_group in user_groups or harvester.admin_group in user_groups
         return True
