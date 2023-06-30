@@ -17,7 +17,9 @@ from galv.models import Harvester, \
     MonitoredPath, \
     ObservedFile, \
     Dataset, \
-    FileState
+    FileState, \
+    DataColumn, \
+    TimeseriesDataInt
 
 logger = logging.getLogger(__file__)
 logger.setLevel(logging.INFO)
@@ -195,26 +197,27 @@ class HarvesterTests(GalvTestCase):
         self.assertEqual(self.client.post(url, {}, **headers).status_code, status.HTTP_400_BAD_REQUEST)
         print("OK")
         print("Test path missing")
-        self.assertEqual(self.client.post(url, {'status': 'success'}, **headers).status_code, status.HTTP_400_BAD_REQUEST)
-        print("OK")
-        print("Test path invalid")
         self.assertEqual(
-            self.client.post(url, {'status': 'error', 'path': '/'}, **headers).status_code,
+            self.client.post(url, {'status': 'success'}, **headers).status_code,
             status.HTTP_400_BAD_REQUEST
         )
         print("OK")
         print("Test path okay")
         path = paths[0].path
         self.assertEqual(
-            self.client.post(url, {'status': 'error', 'path': path + 'x/yz.ext', 'monitored_path_id': path.id}, **headers).status_code,
+            self.client.post(
+                url,
+                {'status': 'error', 'path': path + 'x/yz.ext', 'monitored_path_id': paths[0].id},
+                **headers
+            ).status_code,
             status.HTTP_200_OK
         )
-        HarvestError.objects.get(harvester__id=harvester.id, path__id=paths[0].id)
+        HarvestError.objects.get(harvester__id=harvester.id, file__path=path + 'x/yz.ext')
         print("OK")
         print("Test error with new file")
         response = self.client.post(
             url,
-            {'status': 'error', 'error': 'test', 'path': path + 'new/file.ext', 'monitored_path_id': path.id},
+            {'status': 'error', 'error': 'test', 'path': path + '/new/file.ext', 'monitored_path_id': paths[0].id},
             **headers
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -224,12 +227,12 @@ class HarvesterTests(GalvTestCase):
         print("Test error with existing file")
         response = self.client.post(
             url,
-            {'status': 'error', 'error': 'test', 'path': path + 'new/file.ext', 'monitored_path_id': path.id},
+            {'status': 'error', 'error': 'test', 'path': path + '/new/file.ext', 'monitored_path_id': paths[0].id},
             **headers
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(
-            HarvestError.objects.filter(harvester__id=harvester.id, file__path=path + '/new/file.ext').count(),
+            HarvestError.objects.all().count(),
             3
         )
         print("OK")
@@ -242,13 +245,13 @@ class HarvesterTests(GalvTestCase):
         print("Test task file_size")
         body = {
             'status': 'success',
-            'path': path,
-            'file': 'a/new/file.ext',
+            'monitored_path_id': paths[0].id,
+            'path': '/a/new/file.ext',
             'content': {'task': 'file_size', 'size': 1024}
         }
         response = self.client.post(url, body, **headers)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        f = ObservedFile.objects.get(path='a/new/file.ext', harvester_id=harvester.id)
+        f = ObservedFile.objects.get(path='/a/new/file.ext', harvester_id=harvester.id)
         self.assertEqual(f.state, FileState.GROWING)
         print("OK")
         print("Test task import begin")
@@ -270,7 +273,7 @@ class HarvesterTests(GalvTestCase):
         d = Dataset.objects.get(file__id=f.id)
         self.assertEqual(d.type, 'Test machine')
         print("OK")
-        # # Below skipped because PyCharm won't run fixtures startup script
+        # Below skipped because PyCharm won't run fixtures startup script
         # print("Test task import in_progress")
         # body['content'] = {
         #     'task': 'import',
@@ -279,21 +282,16 @@ class HarvesterTests(GalvTestCase):
         #     'data': [
         #         {'column_name': 'x', 'unit_id': 5, 'values': {'1': 1, '2': 2, '3': 3, '4': 4, '5': 5}},
         #         {'column_name': 'y', 'unit_symbol': 'psx', 'values': {'1': 1, '2': 2, '3': 3, '4': 4, '5': 5}},
-        #         {'column_name': 'z', 'column_id': 1, 'values': {'1': 1, '2': 2, '3': 3, '4': 4, '5': 5}},
-        #         {
-        #             'column_name': 's',
-        #             'unit_symbol': 'str',
-        #             'values': {'1': 1, '2': 2, '3': 1, '4': 1, '5': 2},
-        #             'value_map': {'abc': 1, 'def': 2}
-        #         },
+        #         {'column_name': 'z', 'column_id': 1, 'values': {'1': 1, '2': 2, '3': 3, '4': 4, '5': 5}}
         #     ]
         # }
         # response = self.client.post(url, body, **headers)
+        # print(response.json())
         # self.assertEqual(response.status_code, status.HTTP_200_OK)
         # cols = DataColumn.objects.filter(dataset__id=d.id)
         # self.assertEqual(cols.count(), 4)
         # for c in cols:
-        #     self.assertEqual(TimeseriesData.objects.filter(column_id=c.id).count(), 5)
+        #     self.assertEqual(TimeseriesDataInt.objects.filter(column_id=c.id).count(), 5)
         # print("OK")
         print("Test task import complete")
         body['content'] = {

@@ -24,10 +24,10 @@ def get_files_from_path(path: MonitoredPath) -> list[ObservedFile]:
     """
     Return a list of files from the given path that match the MonitoredPath's regex.
     """
-    path_matches = ObservedFile.objects.filter(path__startswith=path.path, harvester=path.harvester)
+    files = ObservedFile.objects.filter(path__startswith=path.path, harvester=path.harvester)
     if not path.regex:
-        out = path_matches
+        out = files
     else:
         regex = re.compile(path.regex)
-        out = [p for p in path_matches if re.search(regex, os.path.relpath(p.path, path.path))]
+        out = [p for p in files if re.search(regex, os.path.relpath(p.path, path.path))]
     return out

@@ -610,7 +610,7 @@ class HarvesterViewSet(viewsets.ModelViewSet):
                             checkpoint('complete', time_start)
                     except BaseException as e:
                         file.state = FileState.IMPORT_FAILED
-                        HarvestError.objects.create(harvester=harvester, path=path, file=file, error=str(e))
+                        HarvestError.objects.create(harvester=harvester, file=file, error=str(e))
                         file.save()
                         return error_response(f"Error importing data: {e.args}")
                 if content['status'] == 'failed':
@@ -778,10 +778,13 @@ class ObservedFileViewSet(viewsets.ModelViewSet):
             files = {*files, *get_files_from_path(path)}
 
         ids = [file.id for file in files]
+        print(self.request.user.groups.all())
+        print(files)
         return ObservedFile.objects.filter(id__in=ids).order_by('-last_observed_time', '-id')
 
     @action(detail=True, methods=['GET'])
     def reimport(self, request, pk: int = None):
+        print(self.get_queryset())
         try:
             file = self.get_queryset().get(id=pk)
             self.check_object_permissions(self.request, file)

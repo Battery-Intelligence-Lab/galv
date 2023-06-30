@@ -66,21 +66,21 @@ jobs:
 
   test-backend:
     runs-on: ubuntu-latest
-    env:
-      POSTGRES_PASSWORD: "galv"
-      DJANGO_SECRET_KEY: "long-and-insecure-key-12345"
-      FRONTEND_VIRTUAL_HOST: "http://localhost"
-      VIRTUAL_HOST: "localhost"
+#    env:
+#      POSTGRES_PASSWORD: "galv"
+#      DJANGO_SECRET_KEY: "long-and-insecure-key-12345"
+#      FRONTEND_VIRTUAL_HOST: "http://localhost"
+#      VIRTUAL_HOST: "localhost"
     steps:
       - uses: actions/checkout@v3
 
-      - name: Set up secrets
-        run: |
-          echo "POSTGRES_PASSWORD=$POSTGRES_PASSWORD" > .env.secret
-          echo "DJANGO_SECRET_KEY=$DJANGO_SECRET_KEY" >> .env.secret
-          echo "FRONTEND_VIRTUAL_HOST=$FRONTEND_VIRTUAL_HOST" >> .env.secret
-          echo "VIRTUAL_HOST=$VIRTUAL_HOST" >> .env.secret
-          echo "POSTGRES_HOST=postgres_test" >> .env.secret
+#      - name: Set up secrets
+#        run: |
+#          echo "POSTGRES_PASSWORD=$POSTGRES_PASSWORD" > .env.secret
+#          echo "DJANGO_SECRET_KEY=$DJANGO_SECRET_KEY" >> .env.secret
+#          echo "FRONTEND_VIRTUAL_HOST=$FRONTEND_VIRTUAL_HOST" >> .env.secret
+#          echo "VIRTUAL_HOST=$VIRTUAL_HOST" >> .env.secret
+#          echo "POSTGRES_HOST=postgres_test" >> .env.secret
 
       - name: Build the stack
         run: docker-compose -f docker-compose.test.yml up -d --build app_test

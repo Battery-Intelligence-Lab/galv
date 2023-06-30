@@ -23,7 +23,7 @@ class ObservedFileTests(APITestCase):
     def setUp(self):
         self.harvester = HarvesterFactory.create(name='Test Files')
         self.path = MonitoredPathFactory.create(harvester=self.harvester, path="/")
-        self.files = ObservedFileFactory.create_batch(size=5)
+        self.files = ObservedFileFactory.create_batch(size=5, harvester=self.harvester)
         self.user = UserFactory.create(username='test_user')
         self.admin_user = UserFactory.create(username='test_user_admin')
         self.user.groups.add(self.harvester.user_group)
@@ -42,7 +42,7 @@ class ObservedFileTests(APITestCase):
 
     def test_reimport(self):
         self.client.force_login(self.admin_user)
-        print("Test view path")
+        print("Test reimport")
         url = reverse('observedfile-reimport', args=(self.files[0].id,))
         self.assertEqual(self.client.get(url).status_code, status.HTTP_200_OK)
         self.assertEqual(ObservedFile.objects.get(id=self.files[0].id).state, FileState.RETRY_IMPORT)
