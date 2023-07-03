@@ -38,7 +38,7 @@ options = weboptions('HeaderFields', {'Authorization' ['Bearer ' token]});
 % You can add in additional dataset_names or dataset_ids to also
 % fetch the contents of those datasets.
 dataset_names = [];
-dataset_ids = [3, 4]; % add additional dataset ids here if required
+dataset_ids = [${dataset.id}]; % add additional dataset ids here if required
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

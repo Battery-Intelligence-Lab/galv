@@ -53,15 +53,17 @@ jobs:
           docker-compose -f docker-compose.docs.yml run app python manage.py spectacular --format openapi-json --file schema.json
           mv backend/backend_django/schema.* docs/source/resources/
 
-      - name: Create API client
-        run: |
-          echo "{\"lang\": \"python\", \"type\": \"CLIENT\", \"codegenVersion\": \"V3\", \"spec\": $(cat docs/schema.json)}" > payload.json
-          curl -d @payload.json --output docs/source/resources/galv-client-python.zip -H "Content-Type: application/json" https://generator3.swagger.io/api/generate
-          # Check size
-          if [ ! -s docs/source/resources/galv-client-python.zip ]; then 
-            echo "Downloaded python client zip file is zero bytes"
-            exit 1
-          fi 
+#      - name: Create API client
+#        run: |
+#          echo "{\"lang\": \"python\", \"type\": \"CLIENT\", \"codegenVersion\": \"V3\", \"spec\": $(cat docs/schema.json)}" > payload.json
+#          curl -d @payload.json --output docs/source/resources/galv-client-python.zip -H "Content-Type: application/json" https://generator3.swagger.io/api/generate
+#          # Check size
+#          if [ ! -s docs/source/resources/galv-client-python.zip ]; then
+#            echo "Downloaded python client zip file is zero bytes"
+#            exit 1
+#          fi
+#          # Check we can unzip
+#          unzip -t docs/source/resources/galv-client-python.zip
 
       # Enable tmate debugging of manually-triggered workflows if the input option was provided
       - name: Setup tmate session
