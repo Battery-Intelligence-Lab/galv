@@ -31,6 +31,7 @@ import useStyles from "./UseStyles";
 import ActionButtons from "./ActionButtons";
 import Stack from "@mui/material/Stack";
 import DatasetChart from "./DatasetChart";
+import GetDatasetJulia from "./GetDatasetJulia";
 
 export type DatasetFields = {
   url: string;
@@ -76,25 +77,9 @@ export default function Datasets() {
     {label: 'Actions', help: 'Inspect / Save dataset'}
   ]
 
-  const [codeOpen, setCodeOpen] = React.useState(false);
+  const [codeOpen, setCodeOpen] = React.useState<string|null>(null);
 
-  const handleCodeOpen = () => {
-    setCodeOpen(true);
-  };
-
-  const handleCodeClose = () => {
-    setCodeOpen(false);
-  };
-
-  const [codeMatlabOpen, setMatlabCodeOpen] = React.useState(false);
-
-  const handleMatlabCodeOpen = () => {
-    setMatlabCodeOpen(true);
-  };
-
-  const handleMatlabCodeClose = () => {
-    setMatlabCodeOpen(false);
-  };
+  const closeCode = () => setCodeOpen(null);
 
   const get_cell_items = (dataset: DatasetFields) => {
     const cellList = Connection.results.get_contents<CellFields>('cells/')
@@ -266,33 +251,61 @@ export default function Datasets() {
           subrow={
             <Stack spacing={1} justifyContent="center" alignItems="center">
               <Stack spacing={1} justifyContent="center" alignItems="center" direction="row">
-                <Button
-                  variant="contained" onClick={handleCodeOpen}
-                  className={classes.button}
-                >
-                  API Code (Python)
-                </Button>
-                <Dialog
-                  fullWidth={true}
-                  maxWidth={'md'}
-                  open={codeOpen}
-                  onClose={handleCodeClose}
-                >
-                  <DialogTitle>
-                    {`API Code (Python) for dataset "${selected?.name}"`}
-                  </DialogTitle>
-                  <DialogContent>
-                    <GetDatasetPython dataset={selected} />
-                  </DialogContent>
-                  <DialogActions>
-                    <Button onClick={handleCodeClose} color="primary" autoFocus>
-                      Close
-                    </Button>
-                  </DialogActions>
-                </Dialog>
                 <React.Fragment>
                   <Button
-                    variant="contained" onClick={handleMatlabCodeOpen}
+                    variant="contained" onClick={() => setCodeOpen("Python")}
+                    className={classes.button}
+                  >
+                    API Code (Python)
+                  </Button>
+                  <Dialog
+                    fullWidth={true}
+                    maxWidth={'md'}
+                    open={codeOpen === "Python"}
+                    onClose={closeCode}
+                  >
+                    <DialogTitle>
+                      {`API Code (Python) for dataset "${selected?.name}"`}
+                    </DialogTitle>
+                    <DialogContent>
+                      <GetDatasetPython dataset={selected} />
+                    </DialogContent>
+                    <DialogActions>
+                      <Button onClick={closeCode} color="primary" autoFocus>
+                        Close
+                      </Button>
+                    </DialogActions>
+                  </Dialog>
+                </React.Fragment>
+                <React.Fragment>
+                  <Button
+                    variant="contained" onClick={() => setCodeOpen("Julia")}
+                    className={classes.button}
+                  >
+                    API Code (Julia)
+                  </Button>
+                  <Dialog
+                    fullWidth={true}
+                    maxWidth={'md'}
+                    open={codeOpen === "Julia"}
+                    onClose={closeCode}
+                  >
+                    <DialogTitle>
+                      {`API Code (Julia) for dataset "${selected?.name}"`}
+                    </DialogTitle>
+                    <DialogContent>
+                      <GetDatasetJulia dataset={selected} />
+                    </DialogContent>
+                    <DialogActions>
+                      <Button onClick={closeCode} color="primary" autoFocus>
+                        Close
+                      </Button>
+                    </DialogActions>
+                  </Dialog>
+                </React.Fragment>
+                <React.Fragment>
+                  <Button
+                    variant="contained" onClick={() => setCodeOpen("Matlab")}
                     className={classes.button}
                   >
                     API Code (MATLAB)
@@ -300,8 +313,8 @@ export default function Datasets() {
                   <Dialog
                     fullWidth={true}
                     maxWidth={'md'}
-                    open={codeMatlabOpen}
-                    onClose={handleMatlabCodeClose}
+                    open={codeOpen === "Matlab"}
+                    onClose={() => setCodeOpen(null)}
                   >
                     <DialogTitle>
                       {`API Code (MATLAB) for dataset "${selected?.name}"`}
@@ -310,7 +323,7 @@ export default function Datasets() {
                       <GetDatasetMatlab dataset={selected} />
                     </DialogContent>
                     <DialogActions>
-                      <Button onClick={handleMatlabCodeClose} color="primary" autoFocus>
+                      <Button onClick={closeCode} color="primary" autoFocus>
                         Close
                       </Button>
                     </DialogActions>
