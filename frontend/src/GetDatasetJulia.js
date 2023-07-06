@@ -35,6 +35,15 @@ export default function GetDatasetJulia({dataset}) {
 # Copyright  (c) 2020-2023, The Chancellor, Masters and Scholars of the University
 # of Oxford, and the 'Galv' Developers. All rights reserved.
 
+# By Matt Jaquiery <matt.jaquiery@dtc.ox.ac.uk>
+
+# Download datasets from the REST API.
+# Downloads all data for all columns for the dataset and reads them
+# into a Dict object. Data are under datasets[x] as DataFrames.
+#
+# Dataset and column metadata are under dataset_metadata[x] and 
+# column_metadata[x] respectively.
+
 using HTTP
 using JSON
 
@@ -45,7 +54,9 @@ headers = Dict{String, String}("Authorization" => "Bearer ${token}")
 verbose = true
 
 dataset_ids = [${dataset.id}]
-api_data = Dict{Int, Dict{String, Any}}()
+dataset_metadata = Dict{Int64, Dict{String, Any}}()
+column_metadata = Dict{Int64, Dict{Int64, Any}}()
+datasets = Dict{Int64, DataFrame}()
 
 function vprintln(s)
     if verbose
@@ -68,7 +79,7 @@ function get_column_values(dataset_id, column)
     
     try
         body = String(response.body)
-        str_values = split(body, '\n')
+        str_values = split(body, '\\n')
         values = Vector{String}(str_values[begin:end-1])
         if dtype == "float"
             return map((x -> parse(Float64, x)), values)
@@ -100,7 +111,8 @@ function get_column(dataset_id, url)
     # Download column values
     values = get_column_values(dataset_id, column)
     pop!(column, "values", "")
-    column["values"] = values
+
+    datasets[dataset_id][!, column["name"]] = values
 
     return column
 end
@@ -117,16 +129,19 @@ function get_dataset(id)
         println("Error parsing JSON for dataset $id")
         return
     end
-    api_data[id] = body
+    dataset_metadata[id] = body
     
     # Download columns
-    columns = api_data[id]["columns"]
+    columns = dataset_metadata[id]["columns"]
     len = length(columns)
     vprintln("Downloading $len columns for dataset $id")
+
+    datasets[id] = DataFrame()
+    column_metadata[id] = Dict{Int64, Any}()
     
     for (i, col) in enumerate(columns)
         timings = @timed column = get_column(id, col)
-        api_data[id]["columns"][i] = column
+        column_metadata[id][i] = column
         n = column["name"]
         s = round(timings.time, digits = 2)
         vprintln("Column $n completed in $s seconds")
@@ -142,6 +157,7 @@ for id in dataset_ids
 end
 
 vprintln("All datasets complete.")
+
 `
                 }</SyntaxHighlighter>
             )
