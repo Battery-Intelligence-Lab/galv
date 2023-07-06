@@ -35,6 +35,15 @@ export default function GetDatasetJulia({dataset}) {
 # Copyright  (c) 2020-2023, The Chancellor, Masters and Scholars of the University
 # of Oxford, and the 'Galv' Developers. All rights reserved.
 
+# By Matt Jaquiery <matt.jaquiery@dtc.ox.ac.uk>
+
+# Download datasets from the REST API.
+# Downloads all data for all columns for the dataset and reads them
+# into a Dict object. Data are under datasets[x] as DataFrames.
+#
+# Dataset and column metadata are under dataset_metadata[x] and 
+# column_metadata[x] respectively.
+
 using HTTP
 using JSON
 

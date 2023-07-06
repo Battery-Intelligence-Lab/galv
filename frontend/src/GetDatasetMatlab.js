@@ -21,7 +21,12 @@ export default function GetDatasetMatlab({dataset}) {
 %
 % Download datasets from the REST API.
 % Downloads all data for all columns for the dataset and reads them
-% into a struct object. Data are under data{x}.columns.data.
+% into a cell array. Data are under datasets{x} as Tables.
+% Column names are coerced to valid MATLAB variable names using
+% matlab.lang.makeValidName.
+%
+% Dataset and column metadata are under dataset_metadata{x} and 
+% column_metadata{x} respectively.
 %
 % SPDX-License-Identifier: BSD-2-Clause
 % Copyright  (c) 2020-2023, The Chancellor, Masters and Scholars of the University
@@ -33,49 +38,44 @@ token = '${token}';
 apiURL = '${host}datasets';
 options = weboptions('HeaderFields', {'Authorization' ['Bearer ' token]});
 
-% Datasets can be referenced by name or by id. 
-% Only the id is guaranteed to be unique.
+% Datasets are referenced by id. 
 % You can add in additional dataset_names or dataset_ids to also
 % fetch the contents of those datasets.
-dataset_names = [];
 dataset_ids = [${dataset.id}]; % add additional dataset ids here if required
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+n = max(dataset_ids);
+dataset_metadata = cell(n, 1);
+column_metadata = cell(n, 1);
+datasets = cell(n, 1);
 
-% look up dataset ids if names provided
-if exist('dataset_names', 'var') && ~ isempty(dataset_names)
-    dataset_meta = webread(apiURL, options);
-    dataset_ids = [dataset_ids dataset_meta(ismember({dataset_meta.name}, dataset_names)).id];
-end
-
-dataset_ids = string(dataset_ids(:));
 dataset_ids = unique(dataset_ids);
-
-data(1, length(dataset_ids)) = struct();
 
 for i = 1:length(dataset_ids)
     d = dataset_ids(i);
     
     % get data
-    dsURL = strcat(apiURL, '/', d, '/');
+    dsURL = strcat(apiURL, '/', num2str(d), '/');
     meta = webread(dsURL, options);
-
-    col_data = {};
+    dataset_metadata{d} = meta;
+    
+    column_metadata{i} = cell(length(meta.columns), 1);
+    datasets{i} = table();
     
     % append column data in columns
     for c = 1:length(meta.columns)
         cURL = meta.columns{c};
         stream = webread(cURL, options);
-        meta.column_details{c} = stream;
+        column_metadata{i}{c} = stream;
         column_content = webread(stream.values, options);
         % drop final newline
         column_content = regexprep(column_content, '\n$', '');
         column_content = strsplit(column_content, '\n');
         column_content = arrayfun(@(c) str2num(c{1}), column_content);
-        col_data{c} = column_content;
+        datasets{i}.(matlab.lang.makeValidName(stream.name)) = rot90(column_content, -1);        
     end
-    data(i).columns = col_data;
-end`
+end
+`
 
   return (
     <React.Fragment>
