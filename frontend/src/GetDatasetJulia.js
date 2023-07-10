@@ -44,8 +44,12 @@ export default function GetDatasetJulia({dataset}) {
 # Dataset and column metadata are under dataset_metadata[x] and 
 # column_metadata[x] respectively.
 
+using Pkg
+
+Pkg.add(["HTTP", "JSON", "DataFrames"])
 using HTTP
 using JSON
+using DataFrames
 
 host = "${host}"
 headers = Dict{String, String}("Authorization" => "Bearer ${token}")
