@@ -1,0 +1,153 @@
+{
+  "_$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Battery-Intelligence-Lab/galv/blob/main/schemas/columns.json",
+  "@context": {
+    "UnitVolt": "http://emmo.info/emmo#EMMO_e2207e91_02b0_4a8a_b13e_61d2a2a839f1",
+    "UnitAmpere": "http://emmo.info/emmo#EMMO_e2207e91_02b0_4a8a_b13e_61d2a2a839f1",
+    "UnitSecond": "http://emmo.info/emmo#EMMO_314ba716_2d3d_4462_9a4f_d3419ae1df43",
+    "Mass": "http://emmo.info/emmo#EMMO_ed4af7ae_63a2_497e_bb88_2309619ea405",
+    "Cell": "http://emmo.info/battery#battery_68ed592a_7924_45d0_a108_94d6275d57f0"
+  },
+  "$comment": "This schema defines the minimum requirements for data in the Galv system. It uses Linked Data definitions from the EMMO/BattINFO projects where possible.",
+  "title": "Cycler Data Columns",
+  "type": "object",
+  "description": "Columns of data in the cycler data file",
+  "properties": {
+    "Elapsed Time": {
+      "$ref": "#/$defs/ElapsedTimeColumn"
+    },
+    "Voltage": {
+      "$ref": "#/$defs/VoltageColumn"
+    },
+    "Current": {
+      "$ref": "#/$defs/CurrentColumn"
+    }
+  },
+  "additionalProperties": {
+    "$ref": "#/$defs/Column"
+  },
+  "unevaluatedProperties": false,
+  "$defs": {
+    "UnitSecond": {
+      "enumName": ["Second (s)"],
+      "enum": ["s"]
+    },
+    "UnitVolt": {
+      "enumName":["Volt (V)"],
+      "enum": ["V"]
+    },
+    "UnitAmpere": {
+      "enumName":["Ampere (A)"],
+      "enum": ["A"]
+    },
+    "Column": {
+      "type": "object",
+      "additionalProperties": false,
+      "unevaluatedProperties": true,
+      "description": "A variable in the cycler data file represented as a column of values",
+      "properties": {
+        "Description": {
+          "type": "string",
+          "description": "Description of the column",
+          "$comment": "The column name comes from the key in the parent object"
+        },
+        "Units": {
+          "anyOf": [
+            {
+              "$ref": "../enums.json#/$defs/Units"
+            },
+            {
+              "type": "string",
+              "description": "A custom (preferably SI) unit, not covered by an option already available. Do not use units that are directly convertible to the base units; instead convert the data and use the base units themselves.",
+              "examples": ["m"]
+            }
+          ],
+          "default": "unitless"
+        },
+        "Index": {
+          "type": "integer",
+          "description": "Index of the column in the dataset (starting from 0)",
+          "minimum": 0
+        },
+        "Ontology": {
+          "type": "string",
+          "description": "URI to the ontology term for the column"
+        }
+      },
+      "required": [
+        "Units",
+        "Index"
+      ]
+    },
+    "ElapsedTimeColumn": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/Column"
+        },
+        {
+          "type": "object",
+          "$comment": "Time elapsed since the start of the experiment",
+          "properties": {
+            "Description": {
+              "enum": ["Time elapsed since the beginning of the experiment. This is a Galv core data column and must be present in all datasets."]
+            },
+            "Units": {
+              "$ref": "#/$defs/UnitSecond"
+            },
+            "Index": {
+              "default": 0
+            }
+          },
+          "required": [
+            "Description"
+          ]
+        }
+      ]
+    },
+    "VoltageColumn": {
+      "allOf": [{
+        "$ref": "#/$defs/Column"
+      },
+        {
+          "type": "object",
+          "$comment": "Voltage of the cell",
+          "properties":
+          {
+            "Description": {
+              "enum": ["Voltage of the cell. This is a Galv core data column and must be present in all datasets."]
+            },
+            "Units": {
+              "$ref": "#/$defs/UnitVolt"
+            },
+            "Index": {
+              "default": 1
+            }
+          }
+        }
+      ]
+    },
+    "CurrentColumn": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/Column"
+        },
+        {
+          "type": "object",
+          "$comment": "Current of the cell",
+          "properties": {
+            "Description": {
+              "enum": ["Current of the cell. This is a Galv core data column and must be present in all datasets."]
+            },
+            "Units": {
+              "$ref": "#/$defs/UnitAmpere"
+            },
+            "Index": {
+              "default": 2
+            }
+          }
+        }
+      ]
+    }
+  }
+}
+

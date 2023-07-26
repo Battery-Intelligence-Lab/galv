@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Battery-Intelligence-Lab/galv/blob/main/schemas/enums.json",
+  "@context": {
+    "Mass": "http://emmo.info/emmo#EMMO_ed4af7ae_63a2_497e_bb88_2309619ea405",
+    "Cell": "http://emmo.info/battery#battery_68ed592a_7924_45d0_a108_94d6275d57f0"
+  },
+  "$comment": "Enum definitions for the Galv system. They are used to validate the data that is sent to the Galv system. They are used to suggest values to the user when they are entering data.",
+  "$defs": {
+    "Units": {
+      "description": "Units recognised by Galv",
+      "type": "string",
+      "enumNames": [
+        "No units (unitless)",
+        "Volt (V)",
+        "Ampere (A)",
+        "Second (s)",
+        "Watt-hour (Wh)",
+        "Ampere-hour (Ah)",
+        "Degrees Celsius (°c)",
+        "Watt (W)",
+        "Ohm (Ω)",
+        "Degrees (°)",
+        "Hertz (Hz)"
+      ],
+      "enum": [
+        "unitless",
+        "V",
+        "A",
+        "s",
+        "Wh",
+        "Ah",
+        "°c",
+        "W",
+        "Ω",
+        "°",
+        "Hz"
+      ]
+    },
+    "CellFormFactor": {
+      "description": "Cell form factors recognised by Galv",
+      "type":  "string",
+      "enumNames": [
+        "Cylindrical",
+        "Pouch",
+        "Prismatic"
+      ],
+      "enum": [
+        "Cylindrical",
+        "Pouch",
+        "Prismatic"
+      ]
+    },
+    "ElectrodeComposition": {
+      "description": "Electrode compositions recognised by Galv",
+      "type": "string",
+      "enumNames": [
+        "NMC 111",
+        "NMC 622",
+        "NMC 811",
+        "LFP",
+        "LMO",
+        "LCO",
+        "NCA",
+        "LTO",
+        "Graphite",
+        "Silicon",
+        "Lithium"
+      ],
+      "enum": [
+        "NMC 111",
+        "NMC 622",
+        "NMC 811",
+        "LFP",
+        "LMO",
+        "LCO",
+        "NCA",
+        "LTO",
+        "Graphite",
+        "Silicon",
+        "Lithium"
+      ]
+    }
+  }
+}
+

@@ -1,0 +1,179 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Battery-Intelligence-Lab/galv/blob/main/backend/backend_django/galv/fixtures/cycler_data_schema.json",
+  "@context": {
+    "Mass": "http://emmo.info/emmo#EMMO_ed4af7ae_63a2_497e_bb88_2309619ea405",
+    "Cell": "http://emmo.info/battery#battery_68ed592a_7924_45d0_a108_94d6275d57f0"
+  },
+  "$comment": "This schema defines the minimum requirements for data in the Galv system. It uses Linked Data definitions from the EMMO/BattINFO projects where possible.",
+  "title": "Cell",
+  "type": "object",
+  "description": "Electrochemical cell used in the experiment",
+  "additionalProperties": true,
+  "properties": {
+    "uuid": {
+      "$ref": "#/$defs/GalvUUID"
+    },
+    "Identifier": {
+      "type": "string",
+      "description": "Identifier for the cell"
+    },
+    "Datasheet": {
+      "oneOf": [
+        {
+          "type": "string",
+          "description": "URL to the cell datasheet",
+          "format": "uri"
+        },
+        {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "JSON representation of the cell datasheet"
+        }
+      ],
+      "description": "URL to the cell datasheet",
+      "format": "uri"
+    },
+    "Manufacturer": {
+      "type": "string",
+      "description": "Name of the cell manufacturer"
+    },
+    "Model": {
+      "type": "string",
+      "description": "Name of the cell model"
+    },
+    "Mass": {
+      "type": "number",
+      "description": "Mass of the cell in grams",
+      "exclusiveMinimum": 0
+    },
+    "Form Factor": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/CellFormFactor"
+        },
+        {
+          "type": "string",
+          "description": "A new value not in the list of recognised form factors"
+        }
+      ],
+      "description": "Form factor of the cell, e.g. 'pouch'"
+    },
+    "Rated Capacity": "",
+    "Negative Electrode": {
+      "$ref": "#/$defs/Electrode"
+    },
+    "Positive Electrode": {
+      "$ref": "#/$defs/Electrode"
+    },
+    "required": [
+      "Identifier",
+      "Negative Electrode",
+      "Positive Electrode"
+    ]
+  },
+  "$defs": {
+    "GalvUUID": {
+      "type": "string",
+      "description": "Universally unique identifier for the experiment, assigned by Galv [type 5, Glav's hostname namespace]",
+      "format": "uuid",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-[0-9a-f]{4}-[0-9a-f]{12}$",
+      "readOnly": true
+    },
+    "ArbitraryFile": {
+      "type": "object",
+      "description": "Arbitrary file associated with the experiment",
+      "properties": {
+        "Path": {
+          "type": "string",
+          "description": "URL to the file",
+          "format": "uri"
+        },
+        "Format": {
+          "type": "string",
+          "description": "Type of file, e.g. csv"
+        }
+      },
+      "required": [
+        "Path",
+        "Format"
+      ]
+    },
+    "CellFormFactor": {
+      "description": "Cell form factors recognised by Galv",
+      "type":  "string",
+      "enumNames": [
+        "Cylindrical",
+        "Pouch",
+        "Prismatic"
+      ],
+      "enum": [
+        "Cylindrical",
+        "Pouch",
+        "Prismatic"
+      ]
+    },
+    "ElectrodeComposition": {
+      "description": "Electrode compositions recognised by Galv",
+      "type": "string",
+      "enumNames": [
+        "NMC 111",
+        "NMC 622",
+        "NMC 811",
+        "LFP",
+        "LMO",
+        "LCO",
+        "NCA",
+        "LTO",
+        "Graphite",
+        "Silicon",
+        "Lithium"
+      ],
+      "enum": [
+        "NMC 111",
+        "NMC 622",
+        "NMC 811",
+        "LFP",
+        "LMO",
+        "LCO",
+        "NCA",
+        "LTO",
+        "Graphite",
+        "Silicon",
+        "Lithium"
+      ]
+    },
+    "Electrode": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "Composition": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ElectrodeComposition"
+            },
+            {
+              "type": "string",
+              "description": "A new value not in the list of recognised compositions"
+            }
+          ],
+          "description": "Composition of the electrode, e.g. NCM811"
+        },
+        "Thickness": {
+          "type": "number",
+          "description": "Thickness of the electrode in microns",
+          "exclusiveMinimum": 0
+        },
+        "Coated Area": {
+          "type": "number",
+          "description": "Coated area of the electrode in cm^2",
+          "exclusiveMinimum": 0
+        }
+      },
+      "required": [
+        "Composition"
+      ]
+    }
+  }
+}
+
