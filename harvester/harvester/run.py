@@ -51,7 +51,7 @@ def harvest_path(monitored_path: dict):
             for filename in filenames:
                 full_path = os.path.join(dir_path, filename)
                 core_path, file_path = split_path(path, full_path)
-                if regex is not None and not regex.match(file_path):
+                if regex is not None and not regex.search(file_path):
                     logger.debug(f"Skipping {file_path} as it does not match regex {regex}")
                     continue
                 try:
@@ -101,7 +101,8 @@ def harvest_path(monitored_path: dict):
         logger.error(e)
         report_harvest_result(
             monitored_path_id=monitored_path.get('id'),
-            error=e
+            error=e,
+            path=path
         )
 
 
