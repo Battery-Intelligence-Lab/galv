@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: BSD-2-Clause
 # Copyright  (c) 2020-2023, The Chancellor, Masters and Scholars of the University
 # of Oxford, and the 'Galv' Developers. All rights reserved.
-
+import json
 import os.path
 import re
 
@@ -24,7 +24,7 @@ from .models import Harvester, \
     DataColumnType, \
     DataColumn, \
     TimeseriesRangeLabel, \
-    KnoxAuthToken
+    KnoxAuthToken, JSONCell
 from .utils import get_monitored_paths
 from django.utils import timezone
 from django.contrib.auth.models import User, Group
@@ -57,6 +57,53 @@ def get_model_field(model: django.db.models.Model, field_name: str) -> django.db
     """
     fields = {f.name: f for f in model._meta.fields}
     return fields[field_name]
+
+
+class AdditionalPropertiesModelSerializer(serializers.HyperlinkedModelSerializer):
+    """
+    A ModelSerializer that maps unrecognised properties in the input to an 'additional_properties' JSONField,
+    and unpacks the 'additional_properties' JSONField into the output.
+    """
+    additional_properties = serializers.JSONField(required=False, write_only=True, source='additional_properties')
+
+    class Meta:
+        model: django.db.models.Model
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        model_fields = {f.name for f in self.Meta.model._meta.fields}
+        if 'additional_properties' not in model_fields:
+            raise ValueError("AdditionalPropertiesModelSerializer must define additional_properties")
+
+    def to_representation(self, instance):
+        data = {k: v for k, v in super().to_representation(instance).items() if k != '_additional_properties'}
+        for k, v in instance.additional_properties.items():
+            if k in data:
+                raise ValueError(f"Basic model property {k} duplicated in _additional_properties")
+        return {**data, **instance.additional_properties}
+
+
+    def to_internal_value(self, data):
+        if "additional_properties" in data:
+            raise ValidationError("'additional_properties' is a reserved field name")
+        new_data = {'additional_properties': {}}
+        for k, v in data.items():
+            if k not in self.fields:
+                try:
+                    json.dumps(v)
+                except BaseException:
+                    raise ValidationError(f"Value {v} for key {k} is not JSON serializable")
+                new_data['additional_properties'][k] = v
+            else:
+                new_data[k] = v
+        return new_data
+
+
+class JSONCellSerializer(AdditionalPropertiesModelSerializer):
+    class Meta:
+        model = JSONCell
+        fields = ['url', 'id', 'Identifier', 'Datasheet', 'Manufacturer']
+        read_only_fields = ['id', 'url']
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):

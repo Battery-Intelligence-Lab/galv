@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: BSD-2-Clause
 # Copyright  (c) 2020-2023, The Chancellor, Masters and Scholars of the University
 # of Oxford, and the 'Galv' Developers. All rights reserved.
+from __future__ import annotations
 
 import datetime
 import re
@@ -27,7 +28,7 @@ from .serializers import HarvesterSerializer, \
     GroupSerializer, \
     HarvestErrorSerializer, \
     KnoxTokenSerializer, \
-    KnoxTokenFullSerializer
+    KnoxTokenFullSerializer, JSONCellSerializer
 from .models import Harvester, \
     HarvestError, \
     MonitoredPath, \
@@ -47,7 +48,7 @@ from .models import Harvester, \
     TimeseriesRangeLabel, \
     FileState, \
     VouchFor, \
-    KnoxAuthToken
+    KnoxAuthToken, JSONCell
 from .permissions import HarvesterAccess, ReadOnlyIfInUse, MonitoredPathAccess
 from .utils import get_files_from_path
 from django.contrib.auth.models import User, Group
@@ -1001,6 +1002,15 @@ class CellViewSet(viewsets.ModelViewSet):
     filterset_fields = ['display_name', 'uid', 'family__id']
     search_fields = ['@display_name']
     queryset = Cell.objects.all().order_by('-id')
+    http_method_names = ['get', 'post', 'patch', 'delete', 'options']
+
+
+class JSONCellViewSet(viewsets.ModelViewSet):
+    """
+    Cells are specific cells which have generated data stored in Datasets/ObservedFiles.
+    """
+    serializer_class = JSONCellSerializer
+    queryset = JSONCell.objects.all().order_by('-id')
     http_method_names = ['get', 'post', 'patch', 'delete', 'options']
 
 

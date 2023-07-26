@@ -40,6 +40,7 @@ router.register(r'inactive_users', views.InactiveViewSet, basename='inactive_use
 router.register(r'users', views.UserViewSet, basename='user')
 router.register(r'groups', views.GroupViewSet)
 router.register(r'tokens', views.TokenViewSet, basename='tokens')
+router.register(r'jsoncell', views.JSONCellViewSet, basename='jsoncell')
 
 # Wire up our API using automatic URL routing.
 # Additionally, we include login URLs for the browsable API.

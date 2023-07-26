@@ -20,6 +20,13 @@ class FileState(models.TextChoices):
     IMPORTED = "IMPORTED"
 
 
+class JSONCell(models.Model):
+    Identifier = models.TextField(unique=True, help_text="Unique identifier for the cell", null=False)
+    Datasheet = models.URLField(help_text="Link to the cell's datasheet", null=True)
+    Manufacturer = models.TextField(help_text="Name of the cell's manufacturer", null=True)
+    additional_properties = models.JSONField(null=False, default=dict)
+
+
 class Harvester(models.Model):
     name = models.TextField(
         unique=True,
