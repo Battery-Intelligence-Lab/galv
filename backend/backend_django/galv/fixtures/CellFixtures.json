@@ -1,0 +1,87 @@
+[
+    {
+        "pk": 1,
+        "model": "galv.CellManufacturers",
+        "fields": {
+            "value": "Sony"
+        }
+    },
+    {
+        "pk": 2,
+        "model": "galv.CellManufacturers",
+        "fields": {
+            "value": "LG"
+        }
+    },
+    {
+        "pk": 3,
+        "model": "galv.CellManufacturers",
+        "fields": {
+            "value": "Samsung"
+        }
+    },
+    {
+        "pk": 1,
+        "model": "galv.CellModels",
+        "fields": {
+            "value": "VTC6"
+        }
+    },
+    {
+        "pk": 2,
+        "model": "galv.CellModels",
+        "fields": {
+            "value": "HG2"
+        }
+    },
+    {
+        "pk": 3,
+        "model": "galv.CellModels",
+        "fields": {
+            "value": "25R"
+        }
+    },
+    {
+        "pk": 1,
+        "model": "galv.CellChemistries",
+        "fields": {
+            "value": "NMC"
+        }
+    },
+    {
+        "pk": 1,
+        "model": "galv.CellFormFactors",
+        "fields": {
+            "value": "Pouch"
+        }
+    },
+    {
+        "pk": 2,
+        "model": "galv.CellFormFactors",
+        "fields": {
+            "value": "Cyclindrical"
+        }
+    },
+    {
+        "pk": "42fc4c44-efbb-4457-a734-f68ee28de617",
+        "model": "galv.CellFamily",
+        "fields": {
+            "manufacturer": 1,
+            "model": 1,
+            "chemistry": 1,
+            "form_factor": 2,
+            "nominal_voltage": 3.6
+        }
+    },
+    {
+        "pk": "5d19c8d6-a976-423d-ab5d-a624a0606d30",
+        "model": "galv.CellFamily",
+        "fields": {
+            "manufacturer": 2,
+            "model": 2,
+            "chemistry": 1,
+            "form_factor": 2,
+            "nominal_voltage": 3.6
+        }
+    }
+]

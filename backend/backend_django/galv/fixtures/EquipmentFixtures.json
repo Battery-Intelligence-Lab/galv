@@ -1,0 +1,63 @@
+[
+    {
+        "pk": 1,
+        "model": "galv.EquipmentTypes",
+        "fields": {
+            "value": "Thermal Chamber"
+        }
+    },
+    {
+        "pk": 2,
+        "model": "galv.EquipmentTypes",
+        "fields": {
+            "value": "Cycler",
+            "ld_value": "http://emmo.info/battery#battery_23e6170d_a70b_4de9_a4db_458e24a327ac"
+        }
+    },
+    {
+        "pk": 1,
+        "model": "galv.EquipmentManufacturers",
+        "fields": {
+            "value": "Binder"
+        }
+    },
+    {
+        "pk": 2,
+        "model": "galv.EquipmentManufacturers",
+        "fields": {
+            "value": "ARBIN"
+        }
+    },
+    {
+        "pk": 1,
+        "model": "galv.EquipmentModels",
+        "fields": {
+            "value": "KB115"
+        }
+    },
+    {
+        "pk": 2,
+        "model": "galv.EquipmentModels",
+        "fields": {
+            "value": "LBT-21084-HC"
+        }
+    },
+    {
+        "pk": "947e1f7c-c5b9-47b8-a121-d1e519a7154c",
+        "model": "galv.EquipmentFamily",
+        "fields": {
+            "manufacturer": 1,
+            "model": 1,
+            "type": 1
+        }
+    },
+    {
+        "pk": "6ef7c3b4-cb3b-421f-b6bf-de1e1acfaae8",
+        "model": "galv.EquipmentFamily",
+        "fields": {
+            "manufacturer": 2,
+            "model": 2,
+            "type": 2
+        }
+    }
+]

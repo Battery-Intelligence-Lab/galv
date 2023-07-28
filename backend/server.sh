@@ -35,6 +35,8 @@ python manage.py create_superuser
 >&2 echo "... populating database"
 python manage.py loaddata galv/fixtures/DataUnit.json
 python manage.py loaddata galv/fixtures/DataColumnType.json
+python manage.py loaddata galv/fixtures/EquipmentFixtures.json
+python manage.py loaddata galv/fixtures/CellFixtures.json
 
 >&2 echo "Initialisation complete - starting server"
 

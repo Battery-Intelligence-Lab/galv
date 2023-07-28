@@ -28,7 +28,7 @@ from .serializers import HarvesterSerializer, \
     GroupSerializer, \
     HarvestErrorSerializer, \
     KnoxTokenSerializer, \
-    KnoxTokenFullSerializer, JSONCellSerializer
+    KnoxTokenFullSerializer, CellFamilySerializer
 from .models import Harvester, \
     HarvestError, \
     MonitoredPath, \
@@ -48,7 +48,7 @@ from .models import Harvester, \
     TimeseriesRangeLabel, \
     FileState, \
     VouchFor, \
-    KnoxAuthToken, JSONCell
+    KnoxAuthToken, CellFamily
 from .permissions import HarvesterAccess, ReadOnlyIfInUse, MonitoredPathAccess
 from .utils import get_files_from_path
 from django.contrib.auth.models import User, Group
@@ -952,7 +952,7 @@ class CellFamilyViewSet(viewsets.ModelViewSet):
         'nominal_cell_weight', 'manufacturer'
     ]
     search_fields = ['@name', '@manufacturer', 'form_factor']
-    queryset = CellFamily.objects.all().order_by('-id')
+    queryset = CellFamily.objects.all().order_by('-uuid')
     http_method_names = ['get', 'post', 'patch', 'delete', 'options']
 
 
@@ -999,18 +999,18 @@ class CellViewSet(viewsets.ModelViewSet):
     """
     permission_classes = [ReadOnlyIfInUse]
     serializer_class = CellSerializer
-    filterset_fields = ['display_name', 'uid', 'family__id']
+    filterset_fields = ['display_name', 'uuid', 'celltype__uuid']
     search_fields = ['@display_name']
-    queryset = Cell.objects.all().order_by('-id')
+    queryset = Cell.objects.all().order_by('-uuid')
     http_method_names = ['get', 'post', 'patch', 'delete', 'options']
 
 
-class JSONCellViewSet(viewsets.ModelViewSet):
+class CellFamilyViewSet(viewsets.ModelViewSet):
     """
     Cells are specific cells which have generated data stored in Datasets/ObservedFiles.
     """
-    serializer_class = JSONCellSerializer
-    queryset = JSONCell.objects.all().order_by('-id')
+    serializer_class = CellFamilySerializer
+    queryset = CellFamily.objects.all().order_by('-uuid')
     http_method_names = ['get', 'post', 'patch', 'delete', 'options']
 
 
@@ -1098,124 +1098,124 @@ class DataUnitViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = DataUnit.objects.all().order_by('id')
 
 
-@extend_schema_view(
-    list=extend_schema(
-        summary="View Column Types",
-        description="""
-Column Types are generic Column templates. They hold the metadata for a Column,
-while the individual Column instances link Column Types to the TimeseriesData they contain.
+# @extend_schema_view(
+#     list=extend_schema(
+#         summary="View Column Types",
+#         description="""
+# Column Types are generic Column templates. They hold the metadata for a Column,
+# while the individual Column instances link Column Types to the TimeseriesData they contain.
+#
+# Some Column Types are innately recognised by Galv and its harvester parsers,
+# while others can be defined by the parsers during data processing.
+#
+# Searchable fields:
+# - name
+# - description
+#         """
+#     ),
+#     retrieve=extend_schema(
+#         summary="View a Column Type",
+#         description="""
+# Column Types are generic Column templates. They hold the metadata for a Column,
+# while the individual Column instances link Column Types to the TimeseriesData they contain.
+#
+# Some Column Types are innately recognised by Galv and its harvester parsers,
+# while others can be defined by the parsers during data processing.
+#
+# Searchable fields:
+# - name
+# - description
+#         """
+#     )
+# )
+# class DataColumnTypeViewSet(viewsets.ReadOnlyModelViewSet):
+#     """
+#     DataColumnTypes support reuse of DataColumns over multiple DataSets
+#     by abstracting their information.
+#     """
+#     serializer_class = DataColumnTypeSerializer
+#     filterset_fields = ['name', 'unit__symbol', 'unit__name', 'is_default']
+#     search_fields = ['@name', '@description']
+#     queryset = DataColumnType.objects.all().order_by('id')
 
-Some Column Types are innately recognised by Galv and its harvester parsers,
-while others can be defined by the parsers during data processing.
 
-Searchable fields:
-- name
-- description
-        """
-    ),
-    retrieve=extend_schema(
-        summary="View a Column Type",
-        description="""
-Column Types are generic Column templates. They hold the metadata for a Column,
-while the individual Column instances link Column Types to the TimeseriesData they contain.
-
-Some Column Types are innately recognised by Galv and its harvester parsers,
-while others can be defined by the parsers during data processing.
-
-Searchable fields:
-- name
-- description
-        """
-    )
-)
-class DataColumnTypeViewSet(viewsets.ReadOnlyModelViewSet):
-    """
-    DataColumnTypes support reuse of DataColumns over multiple DataSets
-    by abstracting their information.
-    """
-    serializer_class = DataColumnTypeSerializer
-    filterset_fields = ['name', 'unit__symbol', 'unit__name', 'is_default']
-    search_fields = ['@name', '@description']
-    queryset = DataColumnType.objects.all().order_by('id')
-
-
-@extend_schema_view(
-    list=extend_schema(
-        summary="View Columns to which you have access",
-        description="""
-Column instances link Column Types to the TimeseriesData they contain.
-You can access any Column in any Dataset to which you have access.
-
-Searchable fields:
-- dataset__name
-- type__name (Column Type name)
-        """
-    ),
-    retrieve=extend_schema(
-        summary="View a Column",
-        description="""
-Column instances link Column Types to the TimeseriesData they contain.
-
-Searchable fields:
-- dataset__name
-- type__name (Column Type name)
-        """
-    ),
-    values=extend_schema(
-        summary="View Column data as newline-separated stream of values",
-        description="""
-View the TimeseriesData contents of the Column.
-
-Data are presented as a stream of values separated by newlines.
-
-Can be filtered with querystring parameters `min` and `max`, and `mod` (modulo) by specifying a sample number.
-        """
-    )
-)
-class DataColumnViewSet(viewsets.ReadOnlyModelViewSet):
-    """
-    DataColumns describe which columns are in a Dataset's data.
-    """
-    serializer_class = DataColumnSerializer
-    filterset_fields = ['dataset__name', 'type__unit__symbol', 'dataset__id', 'type__id', 'type__name']
-    search_fields = ['@dataset__name', '@type__name']
-    queryset = DataColumn.objects.none().order_by('-dataset_id', '-id')
-
-    def get_queryset(self):
-        user_paths = MonitoredPath.objects.filter(
-            Q(user_group__in=self.request.user.groups.all()) |
-            Q(admin_group__in=self.request.user.groups.all())
-        )
-        files = set()
-        for path in user_paths:
-            files = {*files, *get_files_from_path(path)}
-        return DataColumn.objects.filter(dataset__file__in=files).order_by('-dataset_id', '-id')
-
-    @action(methods=['GET'], detail=True)
-    def values(self, request, pk: int = None):
-        """
-        Fetch the data for this column in an 'observations' dictionary of record_id: observed_value pairs.
-        """
-        column = get_object_or_404(DataColumn, id=pk)
-        self.check_object_permissions(self.request, column)
-        handlers = [TimeseriesDataFloat, TimeseriesDataInt, TimeseriesDataStr]
-        for handler in handlers:
-            if handler.objects.filter(column=column).exists():
-                values = handler.objects.get(column=column).values
-                # Handle querystring parameters
-                if 'min' in request.query_params:
-                    values = values[int(request.query_params['min']):]
-                if 'max' in request.query_params:
-                    values = values[:int(request.query_params['max'])]
-                if 'mod' in request.query_params:
-                    values = values[::int(request.query_params['mod'])]
-
-                def stream():
-                    for v in values:
-                        yield v
-                        yield '\n'.encode('utf-8')
-                return StreamingHttpResponse(stream())
-        return error_response('No data found for this column.', 404)
+# @extend_schema_view(
+#     list=extend_schema(
+#         summary="View Columns to which you have access",
+#         description="""
+# Column instances link Column Types to the TimeseriesData they contain.
+# You can access any Column in any Dataset to which you have access.
+#
+# Searchable fields:
+# - dataset__name
+# - type__name (Column Type name)
+#         """
+#     ),
+#     retrieve=extend_schema(
+#         summary="View a Column",
+#         description="""
+# Column instances link Column Types to the TimeseriesData they contain.
+#
+# Searchable fields:
+# - dataset__name
+# - type__name (Column Type name)
+#         """
+#     ),
+#     values=extend_schema(
+#         summary="View Column data as newline-separated stream of values",
+#         description="""
+# View the TimeseriesData contents of the Column.
+#
+# Data are presented as a stream of values separated by newlines.
+#
+# Can be filtered with querystring parameters `min` and `max`, and `mod` (modulo) by specifying a sample number.
+#         """
+#     )
+# )
+# class DataColumnViewSet(viewsets.ReadOnlyModelViewSet):
+#     """
+#     DataColumns describe which columns are in a Dataset's data.
+#     """
+#     serializer_class = DataColumnSerializer
+#     filterset_fields = ['dataset__name', 'type__unit__symbol', 'dataset__id', 'type__id', 'type__name']
+#     search_fields = ['@dataset__name', '@type__name']
+#     queryset = DataColumn.objects.none().order_by('-dataset_id', '-id')
+#
+#     def get_queryset(self):
+#         user_paths = MonitoredPath.objects.filter(
+#             Q(user_group__in=self.request.user.groups.all()) |
+#             Q(admin_group__in=self.request.user.groups.all())
+#         )
+#         files = set()
+#         for path in user_paths:
+#             files = {*files, *get_files_from_path(path)}
+#         return DataColumn.objects.filter(dataset__file__in=files).order_by('-dataset_id', '-id')
+#
+#     @action(methods=['GET'], detail=True)
+#     def values(self, request, pk: int = None):
+#         """
+#         Fetch the data for this column in an 'observations' dictionary of record_id: observed_value pairs.
+#         """
+#         column = get_object_or_404(DataColumn, id=pk)
+#         self.check_object_permissions(self.request, column)
+#         handlers = [TimeseriesDataFloat, TimeseriesDataInt, TimeseriesDataStr]
+#         for handler in handlers:
+#             if handler.objects.filter(column=column).exists():
+#                 values = handler.objects.get(column=column).values
+#                 # Handle querystring parameters
+#                 if 'min' in request.query_params:
+#                     values = values[int(request.query_params['min']):]
+#                 if 'max' in request.query_params:
+#                     values = values[:int(request.query_params['max'])]
+#                 if 'mod' in request.query_params:
+#                     values = values[::int(request.query_params['mod'])]
+#
+#                 def stream():
+#                     for v in values:
+#                         yield v
+#                         yield '\n'.encode('utf-8')
+#                 return StreamingHttpResponse(stream())
+#         return error_response('No data found for this column.', 404)
 
 
 @extend_schema_view(

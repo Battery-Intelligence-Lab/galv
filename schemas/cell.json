@@ -5,6 +5,8 @@
     "Mass": "http://emmo.info/emmo#EMMO_ed4af7ae_63a2_497e_bb88_2309619ea405",
     "Cell": "http://emmo.info/battery#battery_68ed592a_7924_45d0_a108_94d6275d57f0"
   },
+  "@id": "uuid",
+  "@type": "Cell",
   "$comment": "This schema defines the minimum requirements for data in the Galv system. It uses Linked Data definitions from the EMMO/BattINFO projects where possible.",
   "title": "Cell",
   "type": "object",
@@ -46,6 +48,22 @@
       "type": "number",
       "description": "Mass of the cell in grams",
       "exclusiveMinimum": 0
+    },
+    "LDMass": {
+      "type": "object",
+      "properties": {
+        "Thing": {
+          "enum": ["Mass"]
+        },
+        "value": {
+          "type": "number",
+          "description": "Mass of the cell in grams",
+          "exclusiveMinimum": 0
+        },
+        "unit": {
+            "enum": ["g"]
+        }
+      }
     },
     "Form Factor": {
       "anyOf": [

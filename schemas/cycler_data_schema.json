@@ -9,37 +9,52 @@
     "Cell": "http://emmo.info/battery#battery_68ed592a_7924_45d0_a108_94d6275d57f0"
   },
   "$comment": "This schema defines the minimum requirements for data in the Galv system. It uses Linked Data definitions from the EMMO/BattINFO projects where possible.",
-  "title": "Cycler Data",
-  "description": "Measured or simulated data from a battery cycler experiment",
   "type": "object",
-  "unevaluatedProperties": false,
+  "description": "Experiment metadata",
+  "additionalProperties": true,
   "properties": {
-    "uuid": {
-      "$ref": "#/$defs/GalvUUID"
+    "Identifier": {
+      "type": "string",
+      "description": "Identifier for the experiment"
     },
-    "Cell": {
-      "$ref": "#/$defs/Cell"
+    "Title": {
+      "type": "string",
+      "description": "Title of the experiment"
     },
-    "Columns": {
-      "$ref": "#/$defs/Columns"
+    "Description": {
+      "type": "string",
+      "description": "Description of the experiment"
+    },
+    "Authors": {
+      "type": "array",
+      "description": "List of authors of the experiment",
+      "items": {
+        "type": "string"
+      }
     },
     "Protocol": {
-      "$ref": "#/$defs/Protocol"
+      "oneOf": [
+        {
+          "$ref": "#/$defs/ArbitraryFile"
+        },
+        {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "JSON representation of the protocol"
+        }
+      ]
     },
-    "Equipment": {
-      "$ref": "#/$defs/Equipment"
-    },
-    "Experiment": {
-      "$ref": "#/$defs/Experiment"
+    "Cycler Datasets": {
+      "type": "array",
+      "description": "List of cycler data files associated with the experiment",
+      "items": {
+        "$ref": "#/$defs/CyclerDataset"
+      },
+      "minimumItems": 1
     }
   },
   "required": [
-    "uuid",
-    "Cell",
-    "Columns",
-    "Protocol",
-    "Experiment",
-    "Equipment"
+    "Identifier"
   ],
   "$defs": {
     "GalvUUID": {
@@ -51,7 +66,6 @@
     },
     "ArbitraryFile": {
       "type": "object",
-      "description": "Arbitrary file associated with the experiment",
       "properties": {
         "Path": {
           "type": "string",
@@ -166,6 +180,29 @@
     "Equipment": {
       "type": "object",
       "definition": "Equipment used to make observations on the Cell, producing the readings in the Columns",
+      "properties": {
+        "Description": {
+          "type": "string",
+          "description": "Description of the equipment"
+        },
+        "Calibration Date": {
+          "type": "string",
+          "description": "Date of the equipment calibration",
+          "format": "date"
+        },
+        "Manufacturer": {
+          "type": "string",
+          "description": "Name of the equipment manufacturer"
+        },
+        "Model Number": {
+          "type": "string",
+          "description": "Model number of the equipment"
+        },
+        "Identifier": {
+          "type": "string",
+          "description": "Serial number or other unique identifier for the equipment"
+        }
+      },
       "additionalProperties": true
     },
     "Column": {
@@ -242,16 +279,16 @@
       },
       "unevaluatedProperties": false
     },
-    "Protocol": {
+    "Schedule": {
       "type": "object",
-      "description": "Experimental protocol used to generate the data",
+      "description": "Cycler schedule used to generate the data",
       "additionalProperties": true,
       "properties": {
         "Definition": {
           "type": "string",
           "description": "Type of experiment, e.g. Constant-Current Discharge"
         },
-        "Test Note": {
+        "Description": {
           "type": "string",
           "description": "Description of the experiment"
         },
@@ -260,45 +297,50 @@
           "description": "Ambient temperature in Kelvin",
           "exclusiveMinimum": 0
         },
-        "Procedure": {
-          "oneOf": [
-            {
-              "$ref": "#/$defs/ArbitraryFile"
-            },
-            {
-              "type": "object",
-              "additionalProperties": true,
-              "description": "JSON representation of the procedure"
-            }
-          ]
+        "ExternalScheduleFile": {
+          "$ref": "#/$defs/ArbitraryFile",
+          "description": "Attach an external schedule file. This will be assumed to be a more accurate representation of the schedule than the PyBaMMSchedule (if present)."
+        },
+        "PyBaMMSchedule": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "PyBaMM representation of the schedule"
         }
       }
     },
-    "Experiment": {
+    "CyclerData": {
+      "title": "Cycler Dataset",
+      "description": "Measured or simulated data from a battery cycler experiment",
       "type": "object",
-      "description": "Experiment metadata",
-      "additionalProperties": true,
+      "unevaluatedProperties": false,
       "properties": {
-        "Identifier": {
-          "type": "string",
-          "description": "Identifier for the experiment"
+        "uuid": {
+          "$ref": "#/$defs/GalvUUID"
         },
-        "Title": {
-          "type": "string",
-          "description": "Title of the experiment"
+        "Cell": {
+          "$ref": "#/$defs/Cell"
         },
-        "Description": {
-          "type": "string",
-          "description": "Description of the experiment"
+        "Columns": {
+          "$ref": "#/$defs/Columns"
         },
-        "Authors": {
+        "Schedule": {
+          "$ref": "#/$defs/Schedule"
+        },
+        "Equipment": {
           "type": "array",
-          "description": "List of authors of the experiment",
+          "description": "Equipment used to run the Protocol and make observations on the Cell, producing the readings in the Columns",
           "items": {
-            "type": "string"
+            "$ref": "#/$defs/Equipment"
           }
         }
-      }
+      },
+      "required": [
+        "uuid",
+        "Cell",
+        "Columns",
+        "Schedule",
+        "Equipment"
+      ]
     }
   }
 }

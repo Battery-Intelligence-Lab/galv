@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: BSD-2-Clause
 # Copyright  (c) 2020-2023, The Chancellor, Masters and Scholars of the University
 # of Oxford, and the 'Galv' Developers. All rights reserved.
+import os
+import uuid
 from typing import Type
 
 from django.contrib.postgres.fields import ArrayField
@@ -20,11 +22,188 @@ class FileState(models.TextChoices):
     IMPORTED = "IMPORTED"
 
 
-class JSONCell(models.Model):
-    Identifier = models.TextField(unique=True, help_text="Unique identifier for the cell", null=False)
-    Datasheet = models.URLField(help_text="Link to the cell's datasheet", null=True)
-    Manufacturer = models.TextField(help_text="Name of the cell's manufacturer", null=True)
+LD_SOURCE_MAP = {
+    "schema": "https://schema.org/",
+    "emmo": "https://github.com/emmo-repo/EMMO/blob/master/emmo.ttl",
+    "battinfo": "https://github.com/emmo-repo/domain-battery/blob/master/battery.ttl"
+}
+
+
+class LDSources(models.TextChoices):
+    SCHEMA = "schema"
+    EMMO = "emmo"
+    BattINFO = "battinfo"
+
+
+def _get_namespace():
+    namespace = os.environ.get('VIRTUAL_HOST_ROOT')
+    if namespace is None:
+        raise ValueError("VIRTUAL_HOST_ROOT environment variable must be set")
+    return namespace
+
+
+
+class UUIDFieldLD(models.UUIDField):
+    def __init__(self, **kwargs):
+        super().__init__(**{
+            'default': uuid.uuid4,
+            'editable': False,
+            'primary_key': True,
+            'unique': True,
+            'null': False,
+            **kwargs
+        })
+        self.namespace = _get_namespace()
+
+    def as_id(self):
+        return f"{self.namespace}{self.__str__()}"
+
+
+class UUIDModel(models.Model):
+    uuid = UUIDFieldLD()
+
+class JSONModel(UUIDModel):
     additional_properties = models.JSONField(null=False, default=dict)
+
+    def __json_ld__(self):
+        raise NotImplementedError((
+            "JSONModel subclasses must implement __json_ld__, ",
+            "returning a dict of JSON-LD representation. ",
+            "Should include '@id' and '@type' field, and triples where this model is the source node. ",
+            "@id can be generated using self.uuid.as_id(). ",
+            "LDSources.* can be used to reference known sources, and any used should be included"
+            "in the '_context' field as a simple list."
+        ))
+
+
+class AutoCompleteEntry(models.Model):
+    value = models.TextField(null=False, unique=True)
+    ld_value = models.TextField(null=True, unique=False, blank=True)
+
+    def __str__(self):
+        return self.value
+
+
+# Reference models that will be used to suggest autocompletion in the frontend.
+# Do not shortcut this with a factory because IDEs will not be able to infer the classes' existence.
+class EquipmentTypes(AutoCompleteEntry):
+    pass
+
+
+class EquipmentModels(AutoCompleteEntry):
+    pass
+
+
+class EquipmentManufacturers(AutoCompleteEntry):
+    pass
+
+
+class CellModels(AutoCompleteEntry):
+    pass
+
+
+class CellManufacturers(AutoCompleteEntry):
+    pass
+
+
+class CellChemistries(AutoCompleteEntry):
+    pass
+
+
+class CellFormFactors(AutoCompleteEntry):
+    pass
+
+
+class ScheduleIdentifiers(AutoCompleteEntry):
+    pass
+
+
+class CellFamily(UUIDModel):
+    manufacturer = models.ForeignKey(to=CellModels, help_text="Name of the manufacturer", null=True, blank=True, on_delete=models.CASCADE, related_name="CellFamilies")
+    model = models.ForeignKey(to=CellModels, help_text="Model number for the cells", null=False, on_delete=models.CASCADE)
+    datasheet = models.URLField(help_text="Link to the datasheet", null=True, blank=True)
+    chemistry = models.ForeignKey(to=CellChemistries, help_text="Chemistry of the cells", null=True, blank=True, on_delete=models.CASCADE)
+    nominal_voltage = models.FloatField(help_text="Nominal voltage of the cells (in volts)", null=True, blank=True)
+    nominal_capacity = models.FloatField(help_text="Nominal capacity of the cells (in amp hours)", null=True, blank=True)
+    initial_ac_impedance = models.FloatField(help_text="Initial AC impedance of the cells (in ohms)", null=True, blank=True)
+    initial_dc_resistance = models.FloatField(help_text="Initial DC resistance of the cells (in ohms)", null=True, blank=True)
+    energy_density = models.FloatField(help_text="Energy density of the cells (in watt hours per kilogram)", null=True, blank=True)
+    power_density = models.FloatField(help_text="Power density of the cells (in watts per kilogram)", null=True, blank=True)
+    form_factor = models.ForeignKey(to=CellFormFactors, help_text="Physical shape of the cells", null=True, blank=True, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"{str(self.manufacturer)} {str(self.model)} ({str(self.chemistry)}, {str(self.form_factor)})"
+
+    class Meta:
+        unique_together = [['model', 'manufacturer']]
+
+class Cell(JSONModel):
+    identifier = models.TextField(unique=True, help_text="Unique identifier (e.g. serial number) for the cell", null=False)
+    family = models.ForeignKey(to=CellFamily, on_delete=models.CASCADE, null=False, help_text="Cell type", related_name="Cells")
+
+    def __str__(self):
+        return f"{self.identifier} [{str(self.family)}]"
+
+    def __json_ld__(self):
+        return {
+            "_context": [LDSources.BattINFO, LDSources.SCHEMA],
+            "@id": self.uuid.as_id(),
+            "@type": f"{LDSources.BattINFO}:BatteryCell",
+            f"{LDSources.SCHEMA}:serialNumber": self.identifier,
+            f"{LDSources.SCHEMA}:identifier": str(self.family.model),
+            f"{LDSources.SCHEMA}:documentation": str(self.family.datasheet),
+            f"{LDSources.SCHEMA}:manufacturer": str(self.family.manufacturer)
+            # TODO: Add more fields from CellFamily
+        }
+
+
+class EquipmentFamily(UUIDModel):
+    type = models.ForeignKey(to=EquipmentTypes, on_delete=models.CASCADE, null=False, help_text="Type of equipment")
+    manufacturer = models.ForeignKey(to=EquipmentManufacturers, on_delete=models.CASCADE, null=False, help_text="Manufacturer of equipment")
+    model = models.ForeignKey(to=EquipmentModels, on_delete=models.CASCADE, null=False, help_text="Model of equipment")
+
+    def __str__(self):
+        return f"{str(self.manufacturer)} {str(self.model)} ({str(self.type)})"
+
+class Equipment(JSONModel):
+    identifier = models.TextField(unique=True, help_text="Unique identifier (e.g. serial number) for the equipment", null=False)
+    family = models.ForeignKey(to=EquipmentFamily, on_delete=models.CASCADE, null=False, help_text="Equipment type", related_name="Equipment")
+
+    def __str__(self):
+        return f"{self.identifier} [{str(self.family)}]"
+
+    def __json_ld__(self):
+        return {
+            "_context": [LDSources.BattINFO, LDSources.SCHEMA],
+            "@id": self.uuid.as_id(),
+            "@type": (self.family.type.ld_value if self.family.type.ld_value else f"{LDSources.SCHEMA}:Thing"),
+            f"{LDSources.SCHEMA}:serialNumber": self.identifier,
+            f"{LDSources.SCHEMA}:identifier": str(self.family.model),
+            f"{LDSources.SCHEMA}:manufacturer": str(self.family.manufacturer)
+        }
+
+
+class Schedule(JSONModel):
+    identifier = models.OneToOneField(to=ScheduleIdentifiers, unique=True, blank=False, null=False, help_text="Type of experiment, e.g. Constant-Current Discharge", on_delete=models.CASCADE)
+    description = models.TextField(help_text="Description of the schedule")
+    ambient_temperature = models.FloatField(help_text="Ambient temperature during the experiment (in degrees Celsius)", null=True, blank=True)
+    schedule_file = models.FileField(help_text="File containing the schedule", null=True, blank=True)
+    pybamm_schedule = models.JSONField(help_text="PyBaMM representation of the schedule", null=True, blank=True)
+
+
+class DataColumn(JSONModel):
+    name = models.TextField(help_text="Name of the column", null=False)
+    # unit = models.ForeignKey(to=DataUnit, on_delete=models.CASCADE, null=False, help_text="Unit of the column")
+    # data_type = models.ForeignKey(to=DataColumnType, on_delete=models.CASCADE, null=False, help_text="Type of the column")
+    data = ArrayField(models.FloatField(), help_text="Data contained in the column", null=False)
+    # dataset = models.ForeignKey(to=Dataset, on_delete=models.CASCADE, null=False, help_text="Dataset containing the column")
+
+
+class CyclerTest(JSONModel):
+    cell_subject = models.ForeignKey(to=Cell, on_delete=models.CASCADE, null=False, help_text="Cell that was tested", related_name="CyclerTests")
+    equipment = models.ManyToManyField(to=Equipment, help_text="Equipment used to test the cell", related_name="CyclerTests")
+    schedule = models.ManyToManyField(to=Schedule, help_text="Schedule used to test the cell", related_name="CyclerTests")
+    columns = models.ManyToManyField(to=DataColumn,  help_text="Columns of data collected during the test", related_name="CyclerTests")
 
 
 class Harvester(models.Model):
@@ -193,53 +372,53 @@ class HarvestError(models.Model):
         return f"{self.error} [Harvester_{self.harvester_id}]"
 
 
-class CellFamily(models.Model):
-    name = models.TextField(
-        null=False,
-        unique=True,
-        help_text="Human-friendly identifier"
-    )
-    form_factor = models.TextField(help_text="Physical shape of the cells")
-    link_to_datasheet = models.TextField(help_text="Link to a detailed datasheet for these cells")
-    anode_chemistry = models.TextField(help_text="Chemistry of the cells' anode")
-    cathode_chemistry = models.TextField(help_text="Chemistry of the cells' cathode")
-    nominal_capacity = models.FloatField(help_text="Nominal capacity of the cells (in amp hours)")
-    nominal_cell_weight = models.FloatField(help_text="Nominal weight of the cells (in kilograms)")
-    manufacturer = models.TextField(help_text="Name of the cells' manufacturer")
+# class CellFamily(models.Model):
+#     name = models.TextField(
+#         null=False,
+#         unique=True,
+#         help_text="Human-friendly identifier"
+#     )
+#     form_factor = models.TextField(help_text="Physical shape of the cells")
+#     link_to_datasheet = models.TextField(help_text="Link to a detailed datasheet for these cells")
+#     anode_chemistry = models.TextField(help_text="Chemistry of the cells' anode")
+#     cathode_chemistry = models.TextField(help_text="Chemistry of the cells' cathode")
+#     nominal_capacity = models.FloatField(help_text="Nominal capacity of the cells (in amp hours)")
+#     nominal_cell_weight = models.FloatField(help_text="Nominal weight of the cells (in kilograms)")
+#     manufacturer = models.TextField(help_text="Name of the cells' manufacturer")
+#
+#     def __str__(self):
+#         return f"{self.name} [CellFamily {self.id}]"
+#
+#     def in_use(self) -> bool:
+#         return self.cells.count() > 0
 
-    def __str__(self):
-        return f"{self.name} [CellFamily {self.id}]"
 
-    def in_use(self) -> bool:
-        return self.cells.count() > 0
-
-
-class Cell(models.Model):
-    display_name = models.TextField(
-        null=True,
-        unique=True,
-        help_text="Human-friendly identifier"
-    )
-    uid = models.TextField(
-        null=False,
-        unique=True,
-        help_text="Serial number or similar. Should be globally unique"
-    )
-    family = models.ForeignKey(
-        to=CellFamily,
-        related_name='cells',
-        on_delete=models.DO_NOTHING,
-        null=False,
-        help_text="Family to which this cell belongs"
-    )
-
-    def __str__(self):
-        if self.display_name:
-            return f"{self.uid} ({self.display_name})"
-        return self.uid
-
-    def in_use(self) -> bool:
-        return self.datasets.count() > 0
+# class Cell(models.Model):
+#     display_name = models.TextField(
+#         null=True,
+#         unique=True,
+#         help_text="Human-friendly identifier"
+#     )
+#     uid = models.TextField(
+#         null=False,
+#         unique=True,
+#         help_text="Serial number or similar. Should be globally unique"
+#     )
+#     family = models.ForeignKey(
+#         to=CellFamily,
+#         related_name='cells',
+#         on_delete=models.DO_NOTHING,
+#         null=False,
+#         help_text="Family to which this cell belongs"
+#     )
+#
+#     def __str__(self):
+#         if self.display_name:
+#             return f"{self.uid} ({self.display_name})"
+#         return self.uid
+#
+#     def in_use(self) -> bool:
+#         return self.datasets.count() > 0
 
 
 class Dataset(models.Model):
@@ -281,24 +460,24 @@ class Dataset(models.Model):
         unique_together = [['file', 'date']]
 
 
-class Equipment(models.Model):
-    name = models.TextField(
-        null=False,
-        unique=True,
-        help_text="Specific identifier"
-    )
-    type = models.TextField(help_text="Generic name")
-    datasets = models.ManyToManyField(
-        to=Dataset,
-        related_name='equipment',
-        help_text="Datasets the Equipment is used in"
-    )
-
-    def __str__(self):
-        return f"{self.name} [Equipment {self.id}]"
-
-    def in_use(self) -> bool:
-        return self.datasets.count() > 0
+# class Equipment(models.Model):
+#     name = models.TextField(
+#         null=False,
+#         unique=True,
+#         help_text="Specific identifier"
+#     )
+#     type = models.TextField(help_text="Generic name")
+#     datasets = models.ManyToManyField(
+#         to=Dataset,
+#         related_name='equipment',
+#         help_text="Datasets the Equipment is used in"
+#     )
+#
+#     def __str__(self):
+#         return f"{self.name} [Equipment {self.id}]"
+#
+#     def in_use(self) -> bool:
+#         return self.datasets.count() > 0
 
 
 class DataUnit(models.Model):
@@ -340,27 +519,27 @@ class DataColumnType(models.Model):
         unique_together = [['unit', 'name']]
 
 
-class DataColumn(models.Model):
-    dataset = models.ForeignKey(
-        to=Dataset,
-        related_name='columns',
-        on_delete=models.CASCADE,
-        help_text="Dataset in which this Column appears"
-    )
-    type = models.ForeignKey(
-        to=DataColumnType,
-        on_delete=models.CASCADE,
-        help_text="Column Type which this Column instantiates"
-    )
-    official_sample_counter = models.BooleanField(default=False)
-    data_type = models.TextField(null=False, help_text="Type of the data in this column")
-    name = models.TextField(null=False, help_text="Column title e.g. in .tsv file headers")
-
-    def __str__(self):
-        return f"{self.name} ({self.type.unit.symbol})"
-
-    class Meta:
-        unique_together = [['dataset', 'name']]
+# class DataColumn(models.Model):
+#     dataset = models.ForeignKey(
+#         to=Dataset,
+#         related_name='columns',
+#         on_delete=models.CASCADE,
+#         help_text="Dataset in which this Column appears"
+#     )
+#     type = models.ForeignKey(
+#         to=DataColumnType,
+#         on_delete=models.CASCADE,
+#         help_text="Column Type which this Column instantiates"
+#     )
+#     official_sample_counter = models.BooleanField(default=False)
+#     data_type = models.TextField(null=False, help_text="Type of the data in this column")
+#     name = models.TextField(null=False, help_text="Column title e.g. in .tsv file headers")
+#
+#     def __str__(self):
+#         return f"{self.name} ({self.type.unit.symbol})"
+#
+#     class Meta:
+#         unique_together = [['dataset', 'name']]
 
 # Timeseries data comes in different types, so we need to store them separately.
 # These helper functions reduce redundancy in the code that creates the models.

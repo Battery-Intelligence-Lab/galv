@@ -24,7 +24,7 @@ from .models import Harvester, \
     DataColumnType, \
     DataColumn, \
     TimeseriesRangeLabel, \
-    KnoxAuthToken, JSONCell
+    KnoxAuthToken, CellFamily, EquipmentTypes, CellFormFactors, CellChemistries, CellModels, CellManufacturers
 from .utils import get_monitored_paths
 from django.utils import timezone
 from django.contrib.auth.models import User, Group
@@ -59,6 +59,32 @@ def get_model_field(model: django.db.models.Model, field_name: str) -> django.db
     return fields[field_name]
 
 
+class GetOrCreateTextField(serializers.CharField):
+    """
+    A CharField that will create a new object if it does not exist.
+    """
+    def __init__(self, foreign_model, foreign_model_field: str = 'value', **kwargs):
+        super().__init__(**kwargs)
+        self.foreign_model = foreign_model
+        self.foreign_model_field = foreign_model_field
+
+    def to_internal_value(self, data):
+        # Let CharField do the basic validation
+        data = super().to_internal_value(data)
+        return self.foreign_model.objects.get_or_create(**{self.foreign_model_field: data})[0]
+    def to_representation(self, value):
+        return getattr(value, self.foreign_model_field)
+
+
+class GetOrCreateTextFieldList(serializers.ListField):
+    """
+    Adapt serializers.ListField to use GetOrCreateTextField.
+    Solves ManyRelatedManager is not iterable error.
+    """
+    def to_representation(self, data):
+        return super().to_representation(data.all())
+
+
 class AdditionalPropertiesModelSerializer(serializers.HyperlinkedModelSerializer):
     """
     A ModelSerializer that maps unrecognised properties in the input to an 'additional_properties' JSONField,
@@ -85,8 +111,9 @@ class AdditionalPropertiesModelSerializer(serializers.HyperlinkedModelSerializer
 
     def to_internal_value(self, data):
         if "additional_properties" in data:
-            raise ValidationError("'additional_properties' is a reserved field name")
-        new_data = {'additional_properties': {}}
+            new_data = {'additional_properties': {'additional_properties': data.pop('additional_properties')}}
+        else:
+            new_data = {'additional_properties': {}}
         for k, v in data.items():
             if k not in self.fields:
                 try:
@@ -99,11 +126,36 @@ class AdditionalPropertiesModelSerializer(serializers.HyperlinkedModelSerializer
         return new_data
 
 
-class JSONCellSerializer(AdditionalPropertiesModelSerializer):
+class CellSerializer(AdditionalPropertiesModelSerializer):
     class Meta:
-        model = JSONCell
-        fields = ['url', 'id', 'Identifier', 'Datasheet', 'Manufacturer']
-        read_only_fields = ['id', 'url']
+        model = Cell
+        fields = ['url', 'uuid', 'Identifier', 'CellFamily']
+        read_only_fields = ['url', 'uuid']
+
+class CellFamilySerializer(serializers.HyperlinkedModelSerializer):
+    manufacturer = GetOrCreateTextField(foreign_model=CellManufacturers, help_text="Manufacturer name")
+    model = GetOrCreateTextField(foreign_model=CellModels, help_text="Model number")
+    chemistry = GetOrCreateTextField(foreign_model=CellChemistries, help_text="Chemistry type")
+    form_factor = GetOrCreateTextField(foreign_model=CellFormFactors, help_text="Physical form factor")
+
+    class Meta:
+        model = CellFamily
+        fields = [
+            'url',
+            'uuid',
+            'manufacturer',
+            'model',
+            'datasheet',
+            'chemistry',
+            'nominal_voltage',
+            'nominal_capacity',
+            'initial_ac_impedance',
+            'initial_dc_resistance',
+            'energy_density',
+            'power_density',
+            'form_factor',
+        ]
+        read_only_fields = ['url', 'uuid', 'Cells']
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
@@ -436,49 +488,49 @@ class HarvestErrorSerializer(serializers.HyperlinkedModelSerializer):
         extra_kwargs = augment_extra_kwargs()
 
 
-class CellFamilySerializer(serializers.HyperlinkedModelSerializer):
+# class CellFamilySerializer(serializers.HyperlinkedModelSerializer):
+#
+#     class Meta:
+#         model = CellFamily
+#         fields = [
+#             'url', 'id', 'name',
+#             'form_factor', 'link_to_datasheet',
+#             'anode_chemistry', 'cathode_chemistry',
+#             'nominal_capacity', 'nominal_cell_weight', 'manufacturer',
+#             'cells', 'in_use'
+#         ]
+#         read_only_fields = ['id', 'url', 'cells', 'in_use']
+#         extra_kwargs = augment_extra_kwargs({'cells': {'help_text': "Cells in this Family"}})
 
-    class Meta:
-        model = CellFamily
-        fields = [
-            'url', 'id', 'name',
-            'form_factor', 'link_to_datasheet',
-            'anode_chemistry', 'cathode_chemistry',
-            'nominal_capacity', 'nominal_cell_weight', 'manufacturer',
-            'cells', 'in_use'
-        ]
-        read_only_fields = ['id', 'url', 'cells', 'in_use']
-        extra_kwargs = augment_extra_kwargs({'cells': {'help_text': "Cells in this Family"}})
 
-
-class CellSerializer(serializers.HyperlinkedModelSerializer):
-
-    def validate_display_name(self, value):
-        if isinstance(value, str):
-            return value
-        return ""
-
-    def validate_family(self, value):
-        if not isinstance(value, CellFamily):
-            raise serializers.ValidationError("family property must be a CellFamily instance")
-        return value
-
-    def create(self, validated_data):
-        uid = validated_data.pop('uid')
-        display_name = validated_data.pop('display_name', "")
-        family = validated_data.pop('family')
-        if display_name == '':
-            display_name = f"{family.name}_{family.cells.count()}"
-        return Cell.objects.create(uid=uid, family=family, display_name=display_name)
-
-    class Meta:
-        model = Cell
-        fields = ['url', 'id', 'uid', 'display_name', 'family', 'datasets', 'in_use']
-        read_only_fields = ['id', 'url', 'datasets', 'in_use']
-        extra_kwargs = augment_extra_kwargs({
-            'family': {'help_text': "Cell Family to which this Cell belongs"},
-            'datasets': {'help_text': "Datasets generated in experiments using this Cell"}
-        })
+# class CellSerializer(serializers.HyperlinkedModelSerializer):
+#
+#     def validate_display_name(self, value):
+#         if isinstance(value, str):
+#             return value
+#         return ""
+#
+#     def validate_family(self, value):
+#         if not isinstance(value, CellFamily):
+#             raise serializers.ValidationError("family property must be a CellFamily instance")
+#         return value
+#
+#     def create(self, validated_data):
+#         uid = validated_data.pop('uid')
+#         display_name = validated_data.pop('display_name', "")
+#         family = validated_data.pop('family')
+#         if display_name == '':
+#             display_name = f"{family.name}_{family.cells.count()}"
+#         return Cell.objects.create(uid=uid, family=family, display_name=display_name)
+#
+#     class Meta:
+#         model = Cell
+#         fields = ['url', 'id', 'uid', 'display_name', 'family', 'datasets', 'in_use']
+#         read_only_fields = ['id', 'url', 'datasets', 'in_use']
+#         extra_kwargs = augment_extra_kwargs({
+#             'family': {'help_text': "Cell Family to which this Cell belongs"},
+#             'datasets': {'help_text': "Datasets generated in experiments using this Cell"}
+#         })
 
 
 class EquipmentSerializer(serializers.HyperlinkedModelSerializer):
@@ -544,12 +596,12 @@ class DataColumnSerializer(serializers.HyperlinkedModelSerializer):
     """
     A column contains metadata and data. Data are an ordered list of values.
     """
-    name = serializers.SerializerMethodField(help_text=get_model_field(DataColumn, 'name').help_text)
-    dataset = serializers.SerializerMethodField(help_text=get_model_field(DataColumn, 'dataset').help_text)
-    type_name = serializers.SerializerMethodField(help_text=get_model_field(DataColumnType, 'name').help_text)
-    description = serializers.SerializerMethodField(help_text=get_model_field(DataColumnType, 'description').help_text)
-    unit = serializers.SerializerMethodField(help_text=get_model_field(DataColumnType, 'unit').help_text)
-    values = serializers.SerializerMethodField(help_text="Column values")
+    # name = serializers.SerializerMethodField(help_text=get_model_field(DataColumn, 'name').help_text)
+    # dataset = serializers.SerializerMethodField(help_text=get_model_field(DataColumn, 'dataset').help_text)
+    # type_name = serializers.SerializerMethodField(help_text=get_model_field(DataColumnType, 'name').help_text)
+    # description = serializers.SerializerMethodField(help_text=get_model_field(DataColumnType, 'description').help_text)
+    # unit = serializers.SerializerMethodField(help_text=get_model_field(DataColumnType, 'unit').help_text)
+    # values = serializers.SerializerMethodField(help_text="Column values")
 
     def uri(self, rel_url: str) -> str:
         return self.context['request'].build_absolute_uri(rel_url)
@@ -648,11 +700,12 @@ class HarvesterConfigSerializer(HarvesterSerializer):
 
     @extend_schema_field(DataColumnTypeSerializer(many=True))
     def get_standard_columns(self, instance):
-        return DataColumnTypeSerializer(
-            DataColumnType.objects.filter(is_default=True),
-            many=True,
-            context={'request': self.context['request']}
-        ).data
+        return []
+        # return DataColumnTypeSerializer(
+        #     DataColumnType.objects.filter(is_default=True),
+        #     many=True,
+        #     context={'request': self.context['request']}
+        # ).data
 
     def get_max_upload_bytes(self, instance):
         return DATA_UPLOAD_MAX_MEMORY_SIZE
