@@ -28,7 +28,7 @@ from .serializers import HarvesterSerializer, \
     GroupSerializer, \
     HarvestErrorSerializer, \
     KnoxTokenSerializer, \
-    KnoxTokenFullSerializer, CellFamilySerializer
+    KnoxTokenFullSerializer, CellFamilySerializer, EquipmentFamilySerializer, GetOrCreateTextStringSerializer
 from .models import Harvester, \
     HarvestError, \
     MonitoredPath, \
@@ -48,7 +48,8 @@ from .models import Harvester, \
     TimeseriesRangeLabel, \
     FileState, \
     VouchFor, \
-    KnoxAuthToken, CellFamily
+    KnoxAuthToken, CellFamily, EquipmentTypes, EquipmentModels, EquipmentManufacturers, CellModels, CellManufacturers, \
+    CellChemistries, CellFormFactors, ScheduleIdentifiers, EquipmentFamily
 from .permissions import HarvesterAccess, ReadOnlyIfInUse, MonitoredPathAccess
 from .utils import get_files_from_path
 from django.contrib.auth.models import User, Group
@@ -897,6 +898,75 @@ class HarvestErrorViewSet(viewsets.ReadOnlyModelViewSet):
         ).order_by('-timestamp')
 
 
+class _GetOrCreateTextStringViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    Abstract base class for ViewSets that allow the creation of TextString objects.
+
+    TextString objects are used to describe the properties of Cells, Equipment, and
+    other objects used in experiments, making values available for autocompletion hints.
+    """
+    serializer_class = GetOrCreateTextStringSerializer
+    filterset_fields = ['value']
+    search_fields = ['@value']
+
+    @action(detail=True, methods=['GET'])
+    def details(self, request, pk: int = None):
+        text_string = get_object_or_404(self.queryset, pk=pk)
+        return Response(GetOrCreateTextStringSerializer(text_string).data)
+
+
+class EquipmentTypesViewSet(_GetOrCreateTextStringViewSet):
+    """
+    Equipment Types are used to describe the type of equipment used in an experiment.
+    Examples are "Thermal Chamber", "Cycler".
+    """
+    queryset = EquipmentTypes.objects.filter(include_in_autocomplete=True).order_by('value')
+
+
+class EquipmentModelsViewSet(_GetOrCreateTextStringViewSet):
+    """
+    Equipment Models are used to describe the model of equipment used in an experiment.
+    Examples are "BT-2000", "BT-2043".
+    """
+    queryset = EquipmentModels.objects.filter(include_in_autocomplete=True).order_by('value')
+class EquipmentManufacturersViewSet(_GetOrCreateTextStringViewSet):
+    """
+    Equipment Manufacturers are used to describe the manufacturer of equipment used in an experiment.
+    Examples are "Arbin", "Maccor".
+    """
+    queryset = EquipmentManufacturers.objects.filter(include_in_autocomplete=True).order_by('value')
+class CellModelsViewSet(_GetOrCreateTextStringViewSet):
+    """
+    Cell Models are used to describe the model of cell used in an experiment.
+    Examples are "VTC6", "HG2".
+    """
+    queryset = CellModels.objects.filter(include_in_autocomplete=True).order_by('value')
+class CellManufacturersViewSet(_GetOrCreateTextStringViewSet):
+    """
+    Cell Manufacturers are used to describe the manufacturer of cell used in an experiment.
+    Examples are "Sony", "LG".
+    """
+    queryset = CellManufacturers.objects.filter(include_in_autocomplete=True).order_by('value')
+class CellChemistriesViewSet(_GetOrCreateTextStringViewSet):
+    """
+    Cell Chemistries are used to describe the chemistry of cell used in an experiment.
+    Examples are "NMC", "LFP".
+    """
+    queryset = CellChemistries.objects.filter(include_in_autocomplete=True).order_by('value')
+class CellFormFactorsViewSet(_GetOrCreateTextStringViewSet):
+    """
+    Cell Form Factors are used to describe the form factor of cell used in an experiment.
+    Examples are "Pouch", "Cylindrical".
+    """
+    queryset = CellFormFactors.objects.filter(include_in_autocomplete=True).order_by('value')
+class ScheduleIdentifiersViewSet(_GetOrCreateTextStringViewSet):
+    """
+    Schedule Identifiers are used to describe the type of schedule used in an experiment.
+    Examples are "Cell Conditioning", "Pseudo-OCV".
+    """
+    queryset = ScheduleIdentifiers.objects.filter(include_in_autocomplete=True).order_by('value')
+
+
 @extend_schema_view(
     list=extend_schema(
         summary="View Cell Families",
@@ -948,10 +1018,9 @@ class CellFamilyViewSet(viewsets.ModelViewSet):
     permission_classes = [ReadOnlyIfInUse]
     serializer_class = CellFamilySerializer
     filterset_fields = [
-        'name', 'form_factor', 'anode_chemistry', 'cathode_chemistry', 'nominal_capacity',
-        'nominal_cell_weight', 'manufacturer'
+        'model', 'form_factor', 'chemistry', 'nominal_capacity', 'manufacturer'
     ]
-    search_fields = ['@name', '@manufacturer', 'form_factor']
+    search_fields = ['@model', '@manufacturer', '@form_factor']
     queryset = CellFamily.objects.all().order_by('-uuid')
     http_method_names = ['get', 'post', 'patch', 'delete', 'options']
 
@@ -963,7 +1032,7 @@ class CellFamilyViewSet(viewsets.ModelViewSet):
 Cells are specific cells which generate data stored in Datasets/observed Files.
 
 Searchable fields:
-- display_name
+- identifier
         """
     ),
     retrieve=extend_schema(
@@ -999,18 +1068,67 @@ class CellViewSet(viewsets.ModelViewSet):
     """
     permission_classes = [ReadOnlyIfInUse]
     serializer_class = CellSerializer
-    filterset_fields = ['display_name', 'uuid', 'celltype__uuid']
-    search_fields = ['@display_name']
+    filterset_fields = ['identifer', 'family__uuid']
+    search_fields = ['@identifier', '@family__model', '@family__manufacturer']
     queryset = Cell.objects.all().order_by('-uuid')
     http_method_names = ['get', 'post', 'patch', 'delete', 'options']
 
 
-class CellFamilyViewSet(viewsets.ModelViewSet):
+@extend_schema_view(
+    list=extend_schema(
+        summary="View Equipment Families",
+        description="""
+Equipment Families group together the general properties of a type of Equipment.
+Each Equipment is associated with an Equipment Family.
+
+Searchable fields:
+- type
+- manufacturer
+- form_factor
+        """
+    ),
+    retrieve=extend_schema(
+        summary="View an Equipment Family",
+        description="""
+Equipment Families group together the general properties of a type of Equipment.
+Each Equipment is associated with an Equipment Family.
+        """
+    ),
+    create=extend_schema(
+        summary="Create an Equipment Family",
+        description="""
+Equipment Families group together the general properties of a type of Equipment.
+Each Equipment is associated with an Equipment Family.
+        """
+    ),
+    partial_update=extend_schema(
+        summary="Update an Equipment Family",
+        description="""
+Equipment Families that do not have any Equipment associated with them may be edited.
+Equipment Families that _do_ have Equipment associated with them are locked,
+to prevent accidental updating.
+        """
+    ),
+    destroy=extend_schema(
+        summary="Delete an Equipment Family",
+        description="""
+Equipment Families that do not have any Equipment associated with them may be deleted.
+Equipment Families that _do_ have Equipment associated with them are locked,
+to prevent accidental updating.
+        """
+    )
+)
+class EquipmentFamilyViewSet(viewsets.ModelViewSet):
     """
-    Cells are specific cells which have generated data stored in Datasets/ObservedFiles.
+    EquipmentFamilies describe types of Equipment.
     """
-    serializer_class = CellFamilySerializer
-    queryset = CellFamily.objects.all().order_by('-uuid')
+    permission_classes = [ReadOnlyIfInUse]
+    serializer_class = EquipmentFamilySerializer
+    filterset_fields = [
+        'model', 'type', 'manufacturer'
+    ]
+    search_fields = ['@model', '@manufacturer', '@type']
+    queryset = EquipmentFamily.objects.all().order_by('-uuid')
     http_method_names = ['get', 'post', 'patch', 'delete', 'options']
 
 
@@ -1060,8 +1178,8 @@ class EquipmentViewSet(viewsets.ModelViewSet):
     permission_classes = [ReadOnlyIfInUse]
     serializer_class = EquipmentSerializer
     queryset = Equipment.objects.all()
-    filterset_fields = ['type']
-    search_fields = ['@name', '@type']
+    filterset_fields = ['family__type']
+    search_fields = ['@identifer', '@family__type']
     http_method_names = ['get', 'post', 'patch', 'delete', 'options']
 
 

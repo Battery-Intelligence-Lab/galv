@@ -11,128 +11,40 @@ from drf_spectacular.utils import extend_schema_field
 from rest_framework.exceptions import ValidationError
 from urllib.parse import urlparse
 
-from .models import Harvester, \
+from ..models import Harvester, \
     HarvesterEnvVar, \
     HarvestError, \
     MonitoredPath, \
     ObservedFile, \
     Cell, \
-    CellFamily, \
     Dataset, \
     Equipment, \
     DataUnit, \
     DataColumnType, \
     DataColumn, \
     TimeseriesRangeLabel, \
-    KnoxAuthToken, CellFamily, EquipmentTypes, CellFormFactors, CellChemistries, CellModels, CellManufacturers
-from .utils import get_monitored_paths
+    KnoxAuthToken, CellFamily, EquipmentTypes, CellFormFactors, CellChemistries, CellModels, CellManufacturers, \
+    EquipmentManufacturers, EquipmentModels, EquipmentFamily
+from ..utils import get_monitored_paths
 from django.utils import timezone
 from django.contrib.auth.models import User, Group
 from django.conf.global_settings import DATA_UPLOAD_MAX_MEMORY_SIZE
 from rest_framework import serializers
 from knox.models import AuthToken
 
-
-url_help_text = "Canonical URL for this object"
-
-
-def augment_extra_kwargs(extra_kwargs: dict[str, dict] = None):
-    def _augment(name: str, content: dict):
-        if name == 'url':
-            return {'help_text': url_help_text, 'read_only': True, **content}
-        if name == 'id':
-            return {'help_text': "Auto-assigned object identifier", 'read_only': True, **content}
-        return {**content}
-
-    if extra_kwargs is None:
-        extra_kwargs = {}
-    extra_kwargs = {'url': {}, 'id': {}, **extra_kwargs}
-    return {k: _augment(k, v) for k, v in extra_kwargs.items()}
-
-
-def get_model_field(model: django.db.models.Model, field_name: str) -> django.db.models.Field:
-    """
-    Get a field from a Model.
-    Works, but generates type warnings because Django uses hidden Metaclass ModelBase for models.
-    """
-    fields = {f.name: f for f in model._meta.fields}
-    return fields[field_name]
-
-
-class GetOrCreateTextField(serializers.CharField):
-    """
-    A CharField that will create a new object if it does not exist.
-    """
-    def __init__(self, foreign_model, foreign_model_field: str = 'value', **kwargs):
-        super().__init__(**kwargs)
-        self.foreign_model = foreign_model
-        self.foreign_model_field = foreign_model_field
-
-    def to_internal_value(self, data):
-        # Let CharField do the basic validation
-        data = super().to_internal_value(data)
-        return self.foreign_model.objects.get_or_create(**{self.foreign_model_field: data})[0]
-    def to_representation(self, value):
-        return getattr(value, self.foreign_model_field)
-
-
-class GetOrCreateTextFieldList(serializers.ListField):
-    """
-    Adapt serializers.ListField to use GetOrCreateTextField.
-    Solves ManyRelatedManager is not iterable error.
-    """
-    def to_representation(self, data):
-        return super().to_representation(data.all())
-
-
-class AdditionalPropertiesModelSerializer(serializers.HyperlinkedModelSerializer):
-    """
-    A ModelSerializer that maps unrecognised properties in the input to an 'additional_properties' JSONField,
-    and unpacks the 'additional_properties' JSONField into the output.
-    """
-    additional_properties = serializers.JSONField(required=False, write_only=True, source='additional_properties')
-
-    class Meta:
-        model: django.db.models.Model
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        model_fields = {f.name for f in self.Meta.model._meta.fields}
-        if 'additional_properties' not in model_fields:
-            raise ValueError("AdditionalPropertiesModelSerializer must define additional_properties")
-
-    def to_representation(self, instance):
-        data = {k: v for k, v in super().to_representation(instance).items() if k != '_additional_properties'}
-        for k, v in instance.additional_properties.items():
-            if k in data:
-                raise ValueError(f"Basic model property {k} duplicated in _additional_properties")
-        return {**data, **instance.additional_properties}
-
-
-    def to_internal_value(self, data):
-        if "additional_properties" in data:
-            new_data = {'additional_properties': {'additional_properties': data.pop('additional_properties')}}
-        else:
-            new_data = {'additional_properties': {}}
-        for k, v in data.items():
-            if k not in self.fields:
-                try:
-                    json.dumps(v)
-                except BaseException:
-                    raise ValidationError(f"Value {v} for key {k} is not JSON serializable")
-                new_data['additional_properties'][k] = v
-            else:
-                new_data[k] = v
-        return new_data
-
+from .utils import AdditionalPropertiesModelSerializer, GetOrCreateTextField, augment_extra_kwargs, url_help_text
 
 class CellSerializer(AdditionalPropertiesModelSerializer):
     class Meta:
         model = Cell
-        fields = ['url', 'uuid', 'Identifier', 'CellFamily']
-        read_only_fields = ['url', 'uuid']
+        fields = ['url', 'uuid', 'identifier', 'family', 'cycler_tests', 'in_use']
+        read_only_fields = ['url', 'uuid', 'cycler_tests', 'in_use']
+        extra_kwargs = augment_extra_kwargs({
+            'cycler_tests': {'help_text': "Cycler Tests using this Cell"}
+        })
 
-class CellFamilySerializer(serializers.HyperlinkedModelSerializer):
+
+class CellFamilySerializer(AdditionalPropertiesModelSerializer):
     manufacturer = GetOrCreateTextField(foreign_model=CellManufacturers, help_text="Manufacturer name")
     model = GetOrCreateTextField(foreign_model=CellModels, help_text="Model number")
     chemistry = GetOrCreateTextField(foreign_model=CellChemistries, help_text="Chemistry type")
@@ -154,8 +66,39 @@ class CellFamilySerializer(serializers.HyperlinkedModelSerializer):
             'energy_density',
             'power_density',
             'form_factor',
+            'cells',
+            'in_use'
         ]
-        read_only_fields = ['url', 'uuid', 'Cells']
+        read_only_fields = ['url', 'uuid', 'cells', 'in_use']
+
+
+class EquipmentFamilySerializer(AdditionalPropertiesModelSerializer):
+    type = GetOrCreateTextField(foreign_model=EquipmentTypes, help_text="Equipment type")
+    manufacturer = GetOrCreateTextField(foreign_model=EquipmentManufacturers, help_text="Manufacturer name")
+    model = GetOrCreateTextField(foreign_model=EquipmentModels, help_text="Model number")
+
+    class Meta:
+        model = EquipmentFamily
+        fields = [
+            'url',
+            'uuid',
+            'type',
+            'manufacturer',
+            'model',
+            'in_use',
+            'equipment'
+        ]
+        read_only_fields = ['url', 'uuid', 'in_use', 'equipment']
+
+
+class EquipmentSerializer(AdditionalPropertiesModelSerializer):
+    class Meta:
+        model = Equipment
+        fields = ['url', 'uuid', 'identifier', 'family', 'in_use', 'cycler_tests']
+        read_only_fields = ['url', 'uuid', 'datasets', 'in_use', 'cycler_tests']
+        extra_kwargs = augment_extra_kwargs({
+            'cycler_tests': {'help_text': "Cycler Tests using this Equipment"}
+        })
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
@@ -531,16 +474,6 @@ class HarvestErrorSerializer(serializers.HyperlinkedModelSerializer):
 #             'family': {'help_text': "Cell Family to which this Cell belongs"},
 #             'datasets': {'help_text': "Datasets generated in experiments using this Cell"}
 #         })
-
-
-class EquipmentSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta:
-        model = Equipment
-        fields = ['url', 'id', 'name', 'type', 'datasets', 'in_use']
-        read_only_fields = ['url', 'id', 'datasets', 'in_use']
-        extra_kwargs = augment_extra_kwargs({
-            'datasets': {'help_text': "Datasets generated in experiments using this Equipment"}
-        })
 
 
 class DatasetSerializer(serializers.HyperlinkedModelSerializer):

@@ -29,7 +29,7 @@ done
 >&2 echo "DJANGO_SETTINGS=${DJANGO_SETTINGS}"
 python manage.py makemigrations
 python manage.py migrate
-python manage.py init_db
+#python manage.py init_db
 python manage.py create_superuser
 
 >&2 echo "... populating database"

@@ -33,6 +33,7 @@ router.register(r'datasets', views.DatasetViewSet)
 # router.register(r'columns', views.DataColumnViewSet)
 # router.register(r'column_types', views.DataColumnTypeViewSet)
 router.register(r'units', views.DataUnitViewSet)
+router.register(r'equipment_families', views.EquipmentFamilyViewSet)
 router.register(r'equipment', views.EquipmentViewSet)
 router.register(r'cell_families', views.CellFamilyViewSet)
 router.register(r'cells', views.CellViewSet)
@@ -40,6 +41,14 @@ router.register(r'inactive_users', views.InactiveViewSet, basename='inactive_use
 router.register(r'users', views.UserViewSet, basename='user')
 router.register(r'groups', views.GroupViewSet)
 router.register(r'tokens', views.TokenViewSet, basename='tokens')
+router.register(r'equipment_types', views.EquipmentTypesViewSet)
+router.register(r'equipment_models', views.EquipmentModelsViewSet)
+router.register(r'equipment_manufacturers', views.EquipmentManufacturersViewSet)
+router.register(r'cell_models', views.CellModelsViewSet)
+router.register(r'cell_manufacturers', views.CellManufacturersViewSet)
+router.register(r'cell_chemistries', views.CellChemistriesViewSet)
+router.register(r'cell_form_factors', views.CellFormFactorsViewSet)
+router.register(r'schedule_identifiers', views.ScheduleIdentifiersViewSet)
 
 # Wire up our API using automatic URL routing.
 # Additionally, we include login URLs for the browsable API.

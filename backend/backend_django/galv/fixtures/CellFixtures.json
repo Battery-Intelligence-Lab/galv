@@ -3,67 +3,76 @@
         "pk": 1,
         "model": "galv.CellManufacturers",
         "fields": {
-            "value": "Sony"
+            "value": "Sony",
+            "include_in_autocomplete":true
         }
     },
     {
         "pk": 2,
         "model": "galv.CellManufacturers",
         "fields": {
-            "value": "LG"
+            "value": "LG",
+            "include_in_autocomplete": true
         }
     },
     {
         "pk": 3,
         "model": "galv.CellManufacturers",
         "fields": {
-            "value": "Samsung"
+            "value": "Samsung",
+            "include_in_autocomplete": true
         }
     },
     {
         "pk": 1,
         "model": "galv.CellModels",
         "fields": {
-            "value": "VTC6"
+            "value": "VTC6",
+            "include_in_autocomplete": true
         }
     },
     {
         "pk": 2,
         "model": "galv.CellModels",
         "fields": {
-            "value": "HG2"
+            "value": "HG2",
+            "include_in_autocomplete": true
         }
     },
     {
         "pk": 3,
         "model": "galv.CellModels",
         "fields": {
-            "value": "25R"
+            "value": "25R",
+            "include_in_autocomplete": true
         }
     },
     {
         "pk": 1,
         "model": "galv.CellChemistries",
         "fields": {
-            "value": "NMC"
+            "value": "NMC",
+            "include_in_autocomplete": true
         }
     },
     {
         "pk": 1,
         "model": "galv.CellFormFactors",
         "fields": {
-            "value": "Pouch"
+            "value": "Pouch",
+            "include_in_autocomplete": true
         }
     },
     {
         "pk": 2,
         "model": "galv.CellFormFactors",
         "fields": {
-            "value": "Cyclindrical"
+            "value": "Cyclindrical",
+            "include_in_autocomplete": true
         }
     },
     {
-        "pk": "42fc4c44-efbb-4457-a734-f68ee28de617",
+        "uuid": "42fc4c44-efbb-4457-a734-f68ee28de617",
         "model": "galv.CellFamily",
         "fields": {
             "manufacturer": 1,
@@ -74,7 +83,7 @@
         }
     },
     {
-        "pk": "5d19c8d6-a976-423d-ab5d-a624a0606d30",
+        "uuid": "5d19c8d6-a976-423d-ab5d-a624a0606d30",
         "model": "galv.CellFamily",
         "fields": {
             "manufacturer": 2,

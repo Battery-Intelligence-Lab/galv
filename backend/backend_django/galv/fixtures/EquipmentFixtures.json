@@ -3,7 +3,8 @@
         "pk": 1,
         "model": "galv.EquipmentTypes",
         "fields": {
-            "value": "Thermal Chamber"
+            "value": "Thermal Chamber",
+            "include_in_autocomplete": true
         }
     },
     {
@@ -11,35 +12,40 @@
         "model": "galv.EquipmentTypes",
         "fields": {
             "value": "Cycler",
-            "ld_value": "http://emmo.info/battery#battery_23e6170d_a70b_4de9_a4db_458e24a327ac"
+            "ld_value": "http://emmo.info/battery#battery_23e6170d_a70b_4de9_a4db_458e24a327ac",
+            "include_in_autocomplete": true
         }
     },
     {
         "pk": 1,
         "model": "galv.EquipmentManufacturers",
         "fields": {
-            "value": "Binder"
+            "value": "Binder",
+            "include_in_autocomplete": true
         }
     },
     {
         "pk": 2,
         "model": "galv.EquipmentManufacturers",
         "fields": {
-            "value": "ARBIN"
+            "value": "ARBIN",
+            "include_in_autocomplete": true
         }
     },
     {
         "pk": 1,
         "model": "galv.EquipmentModels",
         "fields": {
-            "value": "KB115"
+            "value": "KB115",
+            "include_in_autocomplete": true
         }
     },
     {
         "pk": 2,
         "model": "galv.EquipmentModels",
         "fields": {
-            "value": "LBT-21084-HC"
+            "value": "LBT-21084-HC",
+            "include_in_autocomplete": true
         }
     },
     {
