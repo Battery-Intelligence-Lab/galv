@@ -81,6 +81,7 @@ class EquipmentFamily(AdditionalPropertiesModel):
 class Equipment(JSONModel):
     identifier = models.TextField(unique=True, help_text="Unique identifier (e.g. serial number) for the equipment", null=False)
     family = models.ForeignKey(to=EquipmentFamily, on_delete=models.CASCADE, null=False, help_text="Equipment type", related_name="equipment")
+    calibration_date = models.DateField(help_text="Date of last calibration", null=True, blank=True)
 
     def in_use(self):
         return self.cycler_tests.count() > 0
@@ -104,7 +105,7 @@ class Schedule(JSONModel):
     description = models.TextField(help_text="Description of the schedule")
     ambient_temperature = models.FloatField(help_text="Ambient temperature during the experiment (in degrees Celsius)", null=True, blank=True)
     schedule_file = models.FileField(help_text="File containing the schedule", null=True, blank=True)
-    pybamm_schedule = models.JSONField(help_text="PyBaMM representation of the schedule", null=True, blank=True)
+    pybamm_schedule = models.JSONField(help_text="PyBaMM.Experiment representation of the schedule", null=True, blank=True)
 
     def in_use(self):
         return self.cycler_tests.count() > 0
@@ -119,8 +120,8 @@ class DataColumn(JSONModel):
 
 class CyclerTest(JSONModel):
     cell_subject = models.ForeignKey(to=Cell, on_delete=models.CASCADE, null=False, help_text="Cell that was tested", related_name="cycler_tests")
+    schedule = models.ForeignKey(to=Schedule, null=True, blank=True, on_delete=models.CASCADE, help_text="Schedule used to test the cell", related_name="cycler_tests")
     equipment = models.ManyToManyField(to=Equipment, help_text="Equipment used to test the cell", related_name="cycler_tests")
-    schedule = models.ManyToManyField(to=Schedule, help_text="Schedule used to test the cell", related_name="cycler_tests")
     columns = models.ManyToManyField(to=DataColumn,  help_text="Columns of data collected during the test", related_name="cycler_tests")
 
 

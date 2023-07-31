@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import datetime
-import re
 
 import knox.auth
 import os
@@ -17,24 +16,21 @@ from .serializers import HarvesterSerializer, \
     MonitoredPathCreateSerializer, \
     ObservedFileSerializer, \
     CellSerializer, \
-    CellFamilySerializer, \
     DatasetSerializer, \
     EquipmentSerializer, \
     DataUnitSerializer, \
-    DataColumnSerializer, \
-    DataColumnTypeSerializer, \
     TimeseriesRangeLabelSerializer, \
     UserSerializer, \
     GroupSerializer, \
     HarvestErrorSerializer, \
     KnoxTokenSerializer, \
-    KnoxTokenFullSerializer, CellFamilySerializer, EquipmentFamilySerializer, GetOrCreateTextStringSerializer
+    KnoxTokenFullSerializer, CellFamilySerializer, EquipmentFamilySerializer, \
+    ScheduleSerializer, CyclerTestSerializer
 from .models import Harvester, \
     HarvestError, \
     MonitoredPath, \
     ObservedFile, \
     Cell, \
-    CellFamily, \
     Dataset, \
     Equipment, \
     DataUnit, \
@@ -49,14 +45,14 @@ from .models import Harvester, \
     FileState, \
     VouchFor, \
     KnoxAuthToken, CellFamily, EquipmentTypes, EquipmentModels, EquipmentManufacturers, CellModels, CellManufacturers, \
-    CellChemistries, CellFormFactors, ScheduleIdentifiers, EquipmentFamily
+    CellChemistries, CellFormFactors, ScheduleIdentifiers, EquipmentFamily, Schedule, CyclerTest
 from .permissions import HarvesterAccess, ReadOnlyIfInUse, MonitoredPathAccess
+from .serializers.utils import GetOrCreateTextStringSerializer
 from .utils import get_files_from_path
 from django.contrib.auth.models import User, Group
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.core import validators
-from django.http import StreamingHttpResponse
 from rest_framework import viewsets, serializers, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -1050,15 +1046,15 @@ Create an instance of a Cell by declaring its unique identifier and associated C
     partial_update=extend_schema(
         summary="Update a Cell",
         description="""
-Cells that are not used in any Dataset may be edited.
-Cells that _are_ used in a Dataset are locked to prevent accidental updating.
+Cells that are not used in Cycler Tests may be edited.
+Cells that _are_ used in a Cycler Tests are locked to prevent accidental updating.
         """
     ),
     destroy=extend_schema(
         summary="Delete a Cell",
         description="""
-Cells that are not used in any Dataset may be deleted.
-Cells that _are_ used in a Dataset are locked to prevent accidental updating.
+Cells that are not used in Cycler Tests may be deleted.
+Cells that _are_ used in a Cycler Tests are locked to prevent accidental updating.
         """
     )
 )
@@ -1068,7 +1064,7 @@ class CellViewSet(viewsets.ModelViewSet):
     """
     permission_classes = [ReadOnlyIfInUse]
     serializer_class = CellSerializer
-    filterset_fields = ['identifer', 'family__uuid']
+    filterset_fields = ['identifier', 'family__uuid']
     search_fields = ['@identifier', '@family__model', '@family__manufacturer']
     queryset = Cell.objects.all().order_by('-uuid')
     http_method_names = ['get', 'post', 'patch', 'delete', 'options']
@@ -1136,7 +1132,7 @@ class EquipmentFamilyViewSet(viewsets.ModelViewSet):
     list=extend_schema(
         summary="View Equipment",
         description="""
-Experimental equipment used in experiments which generate Files and their Datasets.
+Experimental equipment used in experiments which generate Files and their Cycler Tests.
 
 Searchable fields:
 - name
@@ -1146,7 +1142,7 @@ Searchable fields:
     retrieve=extend_schema(
         summary="View specific Equipment",
         description="""
-Experimental equipment used in experiments which generate Files and their Datasets.
+Experimental equipment used in experiments which generate Files and their Cycler Tests.
         """
     ),
     create=extend_schema(
@@ -1158,15 +1154,15 @@ Create Equipment by describing its role and purpose.
     partial_update=extend_schema(
         summary="Update Equipment",
         description="""
-Equipment that is not used in any Dataset may be edited.
-Equipment that _is_ used in a Dataset is locked to prevent accidental updating.
+Equipment that is not used in Cycler Tests may be edited.
+Equipment that _is_ used in a Cycler Tests is locked to prevent accidental updating.
         """
     ),
     destroy=extend_schema(
         summary="Delete Equipment",
         description="""
-Equipment that is not used in any Dataset may be deleted.
-Equipment that _is_ used in a Dataset is locked to prevent accidental updating.
+Equipment that is not used in Cycler Tests may be deleted.
+Equipment that _is_ used in a Cycler Tests is locked to prevent accidental updating.
         """
     )
 )
@@ -1179,7 +1175,72 @@ class EquipmentViewSet(viewsets.ModelViewSet):
     serializer_class = EquipmentSerializer
     queryset = Equipment.objects.all()
     filterset_fields = ['family__type']
-    search_fields = ['@identifer', '@family__type']
+    search_fields = ['@identifier', '@family__type']
+    http_method_names = ['get', 'post', 'patch', 'delete', 'options']
+
+
+@extend_schema_view(
+    list=extend_schema(
+        summary="View Schedule",
+        description="""
+Schedule used in experiments which generate Files and their Datasets.
+
+Searchable fields:
+- identifier
+- description
+        """
+    ),
+    retrieve=extend_schema(
+        summary="View specific Schedule",
+        description="""
+Schedule used in experiments which generate Files and their Datasets.
+        """
+    ),
+    create=extend_schema(
+        summary="Create Schedule",
+        description="""
+Create a Schedule by describing its role and purpose.
+        """
+    ),
+    partial_update=extend_schema(
+        summary="Update Schedule",
+        description="""
+Schedules that is not used in Cycler Tests may be edited.
+Schedules that _is_ used in a Cycler Tests is locked to prevent accidental updating.
+        """
+    ),
+    destroy=extend_schema(
+        summary="Delete Schedule",
+        description="""
+Schedules that is not used in Cycler Tests may be deleted.
+Schedules that _is_ used in a Cycler Tests is locked to prevent accidental updating.
+        """
+    )
+)
+class ScheduleViewSet(viewsets.ModelViewSet):
+    """
+    Schedules can be attached to Cycler Tests and used to view Cycler Tests which
+    have used similar equipment.
+    """
+    permission_classes = [ReadOnlyIfInUse]
+    serializer_class = ScheduleSerializer
+    queryset = Schedule.objects.all()
+    search_fields = ['@identifier', '@description']
+    http_method_names = ['get', 'post', 'patch', 'delete', 'options']
+
+
+class CyclerTestViewSet(viewsets.ModelViewSet):
+    """
+    Cycler Tests are the primary object in the database.
+    They represent a single test conducted on a specific cell using specific equipment,
+    according to a specific schedule.
+
+    The test produces a dataset which can be associated with the Cycler Test,
+    and Cycler Tests can be grouped together into Experiments.
+    """
+    serializer_class = CyclerTestSerializer
+    queryset = CyclerTest.objects.all()
+    search_fields = ['@cell__uuid', '@schedule__identifier']
     http_method_names = ['get', 'post', 'patch', 'delete', 'options']
 
 

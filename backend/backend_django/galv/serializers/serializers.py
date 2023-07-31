@@ -1,11 +1,9 @@
 # SPDX-License-Identifier: BSD-2-Clause
 # Copyright  (c) 2020-2023, The Chancellor, Masters and Scholars of the University
 # of Oxford, and the 'Galv' Developers. All rights reserved.
-import json
 import os.path
 import re
 
-import django.db.models
 from django.urls import reverse, resolve
 from drf_spectacular.utils import extend_schema_field
 from rest_framework.exceptions import ValidationError
@@ -24,7 +22,7 @@ from ..models import Harvester, \
     DataColumn, \
     TimeseriesRangeLabel, \
     KnoxAuthToken, CellFamily, EquipmentTypes, CellFormFactors, CellChemistries, CellModels, CellManufacturers, \
-    EquipmentManufacturers, EquipmentModels, EquipmentFamily
+    EquipmentManufacturers, EquipmentModels, EquipmentFamily, Schedule, ScheduleIdentifiers, CyclerTest
 from ..utils import get_monitored_paths
 from django.utils import timezone
 from django.contrib.auth.models import User, Group
@@ -94,11 +92,47 @@ class EquipmentFamilySerializer(AdditionalPropertiesModelSerializer):
 class EquipmentSerializer(AdditionalPropertiesModelSerializer):
     class Meta:
         model = Equipment
-        fields = ['url', 'uuid', 'identifier', 'family', 'in_use', 'cycler_tests']
+        fields = ['url', 'uuid', 'identifier', 'family', 'calibration_date', 'in_use', 'cycler_tests']
         read_only_fields = ['url', 'uuid', 'datasets', 'in_use', 'cycler_tests']
         extra_kwargs = augment_extra_kwargs({
             'cycler_tests': {'help_text': "Cycler Tests using this Equipment"}
         })
+
+
+class ScheduleSerializer(AdditionalPropertiesModelSerializer):
+    identifier = GetOrCreateTextField(foreign_model=ScheduleIdentifiers)
+
+    def validate_pybamm_schedule(self, value):
+        # TODO: validate pybamm schedule against pybamm.step.string
+        return value
+
+    def validate(self, data):
+        if data.get('schedule_file') is None and data.get('pybamm_schedule') is None:
+            raise ValidationError("Either schedule_file or pybamm_schedule must be provided")
+        return data
+
+    class Meta:
+        model = Schedule
+        fields = [
+            'url', 'uuid', 'identifier', 'description',
+            'ambient_temperature',
+            'schedule_file',
+            'pybamm_schedule',
+            'in_use', 'cycler_tests'
+        ]
+        read_only_fields = ['url', 'uuid', 'in_use', 'cycler_tests']
+        extra_kwargs = augment_extra_kwargs({
+            'cycler_tests': {'help_text': "Cycler Tests using this Equipment"}
+        })
+
+
+class CyclerTestSerializer(AdditionalPropertiesModelSerializer):
+    class Meta:
+        model = CyclerTest
+        fields = [
+            'url', 'uuid', 'cell_subject', 'equipment', 'schedule'
+        ]
+        read_only_fields = ['url', 'uuid']
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):

@@ -95,8 +95,6 @@ class AdditionalPropertiesModelSerializer(serializers.HyperlinkedModelSerializer
 
     The Meta.model must have an additional_properties JSONField.
     """
-    additional_properties = serializers.JSONField(required=False, write_only=True, source='additional_properties')
-
     class Meta:
         model: django.db.models.Model
 
@@ -114,12 +112,9 @@ class AdditionalPropertiesModelSerializer(serializers.HyperlinkedModelSerializer
         return {**data, **instance.additional_properties}
 
     def to_internal_value(self, data):
-        if "additional_properties" in data:
-            new_data = {'additional_properties': {'additional_properties': data.pop('additional_properties')}}
-        else:
-            new_data = {'additional_properties': {}}
+        new_data = {'additional_properties': {}}
         for k, v in data.items():
-            if k not in self.fields:
+            if k not in self.fields or k == 'additional_properties':
                 if k in ['csrfmiddlewaretoken']:
                     continue
                 try:
@@ -127,6 +122,9 @@ class AdditionalPropertiesModelSerializer(serializers.HyperlinkedModelSerializer
                 except BaseException:
                     raise ValidationError(f"Value {v} for key {k} is not JSON serializable")
                 new_data['additional_properties'][k] = v
-            else:
-                new_data[k] = self.fields[k].to_internal_value(v)
+
+        leftover_data = {k: v for k, v in data.items() if k not in new_data['additional_properties']}
+
+        # Let the superclass do the rest
+        new_data = {**new_data, **super().to_internal_value(leftover_data)}
         return new_data

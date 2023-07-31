@@ -72,18 +72,21 @@
         }
     },
     {
-        "uuid": "42fc4c44-efbb-4457-a734-f68ee28de617",
+        "pk": "42fc4c44-efbb-4457-a734-f68ee28de617",
         "model": "galv.CellFamily",
         "fields": {
             "manufacturer": 1,
             "model": 1,
             "chemistry": 1,
             "form_factor": 2,
-            "nominal_voltage": 3.6
+            "nominal_voltage": 3.6,
+            "additional_properties": {
+                "pattern": "diagonal stripes"
+            }
         }
     },
     {
-        "uuid": "5d19c8d6-a976-423d-ab5d-a624a0606d30",
+        "pk": "5d19c8d6-a976-423d-ab5d-a624a0606d30",
         "model": "galv.CellFamily",
         "fields": {
             "manufacturer": 2,
@@ -91,6 +94,17 @@
             "chemistry": 1,
             "form_factor": 2,
             "nominal_voltage": 3.6
+        }
+    },
+    {
+        "pk": "6a3a910b-d42e-46f6-9604-6fb3c2f3d059",
+        "model": "galv.Cell",
+        "fields": {
+            "family": "42fc4c44-efbb-4457-a734-f68ee28de617",
+            "identifier": "vmpq-1234-xx94",
+            "additional_properties": {
+                "color": "green and white"
+            }
         }
     }
 ]

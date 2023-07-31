@@ -1,0 +1,31 @@
+[
+    {
+        "pk": 1,
+        "model": "galv.ScheduleIdentifiers",
+        "fields": {
+            "value": "Cell Conditioning",
+            "include_in_autocomplete":true
+        }
+    },
+    {
+        "pk": "e25f7c94-ca32-4f47-b95a-3b0e7ae4a47f",
+        "model": "galv.Schedule",
+        "fields": {
+            "identifier": 1,
+            "description": "Each cell is cycled five times at 1C discharge and the standard charge. This test is completed at 25◦C.",
+            "ambient_temperature": 25.0,
+            "pybamm_schedule": [
+                "Charge at 1 A until 4.1 V",
+                "Discharge at C/1 for 10 hours or until 3.3 V",
+                "Charge at 1 A until 4.1 V",
+                "Discharge at C/1 for 10 hours or until 3.3 V",
+                "Charge at 1 A until 4.1 V",
+                "Discharge at C/1 for 10 hours or until 3.3 V",
+                "Charge at 1 A until 4.1 V",
+                "Discharge at C/1 for 10 hours or until 3.3 V",
+                "Charge at 1 A until 4.1 V",
+                "Discharge at C/1 for 10 hours or until 3.3 V"
+            ]
+        }
+    }
+]

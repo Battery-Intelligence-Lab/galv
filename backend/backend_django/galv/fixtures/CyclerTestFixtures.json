@@ -1,0 +1,14 @@
+[
+    {
+        "pk": "2b7313c9-94c2-4276-a4ee-e9d58d8a641b",
+        "model": "galv.CyclerTest",
+        "fields": {
+            "cell_subject": "6a3a910b-d42e-46f6-9604-6fb3c2f3d059",
+            "schedule": "e25f7c94-ca32-4f47-b95a-3b0e7ae4a47f",
+            "equipment": [
+                "a7bd4c43-29c7-40f1-bcf7-a2924ed474c2",
+                "12039516-72bf-42b7-a687-cb210ca4a087"
+            ]
+        }
+    }
+]

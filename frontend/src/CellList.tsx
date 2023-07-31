@@ -70,7 +70,7 @@ export default function CellList(props: CellDetailProps) {
                 label="UID"
                 value={cell.uid}
                 disabled={cell.in_use}
-                placeholder={`Serial number or other unique identifer`}
+                placeholder={`Serial number or other unique identifier`}
                 InputProps={{
                   classes: {
                     input: classes.resize,
