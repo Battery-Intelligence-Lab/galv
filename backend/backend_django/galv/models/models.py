@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: BSD-2-Clause
 # Copyright  (c) 2020-2023, The Chancellor, Masters and Scholars of the University
 # of Oxford, and the 'Galv' Developers. All rights reserved.
+import re
 from typing import Type
 
 from django.contrib.postgres.fields import ArrayField
@@ -8,7 +9,7 @@ from django.db import models
 from django.contrib.auth.models import User, Group
 import random
 
-from .utils import AdditionalPropertiesModel, JSONModel, LDSources
+from .utils import AdditionalPropertiesModel, JSONModel, LDSources, render_pybamm_schedule
 from .autocomplete_entries import *
 
 
@@ -100,15 +101,34 @@ class Equipment(JSONModel):
         }
 
 
-class Schedule(JSONModel):
+class ScheduleFamily(AdditionalPropertiesModel):
     identifier = models.OneToOneField(to=ScheduleIdentifiers, unique=True, blank=False, null=False, help_text="Type of experiment, e.g. Constant-Current Discharge", on_delete=models.CASCADE)
     description = models.TextField(help_text="Description of the schedule")
     ambient_temperature = models.FloatField(help_text="Ambient temperature during the experiment (in degrees Celsius)", null=True, blank=True)
+    pybamm_template = ArrayField(base_field=models.TextField(), help_text="Template for the schedule in PyBaMM format", null=True, blank=True)
+
+    def pybamm_template_variable_names(self):
+        template = "\n".join(self.pybamm_template)
+        return re.findall(r"\{([\w_]+)}", template)
+
+    def in_use(self):
+        return self.schedules.count() > 0
+
+    def __str__(self):
+        return f"{str(self.identifier)}"
+
+
+class Schedule(JSONModel):
+    family = models.ForeignKey(to=ScheduleFamily, on_delete=models.CASCADE, null=False, help_text="Schedule type", related_name="schedules")
     schedule_file = models.FileField(help_text="File containing the schedule", null=True, blank=True)
-    pybamm_schedule = models.JSONField(help_text="PyBaMM.Experiment representation of the schedule", null=True, blank=True)
+    pybamm_schedule_variables = models.JSONField(help_text="Variables used in the PyBaMM.Experiment representation of the schedule", null=True, blank=True)
 
     def in_use(self):
         return self.cycler_tests.count() > 0
+
+    def __str__(self):
+        return f"{str(self.uuid)} [{str(self.family)}]"
+
 
 class DataColumn(JSONModel):
     name = models.TextField(help_text="Name of the column", null=False)
@@ -124,6 +144,12 @@ class CyclerTest(JSONModel):
     equipment = models.ManyToManyField(to=Equipment, help_text="Equipment used to test the cell", related_name="cycler_tests")
     columns = models.ManyToManyField(to=DataColumn,  help_text="Columns of data collected during the test", related_name="cycler_tests")
 
+    def rendered_pybamm_schedule(self, validate = True):
+        """
+        Return the PyBaMM representation of the schedule, with variables filled in.
+        Variables are taken from the cell properties, cell family properties, and schedule variables (most preferred first).
+        """
+        return render_pybamm_schedule(self.schedule, self.cell_subject, validate = validate)
 
 class Harvester(models.Model):
     name = models.TextField(

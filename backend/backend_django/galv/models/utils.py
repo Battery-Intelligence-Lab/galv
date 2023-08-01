@@ -2,6 +2,7 @@
 # Copyright  (c) 2020-2023, The Chancellor, Masters and Scholars of the University
 # of Oxford, and the 'Galv' Developers. All rights reserved.
 import os
+import re
 import uuid
 
 from django.db import models
@@ -80,3 +81,46 @@ class AutoCompleteEntry(models.Model):
 
     class Meta:
         abstract = True
+
+
+class ScheduleRenderError(ValueError):
+    pass
+
+
+def render_pybamm_schedule(schedule, cell_subject, validate = True):
+    """
+    Return the PyBaMM representation of the schedule, with variables filled in.
+    Variables are taken from the cell properties, cell family properties, and schedule variables (most preferred first).
+    """
+    variables = {
+        **schedule.pybamm_schedule_variables,
+        **cell_subject.family.__dict__,
+        **cell_subject.family.additional_properties,
+        **cell_subject.__dict__,
+        **cell_subject.additional_properties
+    }
+    rendered_schedule = [t.format(**variables) for t in schedule.family.pybamm_template]
+    if validate:
+        # TODO: validate the schedule properly
+
+        # Check all filled values are numeric
+        for v in schedule.family.pybamm_template_variable_names():
+            if not isinstance(variables[v], (int, float)):
+                if v in cell_subject.additional_properties:
+                    source = f"{str(cell_subject)} (additional properties)"
+                elif v in cell_subject.__dict__:
+                    source = cell_subject
+                elif v in cell_subject.family.additional_properties:
+                    source = f"{str(cell_subject.family)} (additional properties)"
+                elif v in cell_subject.family.__dict__:
+                    source = cell_subject.family
+                else:
+                    source = "schedule variables"
+                raise ScheduleRenderError(f"Schedule variable {v} is not numeric (got {variables[v]} from {source})")
+
+        # Check that all variables have been filled in
+        as_string = "\n".join(rendered_schedule)
+        if re.search(r"\{([\w_]+)}", as_string):
+            missing = re.findall(r"\{([\w_]+)}", as_string)
+            raise ScheduleRenderError(f"Schedule variables {missing} not filled in")
+    return rendered_schedule

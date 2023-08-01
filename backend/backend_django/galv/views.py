@@ -25,7 +25,7 @@ from .serializers import HarvesterSerializer, \
     HarvestErrorSerializer, \
     KnoxTokenSerializer, \
     KnoxTokenFullSerializer, CellFamilySerializer, EquipmentFamilySerializer, \
-    ScheduleSerializer, CyclerTestSerializer
+    ScheduleSerializer, CyclerTestSerializer, ScheduleFamilySerializer
 from .models import Harvester, \
     HarvestError, \
     MonitoredPath, \
@@ -45,7 +45,7 @@ from .models import Harvester, \
     FileState, \
     VouchFor, \
     KnoxAuthToken, CellFamily, EquipmentTypes, EquipmentModels, EquipmentManufacturers, CellModels, CellManufacturers, \
-    CellChemistries, CellFormFactors, ScheduleIdentifiers, EquipmentFamily, Schedule, CyclerTest
+    CellChemistries, CellFormFactors, ScheduleIdentifiers, EquipmentFamily, Schedule, CyclerTest, ScheduleFamily
 from .permissions import HarvesterAccess, ReadOnlyIfInUse, MonitoredPathAccess
 from .serializers.utils import GetOrCreateTextStringSerializer
 from .utils import get_files_from_path
@@ -1181,6 +1181,62 @@ class EquipmentViewSet(viewsets.ModelViewSet):
 
 @extend_schema_view(
     list=extend_schema(
+        summary="View Equipment Families",
+        description="""
+Equipment Families group together the general properties of a type of Equipment.
+Each Equipment is associated with an Equipment Family.
+
+Searchable fields:
+- type
+- manufacturer
+- form_factor
+        """
+    ),
+    retrieve=extend_schema(
+        summary="View a Schedule Family",
+        description="""
+Schedule Families group together the general properties of a type of Schedule.
+Each Schedule is associated with a Schedule Family.
+        """
+    ),
+    create=extend_schema(
+        summary="Create a Schedule Family",
+        description="""
+Schedule Families group together the general properties of a type of Schedule.
+Each Schedule is associated with a Schedule Family.
+        """
+    ),
+    partial_update=extend_schema(
+        summary="Update a Schedule Family",
+        description="""
+Schedule Families that do not have a Schedule associated with them may be edited.
+Schedule Families that _do_ have Schedule associated with them are locked,
+to prevent accidental updating.
+        """
+    ),
+    destroy=extend_schema(
+        summary="Delete a Schedule Family",
+        description="""
+Schedule Families that do not have a Schedule associated with them may be deleted.
+Schedule Families that _do_ have Schedule associated with them are locked,
+to prevent accidental updating.
+        """
+    )
+)
+class ScheduleFamilyViewSet(viewsets.ModelViewSet):
+    """
+    Schedules can be attached to Cycler Tests and used to view Cycler Tests which
+    have used similar equipment.
+    """
+    permission_classes = [ReadOnlyIfInUse]
+    serializer_class = ScheduleFamilySerializer
+    queryset = ScheduleFamily.objects.all()
+    search_fields = ['@identifier', '@description']
+    http_method_names = ['get', 'post', 'patch', 'delete', 'options']
+
+
+@extend_schema_view(
+    list=extend_schema(
         summary="View Schedule",
         description="""
 Schedule used in experiments which generate Files and their Datasets.
@@ -1225,7 +1281,7 @@ class ScheduleViewSet(viewsets.ModelViewSet):
     permission_classes = [ReadOnlyIfInUse]
     serializer_class = ScheduleSerializer
     queryset = Schedule.objects.all()
-    search_fields = ['@identifier', '@description']
+    search_fields = ['@family__identifier']
     http_method_names = ['get', 'post', 'patch', 'delete', 'options']
 
 

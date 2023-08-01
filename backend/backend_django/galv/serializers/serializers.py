@@ -22,7 +22,9 @@ from ..models import Harvester, \
     DataColumn, \
     TimeseriesRangeLabel, \
     KnoxAuthToken, CellFamily, EquipmentTypes, CellFormFactors, CellChemistries, CellModels, CellManufacturers, \
-    EquipmentManufacturers, EquipmentModels, EquipmentFamily, Schedule, ScheduleIdentifiers, CyclerTest
+    EquipmentManufacturers, EquipmentModels, EquipmentFamily, Schedule, ScheduleIdentifiers, CyclerTest, \
+    render_pybamm_schedule
+from ..models.utils import ScheduleRenderError
 from ..utils import get_monitored_paths
 from django.utils import timezone
 from django.contrib.auth.models import User, Group
@@ -99,25 +101,50 @@ class EquipmentSerializer(AdditionalPropertiesModelSerializer):
         })
 
 
-class ScheduleSerializer(AdditionalPropertiesModelSerializer):
+class ScheduleFamilySerializer(AdditionalPropertiesModelSerializer):
     identifier = GetOrCreateTextField(foreign_model=ScheduleIdentifiers)
 
-    def validate_pybamm_schedule(self, value):
-        # TODO: validate pybamm schedule against pybamm.step.string
+    def validate_pybamm_template(self, value):
+        # TODO: validate pybamm template against pybamm.step.string
         return value
-
-    def validate(self, data):
-        if data.get('schedule_file') is None and data.get('pybamm_schedule') is None:
-            raise ValidationError("Either schedule_file or pybamm_schedule must be provided")
-        return data
 
     class Meta:
         model = Schedule
         fields = [
             'url', 'uuid', 'identifier', 'description',
-            'ambient_temperature',
-            'schedule_file',
-            'pybamm_schedule',
+            'ambient_temperature', 'pybamm_template',
+            'in_use', 'schedules'
+        ]
+        read_only_fields = ['url', 'uuid', 'in_use', 'schedules']
+
+
+class ScheduleSerializer(AdditionalPropertiesModelSerializer):
+    def validate_pybamm_schedule_variables(self, value):
+        template = self.instance.family.pybamm_template
+        if template is None and value is not None:
+            raise ValidationError("pybamm_schedule_variables has no effect if pybamm_template is not set")
+        if value is None:
+            return value
+        keys = self.instance.family.pybamm_template_variable_names()
+        for k, v in value.items():
+            if k not in keys:
+                raise ValidationError(f"Schedule variable {k} is not in the template")
+            try:
+                float(v)
+            except (ValueError, TypeError):
+                raise ValidationError(f"Schedule variable {k} must be a number")
+        return value
+
+    def validate(self, data):
+        if data.get('schedule_file') is None and self.instance.family.pybamm_template is None:
+            raise ValidationError("Schedule_file must be provided where pybamm_template is not set")
+        return data
+
+    class Meta:
+        model = Schedule
+        fields = [
+            'url', 'uuid', 'family',
+            'schedule_file', 'pybamm_schedule_variables',
             'in_use', 'cycler_tests'
         ]
         read_only_fields = ['url', 'uuid', 'in_use', 'cycler_tests']
@@ -127,12 +154,27 @@ class ScheduleSerializer(AdditionalPropertiesModelSerializer):
 
 
 class CyclerTestSerializer(AdditionalPropertiesModelSerializer):
+    rendered_schedule = serializers.SerializerMethodField(help_text="Rendered schedule")
+
+    def get_rendered_schedule(self, instance):
+        if instance.schedule is None:
+            return None
+        return instance.rendered_pybamm_schedule(False)
+
+    def validate(self, data):
+        if data.get('schedule') is not None:
+            try:
+                render_pybamm_schedule(data['schedule'], data['cell_subject'])
+            except ScheduleRenderError as e:
+                raise ValidationError(e)
+        return data
+
     class Meta:
         model = CyclerTest
         fields = [
-            'url', 'uuid', 'cell_subject', 'equipment', 'schedule'
+            'url', 'uuid', 'cell_subject', 'equipment', 'schedule', 'rendered_schedule'
         ]
-        read_only_fields = ['url', 'uuid']
+        read_only_fields = ['url', 'uuid', 'rendered_schedule']
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):

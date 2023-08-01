@@ -79,6 +79,18 @@
         }
     },
     {
+        "pk": "31fd16ef-0667-4a31-9232-b5a649913227",
+        "model": "galv.Equipment",
+        "fields": {
+            "identifier": "994-241-arbin-1",
+            "family": "947e1f7c-c5b9-47b8-a121-d1e519a7154c",
+            "calibration_date": "2022-06-11",
+            "additional_properties": {
+                "friendly_name": "Thermal Chamber 2"
+            }
+        }
+    },
+    {
         "pk": "12039516-72bf-42b7-a687-cb210ca4a087",
         "model": "galv.Equipment",
         "fields": {

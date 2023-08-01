@@ -81,7 +81,8 @@
             "form_factor": 2,
             "nominal_voltage": 3.6,
             "additional_properties": {
-                "pattern": "diagonal stripes"
+                "pattern": "diagonal stripes",
+                "standard_discharge_constant_current": 1
             }
         }
     },
@@ -93,7 +94,12 @@
             "model": 2,
             "chemistry": 1,
             "form_factor": 2,
-            "nominal_voltage": 3.6
+            "nominal_voltage": 3.6,
+            "additional_properties": {
+                "standard_discharge_constant_current": 1.0,
+                "fast_charge_constant_current": 0.5,
+                "fast_charge_constant_voltage": 4.2
+            }
         }
     },
     {
@@ -101,10 +107,18 @@
         "model": "galv.Cell",
         "fields": {
             "family": "42fc4c44-efbb-4457-a734-f68ee28de617",
-            "identifier": "vmpq-1234-xx94",
+            "identifier": "sny-vtc-1234-xx94",
             "additional_properties": {
                 "color": "green and white"
             }
+        }
+    },
+    {
+        "pk": "4281a89b-48ff-4f4a-bcd8-5fe427f87a81",
+        "model": "galv.Cell",
+        "fields": {
+            "family": "5d19c8d6-a976-423d-ab5d-a624a0606d30",
+            "identifier": "lg-hg2-1234-xx94"
         }
     }
 ]
