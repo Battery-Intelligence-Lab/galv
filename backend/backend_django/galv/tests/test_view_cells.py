@@ -8,8 +8,9 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 import logging
 
-from .factories import CellFamilyFactory, CellFactory
-from galv.models import CellFamily, Cell
+from .utils import assert_response_property
+from .factories import CellFamilyFactory, CellFactory, CellModelsFactory
+from galv.models import CellFamily, Cell, CellModels
 
 logger = logging.getLogger(__file__)
 logger.setLevel(logging.INFO)
@@ -18,42 +19,43 @@ logger.setLevel(logging.INFO)
 class CellFamilyTests(APITestCase):
     def test_create(self):
         body = {
-            'name': 'Test CF', 'form_factor': 'test', 'link_to_datasheet': 'http',
-            'anode_chemistry': 'yes','cathode_chemistry': 'yes',
-            'nominal_capacity': 5.5, 'nominal_cell_weight': 1.2, 'manufacturer': 'na'
+            'model': 'Test CF', 'form_factor': 'test', 'datasheet': 'http://example.com',
+            'chemistry': 'yes', 'nominal_capacity': 5.5, 'energy_density': 1.2, 'manufacturer': 'na'
         }
         url = reverse('cellfamily-list')
         print("Test create Cell Family")
         response = self.client.post(url, body)
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        assert_response_property(self, response, self.assertEqual, response.status_code, status.HTTP_201_CREATED)
         family_url = response.json().get('url')
         self.assertIsInstance(family_url, str)
         print("OK")
         print("Test create Cell")
         response = self.client.post(
             reverse('cell-list'),
-            {'uid': 'some-unique-id-1234', 'display_name': 'test cell', 'family': family_url}
+            {'identifier': 'some-unique-id-1234', 'family': family_url}
         )
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        assert_response_property(self, response, self.assertEqual, response.status_code, status.HTTP_201_CREATED)
         print("OK")
 
     def test_update(self):
-        cell_family = CellFamilyFactory.create(name='Test family')
-        url = reverse('cellfamily-detail', args=(cell_family.id,))
+        cell_family = CellFamilyFactory.create(model=CellModelsFactory.create(value='Test family'))
+        url = reverse('cellfamily-detail', args=(cell_family.uuid,))
         print("Test update Cell Family")
-        response = self.client.patch(url, {'name': 'cell family'})
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(CellFamily.objects.get(id=cell_family.id).name, 'cell family')
+        response = self.client.patch(url, {'model': 'cell family'})
+        assert_response_property(self, response, self.assertEqual, response.status_code, status.HTTP_200_OK)
+        self.assertEqual(CellFamily.objects.get(uuid=cell_family.uuid).model.value, 'cell family')
+        # Also check that the CellModels object was updated
+        self.assertTrue(CellModels.objects.filter(value='cell family').exists())
         print("OK")
         print("Test update Cell")
         cell = CellFactory.create(family=cell_family)
-        url = reverse('cell-detail', args=(cell.id,))
-        response = self.client.patch(url, {'display_name': 'c123'})
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(Cell.objects.get(id=cell.id).display_name, 'c123')
-        response = self.client.patch(url, {'uid': 'c123'})
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(Cell.objects.get(id=cell.id).uid, 'c123')
+        url = reverse('cell-detail', args=(cell.uuid,))
+        response = self.client.patch(url, {'identifier': 'c123'})
+        assert_response_property(self, response, self.assertEqual, response.status_code, status.HTTP_200_OK)
+        self.assertEqual(Cell.objects.get(uuid=cell.uuid).identifier, 'c123')
+        response = self.client.patch(url, {'identifier': 'ddd-x12'})
+        assert_response_property(self, response, self.assertEqual, response.status_code, status.HTTP_200_OK)
+        self.assertEqual(Cell.objects.get(uuid=cell.uuid).identifier, 'ddd-x12')
         print("OK")
 
 

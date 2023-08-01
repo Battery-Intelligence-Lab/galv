@@ -31,7 +31,7 @@ services:
     command: ./server.sh
 
   postgres:
-    image: "postgres"
+    image: "postgres:14"
     stop_signal: SIGINT                 # Fast Shutdown mode
     volumes:
       - "${GALV_DATA_PATH}:/var/lib/postgresql/data"

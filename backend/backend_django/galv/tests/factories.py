@@ -8,7 +8,9 @@ import factory
 import faker
 import django.conf.global_settings
 from django.utils import timezone
-from galv.models import Harvester, \
+from django.contrib.auth.models import User, Group
+
+from galv.models import EquipmentFamily, Harvester, \
     HarvestError, \
     MonitoredPath, \
     ObservedFile, \
@@ -20,10 +22,44 @@ from galv.models import Harvester, \
     DataColumnType, \
     DataColumn, \
     TimeseriesRangeLabel, \
-    FileState
-from django.contrib.auth.models import User, Group
+    FileState, ScheduleFamily, Schedule, CyclerTest, \
+    ScheduleIdentifiers, CellFormFactors, CellChemistries, CellManufacturers, \
+    CellModels, EquipmentManufacturers, EquipmentModels, EquipmentTypes
 
 fake = faker.Faker(django.conf.global_settings.LANGUAGE_CODE)
+
+class EquipmentTypesFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = EquipmentTypes
+    value = factory.Faker('bs')
+class EquipmentModelsFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = EquipmentModels
+    value = factory.Faker('catch_phrase')
+class EquipmentManufacturersFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = EquipmentManufacturers
+    value = factory.Faker('company')
+class CellModelsFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = CellModels
+    value = factory.Faker('catch_phrase')
+class CellManufacturersFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = CellManufacturers
+    value = factory.Faker('company')
+class CellChemistriesFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = CellChemistries
+    value = factory.Faker('catch_phrase')
+class CellFormFactorsFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = CellFormFactors
+    value = factory.Faker('bs')
+class ScheduleIdentifiersFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = ScheduleIdentifiers
+    value = factory.Faker('bs')
 
 
 class UserFactory(factory.django.DjangoModelFactory):
@@ -109,28 +145,73 @@ class CellFamilyFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = CellFamily
 
-    name = factory.Faker('catch_phrase')
-    form_factor = factory.Faker('bs')
-    link_to_datasheet = factory.Faker('uri')
-    anode_chemistry = factory.Faker('bs')
-    cathode_chemistry = factory.Faker('bs')
-    manufacturer = factory.Faker('company')
+    manufacturer = factory.SubFactory(CellManufacturersFactory)
+    model = factory.SubFactory(CellModelsFactory)
+    form_factor = factory.SubFactory(CellFormFactorsFactory)
+    datasheet = factory.Faker('uri')
+    chemistry = factory.SubFactory(CellChemistriesFactory)
+    nominal_voltage = factory.Faker('pyfloat', min_value=1.0, max_value=1000000.0)
     nominal_capacity = factory.Faker('pyfloat', min_value=1.0, max_value=1000000.0)
-    nominal_cell_weight = factory.Faker('pyfloat', min_value=1.0, max_value=1000000.0)
-
+    initial_ac_impedance = factory.Faker('pyfloat', min_value=1.0, max_value=1000000.0)
+    initial_dc_resistance = factory.Faker('pyfloat', min_value=1.0, max_value=1000000.0)
+    energy_density = factory.Faker('pyfloat', min_value=1.0, max_value=1000000.0)
+    power_density = factory.Faker('pyfloat', min_value=1.0, max_value=1000000.0)
+    additional_properties = factory.Faker('json')
 
 class CellFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Cell
 
-    uid = factory.Faker('bothify', text='?????-##??#-#?#??-?####-?#???')
-    display_name = factory.Faker('catch_phrase')
+    identifier = factory.Faker('bothify', text='?????-##??#-#?#??-?####-?#???')
     family = factory.SubFactory(CellFamilyFactory)
+    additional_properties = factory.Faker('json')
+
+
+class EquipmentFamilyFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = EquipmentFamily
+
+    type = factory.SubFactory(EquipmentTypesFactory)
+    manufacturer = factory.SubFactory(EquipmentManufacturersFactory)
+    model = factory.SubFactory(EquipmentModelsFactory)
+    additional_properties = factory.Faker('json')
 
 
 class EquipmentFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Equipment
 
-    name = factory.Faker('catch_phrase')
-    type = factory.Faker('bs')
+    identifier = factory.Faker('bothify', text='?????-##??#-#?#??-?####-?#???')
+    family = factory.SubFactory(EquipmentFamilyFactory)
+    calibration_date = factory.Faker('date')
+    additional_properties = factory.Faker('json')
+
+
+class ScheduleFamilyFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = ScheduleFamily
+
+    identifier = factory.SubFactory(ScheduleIdentifiersFactory)
+    description = factory.Faker('lorem')
+    ambient_temperature = factory.Faker('pyfloat', min_value=0.0, max_value=1000.0)
+    pybamm_template = None
+    additional_properties = factory.Faker('json')
+
+
+class ScheduleFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Schedule
+
+    family = factory.SubFactory(ScheduleFamilyFactory)
+    schedule_file = None
+    additional_properties = factory.Faker('json')
+
+
+class CyclerTestFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = CyclerTest
+
+    cell_subject = factory.SubFactory(CellFactory)
+    equipment = [factory.SubFactory(EquipmentFactory) for _ in range(2)]
+    schedule = factory.SubFactory(ScheduleFactory)
+    additional_properties = factory.Faker('json')

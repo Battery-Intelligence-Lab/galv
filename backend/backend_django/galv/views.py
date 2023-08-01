@@ -838,7 +838,7 @@ class DatasetViewSet(viewsets.ModelViewSet):
     providing an ability flexibly handle any kind of tabular data.
     """
     serializer_class = DatasetSerializer
-    filterset_fields = ['name', 'type', 'cell__family__name']
+    filterset_fields = ['name', 'type']
     search_fields = ['@name', 'type']
     queryset = Dataset.objects.none().order_by('-date', '-id')
     http_method_names = ['get', 'patch', 'options']

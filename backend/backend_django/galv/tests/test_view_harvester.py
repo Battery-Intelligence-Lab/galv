@@ -68,7 +68,7 @@ class HarvesterTests(GalvTestCase):
         print("OK")
         print("Test access config")
         response = self.client.get(url, **headers)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        assert_response_property(self, response, self.assertEqual, response.status_code, status.HTTP_200_OK)
         json = response.json()
         self.assertIn('api_key', json)
         paths = [p.path for p in paths]
@@ -100,14 +100,14 @@ class HarvesterTests(GalvTestCase):
         print("Test omission in /harvesters/mine/ view")
         url = reverse('harvester-mine')
         response = self.client.get(url, **other_user_header)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        assert_response_property(self, response, self.assertEqual, response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.json()), 0)
         print("OK")
         print("Test presence in /harvesters/mine/ view")
         self.client.force_login(user)
         url = reverse('harvester-mine')
         response = self.client.get(url, **user_header)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        assert_response_property(self, response, self.assertEqual, response.status_code, status.HTTP_200_OK)
         self.assertGreater(len(response.json()), 0)
         print("OK")
 
@@ -130,7 +130,7 @@ class HarvesterTests(GalvTestCase):
         user.groups.add(harvester.admin_group)
         print("Test name duplication error")
         response = self.client.patch(url, {'name': other.name}, **user_header)
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        assert_response_property(self, response, self.assertEqual, response.status_code, status.HTTP_400_BAD_REQUEST)
         print("OK")
         print("Test successful update")
         t = harvester.sleep_time + 10
@@ -169,7 +169,7 @@ class HarvesterTests(GalvTestCase):
         print("Test envvars blank for unauthorized users")
         self.client.force_login(other_user)
         response = self.client.get(reverse('harvester-list'), **other_user_header)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        assert_response_property(self, response, self.assertEqual, response.status_code, status.HTTP_200_OK)
         json = response.json()
         self.assertGreater(len(json), 0)
         for h in json:
@@ -220,7 +220,7 @@ class HarvesterTests(GalvTestCase):
             {'status': 'error', 'error': 'test', 'path': path + '/new/file.ext', 'monitored_path_id': paths[0].id},
             **headers
         )
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        assert_response_property(self, response, self.assertEqual, response.status_code, status.HTTP_200_OK)
         f = ObservedFile.objects.get(path=path + '/new/file.ext', harvester_id=harvester.id)
         HarvestError.objects.get(harvester__id=harvester.id, file__id=f.id)
         print("OK")
@@ -230,7 +230,7 @@ class HarvesterTests(GalvTestCase):
             {'status': 'error', 'error': 'test', 'path': path + '/new/file.ext', 'monitored_path_id': paths[0].id},
             **headers
         )
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        assert_response_property(self, response, self.assertEqual, response.status_code, status.HTTP_200_OK)
         self.assertEqual(
             HarvestError.objects.all().count(),
             3
@@ -250,7 +250,7 @@ class HarvesterTests(GalvTestCase):
             'content': {'task': 'file_size', 'size': 1024}
         }
         response = self.client.post(url, body, **headers)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        assert_response_property(self, response, self.assertEqual, response.status_code, status.HTTP_200_OK)
         f = ObservedFile.objects.get(path='/a/new/file.ext', harvester_id=harvester.id)
         self.assertEqual(f.state, FileState.GROWING)
         print("OK")
@@ -268,7 +268,7 @@ class HarvesterTests(GalvTestCase):
             'extra_metadata': {}
         }
         response = self.client.post(url, body, **headers)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        assert_response_property(self, response, self.assertEqual, response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.json()['state'], FileState.IMPORTING)
         d = Dataset.objects.get(file__id=f.id)
         self.assertEqual(d.type, 'Test machine')
@@ -287,7 +287,7 @@ class HarvesterTests(GalvTestCase):
         # }
         # response = self.client.post(url, body, **headers)
         # print(response.json())
-        # self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # assert_response_property(self, response, self.assertEqual, response.status_code, status.HTTP_200_OK)
         # cols = DataColumn.objects.filter(dataset__id=d.id)
         # self.assertEqual(cols.count(), 4)
         # for c in cols:
@@ -300,7 +300,7 @@ class HarvesterTests(GalvTestCase):
             'test_date': 1024.0
         }
         response = self.client.post(url, body, **headers)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        assert_response_property(self, response, self.assertEqual, response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.json()['state'], FileState.IMPORTED)
         print("OK")
 

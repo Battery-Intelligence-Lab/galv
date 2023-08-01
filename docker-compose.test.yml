@@ -6,7 +6,7 @@ version: "2"
 services:
 
   postgres_test:
-    image: "postgres"
+    image: "postgres:14"
     stop_signal: SIGINT                 # Fast Shutdown mode
     volumes:
       - "${GALV_DATA_PATH}:/var/lib/postgresql/data"
@@ -35,6 +35,7 @@ services:
       DJANGO_SECRET_KEY: "long-and-insecure-key-12345"
       FRONTEND_VIRTUAL_HOST: "http://localhost"
       VIRTUAL_HOST: "localhost"
+      VIRTUAL_HOST_ROOT: "localhost"
       POSTGRES_HOST: "postgres_test"
 
   harvester_test:

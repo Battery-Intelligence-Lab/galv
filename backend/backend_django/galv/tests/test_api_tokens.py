@@ -10,7 +10,7 @@ import logging
 
 from galv.models import KnoxAuthToken
 
-from .utils import GalvTestCase
+from .utils import GalvTestCase, assert_response_property
 from .factories import UserFactory
 
 logger = logging.getLogger(__file__)
@@ -28,7 +28,7 @@ class TokenTests(GalvTestCase):
         url = reverse('knox_create_token')
         print("Test create API token")
         response = self.client.post(url, body)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        assert_response_property(self, response, self.assertEqual, response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.json().get('name'), body['name'])
         self.assertIn('token', response.json())
         print("OK")
@@ -52,13 +52,13 @@ class TokenTests(GalvTestCase):
         print("Test update")
         new_name = "new token name"
         response = self.client.patch(detail_url, {"name": new_name})
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        assert_response_property(self, response, self.assertEqual, response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.json()['name'], new_name)
         print("OK")
 
         print("Test token delete")
         response = self.client.delete(detail_url)
-        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        assert_response_property(self, response, self.assertEqual, response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(KnoxAuthToken.objects.filter(knox_token_key__regex=f"_{self.user.id}$").exists(), False)
         print("OK")
 

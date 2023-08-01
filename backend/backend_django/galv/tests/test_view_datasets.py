@@ -8,6 +8,7 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 import logging
 
+from .utils import assert_response_property
 from .factories import UserFactory, \
     HarvesterFactory, \
     DatasetFactory, MonitoredPathFactory
@@ -30,11 +31,13 @@ class DatasetTests(APITestCase):
     def test_view(self):
         self.client.force_login(self.user)
         print("Test rejection of dataset view")
-        self.assertNotEqual(self.client.get(self.url).status_code, status.HTTP_200_OK)
+        response = self.client.get(self.url)
+        assert_response_property(self, response, self.assertNotEqual, response.status_code, status.HTTP_200_OK)
         print("OK")
         self.client.force_login(self.admin_user)
         print("Test dataset view")
-        self.assertEqual(self.client.get(self.url).status_code, status.HTTP_200_OK)
+        response = self.client.get(self.url)
+        assert_response_property(self, response, self.assertEqual, response.status_code, status.HTTP_200_OK)
         print("OK")
 
 

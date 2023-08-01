@@ -8,6 +8,13 @@ from django.urls import reverse
 from rest_framework.test import APITestCase
 
 
+def assert_response_property(self, response, assertion, *args, **kwargs):
+    try:
+        assertion(*args, **kwargs)
+    except AssertionError as e:
+        raise AssertionError(f"{e}\nResponse: {response.json()}")
+
+
 class GalvTestCase(APITestCase):
 
     def get_token_header_for_user(self, user):
@@ -22,3 +29,4 @@ class GalvTestCase(APITestCase):
         )
         token = basic_auth.json()['token']
         return {'HTTP_AUTHORIZATION': f"Bearer {token}"}
+
