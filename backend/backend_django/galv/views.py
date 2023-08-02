@@ -576,7 +576,7 @@ class HarvesterViewSet(viewsets.ModelViewSet):
                                         column_type = DataColumnType.objects.get(unit=unit)
                                     except DataColumnType.DoesNotExist:
                                         column_type = DataColumnType.objects.create(
-                                            name=column_data['column_name'],
+                                            name_in_dataset=column_data['column_name'],
                                             unit=unit
                                         )
                                     column, _ = DataColumn.objects.get_or_create(

@@ -491,16 +491,16 @@ class ObservedFileSerializer(serializers.HyperlinkedModelSerializer):
         fields = [
             'url', 'uuid', 'harvester', 'path',
             'state', 'last_observed_time', 'last_observed_size', 'errors',
-            'datasets', 'upload_info', 'columns'
+            'upload_info', 'columns'
         ]
         read_only_fields = [
             'url', 'uuid', 'harvester', 'path',
-            'last_observed_time', 'last_observed_size', 'datasets',
-            'errors', 'columns'
+            'last_observed_time', 'last_observed_size', 'errors',
+            'upload_info', 'columns'
         ]
         extra_kwargs = augment_extra_kwargs({
             'errors': {'help_text': "Errors associated with this File"},
-            'datasets': {'help_text': "Datasets extracted from this File"}
+            'columns': {'help_text': "Columns extracted from this File"}
         })
 
 
