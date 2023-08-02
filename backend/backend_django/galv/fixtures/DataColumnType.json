@@ -15,7 +15,8 @@
             "name": "Sample Number",
             "description": "The sample or record number. Is increased by one each time a test machine records a reading. Usually counts from 1 at the start of a test",
             "unit": 1,
-            "is_default": true
+            "is_default": true,
+            "override_child_name": "Sample_number"
         }
     },
     {
@@ -25,7 +26,9 @@
             "name": "Time",
             "description": "The time in seconds since the test run began.",
             "unit": 2,
-            "is_default": true
+            "is_default": true,
+            "is_required": true,
+            "override_child_name": "Elapsed_time_s"
         }
     },
     {
@@ -35,7 +38,9 @@
             "name": "Volts",
             "description": "The voltage of the cell.",
             "unit": 3,
-            "is_default": true
+            "is_default": true,
+            "is_required": true,
+            "override_child_name": "Voltage_V"
         }
     },
     {
@@ -45,7 +50,9 @@
             "name": "Amps",
             "description": "The current current.",
             "unit": 4,
-            "is_default": true
+            "is_default": true,
+            "is_required": true,
+            "override_child_name": "Current_A"
         }
     },
     {

@@ -15,7 +15,6 @@ from ..models import Harvester, \
     MonitoredPath, \
     ObservedFile, \
     Cell, \
-    Dataset, \
     Equipment, \
     DataUnit, \
     DataColumnType, \
@@ -32,7 +31,9 @@ from django.conf.global_settings import DATA_UPLOAD_MAX_MEMORY_SIZE
 from rest_framework import serializers
 from knox.models import AuthToken
 
-from .utils import AdditionalPropertiesModelSerializer, GetOrCreateTextField, augment_extra_kwargs, url_help_text
+from .utils import AdditionalPropertiesModelSerializer, GetOrCreateTextField, augment_extra_kwargs, url_help_text, \
+    get_model_field
+
 
 class CellSerializer(AdditionalPropertiesModelSerializer):
     class Meta:
@@ -472,11 +473,11 @@ class ObservedFileSerializer(serializers.HyperlinkedModelSerializer):
             return None
         try:
             last_record = 0
-            columns = DataColumn.objects.filter(dataset__file=instance)
+            columns = DataColumn.objects.filter(file=instance)
             column_data = []
             for c in columns:
                 column_data.append({'name': c.name, 'id': c.id})
-                if c.official_sample_counter:
+                if c.type.override_child_name == 'Sample_number':
                     last_record = c.values[:-1] if len(c.values) > 0 else 0
             return {
                 'columns': column_data,
@@ -490,12 +491,12 @@ class ObservedFileSerializer(serializers.HyperlinkedModelSerializer):
         fields = [
             'url', 'uuid', 'harvester', 'path',
             'state', 'last_observed_time', 'last_observed_size', 'errors',
-            'datasets', 'upload_info'
+            'datasets', 'upload_info', 'columns'
         ]
         read_only_fields = [
             'url', 'uuid', 'harvester', 'path',
             'last_observed_time', 'last_observed_size', 'datasets',
-            'errors'
+            'errors', 'columns'
         ]
         extra_kwargs = augment_extra_kwargs({
             'errors': {'help_text': "Errors associated with this File"},
@@ -508,32 +509,6 @@ class HarvestErrorSerializer(serializers.HyperlinkedModelSerializer):
         model = HarvestError
         fields = ['url', 'id', 'harvester', 'file', 'error', 'timestamp']
         extra_kwargs = augment_extra_kwargs()
-
-
-class DatasetSerializer(serializers.HyperlinkedModelSerializer):
-    user_sets = serializers.SerializerMethodField(help_text="Roles and the Users assigned to them")
-
-    @extend_schema_field(UserSetSerializer(many=True))
-    def get_user_sets(self, instance):
-        monitored_paths = get_monitored_paths(instance.file.path, instance.file.harvester)
-        user_sets = []
-        ids = []
-        for mp in monitored_paths:
-            sets = MonitoredPathSerializer(mp, context=self.context).data.get('user_sets')
-            sets = [{**s, 'name': f"MonitoredPath_{mp.id}-{s['name']}"} for s in sets]
-            sets = [s for s in sets if s['id'] not in ids]
-            ids += [s['id'] for s in sets]
-            user_sets = [user_sets, *sets]
-        return user_sets
-
-    class Meta:
-        model = Dataset
-        fields = ['url', 'uuid', 'name', 'date', 'type', 'purpose', 'cell', 'equipment', 'file', 'user_sets', 'columns']
-        read_only_fields = ['date', 'file', 'uuid', 'url', 'user_sets', 'columns']
-        extra_kwargs = augment_extra_kwargs({
-            'equipment': {'help_text': "Equipment used in this Dataset's experiment"},
-            'columns': {'help_text': "Columns in this Dataset"}
-        })
 
 
 class DataUnitSerializer(serializers.ModelSerializer):
@@ -563,21 +538,21 @@ class DataColumnSerializer(serializers.HyperlinkedModelSerializer):
     """
     A column contains metadata and data. Data are an ordered list of values.
     """
-    # name = serializers.SerializerMethodField(help_text=get_model_field(DataColumn, 'name').help_text)
-    # dataset = serializers.SerializerMethodField(help_text=get_model_field(DataColumn, 'dataset').help_text)
-    # type_name = serializers.SerializerMethodField(help_text=get_model_field(DataColumnType, 'name').help_text)
-    # description = serializers.SerializerMethodField(help_text=get_model_field(DataColumnType, 'description').help_text)
-    # unit = serializers.SerializerMethodField(help_text=get_model_field(DataColumnType, 'unit').help_text)
-    # values = serializers.SerializerMethodField(help_text="Column values")
+    name = serializers.SerializerMethodField(help_text="Column name (assigned by harvester but overridden by Galv for core fields)")
+    required_column = serializers.SerializerMethodField(help_text="Whether the column is one of those required by Galv")
+    type_name = serializers.SerializerMethodField(help_text=get_model_field(DataColumnType, 'name').help_text)
+    description = serializers.SerializerMethodField(help_text=get_model_field(DataColumnType, 'description').help_text)
+    unit = serializers.SerializerMethodField(help_text=get_model_field(DataColumnType, 'unit').help_text)
+    values = serializers.SerializerMethodField(help_text="Column values")
 
     def uri(self, rel_url: str) -> str:
         return self.context['request'].build_absolute_uri(rel_url)
 
     def get_name(self, instance) -> str:
-        return instance.name
-
-    def get_dataset(self, instance) -> str:
-        return self.uri(reverse('dataset-detail', args=(instance.dataset.id,)))
+        return instance.get_name()
+    
+    def get_is_required_column(self, instance) -> bool:
+        return instance.type.is_required_column
 
     def get_type_name(self, instance) -> str:
         return instance.type.name
@@ -598,11 +573,12 @@ class DataColumnSerializer(serializers.HyperlinkedModelSerializer):
             'id',
             'url',
             'name',
-            'dataset',
+            'name_in_file'
+            'is_required_column',
+            'file',
             'data_type',
             'type_name',
             'description',
-            'official_sample_counter',
             'unit',
             'values',
         ]

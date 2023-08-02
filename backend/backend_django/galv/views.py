@@ -17,7 +17,6 @@ from .serializers import HarvesterSerializer, \
     MonitoredPathCreateSerializer, \
     ObservedFileSerializer, \
     CellSerializer, \
-    DatasetSerializer, \
     EquipmentSerializer, \
     DataUnitSerializer, \
     TimeseriesRangeLabelSerializer, \
@@ -32,7 +31,6 @@ from .models import Harvester, \
     MonitoredPath, \
     ObservedFile, \
     Cell, \
-    Dataset, \
     Equipment, \
     DataUnit, \
     DataColumnType, \
@@ -532,36 +530,28 @@ class HarvesterViewSet(viewsets.ModelViewSet):
                     try:
                         if content['status'] == 'begin':
                             file.state = FileState.IMPORTING
-                            date = deserialize_datetime(content['test_date'])
+                            file.data_generation_date = deserialize_datetime(content['test_date'])
                             # process metadata under 'begin'
                             core_metadata = content['core_metadata']
                             extra_metadata = content['extra_metadata']
-                            defaults = {}
                             if 'Machine Type' in core_metadata:
-                                defaults['type'] = core_metadata['Machine Type']
+                                file.inferred_format = core_metadata['Machine Type']
                             if 'Dataset Name' in core_metadata:
-                                defaults['name'] = core_metadata['Dataset Name']
-                            defaults['json_data'] = {}
+                                file.name = core_metadata['Dataset Name']
                             if 'num_rows' in core_metadata:
-                                defaults['json_data']['num_rows'] = core_metadata['num_rows']
+                                file.num_rows = core_metadata['num_rows']
                             if 'first_sample_no' in core_metadata:
-                                defaults['json_data']['first_sample_no'] = core_metadata['first_sample_no']
+                                file.first_sample_no = core_metadata['first_sample_no']
                             if 'last_sample_no' in core_metadata:
-                                defaults['json_data']['last_sample_no'] = core_metadata['last_sample_no']
-                            defaults['json_data'] = {**defaults['json_data'], **extra_metadata}
+                                file.last_sample_no = core_metadata['last_sample_no']
+                            if extra_metadata:
+                                file.extra_metadata = extra_metadata
 
-                            dataset, _ = Dataset.objects.get_or_create(
-                                defaults=defaults,
-                                file=file,
-                                date=date
-                            )
                         elif content['status'] == 'complete':
                             if file.state == FileState.IMPORTING:
                                 file.state = FileState.IMPORTED
                         else:
                             time_start = time.time()
-                            date = deserialize_datetime(content['test_date'])
-                            dataset = Dataset.objects.get(file=file, date=date)
                             for column_data in content['data']:
                                 time_col_start = time.time()
                                 logger.warning(f"Column {column_data.get('column_name', column_data.get('column_id'))}")
@@ -575,8 +565,7 @@ class HarvesterViewSet(viewsets.ModelViewSet):
                                         name=column_type.name,
                                         data_type=data_type,
                                         type=column_type,
-                                        dataset=dataset,
-                                        official_sample_counter=column_data.get('official_sample_counter', False)
+                                        file=file
                                     )
                                 except KeyError:
                                     if 'unit_id' in column_data:
@@ -594,7 +583,7 @@ class HarvesterViewSet(viewsets.ModelViewSet):
                                         name=column_data['column_name'],
                                         data_type=data_type,
                                         type=column_type,
-                                        dataset=dataset,
+                                        file=file,
                                         official_sample_counter=column_data.get('official_sample_counter', False)
                                     )
 
@@ -808,48 +797,6 @@ class ObservedFileViewSet(viewsets.ModelViewSet):
         file.save()
         return Response(self.get_serializer(file, context={'request': request}).data)
 
-
-@extend_schema_view(
-    list=extend_schema(
-        summary="View Datasets",
-        description="""
-View the Datasets extracted from Files on Paths to which you have access.
-
-Datasets consist of metadata and links to the Columns that link to the actual data themselves.
-
-Searchable fields:
-- name
-- type
-        """
-    ),
-    retrieve=extend_schema(
-        summary="View a Dataset",
-        description="""
-Datasets consist of metadata and links to the Columns that link to the actual data themselves.
-        """
-    ),
-    partial_update=extend_schema(
-        summary="Alter a Dataset's metadata",
-        description="""
-Update a Dataset's metadata to associate it with the Cell or Experimental equipment that were
-used in the experiment that generated the data, describe that experiment's purpose,
-or amend an incorrect name or file type value.
-        """
-    )
-)
-class DatasetViewSet(viewsets.ModelViewSet):
-    """
-    A Dataset contains structured data from an ObservedFile.
-
-    Datasets are decomposed within Galv into columns and datapoints,
-    providing an ability flexibly handle any kind of tabular data.
-    """
-    permission_classes = [VicariousObservedFileAccess]
-    serializer_class = DatasetSerializer
-    filterset_fields = ['name', 'type']
-    search_fields = ['@name', 'type']
-    queryset = Dataset.objects.all().order_by('-date', '-uuid')
-    http_method_names = ['get', 'patch', 'options']
 
 @extend_schema_view(
     list=extend_schema(
@@ -1401,9 +1348,9 @@ class DataColumnViewSet(viewsets.ReadOnlyModelViewSet):
     DataColumns describe which columns are in a Dataset's data.
     """
     serializer_class = DataColumnSerializer
-    filterset_fields = ['dataset__name', 'type__unit__symbol', 'dataset__id', 'type__id', 'type__name']
-    search_fields = ['@dataset__name', '@type__name']
-    queryset = DataColumn.objects.none().order_by('-dataset_id', '-id')
+    filterset_fields = ['file__name', 'type__unit__symbol', 'file__uuid', 'type__id', 'type__name']
+    search_fields = ['@file__name', '@type__name']
+    queryset = DataColumn.objects.all().order_by('-file__uuid', '-id')
 
     def get_queryset(self):
         user_paths = MonitoredPath.objects.filter(
@@ -1413,7 +1360,7 @@ class DataColumnViewSet(viewsets.ReadOnlyModelViewSet):
         files = set()
         for path in user_paths:
             files = {*files, *get_files_from_path(path)}
-        return DataColumn.objects.filter(dataset__file__in=files).order_by('-dataset_id', '-id')
+        return self.queryset.filter(file__in=files)
 
     @action(methods=['GET'], detail=True)
     def values(self, request, pk: int = None):

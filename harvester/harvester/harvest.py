@@ -102,7 +102,8 @@ def import_file(path: str, monitored_path: dict) -> bool:
                 'status': 'begin',
                 'core_metadata': serialize_datetime(core_metadata),
                 'extra_metadata': serialize_datetime(extra_metadata),
-                'test_date': serialize_datetime(core_metadata['Date of Test'])
+                'test_date': serialize_datetime(core_metadata['Date of Test']),
+                'parser': input_file.__class__.__name__
             }
         )
         if report is None:

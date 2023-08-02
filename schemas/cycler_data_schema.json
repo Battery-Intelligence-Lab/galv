@@ -44,11 +44,11 @@
         }
       ]
     },
-    "Cycler Datasets": {
+    "Cycler Tests": {
       "type": "array",
       "description": "List of cycler data files associated with the experiment",
       "items": {
-        "$ref": "#/$defs/CyclerDataset"
+        "$ref": "#/$defs/CyclerTest"
       },
       "minimumItems": 1
     }
@@ -236,7 +236,7 @@
         "Data"
       ]
     },
-    "Columns": {
+    "Dataframe": {
       "type": "object",
       "description": "Columns of data in the cycler data file",
       "properties": {
@@ -308,8 +308,8 @@
         }
       }
     },
-    "CyclerData": {
-      "title": "Cycler Dataset",
+    "CyclerTest": {
+      "title": "Cycler Test",
       "description": "Measured or simulated data from a battery cycler experiment",
       "type": "object",
       "unevaluatedProperties": false,
@@ -320,8 +320,8 @@
         "Cell": {
           "$ref": "#/$defs/Cell"
         },
-        "Columns": {
-          "$ref": "#/$defs/Columns"
+        "Dataframe": {
+          "$ref": "#/$defs/Dataframe"
         },
         "Schedule": {
           "$ref": "#/$defs/Schedule"
@@ -337,7 +337,7 @@
       "required": [
         "uuid",
         "Cell",
-        "Columns",
+        "Dataframe",
         "Schedule",
         "Equipment"
       ]
