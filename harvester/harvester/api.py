@@ -14,18 +14,18 @@ logger = get_logger(__file__)
 
 def report_harvest_result(
         path: os.PathLike|str,
-        monitored_path_id: int,
+        monitored_path_uuid: int,
         content=None,
         error: BaseException = None
 ):
     start = time.time()
     try:
         if error is not None:
-            data = {'status': 'error', 'error': ";".join(error.args)}
+            data = {'status': 'error', 'error': f"{error.__class__.__name__}: {error}"}
         else:
             data = {'status': 'success', 'content': content}
         data['path'] = path
-        data['monitored_path_id'] = monitored_path_id
+        data['monitored_path_uuid'] = monitored_path_uuid
         logger.debug(f"{get_setting('url')}report/; {json.dumps(data, cls=NpEncoder)}")
         out = requests.post(
             f"{get_setting('url')}report/",
@@ -43,8 +43,11 @@ def report_harvest_result(
                 error_text += "..."
             logger.error(f"Server returned invalid JSON (HTTP {out.status_code}): {error_text}")
             return None
+        if not out.ok:
+            logger.error(f"Server returned error (HTTP {out.status_code}): {out.json()}")
+            return None
     except BaseException as e:
-        logger.error(e)
+        logger.error(f"{e.__class__.__name__}: {e}")
         out = None
     logger.info(f"API call finished in {time.time() - start}")
     return out
@@ -89,4 +92,4 @@ def update_config():
         else:
             logger.error(f"Unable to fetch {url}config/ -- received HTTP {result.status_code}")
     except BaseException as e:
-        logger.error(e)
+        logger.error(f"{e.__class__.__name__}: {e}")

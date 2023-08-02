@@ -74,7 +74,7 @@ def import_file(path: str, monitored_path: dict) -> bool:
     """
         Attempts to import a given file
     """
-    monitored_path_id = monitored_path.get('id')
+    monitored_path_uuid = monitored_path.get('uuid')
     default_column_ids = get_standard_columns()
     default_units = get_standard_units()
     max_upload_size = get_setting('max_upload_bytes')
@@ -96,7 +96,7 @@ def import_file(path: str, monitored_path: dict) -> bool:
         core_metadata, extra_metadata = input_file.load_metadata()
         report = report_harvest_result(
             path=path,
-            monitored_path_id=monitored_path_id,
+            monitored_path_uuid=monitored_path_uuid,
             content={
                 'task': 'import',
                 'status': 'begin',
@@ -166,7 +166,7 @@ def import_file(path: str, monitored_path: dict) -> bool:
                 start_row = i
                 report = report_harvest_result(
                     path=path,
-                    monitored_path_id=monitored_path_id,
+                    monitored_path_uuid=monitored_path_uuid,
                     content={
                     'task': 'import',
                     'status': 'in_progress',
@@ -223,7 +223,7 @@ def import_file(path: str, monitored_path: dict) -> bool:
         # Send data
         report = report_harvest_result(
             path=path,
-            monitored_path_id=monitored_path_id,
+            monitored_path_uuid=monitored_path_uuid,
             content={
             'task': 'import',
             'status': 'in_progress',
@@ -243,10 +243,10 @@ def import_file(path: str, monitored_path: dict) -> bool:
 
         logger.info("File successfully imported")
     except Exception as e:
-        logger.error(e)
+        logger.error(f"{e.__class__.__name__}: {e}")
         report_harvest_result(
             path=path,
-            monitored_path_id=monitored_path_id,
+            monitored_path_uuid=monitored_path_uuid,
             error=e
         )
         return False

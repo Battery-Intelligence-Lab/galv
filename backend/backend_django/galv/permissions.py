@@ -7,6 +7,7 @@ from urllib.parse import urlparse
 from django.db.models import Q
 from rest_framework import permissions
 from .models import Harvester, MonitoredPath
+from .utils import get_monitored_paths
 
 
 class HarvesterAccess(permissions.BasePermission):
@@ -19,25 +20,13 @@ class HarvesterAccess(permissions.BasePermission):
 
     def has_object_permission(self, request, view, obj):
         if view.action in self.endpoints:
-            return obj.id == int(view.kwargs['pk']) and \
+            return str(obj.uuid) == view.kwargs['pk'] and \
                    request.META.get('HTTP_AUTHORIZATION', '') == f"Harvester {obj.api_key}"
-        # /harvesters/ returns all harvesters because their envvars are redacted
-        if view.action == 'list' and request.method == 'GET':
-            return True
-        # Read/write detail test
+
         user_groups = request.user.groups.all()
-        # Allow access to Harvesters where we have a Path
-        path_harvesters = [p.harvester.id for p in MonitoredPath.objects.filter(
-            Q(user_group__in=user_groups) | Q(admin_group__in=user_groups)
-        )]
-        user_harvesters = Harvester.objects.filter(
-            Q(user_group__in=user_groups) |
-            Q(id__in=path_harvesters)
-        )
-        admin_harvesters = Harvester.objects.filter(admin_group__in=user_groups)
         if request.method in permissions.SAFE_METHODS:
-            return obj in user_harvesters or obj in admin_harvesters
-        return obj in admin_harvesters
+            return obj.user_group in user_groups or obj.admin_group in user_groups
+        return obj.admin_group in user_groups
 
 
 class MonitoredPathAccess(permissions.BasePermission):
@@ -54,15 +43,36 @@ class MonitoredPathAccess(permissions.BasePermission):
         return obj.admin_group in user_groups
 
     def has_permission(self, request, view):
-        if view.action == 'create':
+        if view.action == 'create' and request.data.get('harvester') is not None:
             user_groups = request.user.groups.all()
             try:
-                harvester_id = resolve(urlparse(request.data.get('harvester')).path).kwargs.get('pk')
+                harvester_uuid = resolve(urlparse(request.data.get('harvester')).path).kwargs.get('pk')
             except Resolver404:
-                raise Http404(f"Invalid harvester URL '{request.data.get('harvester')}'")
-            harvester = Harvester.objects.get(id=harvester_id)
+                # raise Http404(f"Invalid harvester URL '{request.data.get('harvester')}'")
+                return False
+            harvester = Harvester.objects.get(uuid=harvester_uuid)
             return harvester.user_group in user_groups or harvester.admin_group in user_groups
         return True
+
+
+class ObservedFileAccess(permissions.BasePermission):
+    """
+    Object-level permission to allow or deny access to a MonitoredPath based on ObservedFile path.
+    """
+    def has_object_permission(self, request, view, obj):
+        paths = get_monitored_paths(obj.path, obj.harvester)
+        for path in paths:
+            if path.user_group in request.user.groups.all() or path.admin_group in request.user.groups.all():
+                return True
+        return False
+
+
+class VicariousObservedFileAccess(permissions.BasePermission):
+    """
+    Object-level permission to allow or deny access to a MonitoredPath based on an object's ObservedFile.
+    """
+    def has_object_permission(self, request, view, obj):
+        return ObservedFileAccess().has_object_permission(request, view, obj.file)
 
 
 class ReadOnlyIfInUse(permissions.BasePermission):

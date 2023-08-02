@@ -26,7 +26,7 @@ class DatasetTests(APITestCase):
         self.admin_user = UserFactory.create(username='test_user_admin')
         self.user.groups.add(self.harvester.user_group)
         self.admin_user.groups.add(self.monitored_path.admin_group)
-        self.url = reverse('dataset-detail', args=(self.dataset.id,))
+        self.url = reverse('dataset-detail', args=(self.dataset.uuid,))
 
     def test_view(self):
         self.client.force_login(self.user)

@@ -48,7 +48,7 @@ export default function HarvesterEnv(props: HarvesterEnvProps) {
   ]
 
   return (
-    <Paper className={classes.paper} key={`${harvester.id}_paths`}>
+    <Paper className={classes.paper} key={`${harvester.uuid}_paths`}>
       <Typography variant='h5' p={1}>
         {harvester.name} - environment variables
       </Typography>

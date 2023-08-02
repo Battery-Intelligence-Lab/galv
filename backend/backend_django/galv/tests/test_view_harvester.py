@@ -60,8 +60,8 @@ class HarvesterTests(GalvTestCase):
         harvester = HarvesterFactory.create(name='Test Config')
         other = HarvesterFactory.create(name='Test Config Other')
         paths = MonitoredPathFactory.create_batch(size=3, harvester=harvester)
-        MonitoredPathFactory.create_batch(size=3, harvester_id=other.id)
-        url = reverse('harvester-config', args=(harvester.id,))
+        MonitoredPathFactory.create_batch(size=3, harvester_id=other.uuid)
+        url = reverse('harvester-config', args=(harvester.uuid,))
         headers = {'HTTP_AUTHORIZATION': f"Harvester {harvester.api_key}"}
         print("Test config rejection")
         self.assertEqual(self.client.get(url).status_code, status.HTTP_401_UNAUTHORIZED)
@@ -117,7 +117,7 @@ class HarvesterTests(GalvTestCase):
         self.client.force_login(user)
         user_header = self.get_token_header_for_user(user)
         other = HarvesterFactory.create(name='Test Update Other')
-        url = reverse('harvester-detail', args=(harvester.id,))
+        url = reverse('harvester-detail', args=(harvester.uuid,))
         print("Test nonmember access")
         self.assertEqual(self.client.get(url, **user_header).status_code, status.HTTP_403_FORBIDDEN)
         print("OK")
@@ -136,7 +136,7 @@ class HarvesterTests(GalvTestCase):
         t = harvester.sleep_time + 10
         n = harvester.name + " the Second"
         response = self.client.patch(url, {'name': n, 'sleep_time': t}, **user_header)
-        harvester_updated = Harvester.objects.get(id=harvester.id)
+        harvester_updated = Harvester.objects.get(id=harvester.uuid)
         self.assertEqual(response.status_code, status.HTTP_200_OK, "HTTP response error")
         self.assertEqual(harvester_updated.name, n, "name not updated")
         self.assertEqual(harvester_updated.sleep_time, t, "sleep_time not updated")
@@ -155,7 +155,7 @@ class HarvesterTests(GalvTestCase):
         other_user = UserFactory.create()
         other_user_header = self.get_token_header_for_user(other_user)
         self.client.force_login(user)
-        url = reverse('harvester-detail', args=(harvester.id,))
+        url = reverse('harvester-detail', args=(harvester.uuid,))
         print("Test envvars blank")
         self.assertDictEqual(get_envvars(url, **user_header), {})
         print("OK")
@@ -191,7 +191,7 @@ class HarvesterTests(GalvTestCase):
     def test_report(self):
         harvester = HarvesterFactory.create(name='Test Report')
         paths = MonitoredPathFactory.create_batch(size=2, harvester=harvester)
-        url = reverse('harvester-report', args=(harvester.id,))
+        url = reverse('harvester-report', args=(harvester.uuid,))
         headers = {'HTTP_AUTHORIZATION': f"Harvester {harvester.api_key}", 'format': 'json'}
         print("Test status missing")
         self.assertEqual(self.client.post(url, {}, **headers).status_code, status.HTTP_400_BAD_REQUEST)
@@ -207,27 +207,27 @@ class HarvesterTests(GalvTestCase):
         self.assertEqual(
             self.client.post(
                 url,
-                {'status': 'error', 'path': path + 'x/yz.ext', 'monitored_path_id': paths[0].id},
+                {'status': 'error', 'path': path + 'x/yz.ext', 'monitored_path_uuid': paths[0].uuid},
                 **headers
             ).status_code,
             status.HTTP_200_OK
         )
-        HarvestError.objects.get(harvester__id=harvester.id, file__path=path + 'x/yz.ext')
+        HarvestError.objects.get(harvester__uuid=harvester.uuid, file__path=path + 'x/yz.ext')
         print("OK")
         print("Test error with new file")
         response = self.client.post(
             url,
-            {'status': 'error', 'error': 'test', 'path': path + '/new/file.ext', 'monitored_path_id': paths[0].id},
+            {'status': 'error', 'error': 'test', 'path': path + '/new/file.ext', 'monitored_path_uuid': paths[0].uuid},
             **headers
         )
         assert_response_property(self, response, self.assertEqual, response.status_code, status.HTTP_200_OK)
-        f = ObservedFile.objects.get(path=path + '/new/file.ext', harvester_id=harvester.id)
-        HarvestError.objects.get(harvester__id=harvester.id, file__id=f.id)
+        f = ObservedFile.objects.get(path=path + '/new/file.ext', harvester_id=harvester.uuid)
+        HarvestError.objects.get(harvester__uuid=harvester.uuid, file__uuid=f.uuid)
         print("OK")
         print("Test error with existing file")
         response = self.client.post(
             url,
-            {'status': 'error', 'error': 'test', 'path': path + '/new/file.ext', 'monitored_path_id': paths[0].id},
+            {'status': 'error', 'error': 'test', 'path': path + '/new/file.ext', 'monitored_path_uuid': paths[0].uuid},
             **headers
         )
         assert_response_property(self, response, self.assertEqual, response.status_code, status.HTTP_200_OK)
@@ -245,13 +245,13 @@ class HarvesterTests(GalvTestCase):
         print("Test task file_size")
         body = {
             'status': 'success',
-            'monitored_path_id': paths[0].id,
+            'monitored_path_uuid': paths[0].uuid,
             'path': '/a/new/file.ext',
             'content': {'task': 'file_size', 'size': 1024}
         }
         response = self.client.post(url, body, **headers)
         assert_response_property(self, response, self.assertEqual, response.status_code, status.HTTP_200_OK)
-        f = ObservedFile.objects.get(path='/a/new/file.ext', harvester_id=harvester.id)
+        f = ObservedFile.objects.get(path='/a/new/file.ext', harvester_id=harvester.uuid)
         self.assertEqual(f.state, FileState.GROWING)
         print("OK")
         print("Test task import begin")

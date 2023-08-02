@@ -91,8 +91,8 @@ class HarvesterFactory(factory.django.DjangoModelFactory):
 
     @factory.post_generation
     def groups(obj, *args, **kwargs):
-        user_group = GroupFactory.create(name=f"harvester_{obj.id}_user_group")
-        admin_group = GroupFactory.create(name=f"harvester_{obj.id}_admin_group")
+        user_group = GroupFactory.create(name=f"harvester_{obj.uuid}_user_group")
+        admin_group = GroupFactory.create(name=f"harvester_{obj.uuid}_admin_group")
         obj.user_group = user_group
         obj.admin_group = admin_group
         obj.save()
@@ -116,8 +116,8 @@ class MonitoredPathFactory(factory.django.DjangoModelFactory):
 
     @factory.post_generation
     def groups(obj, *args, **kwargs):
-        user_group = GroupFactory.create(name=f"path_{obj.id}_user_group")
-        admin_group = GroupFactory.create(name=f"path_{obj.id}_admin_group")
+        user_group = GroupFactory.create(name=f"path_{obj.uuid}_user_group")
+        admin_group = GroupFactory.create(name=f"path_{obj.uuid}_admin_group")
         obj.user_group = user_group
         obj.admin_group = admin_group
         obj.save()

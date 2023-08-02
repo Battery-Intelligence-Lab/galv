@@ -8,6 +8,7 @@ import datetime
 import knox.auth
 import os
 from django.db.models import Q
+from django.http import StreamingHttpResponse
 
 from .serializers import HarvesterSerializer, \
     HarvesterCreateSerializer, \
@@ -25,7 +26,7 @@ from .serializers import HarvesterSerializer, \
     HarvestErrorSerializer, \
     KnoxTokenSerializer, \
     KnoxTokenFullSerializer, CellFamilySerializer, EquipmentFamilySerializer, \
-    ScheduleSerializer, CyclerTestSerializer, ScheduleFamilySerializer
+    ScheduleSerializer, CyclerTestSerializer, ScheduleFamilySerializer, DataColumnTypeSerializer, DataColumnSerializer
 from .models import Harvester, \
     HarvestError, \
     MonitoredPath, \
@@ -46,7 +47,8 @@ from .models import Harvester, \
     VouchFor, \
     KnoxAuthToken, CellFamily, EquipmentTypes, EquipmentModels, EquipmentManufacturers, CellModels, CellManufacturers, \
     CellChemistries, CellFormFactors, ScheduleIdentifiers, EquipmentFamily, Schedule, CyclerTest, ScheduleFamily
-from .permissions import HarvesterAccess, ReadOnlyIfInUse, MonitoredPathAccess
+from .permissions import HarvesterAccess, ReadOnlyIfInUse, MonitoredPathAccess, VicariousObservedFileAccess, \
+    ObservedFileAccess
 from .serializers.utils import GetOrCreateTextStringSerializer
 from .utils import get_files_from_path
 from django.contrib.auth.models import User, Group
@@ -293,18 +295,18 @@ Searchable fields:
 - name
         """
     ),
-    mine=extend_schema(
-        summary="View Harvesters to which you have access",
-        description="""
-View only Harvesters to which you have access.
-On systems with multiple Harvesters, this view is more useful than /harvesters/.
-
-This view will include Harvester environment variables, while /harvesters/ will not.
-
-Searchable fields:
-- name
-        """
-    ),
+#     mine=extend_schema(
+#         summary="View Harvesters to which you have access",
+#         description="""
+# View only Harvesters to which you have access.
+# On systems with multiple Harvesters, this view is more useful than /harvesters/.
+#
+# This view will include Harvester environment variables, while /harvesters/ will not.
+#
+# Searchable fields:
+# - name
+#         """
+#     ),
     retrieve=extend_schema(
         summary="View a single Harvester",
         description="""
@@ -384,40 +386,51 @@ class HarvesterViewSet(viewsets.ModelViewSet):
     permission_classes = [HarvesterAccess]
     filterset_fields = ['name']
     search_fields = ['@name']
-    queryset = Harvester.objects.all().order_by('-last_check_in', '-id')
+    queryset = Harvester.objects.all().order_by('-last_check_in', '-uuid')
     http_method_names = ['get', 'post', 'patch', 'delete', 'options']
+
+    def get_queryset(self):
+        """Get Harvesters applying access restrictions"""
+        # Allow access to Harvesters if we present their API key
+        if self.request.META.get('HTTP_AUTHORIZATION', '').startswith('Harvester '):
+            key = self.request.META['HTTP_AUTHORIZATION'].split(' ')[1]
+            return self.queryset.filter(api_key=key)
+        return self.queryset.filter(
+            Q(user_group__in=self.request.user.groups.all()) |
+            Q(admin_group__in=self.request.user.groups.all())
+        )
 
     def get_serializer_class(self):
         if self.request.method.lower() == "post":
             return HarvesterCreateSerializer
         return HarvesterSerializer
 
-    @action(detail=False, methods=['GET'])
-    def mine(self, request):
-        user_groups = self.request.user.groups.all()
-        # Allow access to Harvesters where we have a Path
-        path_harvesters = [p.harvester.id for p in MonitoredPath.objects.filter(
-            Q(user_group__in=user_groups) | Q(admin_group__in=user_groups)
-        )]
-        my_harvesters = Harvester.objects.filter(
-            Q(user_group__in=user_groups) |
-            Q(admin_group__in=user_groups) |
-            Q(id__in=path_harvesters)
-        )
-        return Response(HarvesterSerializer(
-            my_harvesters.order_by('-last_check_in', '-id'),
-            many=True,
-            context={'request': request}
-        ).data)
+    # @action(detail=False, methods=['GET'])
+    # def mine(self, request):
+    #     user_groups = self.request.user.groups.all()
+    #     # Allow access to Harvesters where we have a Path
+    #     path_harvesters = [p.harvester.uuid for p in MonitoredPath.objects.filter(
+    #         Q(user_group__in=user_groups) | Q(admin_group__in=user_groups)
+    #     )]
+    #     my_harvesters = Harvester.objects.filter(
+    #         Q(user_group__in=user_groups) |
+    #         Q(admin_group__in=user_groups) |
+    #         Q(id__in=path_harvesters)
+    #     )
+    #     return Response(HarvesterSerializer(
+    #         my_harvesters.order_by('-last_check_in', '-uuid'),
+    #         many=True,
+    #         context={'request': request}
+    #     ).data)
 
     @action(detail=True, methods=['GET'])
-    def config(self, request, pk: int = None):
+    def config(self, request, pk = None):
         """
         Return a full configuration file including MonitoredPaths under paths.
 
         Only available to Harvesters.
         """
-        harvester = get_object_or_404(Harvester, id=pk)
+        harvester = get_object_or_404(Harvester, uuid=pk)
         self.check_object_permissions(self.request, harvester)
         return Response(HarvesterConfigSerializer(
             harvester,
@@ -425,14 +438,14 @@ class HarvesterViewSet(viewsets.ModelViewSet):
         ).data)
 
     @action(detail=True, methods=['POST'])
-    def report(self, request, pk: int = None):
+    def report(self, request, pk = None):
         """
         Process a Harvester's report on its activity.
         This will spawn various other database updates depending on payload content.
 
         Only Harvesters are authorised to issue reports.
         """
-        harvester = get_object_or_404(Harvester, id=pk)
+        harvester = get_object_or_404(Harvester, uuid=pk)
         self.check_object_permissions(self.request, harvester)
         harvester.last_check_in = timezone.now()
         harvester.save()
@@ -445,16 +458,16 @@ class HarvesterViewSet(viewsets.ModelViewSet):
         except AssertionError:
             return error_response('Harvester report must specify a path')
         try:
-            monitored_path_id = request.data.get('monitored_path_id')
+            monitored_path_uuid = request.data.get('monitored_path_uuid')
             if request.data.get('status') != 'error':
-                assert monitored_path_id is not None
-                monitored_path = MonitoredPath.objects.get(id=monitored_path_id)
+                assert monitored_path_uuid is not None
+                monitored_path = MonitoredPath.objects.get(uuid=monitored_path_uuid)
             else:
-                monitored_path = MonitoredPath.objects.get(id=monitored_path_id) if monitored_path_id else None
+                monitored_path = MonitoredPath.objects.get(uuid=monitored_path_uuid) if monitored_path_uuid else None
         except AssertionError:
-            return error_response('Harvester report must specify a monitored_path_id')
+            return error_response('Harvester report must specify a monitored_path_uuid')
         except MonitoredPath.DoesNotExist:
-            return error_response('Harvester report must specify a valid monitored_path_id', 404)
+            return error_response('Harvester report must specify a valid monitored_path_uuid', 404)
         if request.data['status'] == 'error':
             error = request.data.get('error')
             if not isinstance(error, str):
@@ -690,32 +703,26 @@ class MonitoredPathViewSet(viewsets.ModelViewSet):
     MonitoredPaths can be created or updated by a Harvester's admins and users, as
     well as any users who have been given explicit permissions to edit the MonitoredPath.
     """
-    # serializer_class = MonitoredPathSerializer
-    filterset_fields = ['path', 'harvester__id', 'harvester__name']
-    search_fields = ['@path']
-    queryset = MonitoredPath.objects.none().order_by('-id')
-    http_method_names = ['get', 'post', 'patch', 'delete', 'options']
     permission_classes = [MonitoredPathAccess]
+    # serializer_class = MonitoredPathSerializer
+    filterset_fields = ['path', 'harvester__uuid', 'harvester__name']
+    search_fields = ['@path']
+    queryset = MonitoredPath.objects.all().order_by('-uuid')
+    http_method_names = ['get', 'post', 'patch', 'delete', 'options']
+
+    def get_queryset(self):
+        """
+        Return a queryset of MonitoredPaths the user has access to.
+        """
+        return MonitoredPath.objects.filter(
+            Q(user_group__in=self.request.user.groups.all()) |
+            Q(admin_group__in=self.request.user.groups.all())
+        )
 
     def get_serializer_class(self):
         if self.request.method.lower() == "post":
             return MonitoredPathCreateSerializer
         return MonitoredPathSerializer
-
-    # Access restrictions
-    def get_queryset(self):
-        return MonitoredPath.objects.filter(
-            Q(user_group__in=self.request.user.groups.all()) |
-            Q(admin_group__in=self.request.user.groups.all())
-        ).order_by('-id')
-
-    @action(detail=True, methods=['get'])
-    def files(self, request, pk: int = None):
-        try:
-            path = MonitoredPath.objects.get(id=pk)
-        except MonitoredPath.DoesNotExist:
-            return error_response("Path does not exist.", 404)
-        return Response(ObservedFileSerializer(get_files_from_path(path), many=True, context={'request': request}).data)
 
 
 @extend_schema_view(
@@ -768,29 +775,29 @@ class ObservedFileViewSet(viewsets.ModelViewSet):
     encountered while importing the file, and/or to Datasets representing the content
     of imported files.
     """
+    permission_classes = [ObservedFileAccess]
     serializer_class = ObservedFileSerializer
-    filterset_fields = ['harvester__id', 'path', 'state']
+    filterset_fields = ['harvester__uuid', 'path', 'state']
     search_fields = ['@path', 'state']
-    queryset = ObservedFile.objects.none().order_by('-last_observed_time', '-id')
+    queryset = ObservedFile.objects.all().order_by('-last_observed_time', '-uuid')
     http_method_names = ['get', 'options']
 
-    # Access restrictions
     def get_queryset(self):
-        user_paths = MonitoredPath.objects.filter(
-            Q(user_group__in=self.request.user.groups.all()) |
-            Q(admin_group__in=self.request.user.groups.all())
-        )
-        files = set()
-        for path in user_paths:
-            files = {*files, *get_files_from_path(path)}
-
-        ids = [file.id for file in files]
-        return ObservedFile.objects.filter(id__in=ids).order_by('-last_observed_time', '-id')
+        """
+        Return a queryset of ObservedFiles the user has access to.
+        """
+        uuids = {}
+        for path in MonitoredPath.objects.filter(
+                Q(user_group__in=self.request.user.groups.all()) |
+                Q(admin_group__in=self.request.user.groups.all())
+        ):
+            uuids = {*uuids, *[f.uuid for f in get_files_from_path(path)]}
+        return ObservedFile.objects.filter(uuid__in=uuids)
 
     @action(detail=True, methods=['GET'])
-    def reimport(self, request, pk: int = None):
+    def reimport(self, request, pk = None):
         try:
-            file = self.get_queryset().get(id=pk)
+            file = self.queryset.get(uuid=pk)
             self.check_object_permissions(self.request, file)
         except ObservedFile.DoesNotExist:
             return error_response('Requested file not found')
@@ -837,24 +844,12 @@ class DatasetViewSet(viewsets.ModelViewSet):
     Datasets are decomposed within Galv into columns and datapoints,
     providing an ability flexibly handle any kind of tabular data.
     """
+    permission_classes = [VicariousObservedFileAccess]
     serializer_class = DatasetSerializer
     filterset_fields = ['name', 'type']
     search_fields = ['@name', 'type']
-    queryset = Dataset.objects.none().order_by('-date', '-id')
+    queryset = Dataset.objects.all().order_by('-date', '-uuid')
     http_method_names = ['get', 'patch', 'options']
-
-    # Access restrictions
-    def get_queryset(self):
-        user_paths = MonitoredPath.objects.filter(
-            Q(user_group__in=self.request.user.groups.all()) |
-            Q(admin_group__in=self.request.user.groups.all())
-        )
-        files = set()
-        for path in user_paths:
-            files = {*files, *get_files_from_path(path)}
-
-        return Dataset.objects.filter(file__in=files).order_by('-date', '-id')
-
 
 @extend_schema_view(
     list=extend_schema(
@@ -881,17 +876,11 @@ class HarvestErrorViewSet(viewsets.ReadOnlyModelViewSet):
     HarvestErrors are problems encountered by Harvesters during the crawling of
     MonitoredPaths or the importing or inspection of ObservedFiles.
     """
+    permission_classes = [VicariousObservedFileAccess]
     serializer_class = HarvestErrorSerializer
     filterset_fields = ['file', 'harvester']
     search_fields = ['@error']
-    queryset = HarvestError.objects.none().order_by('-timestamp')
-
-    # Access restrictions
-    def get_queryset(self):
-        return HarvestError.objects.filter(
-            Q(path__user_group__in=self.request.user.groups.all()) |
-            Q(path__admin_group__in=self.request.user.groups.all())
-        ).order_by('-timestamp')
+    queryset = HarvestError.objects.all().order_by('-timestamp')
 
 
 class _GetOrCreateTextStringViewSet(viewsets.ReadOnlyModelViewSet):
@@ -1333,124 +1322,124 @@ class DataUnitViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = DataUnit.objects.all().order_by('id')
 
 
-# @extend_schema_view(
-#     list=extend_schema(
-#         summary="View Column Types",
-#         description="""
-# Column Types are generic Column templates. They hold the metadata for a Column,
-# while the individual Column instances link Column Types to the TimeseriesData they contain.
-#
-# Some Column Types are innately recognised by Galv and its harvester parsers,
-# while others can be defined by the parsers during data processing.
-#
-# Searchable fields:
-# - name
-# - description
-#         """
-#     ),
-#     retrieve=extend_schema(
-#         summary="View a Column Type",
-#         description="""
-# Column Types are generic Column templates. They hold the metadata for a Column,
-# while the individual Column instances link Column Types to the TimeseriesData they contain.
-#
-# Some Column Types are innately recognised by Galv and its harvester parsers,
-# while others can be defined by the parsers during data processing.
-#
-# Searchable fields:
-# - name
-# - description
-#         """
-#     )
-# )
-# class DataColumnTypeViewSet(viewsets.ReadOnlyModelViewSet):
-#     """
-#     DataColumnTypes support reuse of DataColumns over multiple DataSets
-#     by abstracting their information.
-#     """
-#     serializer_class = DataColumnTypeSerializer
-#     filterset_fields = ['name', 'unit__symbol', 'unit__name', 'is_default']
-#     search_fields = ['@name', '@description']
-#     queryset = DataColumnType.objects.all().order_by('id')
+@extend_schema_view(
+    list=extend_schema(
+        summary="View Column Types",
+        description="""
+Column Types are generic Column templates. They hold the metadata for a Column,
+while the individual Column instances link Column Types to the TimeseriesData they contain.
+
+Some Column Types are innately recognised by Galv and its harvester parsers,
+while others can be defined by the parsers during data processing.
+
+Searchable fields:
+- name
+- description
+        """
+    ),
+    retrieve=extend_schema(
+        summary="View a Column Type",
+        description="""
+Column Types are generic Column templates. They hold the metadata for a Column,
+while the individual Column instances link Column Types to the TimeseriesData they contain.
+
+Some Column Types are innately recognised by Galv and its harvester parsers,
+while others can be defined by the parsers during data processing.
+
+Searchable fields:
+- name
+- description
+        """
+    )
+)
+class DataColumnTypeViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    DataColumnTypes support reuse of DataColumns over multiple DataSets
+    by abstracting their information.
+    """
+    serializer_class = DataColumnTypeSerializer
+    filterset_fields = ['name', 'unit__symbol', 'unit__name', 'is_default']
+    search_fields = ['@name', '@description']
+    queryset = DataColumnType.objects.all().order_by('id')
 
 
-# @extend_schema_view(
-#     list=extend_schema(
-#         summary="View Columns to which you have access",
-#         description="""
-# Column instances link Column Types to the TimeseriesData they contain.
-# You can access any Column in any Dataset to which you have access.
-#
-# Searchable fields:
-# - dataset__name
-# - type__name (Column Type name)
-#         """
-#     ),
-#     retrieve=extend_schema(
-#         summary="View a Column",
-#         description="""
-# Column instances link Column Types to the TimeseriesData they contain.
-#
-# Searchable fields:
-# - dataset__name
-# - type__name (Column Type name)
-#         """
-#     ),
-#     values=extend_schema(
-#         summary="View Column data as newline-separated stream of values",
-#         description="""
-# View the TimeseriesData contents of the Column.
-#
-# Data are presented as a stream of values separated by newlines.
-#
-# Can be filtered with querystring parameters `min` and `max`, and `mod` (modulo) by specifying a sample number.
-#         """
-#     )
-# )
-# class DataColumnViewSet(viewsets.ReadOnlyModelViewSet):
-#     """
-#     DataColumns describe which columns are in a Dataset's data.
-#     """
-#     serializer_class = DataColumnSerializer
-#     filterset_fields = ['dataset__name', 'type__unit__symbol', 'dataset__id', 'type__id', 'type__name']
-#     search_fields = ['@dataset__name', '@type__name']
-#     queryset = DataColumn.objects.none().order_by('-dataset_id', '-id')
-#
-#     def get_queryset(self):
-#         user_paths = MonitoredPath.objects.filter(
-#             Q(user_group__in=self.request.user.groups.all()) |
-#             Q(admin_group__in=self.request.user.groups.all())
-#         )
-#         files = set()
-#         for path in user_paths:
-#             files = {*files, *get_files_from_path(path)}
-#         return DataColumn.objects.filter(dataset__file__in=files).order_by('-dataset_id', '-id')
-#
-#     @action(methods=['GET'], detail=True)
-#     def values(self, request, pk: int = None):
-#         """
-#         Fetch the data for this column in an 'observations' dictionary of record_id: observed_value pairs.
-#         """
-#         column = get_object_or_404(DataColumn, id=pk)
-#         self.check_object_permissions(self.request, column)
-#         handlers = [TimeseriesDataFloat, TimeseriesDataInt, TimeseriesDataStr]
-#         for handler in handlers:
-#             if handler.objects.filter(column=column).exists():
-#                 values = handler.objects.get(column=column).values
-#                 # Handle querystring parameters
-#                 if 'min' in request.query_params:
-#                     values = values[int(request.query_params['min']):]
-#                 if 'max' in request.query_params:
-#                     values = values[:int(request.query_params['max'])]
-#                 if 'mod' in request.query_params:
-#                     values = values[::int(request.query_params['mod'])]
-#
-#                 def stream():
-#                     for v in values:
-#                         yield v
-#                         yield '\n'.encode('utf-8')
-#                 return StreamingHttpResponse(stream())
-#         return error_response('No data found for this column.', 404)
+@extend_schema_view(
+    list=extend_schema(
+        summary="View Columns to which you have access",
+        description="""
+Column instances link Column Types to the TimeseriesData they contain.
+You can access any Column in any Dataset to which you have access.
+
+Searchable fields:
+- dataset__name
+- type__name (Column Type name)
+        """
+    ),
+    retrieve=extend_schema(
+        summary="View a Column",
+        description="""
+Column instances link Column Types to the TimeseriesData they contain.
+
+Searchable fields:
+- dataset__name
+- type__name (Column Type name)
+        """
+    ),
+    values=extend_schema(
+        summary="View Column data as newline-separated stream of values",
+        description="""
+View the TimeseriesData contents of the Column.
+
+Data are presented as a stream of values separated by newlines.
+
+Can be filtered with querystring parameters `min` and `max`, and `mod` (modulo) by specifying a sample number.
+        """
+    )
+)
+class DataColumnViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    DataColumns describe which columns are in a Dataset's data.
+    """
+    serializer_class = DataColumnSerializer
+    filterset_fields = ['dataset__name', 'type__unit__symbol', 'dataset__id', 'type__id', 'type__name']
+    search_fields = ['@dataset__name', '@type__name']
+    queryset = DataColumn.objects.none().order_by('-dataset_id', '-id')
+
+    def get_queryset(self):
+        user_paths = MonitoredPath.objects.filter(
+            Q(user_group__in=self.request.user.groups.all()) |
+            Q(admin_group__in=self.request.user.groups.all())
+        )
+        files = set()
+        for path in user_paths:
+            files = {*files, *get_files_from_path(path)}
+        return DataColumn.objects.filter(dataset__file__in=files).order_by('-dataset_id', '-id')
+
+    @action(methods=['GET'], detail=True)
+    def values(self, request, pk: int = None):
+        """
+        Fetch the data for this column in an 'observations' dictionary of record_id: observed_value pairs.
+        """
+        column = get_object_or_404(DataColumn, id=pk)
+        self.check_object_permissions(self.request, column)
+        handlers = [TimeseriesDataFloat, TimeseriesDataInt, TimeseriesDataStr]
+        for handler in handlers:
+            if handler.objects.filter(column=column).exists():
+                values = handler.objects.get(column=column).values
+                # Handle querystring parameters
+                if 'min' in request.query_params:
+                    values = values[int(request.query_params['min']):]
+                if 'max' in request.query_params:
+                    values = values[:int(request.query_params['max'])]
+                if 'mod' in request.query_params:
+                    values = values[::int(request.query_params['mod'])]
+
+                def stream():
+                    for v in values:
+                        yield v
+                        yield '\n'.encode('utf-8')
+                return StreamingHttpResponse(stream())
+        return error_response('No data found for this column.', 404)
 
 
 @extend_schema_view(

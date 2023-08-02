@@ -9,7 +9,7 @@ from django.db import models
 from django.contrib.auth.models import User, Group
 import random
 
-from .utils import AdditionalPropertiesModel, JSONModel, LDSources, render_pybamm_schedule
+from .utils import AdditionalPropertiesModel, JSONModel, LDSources, render_pybamm_schedule, UUIDModel
 from .autocomplete_entries import *
 
 
@@ -130,19 +130,19 @@ class Schedule(JSONModel):
         return f"{str(self.uuid)} [{str(self.family)}]"
 
 
-class DataColumn(JSONModel):
-    name = models.TextField(help_text="Name of the column", null=False)
-    # unit = models.ForeignKey(to=DataUnit, on_delete=models.CASCADE, null=False, help_text="Unit of the column")
-    # data_type = models.ForeignKey(to=DataColumnType, on_delete=models.CASCADE, null=False, help_text="Type of the column")
-    data = ArrayField(models.FloatField(), help_text="Data contained in the column", null=False)
-    # dataset = models.ForeignKey(to=Dataset, on_delete=models.CASCADE, null=False, help_text="Dataset containing the column")
+# class DataColumn(JSONModel):
+#     name = models.TextField(help_text="Name of the column", null=False)
+#     # unit = models.ForeignKey(to=DataUnit, on_delete=models.CASCADE, null=False, help_text="Unit of the column")
+#     # data_type = models.ForeignKey(to=DataColumnType, on_delete=models.CASCADE, null=False, help_text="Type of the column")
+#     data = ArrayField(models.FloatField(), help_text="Data contained in the column", null=False)
+#     # dataset = models.ForeignKey(to=Dataset, on_delete=models.CASCADE, null=False, help_text="Dataset containing the column")
 
 
 class CyclerTest(JSONModel):
     cell_subject = models.ForeignKey(to=Cell, on_delete=models.CASCADE, null=False, help_text="Cell that was tested", related_name="cycler_tests")
     schedule = models.ForeignKey(to=Schedule, null=True, blank=True, on_delete=models.CASCADE, help_text="Schedule used to test the cell", related_name="cycler_tests")
     equipment = models.ManyToManyField(to=Equipment, help_text="Equipment used to test the cell", related_name="cycler_tests")
-    columns = models.ManyToManyField(to=DataColumn,  help_text="Columns of data collected during the test", related_name="cycler_tests")
+    # columns = models.ManyToManyField(to=DataColumn,  help_text="Columns of data collected during the test", related_name="cycler_tests")
 
     def rendered_pybamm_schedule(self, validate = True):
         """
@@ -151,7 +151,7 @@ class CyclerTest(JSONModel):
         """
         return render_pybamm_schedule(self.schedule, self.cell_subject, validate = validate)
 
-class Harvester(models.Model):
+class Harvester(UUIDModel):
     name = models.TextField(
         unique=True,
         help_text="Human-friendly Harvester identifier"
@@ -165,7 +165,7 @@ class Harvester(models.Model):
         help_text="Date and time of last Harvester contact"
     )
     sleep_time = models.IntegerField(
-        default=10,
+        default=120,
         help_text="Seconds to sleep between Harvester cycles"
     )  # default to short time so updates happen quickly
     admin_group = models.ForeignKey(
@@ -184,10 +184,10 @@ class Harvester(models.Model):
     )
 
     def __str__(self):
-        return f"{self.name} [Harvester {self.id}]"
+        return f"{self.name} [Harvester {self.uuid}]"
 
     def save(self, *args, **kwargs):
-        if self.id is None:
+        if self.api_key is None:
             # Create groups for Harvester
             text = 'abcdefghijklmnopqrstuvwxyz' + \
                    'ABCDEFGHIJKLMNOPQRSTUVWXYZ' + \
@@ -216,17 +216,18 @@ class HarvesterEnvVar(models.Model):
         unique_together = [['harvester', 'key']]
 
 
-class MonitoredPath(models.Model):
+class MonitoredPath(UUIDModel):
     harvester = models.ForeignKey(
         to=Harvester,
         related_name='monitored_paths',
-        on_delete=models.SET_NULL,
-        null=True,
+        on_delete=models.DO_NOTHING,
+        null=False,
         help_text="Harvester with access to this directory"
     )
     path = models.TextField(help_text="Directory location on Harvester")
     regex = models.TextField(
         null=True,
+        blank=True,
         help_text="""
     Python.re regular expression to filter files by, 
     applied to full file name starting from this Path's directory"""
@@ -254,11 +255,11 @@ class MonitoredPath(models.Model):
     def __str__(self):
         return self.path
 
-    class Meta:
+    class Meta(UUIDModel.Meta):
         unique_together = [['harvester', 'path', 'regex']]
 
 
-class ObservedFile(models.Model):
+class ObservedFile(UUIDModel):
     path = models.TextField(help_text="Absolute file path")
     harvester = models.ForeignKey(
         to=Harvester,
@@ -284,14 +285,14 @@ class ObservedFile(models.Model):
     def __str__(self):
         return self.path
 
-    class Meta:
+    class Meta(UUIDModel.Meta):
         unique_together = [['path', 'harvester']]
 
 
 class HarvestError(models.Model):
     harvester = models.ForeignKey(
         to=Harvester,
-        related_name='paths',
+        related_name='errors',
         on_delete=models.CASCADE,
         help_text="Harvester which reported the error"
     )
@@ -315,7 +316,7 @@ class HarvestError(models.Model):
         return f"{self.error} [Harvester_{self.harvester_id}]"
 
 
-class Dataset(models.Model):
+class Dataset(UUIDModel):
     cell = models.ForeignKey(
         to=Cell,
         related_name='datasets',
@@ -348,30 +349,10 @@ class Dataset(models.Model):
     )
 
     def __str__(self):
-        return f"{self.name} [Dataset {self.id}]"
+        return f"{self.name} [Dataset {self.uuid}]"
 
-    class Meta:
+    class Meta(UUIDModel.Meta):
         unique_together = [['file', 'date']]
-
-
-# class Equipment(models.Model):
-#     name = models.TextField(
-#         null=False,
-#         unique=True,
-#         help_text="Specific identifier"
-#     )
-#     type = models.TextField(help_text="Generic name")
-#     datasets = models.ManyToManyField(
-#         to=Dataset,
-#         related_name='equipment',
-#         help_text="Datasets the Equipment is used in"
-#     )
-#
-#     def __str__(self):
-#         return f"{self.name} [Equipment {self.id}]"
-#
-#     def in_use(self) -> bool:
-#         return self.datasets.count() > 0
 
 
 class DataUnit(models.Model):
@@ -413,27 +394,27 @@ class DataColumnType(models.Model):
         unique_together = [['unit', 'name']]
 
 
-# class DataColumn(models.Model):
-#     dataset = models.ForeignKey(
-#         to=Dataset,
-#         related_name='columns',
-#         on_delete=models.CASCADE,
-#         help_text="Dataset in which this Column appears"
-#     )
-#     type = models.ForeignKey(
-#         to=DataColumnType,
-#         on_delete=models.CASCADE,
-#         help_text="Column Type which this Column instantiates"
-#     )
-#     official_sample_counter = models.BooleanField(default=False)
-#     data_type = models.TextField(null=False, help_text="Type of the data in this column")
-#     name = models.TextField(null=False, help_text="Column title e.g. in .tsv file headers")
-#
-#     def __str__(self):
-#         return f"{self.name} ({self.type.unit.symbol})"
-#
-#     class Meta:
-#         unique_together = [['dataset', 'name']]
+class DataColumn(models.Model):
+    dataset = models.ForeignKey(
+        to=Dataset,
+        related_name='columns',
+        on_delete=models.CASCADE,
+        help_text="Dataset in which this Column appears"
+    )
+    type = models.ForeignKey(
+        to=DataColumnType,
+        on_delete=models.CASCADE,
+        help_text="Column Type which this Column instantiates"
+    )
+    official_sample_counter = models.BooleanField(default=False)
+    data_type = models.TextField(null=False, help_text="Type of the data in this column")
+    name = models.TextField(null=False, help_text="Column title e.g. in .tsv file headers")
+
+    def __str__(self):
+        return f"{self.name} ({self.type.unit.symbol})"
+
+    class Meta:
+        unique_together = [['dataset', 'name']]
 
 # Timeseries data comes in different types, so we need to store them separately.
 # These helper functions reduce redundancy in the code that creates the models.

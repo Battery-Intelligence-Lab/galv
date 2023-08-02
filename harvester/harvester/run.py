@@ -63,7 +63,7 @@ def harvest_path(monitored_path: dict):
                     logger.info(f"Reporting stats for {file_path}")
                     result = report_harvest_result(
                         path=full_path,
-                        monitored_path_id=monitored_path.get('id'),
+                        monitored_path_uuid=monitored_path.get('uuid'),
                         content={
                             'task': 'file_size',
                             'size': os.stat(full_path).st_size
@@ -78,7 +78,7 @@ def harvest_path(monitored_path: dict):
                             if import_file(full_path, monitored_path):
                                 report_harvest_result(
                                     path=full_path,
-                                    monitored_path_id=monitored_path.get('id'),
+                                    monitored_path_uuid=monitored_path.get('uuid'),
                                     content={'task': 'import', 'status': 'complete'}
                                 )
                                 logger.info(f"Successfully parsed file {file_path}")
@@ -86,21 +86,21 @@ def harvest_path(monitored_path: dict):
                                 logger.warn(f"FAILED parsing file {file_path}")
                                 report_harvest_result(
                                     path=full_path,
-                                    monitored_path_id=monitored_path.get('id'),
+                                    monitored_path_uuid=monitored_path.get('uuid'),
                                     content={'task': 'import', 'status': 'failed'}
                                 )
                 except BaseException as e:
-                    logger.error(e)
+                    logger.error(f"{e.__class__.__name__}: {e}")
                     report_harvest_result(
                         path=full_path,
-                        monitored_path_id=monitored_path.get('id'),
+                        monitored_path_uuid=monitored_path.get('uuid'),
                         error=e
                     )
         logger.info(f"Completed directory walking of {path}")
     except BaseException as e:
-        logger.error(e)
+        logger.error(f"{e.__class__.__name__}: {e}")
         report_harvest_result(
-            monitored_path_id=monitored_path.get('id'),
+            monitored_path_uuid=monitored_path.get('uuid'),
             error=e,
             path=path
         )
@@ -117,11 +117,11 @@ def run_cycle():
         try:
             run()
         except BaseException as e:
-            logger.error(e)
+            logger.error(f"{e.__class__.__name__}: {e}")
         try:
             sleep_time = get_setting('sleep_time')
         except BaseException as e:
-            logger.error(e)
+            logger.error(f"{e.__class__.__name__}: {e}")
         time.sleep(sleep_time)
 
 

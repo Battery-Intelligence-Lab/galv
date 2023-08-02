@@ -67,13 +67,13 @@ export default function MonitoredPaths(props: MonitoredPathProps) {
   };
 
   return (
-    <Paper className={classes.paper} key={`${harvester.id}_paths`}>
+    <Paper className={classes.paper} key={`${harvester.uuid}_paths`}>
       <Typography variant='h5' p={1}>
         {harvester.name} - monitored paths
       </Typography>
       <AsyncTable<MonitoredPathFields>
         classes={classes}
-        key={`${harvester.id}_paths`}
+        key={`${harvester.uuid}_paths`}
         columns={columns}
         row_generator={(row, context) => [
           <Fragment>
@@ -147,7 +147,7 @@ export default function MonitoredPaths(props: MonitoredPathProps) {
         ]}
         subrow={selected === null? undefined : <Files path={selected} />}
         subrow_inclusion_rule={row => selected !== null && row.id === selected.id}
-        url={`monitored_paths/?harvester__id=${harvester.id}`}
+        url={`monitored_paths/?harvester__uuid=${harvester.uuid}`}
         new_row_values={{path: "", regex: ".*", stable_time: 60}}
         styles={classes}
       />

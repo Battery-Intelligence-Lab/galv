@@ -36,7 +36,7 @@ class MonitoredPathTests(APITestCase):
         body = {
             'path': self.path,
             'regex': '.*',
-            'harvester': reverse('harvester-detail', args=(self.harvester.id,)),
+            'harvester': reverse('harvester-detail', args=(self.harvester.uuid,)),
             'stable_time': 60
         }
         self.assertEqual(
@@ -53,7 +53,7 @@ class MonitoredPathTests(APITestCase):
         )
         print("OK")
         print("Test rejection of Create Path - invalid harvester")
-        i = 1 if self.harvester.id != 1 else 2
+        i = 1 if self.harvester.uuid != 1 else 2
         self.assertEqual(
             self.client.post(url, {'harvester': i}).status_code,
             status.HTTP_404_NOT_FOUND
@@ -76,7 +76,7 @@ class MonitoredPathTests(APITestCase):
     def test_update(self):
         path = MonitoredPathFactory.create(path=self.path, harvester=self.harvester)
         self.admin_user.groups.add(path.admin_group)
-        url = reverse('monitoredpath-detail', args=(path.id,))
+        url = reverse('monitoredpath-detail', args=(path.uuid,))
         print("Test update rejected - authorisation")
         self.client.force_login(self.user)
         body = {'path': path.path, 'regex': '^abc', 'stable_time': 100}

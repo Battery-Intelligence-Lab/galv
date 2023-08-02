@@ -47,7 +47,7 @@ describe('MonitoredPaths', () => {
 
     it('has appropriate values', async () => {
         expect(mocked_fetchMany).toHaveBeenCalledWith(
-            `monitored_paths/?harvester__id=${mock_harvester.id}`,
+            `monitored_paths/?harvester__uuid=${mock_harvester.uuid}`,
             {},
             false
         )
