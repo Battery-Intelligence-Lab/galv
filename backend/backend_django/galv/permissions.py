@@ -44,13 +44,17 @@ class MonitoredPathAccess(permissions.BasePermission):
 
     def has_permission(self, request, view):
         if view.action == 'create' and request.data.get('harvester') is not None:
-            user_groups = request.user.groups.all()
             try:
                 harvester_uuid = resolve(urlparse(request.data.get('harvester')).path).kwargs.get('pk')
             except Resolver404:
                 # raise Http404(f"Invalid harvester URL '{request.data.get('harvester')}'")
                 return False
             harvester = Harvester.objects.get(uuid=harvester_uuid)
+            # Allow harvesters to create MonitoredPaths for themselves
+            if request.META.get('HTTP_AUTHORIZATION', '') == f"Harvester {harvester.api_key}":
+                return True
+            # Allow users in the harvester's user_group or admin_group to create MonitoredPaths
+            user_groups = request.user.groups.all()
             return harvester.user_group in user_groups or harvester.admin_group in user_groups
         return True
 

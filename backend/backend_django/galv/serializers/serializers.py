@@ -424,7 +424,15 @@ class MonitoredPathCreateSerializer(MonitoredPathSerializer):
 
     def create(self, validated_data):
         stable_time = validated_data.get('stable_time', 60)
-        regex = validated_data.get('regex', '.*')
+        regex = validated_data.get('regex')
+        # Default path admin is requesting user or harvester's first admin (if Harvester is requesting path creation)
+        admin = self.context['request'].user
+        if admin is None or not admin.is_authenticated:
+            if self.context['request'].META.get('HTTP_AUTHORIZATION', '') == \
+                f"Harvester {validated_data['harvester'].api_key}":
+                admin = validated_data['harvester'].admin_group.user_set.all().first()
+        if admin is None:
+            raise ValidationError("Unable to determine admin user for path creation")
         # Create Path
         try:
             monitored_path = MonitoredPath.objects.create(
@@ -447,8 +455,7 @@ class MonitoredPathCreateSerializer(MonitoredPathSerializer):
             name=f"path_{monitored_path.uuid}_users"
         )
         monitored_path.save()
-        # Add user as admin
-        self.context['request'].user.groups.add(monitored_path.admin_group)
+        admin.groups.add(monitored_path.admin_group)
         return monitored_path
 
     def to_representation(self, instance):
@@ -457,15 +464,20 @@ class MonitoredPathCreateSerializer(MonitoredPathSerializer):
     class Meta:
         model = MonitoredPath
         fields = ['path', 'regex', 'stable_time', 'harvester']
-        extra_metadata = {
-            'regex': {'required': False},
+        extra_kwargs = augment_extra_kwargs({
             'stable_time': {'required': False},
-        }
+        })
 
 
 class ObservedFileSerializer(serializers.HyperlinkedModelSerializer):
     upload_info = serializers.SerializerMethodField(
         help_text="Metadata required for harvester program to resume file parsing"
+    )
+    has_required_columns = serializers.SerializerMethodField(
+        help_text="Whether the file has all required columns"
+    )
+    column_errors = serializers.SerializerMethodField(
+        help_text="Errors in uploaded columns"
     )
 
     def get_upload_info(self, instance) -> dict | None:
@@ -486,20 +498,31 @@ class ObservedFileSerializer(serializers.HyperlinkedModelSerializer):
         except BaseException as e:
             return {'columns': [], 'last_record_number': None, 'error': str(e)}
 
+    def get_has_required_columns(self, instance) -> bool:
+        return instance.has_required_columns()
+
+    def get_column_errors(self, instance) -> list:
+        return instance.column_errors()
+
     class Meta:
         model = ObservedFile
-        fields = [
-            'url', 'uuid', 'harvester', 'path',
-            'state', 'last_observed_time', 'last_observed_size', 'errors',
-            'upload_info', 'columns'
-        ]
         read_only_fields = [
             'url', 'uuid', 'harvester', 'path',
-            'last_observed_time', 'last_observed_size', 'errors',
+            'state',
+            'parser',
+            'num_rows',
+            'first_sample_no',
+            'last_sample_no',
+            'num_rows',
+            'extra_metadata',
+            'has_required_columns',
+            'last_observed_time', 'last_observed_size', 'upload_errors',
+            'column_errors',
             'upload_info', 'columns'
         ]
+        fields = [*read_only_fields, 'name']
         extra_kwargs = augment_extra_kwargs({
-            'errors': {'help_text': "Errors associated with this File"},
+            'upload_errors': {'help_text': "Errors associated with this File"},
             'columns': {'help_text': "Columns extracted from this File"}
         })
 
@@ -539,7 +562,7 @@ class DataColumnSerializer(serializers.HyperlinkedModelSerializer):
     A column contains metadata and data. Data are an ordered list of values.
     """
     name = serializers.SerializerMethodField(help_text="Column name (assigned by harvester but overridden by Galv for core fields)")
-    required_column = serializers.SerializerMethodField(help_text="Whether the column is one of those required by Galv")
+    is_required_column = serializers.SerializerMethodField(help_text="Whether the column is one of those required by Galv")
     type_name = serializers.SerializerMethodField(help_text=get_model_field(DataColumnType, 'name').help_text)
     description = serializers.SerializerMethodField(help_text=get_model_field(DataColumnType, 'description').help_text)
     unit = serializers.SerializerMethodField(help_text=get_model_field(DataColumnType, 'unit').help_text)
@@ -550,9 +573,9 @@ class DataColumnSerializer(serializers.HyperlinkedModelSerializer):
 
     def get_name(self, instance) -> str:
         return instance.get_name()
-    
+
     def get_is_required_column(self, instance) -> bool:
-        return instance.type.is_required_column
+        return instance.type.is_required
 
     def get_type_name(self, instance) -> str:
         return instance.type.name
@@ -573,7 +596,7 @@ class DataColumnSerializer(serializers.HyperlinkedModelSerializer):
             'id',
             'url',
             'name',
-            'name_in_file'
+            'name_in_file',
             'is_required_column',
             'file',
             'data_type',

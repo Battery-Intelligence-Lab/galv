@@ -138,7 +138,6 @@ def import_file(path: str, monitored_path: dict) -> bool:
             record_number_column = None
             column_data = {"Sample Number": {
                 "column_id": default_column_ids["Sample Number"],
-                "official_sample_counter": True,
                 "values": []
             }}
 
@@ -208,11 +207,11 @@ def import_file(path: str, monitored_path: dict) -> bool:
                             column_data[k]['unit_id'] = default_units['Unitless']
                     column_data[k]['values'] = []
                     if k == record_number_column:
-                        sample_counters = [k for k, v in column_data.items() if v.get('official_sample_counter')]
+                        sample_counters = [k for k, v in column_data.items() if v.get('id') == default_column_ids.get('Sample Number')]
                         if len(sample_counters) > 0:
                             logger.error(f"Cannot set more than one official_sample_counter column ({[*sample_counters, k]})")
                             return False
-                        column_data[k]['official_sample_counter'] = True
+                        column_data[k]['id'] = default_column_ids.get('Sample Number')
                 new_row[k] = v
 
             if i == 1:

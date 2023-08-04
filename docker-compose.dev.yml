@@ -16,7 +16,7 @@ services:
      - "${GALV_HARVESTER_TEST_PATH}:/usr/test_data"
     working_dir: /usr/harvester
     restart: unless-stopped
-    command: python start.py --name "harvey" --url http://app/ --user_id 1 --run_foreground --restart
+    command: python start.py --name "harvey" --url http://app/ --user_id 1 --monitor_path /usr/test_data/ --run_foreground --restart
 #    command: tail -F anything
 
   frontend:

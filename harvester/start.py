@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: BSD-2-Clause
 # Copyright  (c) 2020-2023, The Chancellor, Masters and Scholars of the University
 # of Oxford, and the 'Galv' Developers. All rights reserved.
+import os.path
+import time
 
 import click
 import re
@@ -11,19 +13,29 @@ import harvester.run
 import harvester.settings
 
 
-def query(url: str, data: object = None) -> object|list:
-    if data is None:
-        result = requests.get(url)
-        click.echo(f"GET {url} {result.status_code}")
-    else:
-        result = requests.post(url, data=data)
-        click.echo(f"POST {url}; {json.dumps(data)} {result.status_code}")
-    if result.status_code >= 400:
+def query(url: str, data: object = None, retries: int = 5, sleep_seconds: float = 3.0, **kwargs) -> object|list:
+    while retries > 0:
         try:
-            raise ConnectionError(result.json()['error'])
-        except (json.JSONDecodeError, AttributeError, KeyError):
-            raise ConnectionError(f"Unable to connect to {url}")
-    return result.json()
+            if data is None:
+                result = requests.get(url, **kwargs)
+                click.echo(f"GET {url} {result.status_code}")
+            else:
+                result = requests.post(url, data=data, **kwargs)
+                click.echo(f"POST {url}; {json.dumps(data)} {result.status_code}")
+            if result.status_code >= 400:
+                try:
+                    raise ConnectionError(result.json())
+                except (json.JSONDecodeError, AttributeError, KeyError):
+                    raise ConnectionError(f"Unable to connect to {url}")
+            return result.json()
+        except ConnectionError as e:
+            click.echo(f"Unable to connect to {url} -- {e}", err=True)
+            retries -= 1
+            if retries == 0:
+                raise e
+            else:
+                click.echo(f"Retrying in {sleep_seconds}s ({retries} remaining)", err=True)
+                time.sleep(sleep_seconds)
 
 
 def get_name() -> str:
@@ -42,42 +54,45 @@ def get_url() -> str:
     return append_slash(url)
 
 
-def register(url: str = None, name: str = None, user_id: int = None, run_foreground: bool = False):
+def register(
+        url: str = None, name: str = None, user_id: int = None,
+        monitor_path: str = None, monitor_path_regex: str = ".*",
+        run_foreground: bool = False
+):
     """
     Guide a user through the setup process.
 
-    If url, name, and user_id are set, those stages are skipped.
-    Specifying both makes the function avoid all calls to input() making it non-interactive.
+    Specifying any of the config args (url, name, user_id, monitor_path, monitor_path_regex) function avoid all calls to input() making it non-interactive.
     """
+    specified = (
+            url is not None or
+            name is not None or
+            user_id is not None or
+            monitor_path is not None
+    )
     # Check we can connect to the API
     if url is not None:
         url = append_slash(url)
-        url_specified = True
-    else:
-        url_specified = False
     while True:
-        if not url_specified:
+        if not specified:
             url = get_url()
         try:
             query(f"{url}")
             break
         except BaseException as e:
             click.echo(f"Unable to connect to {url} -- {e}", err=True)
-            if url_specified:
+            if specified:
                 exit(1)
 
     # Check name okay
     if name is None:
         name = get_name()
-        name_specified = False
-    else:
-        name_specified = True
     while True:
         result = query(f"{url}harvesters/?name={name}")
 
         if len(result) > 0:
             click.echo(f"There is already a harvester called {name}.", err=True)
-            if name_specified:
+            if specified:
                 exit(1)
             click.echo("Please try something else.")
             name = get_name()
@@ -85,7 +100,7 @@ def register(url: str = None, name: str = None, user_id: int = None, run_foregro
             break
 
     # Select a user to administrate
-    if user_id is None:
+    if user_id is None and not specified:
         user_url = ""
         user_name = ""
         result = query(f"{url}users/")
@@ -152,8 +167,62 @@ def register(url: str = None, name: str = None, user_id: int = None, run_foregro
 
     click.echo("Success.")
     click.echo("")
+    # Skip asking for a monitored path if we specified url, name, etc. in command line args
+    # because that means we're running in a non-interactive mode
+    if monitor_path is None and not specified:
+        click.echo("The harvester will monitor a path on the server for changes and upload files.")
+        click.echo("Enter a directory on the server to monitor, or leave blank to skip this step.")
+        while True:
+            monitor_path = input("Path: ")
+            if monitor_path == "":
+                monitor_path = None
+                click.echo("Skipping path monitoring.")
+                break
+            abs_path = os.path.abspath(monitor_path)
+            if monitor_path != abs_path:
+                click.echo(f"Using absolute path {abs_path}")
+                monitor_path = abs_path
+            if not os.path.exists(monitor_path):
+                click.echo(f"Path {monitor_path} does not exist.", err=True)
+                continue
+            if not os.path.isdir(monitor_path):
+                click.echo(f"Path {monitor_path} is not a directory.", err=True)
+                continue
+            regex_ok = monitor_path_regex is not None
+            while not regex_ok:
+                monitor_path_regex = input("Enter a regex to match files in this directory to monitor, or leave blank to monitor all files: ")
+                if monitor_path_regex == "":
+                    monitor_path_regex = ".*"
+                    regex_ok = True
+                else:
+                    try:
+                        re.compile(monitor_path_regex)
+                        regex_ok = True
+                    except re.error as e:
+                        click.echo(f"Invalid regex -- {e}", err=True)
+            break
+    if monitor_path is not None:
+        regex_str = f" with regex {monitor_path_regex}" if monitor_path_regex is not None else ""
+        click.echo(f"Setting monitor path to {monitor_path}{regex_str}")
+        try:
+            query(
+                f"{url}monitored_paths/",
+                {
+                    'path': monitor_path,
+                    'regex': monitor_path_regex,
+                    'harvester': result['url']
+                },
+                headers={
+                    'Authorization': f"Harvester {harvester.settings.get_setting('api_key')}"
+                },
+            )
+        except BaseException as e:
+            click.echo(f"Unable to set monitored path -- {e}", err=True)
+
+
+    click.echo("")
     click.echo((
-        f"You can now configure this harvester's watched paths and other details by visiting the API at "
+        f"You can configure this harvester's details by visiting the API at "
         f"{url}"
     ))
     click.echo("")
@@ -170,6 +239,8 @@ def register(url: str = None, name: str = None, user_id: int = None, run_foregro
 @click.option('--url', type=str, help="API URL to register harvester with.")
 @click.option('--name', type=str, help="Name for the harvester.")
 @click.option('--user_id', type=int, help="ID of an API user to assign as harvester admin.")
+@click.option('--monitor_path', type=str, help="Path to harvest files from.")
+@click.option('--monitor_path_regex', type=str, help="Regex to match files to harvest. Other options can be specified using the frontend.", default=".*")
 @click.option(
     '--run_foreground',
     is_flag=True,
@@ -183,14 +254,29 @@ def register(url: str = None, name: str = None, user_id: int = None, run_foregro
     is_flag=True,
     help="Ignore other options and run harvester if config file already exists."
 )
-def click_wrapper(url: str, name: str, user_id: int, run_foreground: bool, restart: bool):
-    if restart and harvester.settings.get_setting('url'):
-        harvester.run.run_cycle()
-    else:
-        register(url=url, name=name, user_id=user_id, run_foreground=run_foreground)
+def click_wrapper(
+        url: str, name: str, user_id: int,
+        monitor_path: str, monitor_path_regex: str,
+        run_foreground: bool, restart: bool
+):
+    if restart:
+        click.echo("Attempting to restart harvester.")
+        # Check whether a config file already exists, if so, use it
+        if harvester.settings.get_setting('url'):
+            click.echo("Config file found, restarting harvester.")
+            harvester.run.run_cycle()
+            return
+        else:
+            click.echo("No config file found, continuing to setup.")
+            click.echo("")
+
+    click.echo("Welcome to Harvester setup.")
+    register(
+        url=url, name=name, user_id=user_id,
+        monitor_path=monitor_path, monitor_path_regex=monitor_path_regex,
+        run_foreground=run_foreground
+    )
 
 
 if __name__ == "__main__":
-    # Check whether a config file already exists, if so, use it
-    click.echo("Welcome to Harvester setup.")
     click_wrapper()

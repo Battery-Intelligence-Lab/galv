@@ -293,18 +293,18 @@ Searchable fields:
 - name
         """
     ),
-#     mine=extend_schema(
-#         summary="View Harvesters to which you have access",
-#         description="""
-# View only Harvesters to which you have access.
-# On systems with multiple Harvesters, this view is more useful than /harvesters/.
-#
-# This view will include Harvester environment variables, while /harvesters/ will not.
-#
-# Searchable fields:
-# - name
-#         """
-#     ),
+    #     mine=extend_schema(
+    #         summary="View Harvesters to which you have access",
+    #         description="""
+    # View only Harvesters to which you have access.
+    # On systems with multiple Harvesters, this view is more useful than /harvesters/.
+    #
+    # This view will include Harvester environment variables, while /harvesters/ will not.
+    #
+    # Searchable fields:
+    # - name
+    #         """
+    #     ),
     retrieve=extend_schema(
         summary="View a single Harvester",
         description="""
@@ -540,6 +540,8 @@ class HarvesterViewSet(viewsets.ModelViewSet):
                                 file.name = core_metadata['Dataset Name']
                             if 'num_rows' in core_metadata:
                                 file.num_rows = core_metadata['num_rows']
+                            if 'parser' in content:
+                                file.parser = content['parser']
                             if 'first_sample_no' in core_metadata:
                                 file.first_sample_no = core_metadata['first_sample_no']
                             if 'last_sample_no' in core_metadata:
@@ -562,7 +564,7 @@ class HarvesterViewSet(viewsets.ModelViewSet):
                                 try:
                                     column_type = DataColumnType.objects.get(id=column_data['column_id'])
                                     column, _ = DataColumn.objects.get_or_create(
-                                        name=column_type.name,
+                                        name_in_file=column_type.name,
                                         data_type=data_type,
                                         type=column_type,
                                         file=file
@@ -573,18 +575,20 @@ class HarvesterViewSet(viewsets.ModelViewSet):
                                     else:
                                         unit, _ = DataUnit.objects.get_or_create(symbol=column_data['unit_symbol'])
                                     try:
-                                        column_type = DataColumnType.objects.get(unit=unit)
-                                    except DataColumnType.DoesNotExist:
+                                        column_type = DataColumnType.objects.get(unit=unit, is_default=True)
+                                        # Don't create multiple special columns for the same unit
+                                        if column_type.override_child_name is not None:
+                                            assert not DataColumn.objects.filter(file=file, type=column_type).exists()
+                                    except (DataColumnType.DoesNotExist, AssertionError):
                                         column_type = DataColumnType.objects.create(
-                                            name_in_dataset=column_data['column_name'],
+                                            name=column_data['column_name'],
                                             unit=unit
                                         )
                                     column, _ = DataColumn.objects.get_or_create(
-                                        name=column_data['column_name'],
+                                        name_in_file=column_data['column_name'],
                                         data_type=data_type,
                                         type=column_type,
-                                        file=file,
-                                        official_sample_counter=column_data.get('official_sample_counter', False)
+                                        file=file
                                     )
 
                                 time_ts_prep = time.time()
@@ -790,9 +794,9 @@ class ObservedFileViewSet(viewsets.ModelViewSet):
             self.check_object_permissions(self.request, file)
         except ObservedFile.DoesNotExist:
             return error_response('Requested file not found')
-        TimeseriesDataFloat.objects.filter(column__dataset__file=file).delete()
-        TimeseriesDataInt.objects.filter(column__dataset__file=file).delete()
-        TimeseriesDataStr.objects.filter(column__dataset__file=file).delete()
+        TimeseriesDataFloat.objects.filter(column__file=file).delete()
+        TimeseriesDataInt.objects.filter(column__file=file).delete()
+        TimeseriesDataStr.objects.filter(column__file=file).delete()
         file.state = FileState.RETRY_IMPORT
         file.save()
         return Response(self.get_serializer(file, context={'request': request}).data)

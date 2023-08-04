@@ -230,21 +230,24 @@ class ObservedFile(UUIDModel):
         help_text="Extra metadata from the harvester"
     )
 
-    def is_complete(self):
-        columns = self.columns.all()
+    def missing_required_columns(self):
+        errors = []
         for required_column in DataColumnType.objects.filter(is_required=True):
-            if not columns.filter(column_type=required_column).count() == 1:
-                return False
-        return True
+            if not self.columns.filter(type=required_column).count() == 1:
+                errors.append(f"Missing required column: {required_column.override_child_name or required_column.name}")
+        return errors
 
-    def errors(self):
+    def has_required_columns(self):
+        return len(self.missing_required_columns()) == 0
+
+    def column_errors(self):
         errors = []
         names = []
         for c in self.columns.all():
             if c.get_name() in names:
                 errors.append(f"Duplicate column name: {c.get_name()}")
             names.append(c.get_name())
-        return errors
+        return [*self.missing_required_columns(), *errors]
 
     def __str__(self):
         return self.path
@@ -332,13 +335,13 @@ class MonitoredPath(UUIDModel):
 class HarvestError(models.Model):
     harvester = models.ForeignKey(
         to=Harvester,
-        related_name='errors',
+        related_name='upload_errors',
         on_delete=models.CASCADE,
         help_text="Harvester which reported the error"
     )
     file = models.ForeignKey(
         to=ObservedFile,
-        related_name='errors',
+        related_name='upload_errors',
         on_delete=models.SET_NULL,
         null=True,
         help_text="File where error originated"
@@ -432,12 +435,12 @@ class DataColumn(models.Model):
 # These helper functions reduce redundancy in the code that creates the models.
 
 
-# def _timeseries_column_field():
-#     return models.OneToOneField(
-#         to=DataColumn,
-#         on_delete=models.CASCADE,
-#         help_text="Column whose data are listed"
-#     )
+def _timeseries_column_field():
+    return models.OneToOneField(
+        to=DataColumn,
+        on_delete=models.CASCADE,
+        help_text="Column whose data are listed"
+    )
 
 
 def _timeseries_str(self):
@@ -453,21 +456,21 @@ def _timeseries_repr(self):
 
 
 class TimeseriesDataFloat(models.Model):
-    column = models.TextField()# _timeseries_column_field()
+    column = _timeseries_column_field()
     values = ArrayField(models.FloatField(null=True), null=True, help_text="Row values (floats) for Column")
     __str__ = _timeseries_str
     __repr__ = _timeseries_repr
 
 
 class TimeseriesDataInt(models.Model):
-    column = models.TextField()# _timeseries_column_field()
+    column = _timeseries_column_field()
     values = ArrayField(models.IntegerField(null=True), null=True, help_text="Row values (integers) for Column")
     __str__ = _timeseries_str
     __repr__ = _timeseries_repr
 
 
 class TimeseriesDataStr(models.Model):
-    column = models.TextField()# _timeseries_column_field()
+    column = _timeseries_column_field()
     values = ArrayField(models.TextField(null=True), null=True, help_text="Row values (str) for Column")
     __str__ = _timeseries_str
     __repr__ = _timeseries_repr
