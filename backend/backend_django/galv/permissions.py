@@ -84,3 +84,31 @@ class ReadOnlyIfInUse(permissions.BasePermission):
         if request.method in permissions.SAFE_METHODS:
             return True
         return not obj.in_use()
+
+
+def get_group_owner(group):
+    owner = Harvester.objects.filter(Q(user_group=group) | Q(admin_group=group))
+    if not len(owner) > 0:
+        owner = MonitoredPath.objects.filter(Q(user_group=group) | Q(admin_group=group))
+    if len(owner) == 0:
+        return None
+    return owner[0]
+
+
+class GroupEditAccess(permissions.BasePermission):
+    def has_object_permission(self, request, view, obj):
+        if request.user is None:
+            return False
+
+        # admins can do whatever to their group
+        owner = get_group_owner(obj)
+        if owner.admin_group in request.user.groups.all():
+            return True
+
+        # non-admins can only remove themselves
+        if obj not in request.user.groups.all():
+            return False
+        if request.data.get('add_user') is not None:
+            return False
+        user_url = request.data.get('remove_user')
+        return resolve(urlparse(user_url).path).kwargs.get('pk') == request.user.pk

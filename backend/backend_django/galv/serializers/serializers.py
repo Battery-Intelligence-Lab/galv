@@ -4,6 +4,7 @@
 import os.path
 import re
 
+from django.db.models import Q
 from django.urls import reverse, resolve
 from drf_spectacular.utils import extend_schema_field
 from rest_framework.exceptions import ValidationError
@@ -24,6 +25,7 @@ from ..models import Harvester, \
     EquipmentManufacturers, EquipmentModels, EquipmentFamily, Schedule, ScheduleIdentifiers, CyclerTest, \
     render_pybamm_schedule, ScheduleFamily
 from ..models.utils import ScheduleRenderError
+from ..permissions import get_group_owner
 from ..utils import get_monitored_paths
 from django.utils import timezone
 from django.contrib.auth.models import User, Group
@@ -200,6 +202,29 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
 
 class GroupSerializer(serializers.HyperlinkedModelSerializer):
     users = serializers.SerializerMethodField(help_text="Users in the group")
+    add_user = serializers.HyperlinkedRelatedField(
+        view_name='user-detail',
+        queryset=Group.objects.all(),
+        write_only=True,
+        required=False,
+        help_text="User to add"
+    )
+    remove_user = serializers.HyperlinkedRelatedField(
+        view_name='user-detail',
+        queryset=Group.objects.all(),
+        write_only=True,
+        required=False,
+        help_text="User to remove"
+    )
+
+    def validate_remove_user(self, value):
+        # Only admin groups have to have at least one user
+        owner = get_group_owner(value)
+        if not owner.admin_group == value:
+            return value
+        if len(value.user_set.all()) <= 1:
+            raise ValidationError(f"Removing that user would leave the group empty")
+        return value
 
     @extend_schema_field(UserSerializer(many=True))
     def get_users(self, instance):
@@ -211,7 +236,7 @@ class GroupSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Group
-        fields = [
+        read_only_fields = [
             'id',
             'url',
             'name',
@@ -221,6 +246,7 @@ class GroupSerializer(serializers.HyperlinkedModelSerializer):
             'readable_harvesters',
             'editable_harvesters'
         ]
+        fields = [*read_only_fields, 'add_user', 'remove_user']
         extra_kwargs = augment_extra_kwargs({
             'readable_paths': {'help_text': "Paths on which this Group are Users"},
             'editable_paths': {'help_text': "Paths on which this Group are Admins"},
