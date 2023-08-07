@@ -67,7 +67,7 @@ jobs:
   test-backend:
     runs-on: ubuntu-latest
     env:
-      POSTGRES_PASSWORD: "galv"
+      POSTGRES_PASSWORD: "postgres"
       DJANGO_SECRET_KEY: "long-and-insecure-key-12345"
       FRONTEND_VIRTUAL_HOST: "http://localhost"
       VIRTUAL_HOST: "localhost"

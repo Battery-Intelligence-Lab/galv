@@ -32,7 +32,6 @@ class MonitoredPathTests(APITestCase):
         self.client.force_login(self.non_user)
         url = reverse('monitoredpath-list')
         print("Test rejection of Create Path - no authorisation")
-        self.client.force_login(self.user)
         body = {
             'path': self.path,
             'regex': '.*',
@@ -41,9 +40,10 @@ class MonitoredPathTests(APITestCase):
         }
         self.assertEqual(
             self.client.post(url, body).status_code,
-            status.HTTP_400_BAD_REQUEST
+            status.HTTP_403_FORBIDDEN
         )
         print("OK")
+        self.client.force_login(self.user)
         print("Test rejection of Create Path - no path")
         no_path = {**body}
         no_path.pop('path')
@@ -56,7 +56,7 @@ class MonitoredPathTests(APITestCase):
         i = 1 if self.harvester.uuid != 1 else 2
         self.assertEqual(
             self.client.post(url, {'harvester': i}).status_code,
-            status.HTTP_404_NOT_FOUND
+            status.HTTP_403_FORBIDDEN
         )
         print("OK")
         print("Test successful Path creation")

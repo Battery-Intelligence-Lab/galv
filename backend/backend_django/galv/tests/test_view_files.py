@@ -45,7 +45,7 @@ class ObservedFileTests(APITestCase):
         print("Test reimport")
         url = reverse('observedfile-reimport', args=(self.files[0].uuid,))
         self.assertEqual(self.client.get(url).status_code, status.HTTP_200_OK)
-        self.assertEqual(ObservedFile.objects.get(id=self.files[0].uuid).state, FileState.RETRY_IMPORT)
+        self.assertEqual(ObservedFile.objects.get(uuid=self.files[0].uuid).state, FileState.RETRY_IMPORT)
         print("OK")
 
 

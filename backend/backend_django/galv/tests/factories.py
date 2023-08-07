@@ -16,7 +16,6 @@ from galv.models import EquipmentFamily, Harvester, \
     ObservedFile, \
     Cell, \
     CellFamily, \
-    Dataset, \
     Equipment, \
     DataUnit, \
     DataColumnType, \
@@ -130,15 +129,6 @@ class ObservedFileFactory(factory.django.DjangoModelFactory):
 
     path = factory.Faker('file_path')
     harvester = factory.SubFactory(HarvesterFactory)
-
-
-class DatasetFactory(factory.django.DjangoModelFactory):
-    class Meta:
-        model = Dataset
-        django_get_or_create = ('file', 'date',)
-
-    file = factory.SubFactory(ObservedFileFactory)
-    date = timezone.make_aware(timezone.datetime.now())
 
 
 class CellFamilyFactory(factory.django.DjangoModelFactory):

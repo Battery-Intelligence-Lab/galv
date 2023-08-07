@@ -7,7 +7,7 @@ from django.urls import reverse
 from rest_framework import status
 import logging
 
-from .utils import GalvTestCase
+from .utils import GalvTestCase, assert_response_property
 from .factories import UserFactory, \
     HarvesterFactory, \
     MonitoredPathFactory
@@ -16,7 +16,6 @@ from galv.models import Harvester, \
     HarvestError, \
     MonitoredPath, \
     ObservedFile, \
-    Dataset, \
     FileState, \
     DataColumn, \
     TimeseriesDataInt
@@ -91,24 +90,12 @@ class HarvesterTests(GalvTestCase):
         other_user_header = self.get_token_header_for_user(other_user)
         self.client.force_login(user)
         url = reverse('harvester-list')
-        print("Test both see the harvester in /harvesters/ view")
-        list_a = self.client.get(url, **user_header).json()
+        print("Test only owner sees the harvester")
+        list_a = [h['uuid'] for h in self.client.get(url, **user_header).json()]
         self.client.force_login(other_user)
-        list_b = self.client.get(url, **other_user_header).json()
-        self.assertListEqual(list_a, list_b)
-        print("OK")
-        print("Test omission in /harvesters/mine/ view")
-        url = reverse('harvester-mine')
-        response = self.client.get(url, **other_user_header)
-        assert_response_property(self, response, self.assertEqual, response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.json()), 0)
-        print("OK")
-        print("Test presence in /harvesters/mine/ view")
-        self.client.force_login(user)
-        url = reverse('harvester-mine')
-        response = self.client.get(url, **user_header)
-        assert_response_property(self, response, self.assertEqual, response.status_code, status.HTTP_200_OK)
-        self.assertGreater(len(response.json()), 0)
+        list_b = [h['uuid'] for h in self.client.get(url, **other_user_header).json()]
+        self.assertIn(str(harvester.uuid), list_a)
+        self.assertNotIn(str(harvester.uuid), list_b)
         print("OK")
 
     def test_update(self):
@@ -119,12 +106,12 @@ class HarvesterTests(GalvTestCase):
         other = HarvesterFactory.create(name='Test Update Other')
         url = reverse('harvester-detail', args=(harvester.uuid,))
         print("Test nonmember access")
-        self.assertEqual(self.client.get(url, **user_header).status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(self.client.get(url, **user_header).status_code, status.HTTP_404_NOT_FOUND)
         print("OK")
         print("Test edit access rejection")
         self.assertEqual(
             self.client.patch(url, {'name': 'hacker'}, **user_header).status_code,
-            status.HTTP_403_FORBIDDEN
+            status.HTTP_404_NOT_FOUND
         )
         print("OK")
         user.groups.add(harvester.admin_group)
@@ -136,7 +123,7 @@ class HarvesterTests(GalvTestCase):
         t = harvester.sleep_time + 10
         n = harvester.name + " the Second"
         response = self.client.patch(url, {'name': n, 'sleep_time': t}, **user_header)
-        harvester_updated = Harvester.objects.get(id=harvester.uuid)
+        harvester_updated = Harvester.objects.get(uuid=harvester.uuid)
         self.assertEqual(response.status_code, status.HTTP_200_OK, "HTTP response error")
         self.assertEqual(harvester_updated.name, n, "name not updated")
         self.assertEqual(harvester_updated.sleep_time, t, "sleep_time not updated")
@@ -166,12 +153,12 @@ class HarvesterTests(GalvTestCase):
         )
         self.assertDictEqual(get_envvars(url, **user_header), envvars)
         print("OK")
-        print("Test envvars blank for unauthorized users")
+        print("Test harvester not show to unauthorized users")
         self.client.force_login(other_user)
         response = self.client.get(reverse('harvester-list'), **other_user_header)
         assert_response_property(self, response, self.assertEqual, response.status_code, status.HTTP_200_OK)
         json = response.json()
-        self.assertGreater(len(json), 0)
+        self.assertNotIn(harvester.uuid, [h['uuid'] for h in json])
         for h in json:
             self.assertDictEqual(h['environment_variables'], {})
         print("OK")
@@ -270,8 +257,8 @@ class HarvesterTests(GalvTestCase):
         response = self.client.post(url, body, **headers)
         assert_response_property(self, response, self.assertEqual, response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.json()['state'], FileState.IMPORTING)
-        d = Dataset.objects.get(file__id=f.id)
-        self.assertEqual(d.type, 'Test machine')
+        # d = Dataset.objects.get(file__id=f.id)
+        # self.assertEqual(d.type, 'Test machine')
         print("OK")
         # Below skipped because PyCharm won't run fixtures startup script
         # print("Test task import in_progress")

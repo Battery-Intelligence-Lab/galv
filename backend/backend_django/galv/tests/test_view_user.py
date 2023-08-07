@@ -9,6 +9,7 @@ from rest_framework.test import APITestCase
 import logging
 import base64
 
+from backend.backend_django.galv.tests.utils import assert_response_property
 from .factories import UserFactory
 from galv.models import VouchFor
 from django.contrib.auth.models import User
