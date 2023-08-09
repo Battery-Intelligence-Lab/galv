@@ -56,16 +56,32 @@ class AdditionalPropertiesModel(UUIDModel):
         abstract = True
 
 
+def unpack_rdf(obj: dict) -> dict:
+    """
+    Unpack any RDF properties from a dictionary of properties
+    """
+    rdf_props = {}
+    for k, v in obj.items():
+        if isinstance(v, dict) and '@rdf-predicate-uri' in v and 'value' in v:
+            rdf_props[v['@rdf-predicate-uri']] = v['value']
+    return rdf_props
+
+
 class JSONModel(AdditionalPropertiesModel):
-    def __json_ld__(self):
-        raise NotImplementedError((
-            "JSONModel subclasses must implement __json_ld__, ",
-            "returning a dict of JSON-LD representation. ",
-            "Should include '@id' and '@type' field, and triples where this model is the source node. ",
-            "@id can be generated using self.uuid.as_id(). ",
-            "LDSources.* can be used to reference known sources, and any used should be included"
-            "in the '_context' field as a simple list."
-        ))
+    def __json_ld__(self) -> dict:
+        # Complain if not implemented by subclass
+        if not hasattr(self, '__json_ld__'):
+            raise NotImplementedError((
+                "JSONModel subclasses must implement __json_ld__, ",
+                "returning a dict of JSON-LD representation. ",
+                "Should include '@id' and '@type' field, and triples where this model is the source node. ",
+                "@id can be generated using self.uuid.as_id(). ",
+                "LDSources.* can be used to reference known sources, and any used should be included"
+                "in the '_context' field as a simple list."
+            ))
+        # Unpack any RDF properties from the additional properties
+        additional_properties = self.additional_properties.copy()
+        return unpack_rdf(additional_properties)
 
     class Meta(AdditionalPropertiesModel.Meta):
         abstract = True
@@ -92,12 +108,14 @@ def render_pybamm_schedule(schedule, cell_subject, validate = True):
     Return the PyBaMM representation of the schedule, with variables filled in.
     Variables are taken from the cell properties, cell family properties, and schedule variables (most preferred first).
     """
+    if not schedule.family.pybamm_template:
+        return None
     variables = {
-        **schedule.pybamm_schedule_variables,
-        **cell_subject.family.__dict__,
-        **cell_subject.family.additional_properties,
-        **cell_subject.__dict__,
-        **cell_subject.additional_properties
+        **(schedule.pybamm_schedule_variables or {}),
+        **(cell_subject.family.__dict__ or {}),
+        **(cell_subject.family.additional_properties or {}),
+        **(cell_subject.__dict__ or {}),
+        **(cell_subject.additional_properties or {})
     }
     rendered_schedule = [t.format(**variables) for t in schedule.family.pybamm_template]
     if validate:

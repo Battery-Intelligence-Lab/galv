@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: BSD-2-Clause
 # Copyright  (c) 2020-2023, The Chancellor, Masters and Scholars of the University
 # of Oxford, and the 'Galv' Developers. All rights reserved.
-
+import json
 import os
 
 import factory
@@ -146,7 +146,7 @@ class CellFamilyFactory(factory.django.DjangoModelFactory):
     initial_dc_resistance = factory.Faker('pyfloat', min_value=1.0, max_value=1000000.0)
     energy_density = factory.Faker('pyfloat', min_value=1.0, max_value=1000000.0)
     power_density = factory.Faker('pyfloat', min_value=1.0, max_value=1000000.0)
-    additional_properties = factory.Faker('json')
+    additional_properties = factory.Faker('pydict', value_types=['str', 'int', 'float', 'dict', 'list'])
 
 class CellFactory(factory.django.DjangoModelFactory):
     class Meta:
@@ -154,7 +154,7 @@ class CellFactory(factory.django.DjangoModelFactory):
 
     identifier = factory.Faker('bothify', text='?????-##??#-#?#??-?####-?#???')
     family = factory.SubFactory(CellFamilyFactory)
-    additional_properties = factory.Faker('json')
+    additional_properties = factory.Faker('pydict', value_types=['str', 'int', 'float', 'dict', 'list'])
 
 
 class EquipmentFamilyFactory(factory.django.DjangoModelFactory):
@@ -164,7 +164,7 @@ class EquipmentFamilyFactory(factory.django.DjangoModelFactory):
     type = factory.SubFactory(EquipmentTypesFactory)
     manufacturer = factory.SubFactory(EquipmentManufacturersFactory)
     model = factory.SubFactory(EquipmentModelsFactory)
-    additional_properties = factory.Faker('json')
+    additional_properties = factory.Faker('pydict', value_types=['str', 'int', 'float', 'dict', 'list'])
 
 
 class EquipmentFactory(factory.django.DjangoModelFactory):
@@ -174,7 +174,7 @@ class EquipmentFactory(factory.django.DjangoModelFactory):
     identifier = factory.Faker('bothify', text='?????-##??#-#?#??-?####-?#???')
     family = factory.SubFactory(EquipmentFamilyFactory)
     calibration_date = factory.Faker('date')
-    additional_properties = factory.Faker('json')
+    additional_properties = factory.Faker('pydict', value_types=['str', 'int', 'float', 'dict', 'list'])
 
 
 class ScheduleFamilyFactory(factory.django.DjangoModelFactory):
@@ -182,10 +182,10 @@ class ScheduleFamilyFactory(factory.django.DjangoModelFactory):
         model = ScheduleFamily
 
     identifier = factory.SubFactory(ScheduleIdentifiersFactory)
-    description = factory.Faker('lorem')
+    description = factory.Faker('sentence')
     ambient_temperature = factory.Faker('pyfloat', min_value=0.0, max_value=1000.0)
     pybamm_template = None
-    additional_properties = factory.Faker('json')
+    additional_properties = factory.Faker('pydict', value_types=['str', 'int', 'float', 'dict', 'list'])
 
 
 class ScheduleFactory(factory.django.DjangoModelFactory):
@@ -194,7 +194,7 @@ class ScheduleFactory(factory.django.DjangoModelFactory):
 
     family = factory.SubFactory(ScheduleFamilyFactory)
     schedule_file = None
-    additional_properties = factory.Faker('json')
+    additional_properties = factory.Faker('pydict', value_types=['str', 'int', 'float', 'dict', 'list'])
 
 
 class CyclerTestFactory(factory.django.DjangoModelFactory):
@@ -202,6 +202,14 @@ class CyclerTestFactory(factory.django.DjangoModelFactory):
         model = CyclerTest
 
     cell_subject = factory.SubFactory(CellFactory)
-    equipment = [factory.SubFactory(EquipmentFactory) for _ in range(2)]
     schedule = factory.SubFactory(ScheduleFactory)
-    additional_properties = factory.Faker('json')
+    additional_properties = factory.Faker('pydict', value_types=['str', 'int', 'float', 'dict', 'list'])
+
+    @factory.post_generation
+    def equipment(self, create, extracted, **kwargs):
+        if not create or not extracted:
+            # Simple build, or nothing to add, do nothing.
+            return
+
+        # Add the iterable of equipment using bulk addition
+        self.equipment.add(*extracted)

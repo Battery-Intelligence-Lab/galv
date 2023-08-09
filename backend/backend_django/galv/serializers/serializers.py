@@ -139,8 +139,12 @@ class ScheduleSerializer(AdditionalPropertiesModelSerializer):
         return value
 
     def validate(self, data):
-        if data.get('schedule_file') is None and self.instance.family.pybamm_template is None:
-            raise ValidationError("Schedule_file must be provided where pybamm_template is not set")
+        if data.get('schedule_file') is None:
+            try:
+                family = data.get('family') or self.instance.family
+                assert family.pybamm_template is not None
+            except (AttributeError, AssertionError):
+                raise ValidationError("Schedule_file must be provided where pybamm_template is not set")
         return data
 
     class Meta:

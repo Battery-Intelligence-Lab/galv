@@ -1224,7 +1224,6 @@ class ScheduleViewSet(viewsets.ModelViewSet):
     search_fields = ['@family__identifier']
     http_method_names = ['get', 'post', 'patch', 'delete', 'options']
 
-
 class CyclerTestViewSet(viewsets.ModelViewSet):
     """
     Cycler Tests are the primary object in the database.
@@ -1239,6 +1238,8 @@ class CyclerTestViewSet(viewsets.ModelViewSet):
     search_fields = ['@cell__uuid', '@schedule__identifier']
     http_method_names = ['get', 'post', 'patch', 'delete', 'options']
 
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
 
 @extend_schema_view(
     list=extend_schema(
