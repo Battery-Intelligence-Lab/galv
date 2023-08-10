@@ -23,7 +23,7 @@ from ..models import Harvester, \
     TimeseriesRangeLabel, \
     KnoxAuthToken, CellFamily, EquipmentTypes, CellFormFactors, CellChemistries, CellModels, CellManufacturers, \
     EquipmentManufacturers, EquipmentModels, EquipmentFamily, Schedule, ScheduleIdentifiers, CyclerTest, \
-    render_pybamm_schedule, ScheduleFamily
+    render_pybamm_schedule, ScheduleFamily, ValidationSchema, Experiment
 from ..models.utils import ScheduleRenderError
 from ..permissions import get_group_owner
 from ..utils import get_monitored_paths
@@ -366,7 +366,7 @@ class HarvesterSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Harvester
-        fields = ['url', 'uuid', 'name', 'sleep_time', 'last_check_in', 'user_sets', 'environment_variables']
+        fields = ['url', 'uuid', 'name', 'sleep_time', 'last_check_in', 'user_sets', 'environment_variables', 'active']
         read_only_fields = ['url', 'uuid', 'last_check_in', 'user_sets']
         extra_kwargs = augment_extra_kwargs()
 
@@ -459,7 +459,7 @@ class MonitoredPathCreateSerializer(MonitoredPathSerializer):
         admin = self.context['request'].user
         if admin is None or not admin.is_authenticated:
             if self.context['request'].META.get('HTTP_AUTHORIZATION', '') == \
-                f"Harvester {validated_data['harvester'].api_key}":
+                    f"Harvester {validated_data['harvester'].api_key}":
                 admin = validated_data['harvester'].admin_group.user_set.all().first()
         if admin is None:
             raise ValidationError("Unable to determine admin user for path creation")
@@ -636,6 +636,23 @@ class DataColumnSerializer(serializers.HyperlinkedModelSerializer):
             'values',
         ]
         read_only_fields = fields
+        extra_kwargs = augment_extra_kwargs()
+
+
+class ExperimentSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = Experiment
+        fields = [
+            'url',
+            'uuid',
+            'title',
+            'description',
+            'authors',
+            'protocol',
+            'protocol_file',
+            'cycler_tests',
+        ]
+        read_only_fields = ['url', 'uuid']
         extra_kwargs = augment_extra_kwargs()
 
 

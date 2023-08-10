@@ -4,6 +4,7 @@
         "model": "galv.CellManufacturers",
         "fields": {
             "value": "Sony",
+            "ld_value": "http://dbpedia.org/resource/Sony",
             "include_in_autocomplete":true
         }
     },
@@ -12,6 +13,7 @@
         "model": "galv.CellManufacturers",
         "fields": {
             "value": "LG",
+            "ld_value": "http://dbpedia.org/resource/LG_Corporation",
             "include_in_autocomplete": true
         }
     },
@@ -20,6 +22,7 @@
         "model": "galv.CellManufacturers",
         "fields": {
             "value": "Samsung",
+            "ld_value": "http://dbpedia.org/resource/Samsung",
             "include_in_autocomplete": true
         }
     },

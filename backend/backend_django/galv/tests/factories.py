@@ -7,7 +7,6 @@ import os
 import factory
 import faker
 import django.conf.global_settings
-from django.utils import timezone
 from django.contrib.auth.models import User, Group
 
 from galv.models import EquipmentFamily, Harvester, \
@@ -23,7 +22,8 @@ from galv.models import EquipmentFamily, Harvester, \
     TimeseriesRangeLabel, \
     FileState, ScheduleFamily, Schedule, CyclerTest, \
     ScheduleIdentifiers, CellFormFactors, CellChemistries, CellManufacturers, \
-    CellModels, EquipmentManufacturers, EquipmentModels, EquipmentTypes
+    CellModels, EquipmentManufacturers, EquipmentModels, EquipmentTypes, Experiment, \
+    ValidationSchema
 
 fake = faker.Faker(django.conf.global_settings.LANGUAGE_CODE)
 
@@ -213,3 +213,40 @@ class CyclerTestFactory(factory.django.DjangoModelFactory):
 
         # Add the iterable of equipment using bulk addition
         self.equipment.add(*extracted)
+
+
+class ExperimentFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Experiment
+
+    title = factory.Faker('sentence')
+    description = factory.Faker('sentence')
+    additional_properties = factory.Faker('pydict', value_types=['str', 'int', 'float', 'dict', 'list'])
+
+    @factory.post_generation
+    def cycler_tests(self, create, extracted, **kwargs):
+        if not create:
+            # Simple build, or nothing to add, do nothing.
+            return
+        if not extracted:
+            extracted = [CyclerTestFactory() for _ in range(3)]
+        # Add the iterable of cycler tests using bulk addition
+        self.cycler_test.add(*extracted)
+
+    @factory.post_generation
+    def authors(self, create, extracted, **kwargs):
+        if not create:
+            # Simple build, or nothing to add, do nothing.
+            return
+        if not extracted:
+            extracted = [UserFactory() for _ in range(3)]
+        # Add the iterable of cycler tests using bulk addition
+        self.authors.add(*extracted)
+
+
+class ValidationSchemaFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = ValidationSchema
+
+    name = factory.Faker('sentence')
+    schema = factory.Faker('pydict', value_types=['str', 'int', 'float', 'dict', 'list'])

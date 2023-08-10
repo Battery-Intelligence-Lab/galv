@@ -9,7 +9,8 @@ from django.db import models
 from django.contrib.auth.models import User, Group
 import random
 
-from .utils import AdditionalPropertiesModel, JSONModel, LDSources, render_pybamm_schedule, UUIDModel
+from .utils import AdditionalPropertiesModel, JSONModel, LDSources, render_pybamm_schedule, UUIDModel, \
+    combine_rdf_props, ValidatableBySchemaMixin
 from .autocomplete_entries import *
 
 
@@ -23,7 +24,15 @@ class FileState(models.TextChoices):
     IMPORTED = "IMPORTED"
 
 
-class CellFamily(AdditionalPropertiesModel):
+class BibliographicInfo(models.Model):
+    user = models.OneToOneField(to=User, on_delete=models.CASCADE, null=False, blank=False)
+    bibjson = models.JSONField(null=False, blank=False)
+
+    def __str__(self):
+        return f"{self.user.username} byline"
+
+
+class CellFamily(AdditionalPropertiesModel, ValidatableBySchemaMixin):
     manufacturer = models.ForeignKey(to=CellManufacturers, help_text="Name of the manufacturer", null=True, blank=True, on_delete=models.CASCADE)
     model = models.ForeignKey(to=CellModels, help_text="Model number for the cells", null=False, on_delete=models.CASCADE)
     chemistry = models.ForeignKey(to=CellChemistries, help_text="Chemistry of the cells", null=True, blank=True, on_delete=models.CASCADE)
@@ -45,7 +54,7 @@ class CellFamily(AdditionalPropertiesModel):
     class Meta(AdditionalPropertiesModel.Meta):
         unique_together = [['model', 'manufacturer']]
 
-class Cell(JSONModel):
+class Cell(JSONModel, ValidatableBySchemaMixin):
     identifier = models.TextField(unique=True, help_text="Unique identifier (e.g. serial number) for the cell", null=False)
     family = models.ForeignKey(to=CellFamily, on_delete=models.CASCADE, null=False, help_text="Cell type", related_name="cells")
 
@@ -56,19 +65,21 @@ class Cell(JSONModel):
         return f"{self.identifier} [{str(self.family)}]"
 
     def __json_ld__(self):
-        return {
-            "_context": [LDSources.BattINFO, LDSources.SCHEMA],
-            "@id": self.uuid.as_id(),
-            "@type": f"{LDSources.BattINFO}:BatteryCell",
-            f"{LDSources.SCHEMA}:serialNumber": self.identifier,
-            f"{LDSources.SCHEMA}:identifier": str(self.family.model),
-            f"{LDSources.SCHEMA}:documentation": str(self.family.datasheet),
-            f"{LDSources.SCHEMA}:manufacturer": str(self.family.manufacturer)
-            # TODO: Add more fields from CellFamily
-        }
+        return combine_rdf_props(
+            super().__json_ld__(),
+            {
+                "_context": [LDSources.BattINFO, LDSources.SCHEMA],
+                "@type": f"{LDSources.BattINFO}:BatteryCell",
+                f"{LDSources.SCHEMA}:serialNumber": self.identifier,
+                f"{LDSources.SCHEMA}:identifier": self.family.model.__json_ld__(),
+                f"{LDSources.SCHEMA}:documentation": str(self.family.datasheet),
+                f"{LDSources.SCHEMA}:manufacturer": self.family.manufacturer.__json_ld__()
+                # TODO: Add more fields from CellFamily
+            }
+        )
 
 
-class EquipmentFamily(AdditionalPropertiesModel):
+class EquipmentFamily(AdditionalPropertiesModel, ValidatableBySchemaMixin):
     type = models.ForeignKey(to=EquipmentTypes, on_delete=models.CASCADE, null=False, help_text="Type of equipment")
     manufacturer = models.ForeignKey(to=EquipmentManufacturers, on_delete=models.CASCADE, null=False, help_text="Manufacturer of equipment")
     model = models.ForeignKey(to=EquipmentModels, on_delete=models.CASCADE, null=False, help_text="Model of equipment")
@@ -79,7 +90,7 @@ class EquipmentFamily(AdditionalPropertiesModel):
     def __str__(self):
         return f"{str(self.manufacturer)} {str(self.model)} ({str(self.type)})"
 
-class Equipment(JSONModel):
+class Equipment(JSONModel, ValidatableBySchemaMixin):
     identifier = models.TextField(unique=True, help_text="Unique identifier (e.g. serial number) for the equipment", null=False)
     family = models.ForeignKey(to=EquipmentFamily, on_delete=models.CASCADE, null=False, help_text="Equipment type", related_name="equipment")
     calibration_date = models.DateField(help_text="Date of last calibration", null=True, blank=True)
@@ -93,15 +104,14 @@ class Equipment(JSONModel):
     def __json_ld__(self):
         return {
             "_context": [LDSources.BattINFO, LDSources.SCHEMA],
-            "@id": self.uuid.as_id(),
-            "@type": (self.family.type.ld_value if self.family.type.ld_value else f"{LDSources.SCHEMA}:Thing"),
+            "@type": self.family.type.__json_ld__(),
             f"{LDSources.SCHEMA}:serialNumber": self.identifier,
-            f"{LDSources.SCHEMA}:identifier": str(self.family.model),
-            f"{LDSources.SCHEMA}:manufacturer": str(self.family.manufacturer)
+            f"{LDSources.SCHEMA}:identifier": str(self.family.model.__json_ld__()),
+            f"{LDSources.SCHEMA}:manufacturer": str(self.family.manufacturer.__json_ld__())
         }
 
 
-class ScheduleFamily(AdditionalPropertiesModel):
+class ScheduleFamily(AdditionalPropertiesModel, ValidatableBySchemaMixin):
     identifier = models.OneToOneField(to=ScheduleIdentifiers, unique=True, blank=False, null=False, help_text="Type of experiment, e.g. Constant-Current Discharge", on_delete=models.CASCADE)
     description = models.TextField(help_text="Description of the schedule")
     ambient_temperature = models.FloatField(help_text="Ambient temperature during the experiment (in degrees Celsius)", null=True, blank=True)
@@ -118,7 +128,7 @@ class ScheduleFamily(AdditionalPropertiesModel):
         return f"{str(self.identifier)}"
 
 
-class Schedule(JSONModel):
+class Schedule(JSONModel, ValidatableBySchemaMixin):
     family = models.ForeignKey(to=ScheduleFamily, on_delete=models.CASCADE, null=False, help_text="Schedule type", related_name="schedules")
     schedule_file = models.FileField(help_text="File containing the schedule", null=True, blank=True)
     pybamm_schedule_variables = models.JSONField(help_text="Variables used in the PyBaMM.Experiment representation of the schedule", null=True, blank=True)
@@ -129,7 +139,7 @@ class Schedule(JSONModel):
     def __str__(self):
         return f"{str(self.uuid)} [{str(self.family)}]"
 
-class Harvester(UUIDModel):
+class Harvester(UUIDModel, ValidatableBySchemaMixin):
     name = models.TextField(
         unique=True,
         help_text="Human-friendly Harvester identifier"
@@ -146,6 +156,10 @@ class Harvester(UUIDModel):
         default=120,
         help_text="Seconds to sleep between Harvester cycles"
     )  # default to short time so updates happen quickly
+    active = models.BooleanField(
+        default=True,
+        help_text="Whether the Harvester is active"
+    )
     admin_group = models.ForeignKey(
         to=Group,
         on_delete=models.CASCADE,
@@ -175,7 +189,7 @@ class Harvester(UUIDModel):
         super(Harvester, self).save(*args, **kwargs)
 
 
-class ObservedFile(UUIDModel):
+class ObservedFile(UUIDModel, ValidatableBySchemaMixin):
     path = models.TextField(help_text="Absolute file path")
     harvester = models.ForeignKey(
         to=Harvester,
@@ -256,11 +270,14 @@ class ObservedFile(UUIDModel):
         unique_together = [['path', 'harvester']]
 
 
-class CyclerTest(JSONModel):
+class CyclerTest(JSONModel, ValidatableBySchemaMixin):
     cell_subject = models.ForeignKey(to=Cell, on_delete=models.CASCADE, null=False, help_text="Cell that was tested", related_name="cycler_tests")
     schedule = models.ForeignKey(to=Schedule, null=True, blank=True, on_delete=models.CASCADE, help_text="Schedule used to test the cell", related_name="cycler_tests")
     equipment = models.ManyToManyField(to=Equipment, help_text="Equipment used to test the cell", related_name="cycler_tests")
     file = models.ManyToManyField(to=ObservedFile,  help_text="Columns of data in the test", related_name="cycler_tests")
+
+    def __str__(self):
+        return f"{self.cell_subject} [CyclerTest {self.uuid}]"
 
     def rendered_pybamm_schedule(self, validate = True):
         """
@@ -268,6 +285,18 @@ class CyclerTest(JSONModel):
         Variables are taken from the cell properties, cell family properties, and schedule variables (most preferred first).
         """
         return render_pybamm_schedule(self.schedule, self.cell_subject, validate = validate)
+
+
+class Experiment(JSONModel, ValidatableBySchemaMixin):
+    title = models.TextField(help_text="Title of the experiment")
+    description = models.TextField(help_text="Description of the experiment", null=True, blank=True)
+    authors = models.ManyToManyField(to=User, help_text="Authors of the experiment")
+    protocol = models.JSONField(help_text="Protocol of the experiment", null=True, blank=True)
+    protocol_file = models.FileField(help_text="Protocol file of the experiment", null=True, blank=True)
+    cycler_tests = models.ManyToManyField(to=CyclerTest, help_text="Cycler tests of the experiment", related_name="experiments")
+
+    def __str__(self):
+        return self.title
 
 
 class HarvesterEnvVar(models.Model):
@@ -380,7 +409,7 @@ class DataUnit(models.Model):
         return f"{self.name} - {self.description}"
 
 
-class DataColumnType(models.Model):
+class DataColumnType(models.Model, ValidatableBySchemaMixin):
     unit = models.ForeignKey(
         to=DataUnit,
         on_delete=models.SET_NULL,
@@ -402,6 +431,13 @@ class DataColumnType(models.Model):
         blank=True,
         help_text="If set, this name will be used instead of the Column name in Dataframes"
     )
+
+    def __str__(self):
+        if self.is_default:
+            if self.is_required:
+                return f"{self.name} ({self.unit.symbol}) [required]"
+            return f"{self.name} ({self.unit.symbol} [default])"
+        return f"{self.name} ({self.unit.symbol})"
 
     class Meta:
         unique_together = [['unit', 'name']]
@@ -517,6 +553,17 @@ class TimeseriesRangeLabel(models.Model):
 
     def __str__(self) -> str:
         return f"{self.label} [{self.range_start}, {self.range_end}]: {self.info}"
+
+
+class ValidationSchema(models.Model):
+    """
+    JSON schema that can be used for validating components.
+    """
+    name = models.TextField(null=False, help_text="Human-friendly identifier")
+    schema = models.JSONField(help_text="JSON Schema")
+
+    def __str__(self):
+        return f"{self.name}"
 
 
 class VouchFor(models.Model):

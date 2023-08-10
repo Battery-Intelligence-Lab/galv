@@ -9,7 +9,10 @@ import knox.auth
 import os
 from django.db.models import Q
 from django.http import StreamingHttpResponse
+from django.urls import NoReverseMatch
+from rest_framework.reverse import reverse
 
+from .models.utils import ValidatableBySchemaMixin
 from .serializers import HarvesterSerializer, \
     HarvesterCreateSerializer, \
     HarvesterConfigSerializer, \
@@ -25,7 +28,8 @@ from .serializers import HarvesterSerializer, \
     HarvestErrorSerializer, \
     KnoxTokenSerializer, \
     KnoxTokenFullSerializer, CellFamilySerializer, EquipmentFamilySerializer, \
-    ScheduleSerializer, CyclerTestSerializer, ScheduleFamilySerializer, DataColumnTypeSerializer, DataColumnSerializer
+    ScheduleSerializer, CyclerTestSerializer, ScheduleFamilySerializer, DataColumnTypeSerializer, DataColumnSerializer, \
+    ExperimentSerializer
 from .models import Harvester, \
     HarvestError, \
     MonitoredPath, \
@@ -44,10 +48,11 @@ from .models import Harvester, \
     FileState, \
     VouchFor, \
     KnoxAuthToken, CellFamily, EquipmentTypes, EquipmentModels, EquipmentManufacturers, CellModels, CellManufacturers, \
-    CellChemistries, CellFormFactors, ScheduleIdentifiers, EquipmentFamily, Schedule, CyclerTest, ScheduleFamily
+    CellChemistries, CellFormFactors, ScheduleIdentifiers, EquipmentFamily, Schedule, CyclerTest, ScheduleFamily, \
+    ValidationSchema, Experiment
 from .permissions import HarvesterAccess, ReadOnlyIfInUse, MonitoredPathAccess, VicariousObservedFileAccess, \
     ObservedFileAccess, GroupEditAccess
-from .serializers.utils import GetOrCreateTextStringSerializer
+from .serializers.utils import GetOrCreateTextStringSerializer, validate_against_schemas, ValidationSchemaSerializer
 from .utils import get_files_from_path
 from django.contrib.auth.models import User, Group
 from django.shortcuts import get_object_or_404
@@ -94,6 +99,34 @@ def deserialize_datetime(serialized_value: str | float) -> timezone.datetime:
         return timezone.make_aware(timezone.datetime.fromtimestamp(serialized_value))
     raise TypeError
 
+
+class _GetOrCreateTextStringViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    Abstract base class for ViewSets that allow the creation of TextString objects.
+
+    TextString objects are used to describe the properties of Cells, Equipment, and
+    other objects used in experiments, making values available for autocompletion hints.
+    """
+    serializer_class = GetOrCreateTextStringSerializer
+    filterset_fields = ['value']
+    search_fields = ['@value']
+
+    @action(detail=True, methods=['GET'])
+    def details(self, request, pk: int = None):
+        text_string = get_object_or_404(self.queryset, pk=pk)
+        return Response(GetOrCreateTextStringSerializer(text_string).data)
+
+
+class _WithValidationResultMixin(viewsets.GenericViewSet):
+    @action(detail=True, methods=['GET'])
+    def with_validation(self, request, pk):
+        obj = self.get_object()
+        self.check_object_permissions(request, obj)
+        return Response(
+            validate_against_schemas(
+                self.serializer_class(obj, context={'request': request})
+            )
+        )
 
 @extend_schema(
     summary="Log in to retrieve an API Token for use elsewhere in the API.",
@@ -293,18 +326,6 @@ Searchable fields:
 - name
         """
     ),
-    #     mine=extend_schema(
-    #         summary="View Harvesters to which you have access",
-    #         description="""
-    # View only Harvesters to which you have access.
-    # On systems with multiple Harvesters, this view is more useful than /harvesters/.
-    #
-    # This view will include Harvester environment variables, while /harvesters/ will not.
-    #
-    # Searchable fields:
-    # - name
-    #         """
-    #     ),
     retrieve=extend_schema(
         summary="View a single Harvester",
         description="""
@@ -331,15 +352,13 @@ Only Harvester Administrators are authorised to make these changes.
         """
     ),
     destroy=extend_schema(
-        summary="Delete a Harvester",
+        summary="Deactivate a Harvester",
         description="""
 **Use with caution.**
 
 Only Harvester Administrators are authorised to delete harvesters.
 Deleting a Harvester will not stop the harvester program running,
 it will instead deactivate its API access.
-Currently, harvesters cannot be recreated easily, so don't delete them if you might want them later.
-Generally, a better solution is to stop the harvester program instead.
         """
     ),
     config=extend_schema(
@@ -370,7 +389,7 @@ File parsing reports may contain metadata or data to store.
         }
     )
 )
-class HarvesterViewSet(viewsets.ModelViewSet):
+class HarvesterViewSet(viewsets.ModelViewSet, _WithValidationResultMixin):
     """
     Harvesters monitor a set of MonitoredPaths and send reports about ObservedFiles
     within those paths.
@@ -403,23 +422,12 @@ class HarvesterViewSet(viewsets.ModelViewSet):
             return HarvesterCreateSerializer
         return HarvesterSerializer
 
-    # @action(detail=False, methods=['GET'])
-    # def mine(self, request):
-    #     user_groups = self.request.user.groups.all()
-    #     # Allow access to Harvesters where we have a Path
-    #     path_harvesters = [p.harvester.uuid for p in MonitoredPath.objects.filter(
-    #         Q(user_group__in=user_groups) | Q(admin_group__in=user_groups)
-    #     )]
-    #     my_harvesters = Harvester.objects.filter(
-    #         Q(user_group__in=user_groups) |
-    #         Q(admin_group__in=user_groups) |
-    #         Q(id__in=path_harvesters)
-    #     )
-    #     return Response(HarvesterSerializer(
-    #         my_harvesters.order_by('-last_check_in', '-uuid'),
-    #         many=True,
-    #         context={'request': request}
-    #     ).data)
+    # We do not actually destroy harvesters, just deactivate them
+    def destroy(self, request, *args, **kwargs):
+        self.check_object_permissions(self.request, self.get_object())
+        self.get_object().active = False
+        self.get_object().save()
+        return Response(self.get_serializer(self.get_object()).data, status=200)
 
     @action(detail=True, methods=['GET'])
     def config(self, request, pk = None):
@@ -687,7 +695,7 @@ or the time for which files need to be stable before being imported.
         description="Fetch files matched by this Path's path and RegEx."
     )
 )
-class MonitoredPathViewSet(viewsets.ModelViewSet):
+class MonitoredPathViewSet(viewsets.ModelViewSet, _WithValidationResultMixin):
     """
     A MonitoredPath refers to a directory accessible by a Harvester in which
     data files will reside. Those files will be scanned periodically by the Harvester,
@@ -758,7 +766,7 @@ harvester program to rerun the import process when it next scans the file.
         """
     )
 )
-class ObservedFileViewSet(viewsets.ModelViewSet):
+class ObservedFileViewSet(viewsets.ModelViewSet, _WithValidationResultMixin):
     """
     ObservedFiles are files that exist (or have existed) in a MonitoredPath and have
     been reported to Galv by the Harvester.
@@ -832,23 +840,6 @@ class HarvestErrorViewSet(viewsets.ReadOnlyModelViewSet):
     filterset_fields = ['file', 'harvester']
     search_fields = ['@error']
     queryset = HarvestError.objects.all().order_by('-timestamp')
-
-
-class _GetOrCreateTextStringViewSet(viewsets.ReadOnlyModelViewSet):
-    """
-    Abstract base class for ViewSets that allow the creation of TextString objects.
-
-    TextString objects are used to describe the properties of Cells, Equipment, and
-    other objects used in experiments, making values available for autocompletion hints.
-    """
-    serializer_class = GetOrCreateTextStringSerializer
-    filterset_fields = ['value']
-    search_fields = ['@value']
-
-    @action(detail=True, methods=['GET'])
-    def details(self, request, pk: int = None):
-        text_string = get_object_or_404(self.queryset, pk=pk)
-        return Response(GetOrCreateTextStringSerializer(text_string).data)
 
 
 class EquipmentTypesViewSet(_GetOrCreateTextStringViewSet):
@@ -947,7 +938,7 @@ to prevent accidental updating.
         """
     )
 )
-class CellFamilyViewSet(viewsets.ModelViewSet):
+class CellFamilyViewSet(viewsets.ModelViewSet, _WithValidationResultMixin):
     """
     CellFamilies describe types of Cell.
     """
@@ -996,9 +987,15 @@ Cells that _are_ used in a Cycler Tests are locked to prevent accidental updatin
 Cells that are not used in Cycler Tests may be deleted.
 Cells that _are_ used in a Cycler Tests are locked to prevent accidental updating.
         """
+    ),
+    rdf=extend_schema(
+        summary="View a Cell in RDF (JSON-LD)",
+        description="""
+Dump the Cell in RDF (JSON-LD) format.
+        """
     )
 )
-class CellViewSet(viewsets.ModelViewSet):
+class CellViewSet(viewsets.ModelViewSet, _WithValidationResultMixin):
     """
     Cells are specific cells which have generated data stored in Datasets/ObservedFiles.
     """
@@ -1008,6 +1005,15 @@ class CellViewSet(viewsets.ModelViewSet):
     search_fields = ['@identifier', '@family__model', '@family__manufacturer']
     queryset = Cell.objects.all().order_by('-uuid')
     http_method_names = ['get', 'post', 'patch', 'delete', 'options']
+
+    @action(detail=True, methods=['get'])
+    def rdf(self, request, pk=None):
+        """
+        Dump the Cell in RDF (JSON-LD) format.
+        """
+        cell = self.get_object()
+        self.check_object_permissions(self.request, cell)
+        return Response(cell.__json_ld__())
 
 
 @extend_schema_view(
@@ -1054,7 +1060,7 @@ to prevent accidental updating.
         """
     )
 )
-class EquipmentFamilyViewSet(viewsets.ModelViewSet):
+class EquipmentFamilyViewSet(viewsets.ModelViewSet, _WithValidationResultMixin):
     """
     EquipmentFamilies describe types of Equipment.
     """
@@ -1106,7 +1112,7 @@ Equipment that _is_ used in a Cycler Tests is locked to prevent accidental updat
         """
     )
 )
-class EquipmentViewSet(viewsets.ModelViewSet):
+class EquipmentViewSet(viewsets.ModelViewSet, _WithValidationResultMixin):
     """
     Equipment can be attached to Datasets and used to view Datasets which
     have used similar equipment.
@@ -1163,7 +1169,7 @@ to prevent accidental updating.
         """
     )
 )
-class ScheduleFamilyViewSet(viewsets.ModelViewSet):
+class ScheduleFamilyViewSet(viewsets.ModelViewSet,_WithValidationResultMixin):
     """
     Schedules can be attached to Cycler Tests and used to view Cycler Tests which
     have used similar equipment.
@@ -1213,7 +1219,7 @@ Schedules that _is_ used in a Cycler Tests is locked to prevent accidental updat
         """
     )
 )
-class ScheduleViewSet(viewsets.ModelViewSet):
+class ScheduleViewSet(viewsets.ModelViewSet, _WithValidationResultMixin):
     """
     Schedules can be attached to Cycler Tests and used to view Cycler Tests which
     have used similar equipment.
@@ -1224,7 +1230,7 @@ class ScheduleViewSet(viewsets.ModelViewSet):
     search_fields = ['@family__identifier']
     http_method_names = ['get', 'post', 'patch', 'delete', 'options']
 
-class CyclerTestViewSet(viewsets.ModelViewSet):
+class CyclerTestViewSet(viewsets.ModelViewSet, _WithValidationResultMixin):
     """
     Cycler Tests are the primary object in the database.
     They represent a single test conducted on a specific cell using specific equipment,
@@ -1240,6 +1246,41 @@ class CyclerTestViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
+
+
+@extend_schema_view(
+    list=extend_schema(
+        summary="View Experiments",
+        description="""
+Experiments are collections of Cycler Tests which are grouped together for analysis.
+        """
+    ),
+    retrieve=extend_schema(
+        summary="View an Experiment",
+        description="""
+Experiments are collections of Cycler Tests which are grouped together for analysis.
+        """
+    ),
+    create=extend_schema(
+        summary="Create an Experiment",
+        description="""
+Experiments are collections of Cycler Tests which are grouped together for analysis.
+        """
+    )
+)
+class ExperimentViewSet(viewsets.ModelViewSet, _WithValidationResultMixin):
+    """
+    Experiments are collections of Cycler Tests which are grouped together for analysis.
+    """
+    serializer_class = ExperimentSerializer
+    queryset = Experiment.objects.all()
+    search_fields = ['@title', '@description']
+    filterset_fields = ['cyclertests__uuid__contains', 'authors__username__contains']
+    http_method_names = ['get', 'post', 'patch', 'delete', 'options']
+
+    def get_queryset(self):
+        return self.queryset.filter(authors__contains=self.request.user)
+
 
 @extend_schema_view(
     list=extend_schema(
@@ -1560,7 +1601,91 @@ class GroupViewSet(viewsets.ModelViewSet):
     permission_classes = [GroupEditAccess]
     serializer_class = GroupSerializer
     queryset = Group.objects.none().order_by('-id')
-    http_method_names = ['patch', 'get']
+    http_method_names = ['patch', 'options', 'get']
 
     def get_queryset(self):
         return self.request.user.groups.all().order_by('-id')
+
+
+@extend_schema_view(
+    list=extend_schema(
+        summary="List all Validation Schemas",
+        description="""
+Validation schemas contain one or more definitions that describe requirements for Galv objects.
+The possible values are available at `/keys/` and should be implemented in your schema thus:
+
+```json
+{
+    ...
+    "$defs": {
+        "key_name": {
+            ... description
+        },
+        ... and so on for any other keys
+    },
+    ...
+```
+
+For each of these schemas that is enabled, Galv will test the objects against the definition
+by constructing a JSON Schema file that hooks in your definitions and asserts a single object.
+This means you need not specify a root object (e.g. with `"type": "object"`) in your schema.
+
+```json
+{
+    ...
+    "type": {"$ref": "#/$defs/key_name"}
+}
+```
+
+Because your definitions are included locally, you can include references to other definitions in your schema, 
+and Galv will automatically resolve them for you.
+
+Galv will highlight any objects that do not meet the requirements.
+This can allow you to specify a series of increasingly strict requirements for your lab's metadata.
+
+Schemas are validated against _individually_, and are not checked for consistency.
+If you declare that a particular field is a `string` in one schema and a `number` in another, 
+Galv will not complain, except to issue a warning for failing to adhere to one or the other schema.
+
+Because schemas validate objects returned from the Galv API, 
+schemas should expect most relational fields to be represented as URLs. 
+
+Note: there are some requirements put in place by Galv's database structure. 
+These will always apply, and will generate errors rather than warnings.
+"""
+    ),
+    keys=extend_schema(
+        summary="Keys available for validation schemas",
+        description="""
+Validation schemas contain one or more root properties that describe requirements for Galv objects.
+This endpoint provides the names and list URLs for each Galv object that can be validated against a schema.
+        """,
+        responses={
+            200: inline_serializer('ValidationSchemaRootKeys', {
+                'key': serializers.CharField(help_text="Name of the root key"),
+                'describes': serializers.CharField(help_text="URL of the objects the key describes"),
+            })
+        }
+    )
+)
+class ValidationSchemaViewSet(viewsets.ModelViewSet):
+    serializer_class = ValidationSchemaSerializer
+    queryset = ValidationSchema.objects.all().order_by('-id')
+
+    @action(methods=['get'], detail=False)
+    def keys(self, request):
+        """
+        Return the possible root keys for a validation schema.
+        This consists of all models that extend the JSONModel or UUIDModel classes.
+        """
+        def url(s):
+            try:
+                return reverse(f"{s.lower()}-list", request=request)
+            except NoReverseMatch:
+                return None
+
+        return Response([{
+                'key': m.__name__,
+                'describes': url(m.__name__)
+            } for m in ValidatableBySchemaMixin.__subclasses__() if url(m.__name__) is not None]
+        )

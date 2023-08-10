@@ -21,10 +21,10 @@ class LDSources(models.TextChoices):
 
 
 def get_namespace():
-    namespace = os.environ.get('VIRTUAL_HOST_ROOT')
+    namespace = os.environ.get('RDF_HOST_ROOT', os.environ.get('VIRTUAL_HOST_ROOT'))
     if namespace is None:
-        raise ValueError("VIRTUAL_HOST_ROOT environment variable must be set")
-    return namespace
+        raise ValueError("RDF_HOST_ROOT or VIRTUAL_HOST_ROOT environment variable must be set")
+    return f"https://rdf.{namespace}/"
 
 
 
@@ -38,14 +38,11 @@ class UUIDFieldLD(models.UUIDField):
             'null': False,
             **kwargs
         })
-        self.namespace = get_namespace()
-
-    def as_id(self):
-        return f"{self.namespace}{self.__str__()}"
 
 
 class UUIDModel(models.Model):
     uuid = UUIDFieldLD()
+
     class Meta:
         abstract = True
 
@@ -67,6 +64,21 @@ def unpack_rdf(obj: dict) -> dict:
     return rdf_props
 
 
+def combine_rdf_props(*args) -> dict:
+    """
+    Combine multiple dictionaries of RDF properties into a single dictionary
+    """
+    rdf_props = {"@context": []}
+    for obj in args:
+        for k, v in obj.items():
+            if k == "_context":
+                rdf_props["@context"] = [*rdf_props["@context"], *v]
+            else:
+                rdf_props[k] = v
+    if len(rdf_props["@context"]) == 0:
+        del rdf_props["@context"]
+    return rdf_props
+
 class JSONModel(AdditionalPropertiesModel):
     def __json_ld__(self) -> dict:
         # Complain if not implemented by subclass
@@ -74,14 +86,17 @@ class JSONModel(AdditionalPropertiesModel):
             raise NotImplementedError((
                 "JSONModel subclasses must implement __json_ld__, ",
                 "returning a dict of JSON-LD representation. ",
-                "Should include '@id' and '@type' field, and triples where this model is the source node. ",
-                "@id can be generated using self.uuid.as_id(). ",
+                "Should include '@type' field, and triples where this model is the source node. ",
+                "@id is automatically inserted using the UUID. ",
                 "LDSources.* can be used to reference known sources, and any used should be included"
                 "in the '_context' field as a simple list."
             ))
         # Unpack any RDF properties from the additional properties
         additional_properties = self.additional_properties.copy()
-        return unpack_rdf(additional_properties)
+        return combine_rdf_props(
+            {'@id': f"{get_namespace()}{str(self.uuid)}"},
+            unpack_rdf(additional_properties)
+        )
 
     class Meta(AdditionalPropertiesModel.Meta):
         abstract = True
@@ -94,6 +109,9 @@ class AutoCompleteEntry(models.Model):
 
     def __str__(self):
         return self.value
+
+    def __json_ld__(self):
+        return self.ld_value or self.value
 
     class Meta:
         abstract = True
@@ -142,3 +160,11 @@ def render_pybamm_schedule(schedule, cell_subject, validate = True):
             missing = re.findall(r"\{([\w_]+)}", as_string)
             raise ScheduleRenderError(f"Schedule variables {missing} not filled in")
     return rendered_schedule
+
+
+class ValidatableBySchemaMixin():
+    """
+    Subclasses are picked up by a crawl in ValidationSchemaViewSet and used
+    to list possible values for validation schema root keys.
+    """
+    pass

@@ -1,8 +1,10 @@
 import json
 import django.db.models
+import jsonschema
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
+from galv.models import ValidationSchema
 
 url_help_text = "Canonical URL for this object"
 
@@ -108,7 +110,7 @@ class AdditionalPropertiesModelSerializer(serializers.HyperlinkedModelSerializer
         data = {k: v for k, v in super().to_representation(instance).items() if k != 'additional_properties'}
         for k, v in instance.additional_properties.items():
             if k in data:
-                raise ValueError(f"Basic model property {k} duplicated in _additional_properties")
+                raise ValueError(f"Basic model property {k} duplicated in additional_properties")
         return {**data, **instance.additional_properties}
 
     def to_internal_value(self, data):
@@ -128,3 +130,59 @@ class AdditionalPropertiesModelSerializer(serializers.HyperlinkedModelSerializer
         # Let the superclass do the rest
         new_data = {**new_data, **super().to_internal_value(leftover_data)}
         return new_data
+
+
+class ValidationSchemaSerializer(serializers.HyperlinkedModelSerializer):
+    def validate_schema(self, value):
+        try:
+            jsonschema.validate({}, value)
+        except jsonschema.exceptions.SchemaError as e:
+            raise ValidationError(e)
+        except jsonschema.exceptions.ValidationError:
+            pass
+        return value
+
+    class Meta:
+        model = ValidationSchema
+        fields = ['url', 'id', 'name', 'schema']
+
+
+def validate_against_schemas(serializer: serializers.ModelSerializer, schemas = None):
+    """
+    Validate a serializer against a list of JSON schemas.
+    """
+    if schemas is None:
+        schemas = ValidationSchema.objects.all()
+    validation_results = []
+    for schema in schemas:
+        try:
+            # Create the schema to validate against by asserting we have type classname
+            s = schema.schema
+            s['type'] = "array"
+            s['items'] = {'$ref': f"#/$defs/{serializer.Meta.model.__name__}"}
+            data = serializer.data if isinstance(serializer, serializers.ListSerializer) else [serializer.data]
+            result = jsonschema.validate(data, s)
+            validation_results.append({
+                'schema': ValidationSchemaSerializer(schema, context=serializer.context).data.get('url'),
+                'schema_name': schema.name,
+                'error': None,
+                'result': result
+            })
+        except jsonschema.exceptions.ValidationError as e:
+            validation_results.append({
+                'schema': ValidationSchemaSerializer(schema, context=serializer.context).data.get('url'),
+                'schema_name': schema.name,
+                'error': {
+                    'message': e.message,
+                    'context': e.context,
+                    'cause': e.cause,
+                    'json_path': e.json_path,
+                    'validator': e.validator,
+                    'validator_value': e.validator_value
+                },
+                'result': None
+            })
+    return {
+        **serializer.data,
+        'validation_results': validation_results
+    }

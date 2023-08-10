@@ -1,13 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/Battery-Intelligence-Lab/galv/blob/main/backend/backend_django/galv/fixtures/cycler_data_schema.json",
-  "@context": {
-    "UnitVolt": "http://emmo.info/emmo#EMMO_e2207e91_02b0_4a8a_b13e_61d2a2a839f1",
-    "UnitAmpere": "http://emmo.info/emmo#EMMO_e2207e91_02b0_4a8a_b13e_61d2a2a839f1",
-    "UnitSecond": "http://emmo.info/emmo#EMMO_314ba716_2d3d_4462_9a4f_d3419ae1df43",
-    "Mass": "http://emmo.info/emmo#EMMO_ed4af7ae_63a2_497e_bb88_2309619ea405",
-    "Cell": "http://emmo.info/battery#battery_68ed592a_7924_45d0_a108_94d6275d57f0"
-  },
   "$comment": "This schema defines the minimum requirements for data in the Galv system. It uses Linked Data definitions from the EMMO/BattINFO projects where possible.",
   "type": "object",
   "description": "Experiment metadata",

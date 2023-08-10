@@ -39,6 +39,7 @@ python manage.py loaddata galv/fixtures/EquipmentFixtures.json
 python manage.py loaddata galv/fixtures/CellFixtures.json
 python manage.py loaddata galv/fixtures/ScheduleFixtures.json
 python manage.py loaddata galv/fixtures/CyclerTestFixtures.json
+python manage.py loaddata galv/fixtures/ValidationSchemaFixtures.json
 
 >&2 echo "Initialisation complete - starting server"
 
