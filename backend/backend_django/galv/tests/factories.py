@@ -231,7 +231,7 @@ class ExperimentFactory(factory.django.DjangoModelFactory):
         if not extracted:
             extracted = [CyclerTestFactory() for _ in range(3)]
         # Add the iterable of cycler tests using bulk addition
-        self.cycler_test.add(*extracted)
+        self.cycler_tests.add(*extracted)
 
     @factory.post_generation
     def authors(self, create, extracted, **kwargs):

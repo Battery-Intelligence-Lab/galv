@@ -4,13 +4,11 @@
 
 import unittest
 
-from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
 from rest_framework import status
-from rest_framework.test import APITestCase
 import logging
 
-from backend.backend_django.galv.tests.utils import assert_response_property
+from .utils import assert_response_property, GalvTestCase
 from .factories import ExperimentFactory, CellFactory, ScheduleFactory, EquipmentFactory, ObservedFileFactory, \
     CyclerTestFactory, UserFactory
 from galv.models import Experiment
@@ -19,7 +17,7 @@ logger = logging.getLogger(__file__)
 logger.setLevel(logging.INFO)
 
 
-class ExperimentTests(APITestCase):
+class ExperimentTests(GalvTestCase):
     def test_create(self):
         # Create Experiment properties
         cycler_tests = CyclerTestFactory.create_batch(size=4)
@@ -43,13 +41,17 @@ class ExperimentTests(APITestCase):
         print("OK")
 
     def test_update(self):
+        user = UserFactory.create()
         cycler_tests = CyclerTestFactory.create_batch(size=2)
-        experiment = ExperimentFactory.create(cycler_tests=[cycler_tests[0]])
+        experiment = ExperimentFactory.create(cycler_tests=[cycler_tests[0]], authors=[user])
+        self.client.force_login(user)
+        user_header = self.get_token_header_for_user(user)
         url = reverse('experiment-detail', args=(experiment.uuid,))
         print("Test update Experiment")
         response = self.client.patch(
             url,
-            {'cycler_tests': [reverse('cyclertest-detail', args=(cycler_tests[1].uuid,))]}
+            {'cycler_tests': [reverse('cyclertest-detail', args=(cycler_tests[1].uuid,))]},
+            **user_header
         )
         assert_response_property(self, response, self.assertEqual, response.status_code, status.HTTP_200_OK)
         self.assertEqual(

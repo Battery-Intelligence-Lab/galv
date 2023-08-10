@@ -1275,12 +1275,12 @@ class ExperimentViewSet(viewsets.ModelViewSet, _WithValidationResultMixin):
     serializer_class = ExperimentSerializer
     queryset = Experiment.objects.all()
     search_fields = ['@title', '@description']
-    filterset_fields = ['cyclertests__uuid__contains', 'authors__username__contains']
     http_method_names = ['get', 'post', 'patch', 'delete', 'options']
 
     def get_queryset(self):
-        return self.queryset.filter(authors__contains=self.request.user)
-
+        if self.request.user and self.request.user.id:
+            return self.queryset.filter(authors__id__contains=self.request.user.id)
+        return self.queryset.none()
 
 @extend_schema_view(
     list=extend_schema(

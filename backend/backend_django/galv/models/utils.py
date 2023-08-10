@@ -104,7 +104,7 @@ class JSONModel(AdditionalPropertiesModel):
 
 class AutoCompleteEntry(models.Model):
     value = models.TextField(null=False, unique=True)
-    ld_value = models.TextField(null=True, unique=False, blank=True)
+    ld_value = models.JSONField(null=True, unique=False, blank=True)
     include_in_autocomplete = models.BooleanField(default=True)
 
     def __str__(self):
