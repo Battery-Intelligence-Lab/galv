@@ -25,6 +25,8 @@ from galv import views
 
 router = routers.DefaultRouter()
 
+router.register(r'labs', views.LabViewSet)
+router.register(r'teams', views.TeamViewSet)
 router.register(r'harvesters', views.HarvesterViewSet)
 router.register(r'harvest_errors', views.HarvestErrorViewSet)
 router.register(r'monitored_paths', views.MonitoredPathViewSet)
@@ -42,7 +44,6 @@ router.register(r'cycler_tests', views.CyclerTestViewSet)
 router.register(r'experiments', views.ExperimentViewSet)
 router.register(r'validation_schemas', views.ValidationSchemaViewSet)
 router.register(r'users', views.UserViewSet, basename='user')
-router.register(r'inactive_users', views.InactiveViewSet, basename='inactive_user')
 router.register(r'tokens', views.TokenViewSet, basename='tokens')
 router.register(r'groups', views.GroupViewSet)
 router.register(r'equipment_types', views.EquipmentTypesViewSet)

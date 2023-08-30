@@ -13,7 +13,6 @@ LD_SOURCE_MAP = {
     "battinfo": "https://github.com/emmo-repo/domain-battery/blob/master/battery.ttl"
 }
 
-
 class LDSources(models.TextChoices):
     SCHEMA = "schema"
     EMMO = "emmo"

@@ -10,6 +10,7 @@ import os
 from django.db.models import Q
 from django.http import StreamingHttpResponse
 from django.urls import NoReverseMatch
+from dry_rest_permissions.generics import DRYPermissions
 from rest_framework.reverse import reverse
 
 from .models.utils import ValidatableBySchemaMixin
@@ -29,7 +30,7 @@ from .serializers import HarvesterSerializer, \
     KnoxTokenSerializer, \
     KnoxTokenFullSerializer, CellFamilySerializer, EquipmentFamilySerializer, \
     ScheduleSerializer, CyclerTestSerializer, ScheduleFamilySerializer, DataColumnTypeSerializer, DataColumnSerializer, \
-    ExperimentSerializer
+    ExperimentSerializer, LabSerializer, TeamSerializer
 from .models import Harvester, \
     HarvestError, \
     MonitoredPath, \
@@ -46,12 +47,11 @@ from .models import Harvester, \
     get_timeseries_handler_by_type, \
     TimeseriesRangeLabel, \
     FileState, \
-    VouchFor, \
     KnoxAuthToken, CellFamily, EquipmentTypes, EquipmentModels, EquipmentManufacturers, CellModels, CellManufacturers, \
     CellChemistries, CellFormFactors, ScheduleIdentifiers, EquipmentFamily, Schedule, CyclerTest, ScheduleFamily, \
-    ValidationSchema, Experiment
+    ValidationSchema, Experiment, Lab, Team
 from .permissions import HarvesterAccess, ReadOnlyIfInUse, MonitoredPathAccess, VicariousObservedFileAccess, \
-    ObservedFileAccess, GroupEditAccess
+    ObservedFileAccess, GroupEditAccess, HarvesterFilterBackend, TeamFilterBackend, LabFilterBackend
 from .serializers.utils import GetOrCreateTextStringSerializer, validate_against_schemas, ValidationSchemaSerializer
 from .utils import get_files_from_path
 from django.contrib.auth.models import User, Group
@@ -316,6 +316,78 @@ class TokenViewSet(viewsets.ModelViewSet):
 
 @extend_schema_view(
     list=extend_schema(
+        summary="View all Labs",
+        description="""
+Labs are collections of Teams that provide for wider-scale access management and administration.
+"""
+    ),
+    retrieve=extend_schema(
+        summary="View a single Lab",
+        description="""
+Labs are collections of Teams that provide for wider-scale access management and administration.
+"""
+    ),
+    create=extend_schema(
+        summary="Create a new Lab",
+        description="""
+Labs are collections of Teams that provide for wider-scale access management and administration.
+"""
+    ),
+    partial_update=extend_schema(
+        summary="Update a Lab",
+        description="""
+Labs are collections of Teams that provide for wider-scale access management and administration.
+"""
+    )
+)
+class LabViewSet(viewsets.ModelViewSet):
+    permission_classes = [DRYPermissions]
+    filter_backends = [LabFilterBackend]
+    filterset_fields = ['name']
+    search_fields = ['@name']
+    queryset = Lab.objects.all().order_by('-id')
+    serializer_class = LabSerializer
+    http_method_names = ['get', 'post', 'patch', 'delete', 'options']
+
+
+@extend_schema_view(
+    list=extend_schema(
+        summary="View all Labs",
+        description="""
+Teams are groups of Users who share Resources.
+"""
+    ),
+    retrieve=extend_schema(
+        summary="View a single Lab",
+        description="""
+Teams are groups of Users who share Resources.
+"""
+    ),
+    create=extend_schema(
+        summary="Create a new Lab",
+        description="""
+Teams are groups of Users who share Resources.
+"""
+    ),
+    partial_update=extend_schema(
+        summary="Update a Lab",
+        description="""
+Teams are groups of Users who share Resources.
+"""
+    )
+)
+class TeamViewSet(viewsets.ModelViewSet):
+    permission_classes = [DRYPermissions]
+    filter_backends = [TeamFilterBackend]
+    serializer_class = TeamSerializer
+    filterset_fields = ['name']
+    search_fields = ['@name']
+    queryset = Team.objects.all().order_by('-id')
+    http_method_names = ['get', 'post', 'patch', 'delete', 'options']
+
+
+@extend_schema_view(
+    list=extend_schema(
         summary="View all Harvesters",
         description="""
 Harvesters monitor a set of MonitoredPaths and send reports about ObservedFiles within those paths.
@@ -401,21 +473,11 @@ class HarvesterViewSet(viewsets.ModelViewSet, _WithValidationResultMixin):
     Harvesters are created by a separate software package available within Galv.
     """
     permission_classes = [HarvesterAccess]
-    filterset_fields = ['name']
+    filter_backends = [HarvesterFilterBackend]
+    filterset_fields = ['name', 'lab_id']
     search_fields = ['@name']
     queryset = Harvester.objects.all().order_by('-last_check_in', '-uuid')
     http_method_names = ['get', 'post', 'patch', 'delete', 'options']
-
-    def get_queryset(self):
-        """Get Harvesters applying access restrictions"""
-        # Allow access to Harvesters if we present their API key
-        if self.request.META.get('HTTP_AUTHORIZATION', '').startswith('Harvester '):
-            key = self.request.META['HTTP_AUTHORIZATION'].split(' ')[1]
-            return self.queryset.filter(api_key=key)
-        return self.queryset.filter(
-            Q(user_group__in=self.request.user.groups.all()) |
-            Q(admin_group__in=self.request.user.groups.all())
-        )
 
     def get_serializer_class(self):
         if self.request.method.lower() == "post":
@@ -1476,74 +1538,6 @@ class TimeseriesRangeLabelViewSet(viewsets.ModelViewSet):
 
 
 @extend_schema_view(
-    list=extend_schema(
-        summary="View Users awaiting approval",
-        description="""
-Users can be created freely, but cannot use the API until they are approved by an existing user account.
-        """
-    ),
-    retrieve=extend_schema(
-        summary="View a User awaiting approval",
-        description="""
-Users can be created freely, but cannot use the API until they are approved by an existing user account.
-        """
-    ),
-    create=extend_schema(
-        summary="Create a new User account",
-        description="""
-Users can be created freely, but cannot use the API until they are approved by an existing user account.
-        """
-    ),
-    vouch_for=extend_schema(
-        summary="Approve a User awaiting activation",
-        description="""
-Approving a User will allow them to access the API. A record will be kept of the approval.
-        """
-    )
-)
-class InactiveViewSet(viewsets.ModelViewSet):
-    """
-    Users are Django User instances custom-serialized for convenience.
-
-    New users can be created at will, but they will be marked as is_active=False
-    until vouched for by an existing active user.
-    """
-    serializer_class = UserSerializer
-    queryset = User.objects.filter(is_active=False).order_by('-id')
-    http_method_names = ['get', 'post', 'options']
-
-    def create(self, request, *args, **kwargs):
-        # TODO: Move to serializer so only wanted fields appear in Django web form?
-        try:
-            username = request.data['username']
-            email = validators.validate_email(request.data['email'])
-            password = request.data['password']
-        except (KeyError, validators.ValidationError):
-            return error_response(f"Username, email, and password fields required.")
-        if len(password) < 8:
-            return error_response(f"Password must be at least 8 characters long")
-        if User.objects.filter(username=username).exists():
-            return error_response(f"User {username} already exists.")
-        try:
-            new_user = User.objects.create_user(username=username, email=email, password=password, is_active=False)
-        except:
-            return error_response(error='Error creating user')
-        return Response(UserSerializer(new_user, context={'request': request}).data)
-
-    @action(methods=['GET'], detail=True)
-    def vouch_for(self, request, pk: int = None):
-        try:
-            new_user = User.objects.get(id=pk)
-            self.check_object_permissions(self.request, new_user)
-        except User.DoesNotExist:
-            return error_response(f"User not found")
-        VouchFor.objects.create(new_user=new_user, vouching_user=request.user)
-        new_user.is_active = True
-        new_user.save()
-        return Response(UserSerializer(new_user, context={'request': request}).data)
-
-
-@extend_schema_view(
     partial_update=extend_schema(
         summary="Update User profile",
         description="""
@@ -1685,7 +1679,7 @@ class ValidationSchemaViewSet(viewsets.ModelViewSet):
                 return None
 
         return Response([{
-                'key': m.__name__,
-                'describes': url(m.__name__)
-            } for m in ValidatableBySchemaMixin.__subclasses__() if url(m.__name__) is not None]
+            'key': m.__name__,
+            'describes': url(m.__name__)
+        } for m in ValidatableBySchemaMixin.__subclasses__() if url(m.__name__) is not None]
         )

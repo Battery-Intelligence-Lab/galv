@@ -84,6 +84,7 @@
         "pk": "42fc4c44-efbb-4457-a734-f68ee28de617",
         "model": "galv.CellFamily",
         "fields": {
+            "team": 1,
             "manufacturer": 1,
             "model": 1,
             "chemistry": 1,
@@ -99,6 +100,7 @@
         "pk": "5d19c8d6-a976-423d-ab5d-a624a0606d30",
         "model": "galv.CellFamily",
         "fields": {
+            "team": 1,
             "manufacturer": 2,
             "model": 2,
             "chemistry": 1,
@@ -115,6 +117,7 @@
         "pk": "6a3a910b-d42e-46f6-9604-6fb3c2f3d059",
         "model": "galv.Cell",
         "fields": {
+            "team": 1,
             "family": "42fc4c44-efbb-4457-a734-f68ee28de617",
             "identifier": "sny-vtc-1234-xx94",
             "additional_properties": {
@@ -126,6 +129,7 @@
         "pk": "4281a89b-48ff-4f4a-bcd8-5fe427f87a81",
         "model": "galv.Cell",
         "fields": {
+            "team": 1,
             "family": "5d19c8d6-a976-423d-ab5d-a624a0606d30",
             "identifier": "lg-hg2-1234-xx94"
         }

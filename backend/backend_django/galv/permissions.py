@@ -1,14 +1,53 @@
 # SPDX-License-Identifier: BSD-2-Clause
 # Copyright  (c) 2020-2023, The Chancellor, Masters and Scholars of the University
 # of Oxford, and the 'Galv' Developers. All rights reserved.
+from django.db import models
 from django.http import Http404
 from django.urls import resolve, Resolver404
 from urllib.parse import urlparse
 from django.db.models import Q
+from dry_rest_permissions.generics import DRYPermissionFiltersBase
 from rest_framework import permissions
-from .models import Harvester, MonitoredPath
+from .models import Harvester, MonitoredPath, user_labs, user_teams
 from .utils import get_monitored_paths
 
+
+class HarvesterFilterBackend(DRYPermissionFiltersBase):
+    action_routing = True
+
+    def filter_list_queryset(self, request, queryset, view):
+        key = request.META.get('HTTP_AUTHORIZATION', '')
+        if key.startswith('Harvester '):
+            return queryset.filter(api_key=key.split(' ')[1])
+        labs = user_labs(request.user)
+        if len(labs) == 0:
+            return queryset.none()
+        return queryset.filter(lab__in=labs)
+
+    # def filter_config_queryset(self, request, queryset, view):
+    #     key = request.META.get('HTTP_AUTHORIZATION', '')
+    #     if key.startswith('Harvester '):
+    #         return queryset.filter(api_key=key.split(' ')[1])
+    #     return queryset.none()
+    #
+    # def filter_report_queryset(self, request, queryset, view):
+    #     return self.filter_config_queryset(request, queryset, view)
+
+class LabFilterBackend(DRYPermissionFiltersBase):
+    action_routing = True
+    def filter_list_queryset(self, request, queryset, view):
+        labs = [l.pk for l in user_labs(request.user)]
+        if len(labs) == 0:
+            return queryset.none()
+        return queryset.filter(pk__in=labs)
+
+class TeamFilterBackend(DRYPermissionFiltersBase):
+    action_routing = True
+    def filter_list_queryset(self, request, queryset, view):
+        teams = [t.pk for t in user_teams(request.user)]
+        if len(teams) == 0:
+            return queryset.none()
+        return queryset.filter(pk__in=teams)
 
 class HarvesterAccess(permissions.BasePermission):
     """

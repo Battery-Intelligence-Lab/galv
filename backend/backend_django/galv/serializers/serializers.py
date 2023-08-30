@@ -23,10 +23,9 @@ from ..models import Harvester, \
     TimeseriesRangeLabel, \
     KnoxAuthToken, CellFamily, EquipmentTypes, CellFormFactors, CellChemistries, CellModels, CellManufacturers, \
     EquipmentManufacturers, EquipmentModels, EquipmentFamily, Schedule, ScheduleIdentifiers, CyclerTest, \
-    render_pybamm_schedule, ScheduleFamily, ValidationSchema, Experiment
+    render_pybamm_schedule, ScheduleFamily, ValidationSchema, Experiment, Lab, Team
 from ..models.utils import ScheduleRenderError
 from ..permissions import get_group_owner
-from ..utils import get_monitored_paths
 from django.utils import timezone
 from django.contrib.auth.models import User, Group
 from django.conf.global_settings import DATA_UPLOAD_MAX_MEMORY_SIZE
@@ -34,20 +33,95 @@ from rest_framework import serializers
 from knox.models import AuthToken
 
 from .utils import AdditionalPropertiesModelSerializer, GetOrCreateTextField, augment_extra_kwargs, url_help_text, \
-    get_model_field
+    get_model_field, PermissionsMixin
 
 
-class CellSerializer(AdditionalPropertiesModelSerializer):
+class UserSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = User
+        write_fields = ['username', 'email', 'first_name', 'last_name']
+        write_only_fields = ['password']
+        read_only_fields = ['url', 'id', 'is_active', 'is_staff', 'is_superuser']
+        fields = [*write_fields, *read_only_fields, *write_only_fields]
+        extra_kwargs = augment_extra_kwargs({
+            'password': {'write_only': True, 'help_text': "Password (8 characters minimum)"},
+        })
+
+class GroupSerializer(serializers.HyperlinkedModelSerializer):
+    users = serializers.SerializerMethodField(help_text="Users in the group")
+    add_user = serializers.HyperlinkedRelatedField(
+        view_name='user-detail',
+        queryset=Group.objects.all(),
+        write_only=True,
+        required=False,
+        help_text="User to add"
+    )
+    remove_user = serializers.HyperlinkedRelatedField(
+        view_name='user-detail',
+        queryset=Group.objects.all(),
+        write_only=True,
+        required=False,
+        help_text="User to remove"
+    )
+
+    @staticmethod
+    def validate_remove_user(value):
+        # Only admin groups have to have at least one user
+        owner = get_group_owner(value)
+        if not owner.admin_group == value:
+            return value
+        if len(value.user_set.all()) <= 1:
+            raise ValidationError(f"Removing that user would leave the group empty")
+        return value
+
+    @extend_schema_field(UserSerializer(many=True))
+    def get_users(self, instance):
+        return UserSerializer(
+            instance.user_set.all(),
+            many=True,
+            context={'request': self.context['request']}
+        ).data
+
+    class Meta:
+        model = Group
+        read_only_fields = ['id', 'url', 'name', 'users']
+        fields = [*read_only_fields, 'add_user', 'remove_user']
+
+class LabSerializer(serializers.HyperlinkedModelSerializer, PermissionsMixin):
+    admin_group = GroupSerializer(help_text="Group of users who can edit this Lab")
+    class Meta:
+        model = Lab
+        fields = ['url', 'id', 'name', 'description', 'teams', 'admin_group', 'permissions']
+        read_only_fields = ['url', 'id', 'teams', 'admins', 'permissions']
+
+class TeamSerializer(serializers.HyperlinkedModelSerializer, PermissionsMixin):
+    member_group = GroupSerializer(help_text="Members of this Team")
+    admin_group = GroupSerializer(help_text="Administrators of this Team")
+    class Meta:
+        model = Team
+        read_only_fields = [
+            'url', 'id',
+            'member_group', 'admin_group',
+            'monitored_paths',
+            # 'cell_family_resources', 'cell_resources',
+            # 'equipment_family_resources', 'equipment_resources',
+            # 'schedule_family_resources', 'schedule_resources',
+            # 'cycler_test_resources', 'experiment_resources',
+            'permissions'
+        ]
+        fields = [*read_only_fields, 'name', 'description', 'lab']
+
+class CellSerializer(AdditionalPropertiesModelSerializer, PermissionsMixin):
     class Meta:
         model = Cell
-        fields = ['url', 'uuid', 'identifier', 'family', 'cycler_tests', 'in_use']
-        read_only_fields = ['url', 'uuid', 'cycler_tests', 'in_use']
+        fields = ['url', 'uuid', 'identifier', 'family', 'cycler_tests', 'in_use', 'permissions']
+        read_only_fields = ['url', 'uuid', 'cycler_tests', 'in_use', 'permissions']
         extra_kwargs = augment_extra_kwargs({
             'cycler_tests': {'help_text': "Cycler Tests using this Cell"}
         })
 
 
-class CellFamilySerializer(AdditionalPropertiesModelSerializer):
+class CellFamilySerializer(AdditionalPropertiesModelSerializer, PermissionsMixin):
     manufacturer = GetOrCreateTextField(foreign_model=CellManufacturers, help_text="Manufacturer name")
     model = GetOrCreateTextField(foreign_model=CellModels, help_text="Model number")
     chemistry = GetOrCreateTextField(foreign_model=CellChemistries, help_text="Chemistry type")
@@ -70,12 +144,13 @@ class CellFamilySerializer(AdditionalPropertiesModelSerializer):
             'power_density',
             'form_factor',
             'cells',
-            'in_use'
+            'in_use',
+            'permissions'
         ]
-        read_only_fields = ['url', 'uuid', 'cells', 'in_use']
+        read_only_fields = ['url', 'uuid', 'cells', 'in_use', 'permissions']
 
 
-class EquipmentFamilySerializer(AdditionalPropertiesModelSerializer):
+class EquipmentFamilySerializer(AdditionalPropertiesModelSerializer, PermissionsMixin):
     type = GetOrCreateTextField(foreign_model=EquipmentTypes, help_text="Equipment type")
     manufacturer = GetOrCreateTextField(foreign_model=EquipmentManufacturers, help_text="Manufacturer name")
     model = GetOrCreateTextField(foreign_model=EquipmentModels, help_text="Model number")
@@ -89,22 +164,23 @@ class EquipmentFamilySerializer(AdditionalPropertiesModelSerializer):
             'manufacturer',
             'model',
             'in_use',
-            'equipment'
+            'equipment',
+            'permissions'
         ]
-        read_only_fields = ['url', 'uuid', 'in_use', 'equipment']
+        read_only_fields = ['url', 'uuid', 'in_use', 'equipment', 'permissions']
 
 
-class EquipmentSerializer(AdditionalPropertiesModelSerializer):
+class EquipmentSerializer(AdditionalPropertiesModelSerializer, PermissionsMixin):
     class Meta:
         model = Equipment
-        fields = ['url', 'uuid', 'identifier', 'family', 'calibration_date', 'in_use', 'cycler_tests']
-        read_only_fields = ['url', 'uuid', 'datasets', 'in_use', 'cycler_tests']
+        fields = ['url', 'uuid', 'identifier', 'family', 'calibration_date', 'in_use', 'cycler_tests', 'permissions']
+        read_only_fields = ['url', 'uuid', 'datasets', 'in_use', 'cycler_tests', 'permissions']
         extra_kwargs = augment_extra_kwargs({
             'cycler_tests': {'help_text': "Cycler Tests using this Equipment"}
         })
 
 
-class ScheduleFamilySerializer(AdditionalPropertiesModelSerializer):
+class ScheduleFamilySerializer(AdditionalPropertiesModelSerializer, PermissionsMixin):
     identifier = GetOrCreateTextField(foreign_model=ScheduleIdentifiers)
 
     def validate_pybamm_template(self, value):
@@ -116,12 +192,12 @@ class ScheduleFamilySerializer(AdditionalPropertiesModelSerializer):
         fields = [
             'url', 'uuid', 'identifier', 'description',
             'ambient_temperature', 'pybamm_template',
-            'in_use', 'schedules'
+            'in_use', 'schedules', 'permissions'
         ]
-        read_only_fields = ['url', 'uuid', 'in_use', 'schedules']
+        read_only_fields = ['url', 'uuid', 'in_use', 'schedules', 'permissions']
 
 
-class ScheduleSerializer(AdditionalPropertiesModelSerializer):
+class ScheduleSerializer(AdditionalPropertiesModelSerializer, PermissionsMixin):
     def validate_pybamm_schedule_variables(self, value):
         template = self.instance.family.pybamm_template
         if template is None and value is not None:
@@ -152,15 +228,15 @@ class ScheduleSerializer(AdditionalPropertiesModelSerializer):
         fields = [
             'url', 'uuid', 'family',
             'schedule_file', 'pybamm_schedule_variables',
-            'in_use', 'cycler_tests'
+            'in_use', 'cycler_tests', 'permissions'
         ]
-        read_only_fields = ['url', 'uuid', 'in_use', 'cycler_tests']
+        read_only_fields = ['url', 'uuid', 'in_use', 'cycler_tests', 'permissions']
         extra_kwargs = augment_extra_kwargs({
             'cycler_tests': {'help_text': "Cycler Tests using this Equipment"}
         })
 
 
-class CyclerTestSerializer(AdditionalPropertiesModelSerializer):
+class CyclerTestSerializer(AdditionalPropertiesModelSerializer, PermissionsMixin):
     rendered_schedule = serializers.SerializerMethodField(help_text="Rendered schedule")
 
     def get_rendered_schedule(self, instance):
@@ -179,84 +255,9 @@ class CyclerTestSerializer(AdditionalPropertiesModelSerializer):
     class Meta:
         model = CyclerTest
         fields = [
-            'url', 'uuid', 'cell_subject', 'equipment', 'schedule', 'rendered_schedule'
+            'url', 'uuid', 'cell_subject', 'equipment', 'schedule', 'rendered_schedule', 'permissions'
         ]
-        read_only_fields = ['url', 'uuid', 'rendered_schedule']
-
-
-class UserSerializer(serializers.HyperlinkedModelSerializer):
-    url = serializers.SerializerMethodField(help_text=url_help_text)
-
-    def get_url(self, instance) -> str:
-        uri = self.context['request'].build_absolute_uri
-        if instance.is_active:
-            return uri(reverse('user-detail', args=(instance.id,)))
-        return uri(reverse('inactive_user-detail', args=(instance.id,)))
-
-    class Meta:
-        model = User
-        write_fields = ['username', 'email', 'first_name', 'last_name']
-        write_only_fields = ['password']
-        read_only_fields = ['url', 'id', 'is_active', 'is_staff', 'is_superuser']
-        fields = [*write_fields, *read_only_fields, *write_only_fields]
-        extra_kwargs = augment_extra_kwargs({
-            'password': {'write_only': True, 'help_text': "Password (8 characters minimum)"},
-        })
-
-
-class GroupSerializer(serializers.HyperlinkedModelSerializer):
-    users = serializers.SerializerMethodField(help_text="Users in the group")
-    add_user = serializers.HyperlinkedRelatedField(
-        view_name='user-detail',
-        queryset=Group.objects.all(),
-        write_only=True,
-        required=False,
-        help_text="User to add"
-    )
-    remove_user = serializers.HyperlinkedRelatedField(
-        view_name='user-detail',
-        queryset=Group.objects.all(),
-        write_only=True,
-        required=False,
-        help_text="User to remove"
-    )
-
-    def validate_remove_user(self, value):
-        # Only admin groups have to have at least one user
-        owner = get_group_owner(value)
-        if not owner.admin_group == value:
-            return value
-        if len(value.user_set.all()) <= 1:
-            raise ValidationError(f"Removing that user would leave the group empty")
-        return value
-
-    @extend_schema_field(UserSerializer(many=True))
-    def get_users(self, instance):
-        return UserSerializer(
-            instance.user_set.filter(is_active=True),
-            many=True,
-            context={'request': self.context['request']}
-        ).data
-
-    class Meta:
-        model = Group
-        read_only_fields = [
-            'id',
-            'url',
-            'name',
-            'users',
-            'readable_paths',
-            'editable_paths',
-            'readable_harvesters',
-            'editable_harvesters'
-        ]
-        fields = [*read_only_fields, 'add_user', 'remove_user']
-        extra_kwargs = augment_extra_kwargs({
-            'readable_paths': {'help_text': "Paths on which this Group are Users"},
-            'editable_paths': {'help_text': "Paths on which this Group are Admins"},
-            'readable_harvesters': {'help_text': "Harvesters for which this Group are Users"},
-            'editable_harvesters': {'help_text': "Harvesters for which this Group are Admins"},
-        })
+        read_only_fields = ['url', 'uuid', 'rendered_schedule', 'permissions']
 
 
 class UserSetSerializer(GroupSerializer):
@@ -288,7 +289,7 @@ class UserSetSerializer(GroupSerializer):
         extra_kwargs = augment_extra_kwargs()
 
 
-class HarvesterSerializer(serializers.HyperlinkedModelSerializer):
+class HarvesterSerializer(serializers.HyperlinkedModelSerializer, PermissionsMixin):
     class EnvField(serializers.DictField):
         # respresentation for json
         def to_representation(self, value) -> dict[str, str]:
@@ -366,12 +367,12 @@ class HarvesterSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Harvester
-        fields = ['url', 'uuid', 'name', 'sleep_time', 'last_check_in', 'user_sets', 'environment_variables', 'active']
-        read_only_fields = ['url', 'uuid', 'last_check_in', 'user_sets']
+        read_only_fields = ['url', 'uuid', 'last_check_in', 'user_sets', 'permissions']
+        fields = [*read_only_fields, 'name', 'sleep_time', 'environment_variables', 'active']
         extra_kwargs = augment_extra_kwargs()
 
 
-class MonitoredPathSerializer(serializers.HyperlinkedModelSerializer):
+class MonitoredPathSerializer(serializers.HyperlinkedModelSerializer, PermissionsMixin):
     user_sets = serializers.SerializerMethodField(help_text="Roles and the Users assigned to them")
 
     @extend_schema_field(UserSetSerializer(many=True))
@@ -445,12 +446,12 @@ class MonitoredPathSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = MonitoredPath
-        fields = ['url', 'uuid', 'path', 'regex', 'stable_time', 'active', 'harvester', 'user_sets']
-        read_only_fields = ['url', 'uuid', 'harvester', 'user_sets']
+        fields = ['url', 'uuid', 'path', 'regex', 'stable_time', 'active', 'harvester', 'user_sets', 'permissions']
+        read_only_fields = ['url', 'uuid', 'harvester', 'user_sets', 'permissions']
         extra_kwargs = augment_extra_kwargs()
 
 
-class MonitoredPathCreateSerializer(MonitoredPathSerializer):
+class MonitoredPathCreateSerializer(MonitoredPathSerializer, PermissionsMixin):
 
     def create(self, validated_data):
         stable_time = validated_data.get('stable_time', 60)
@@ -493,13 +494,14 @@ class MonitoredPathCreateSerializer(MonitoredPathSerializer):
 
     class Meta:
         model = MonitoredPath
-        fields = ['path', 'regex', 'stable_time', 'harvester']
+        fields = ['path', 'regex', 'stable_time', 'harvester', 'permissions']
+        read_only_fields = ['permissions']
         extra_kwargs = augment_extra_kwargs({
             'stable_time': {'required': False},
         })
 
 
-class ObservedFileSerializer(serializers.HyperlinkedModelSerializer):
+class ObservedFileSerializer(serializers.HyperlinkedModelSerializer, PermissionsMixin):
     upload_info = serializers.SerializerMethodField(
         help_text="Metadata required for harvester program to resume file parsing"
     )
@@ -548,7 +550,7 @@ class ObservedFileSerializer(serializers.HyperlinkedModelSerializer):
             'has_required_columns',
             'last_observed_time', 'last_observed_size', 'upload_errors',
             'column_errors',
-            'upload_info', 'columns'
+            'upload_info', 'columns', 'permissions'
         ]
         fields = [*read_only_fields, 'name']
         extra_kwargs = augment_extra_kwargs({
@@ -557,21 +559,21 @@ class ObservedFileSerializer(serializers.HyperlinkedModelSerializer):
         })
 
 
-class HarvestErrorSerializer(serializers.HyperlinkedModelSerializer):
+class HarvestErrorSerializer(serializers.HyperlinkedModelSerializer, PermissionsMixin):
     class Meta:
         model = HarvestError
-        fields = ['url', 'id', 'harvester', 'file', 'error', 'timestamp']
+        fields = ['url', 'id', 'harvester', 'file', 'error', 'timestamp', 'permissions']
         extra_kwargs = augment_extra_kwargs()
 
 
-class DataUnitSerializer(serializers.ModelSerializer):
+class DataUnitSerializer(serializers.ModelSerializer, PermissionsMixin):
     class Meta:
         model = DataUnit
-        fields = ['url', 'id', 'name', 'symbol', 'description']
+        fields = ['url', 'id', 'name', 'symbol', 'description', 'permissions']
         extra_kwargs = augment_extra_kwargs()
 
 
-class TimeseriesRangeLabelSerializer(serializers.HyperlinkedModelSerializer):
+class TimeseriesRangeLabelSerializer(serializers.HyperlinkedModelSerializer, PermissionsMixin):
     data = serializers.SerializerMethodField()
 
     class Meta:
@@ -580,14 +582,14 @@ class TimeseriesRangeLabelSerializer(serializers.HyperlinkedModelSerializer):
         extra_kwargs = augment_extra_kwargs()
 
 
-class DataColumnTypeSerializer(serializers.HyperlinkedModelSerializer):
+class DataColumnTypeSerializer(serializers.HyperlinkedModelSerializer, PermissionsMixin):
     class Meta:
         model = DataColumnType
-        fields = ['url', 'id', 'name', 'description', 'is_default', 'unit']
+        fields = ['url', 'id', 'name', 'description', 'is_default', 'unit', 'permissions']
         extra_kwargs = augment_extra_kwargs()
 
 
-class DataColumnSerializer(serializers.HyperlinkedModelSerializer):
+class DataColumnSerializer(serializers.HyperlinkedModelSerializer, PermissionsMixin):
     """
     A column contains metadata and data. Data are an ordered list of values.
     """
@@ -634,12 +636,13 @@ class DataColumnSerializer(serializers.HyperlinkedModelSerializer):
             'description',
             'unit',
             'values',
+            'permissions'
         ]
         read_only_fields = fields
         extra_kwargs = augment_extra_kwargs()
 
 
-class ExperimentSerializer(serializers.HyperlinkedModelSerializer):
+class ExperimentSerializer(serializers.HyperlinkedModelSerializer, PermissionsMixin):
     class Meta:
         model = Experiment
         fields = [
@@ -651,8 +654,9 @@ class ExperimentSerializer(serializers.HyperlinkedModelSerializer):
             'protocol',
             'protocol_file',
             'cycler_tests',
+            'permissions'
         ]
-        read_only_fields = ['url', 'uuid']
+        read_only_fields = ['url', 'uuid', 'permissions']
         extra_kwargs = augment_extra_kwargs()
 
 
@@ -696,7 +700,7 @@ class KnoxTokenFullSerializer(KnoxTokenSerializer):
         extra_kwargs = augment_extra_kwargs()
 
 
-class HarvesterConfigSerializer(HarvesterSerializer):
+class HarvesterConfigSerializer(HarvesterSerializer, PermissionsMixin):
     standard_units = serializers.SerializerMethodField(help_text="Units recognised by the initial database")
     standard_columns = serializers.SerializerMethodField(help_text="Column Types recognised by the initial database")
     max_upload_bytes = serializers.SerializerMethodField(help_text="Maximum upload size (bytes)")
@@ -731,7 +735,7 @@ class HarvesterConfigSerializer(HarvesterSerializer):
         fields = [
             'url', 'uuid', 'api_key', 'name', 'sleep_time', 'monitored_paths',
             'standard_units', 'standard_columns', 'max_upload_bytes',
-            'environment_variables', 'deleted_environment_variables'
+            'environment_variables', 'deleted_environment_variables', 'permissions'
         ]
         read_only_fields = fields
         extra_kwargs = augment_extra_kwargs({
@@ -740,27 +744,16 @@ class HarvesterConfigSerializer(HarvesterSerializer):
         depth = 1
 
 
-class HarvesterCreateSerializer(HarvesterSerializer):
-    user = serializers.HyperlinkedRelatedField(
-        view_name='user-detail',
-        required=True,
-        queryset=User.objects.filter(is_active=True)
-    )
+class HarvesterCreateSerializer(HarvesterSerializer, PermissionsMixin):
 
     def create(self, validated_data):
         """
         Create a Harvester and the user Groups required to control it.
         """
         # Create Harvester
-        harvester = Harvester.objects.create(name=validated_data['name'])
-        # Create user/admin groups
-        harvester.admin_group = Group.objects.create(name=f"harvester_{harvester.uuid}_admins")
-        harvester.user_group = Group.objects.create(name=f"harvester_{harvester.uuid}_users")
+        harvester = Harvester.objects.create(name=validated_data['name'], lab=validated_data['lab'])
         harvester.save()
         # Add user as admin
-        user = validated_data['user']
-        user.groups.add(harvester.admin_group)
-        user.save()
 
         return harvester
 
@@ -769,5 +762,6 @@ class HarvesterCreateSerializer(HarvesterSerializer):
 
     class Meta:
         model = Harvester
-        fields = ['name', 'user']
+        fields = ['name', 'lab', 'permissions']
+        read_only_fields = ['permissions']
         extra_kwargs = {'name': {'required': True}}

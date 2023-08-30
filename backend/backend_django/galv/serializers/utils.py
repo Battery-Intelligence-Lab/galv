@@ -1,6 +1,7 @@
 import json
 import django.db.models
 import jsonschema
+from dry_rest_permissions.generics import DRYPermissionsField
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
@@ -186,3 +187,7 @@ def validate_against_schemas(serializer: serializers.ModelSerializer, schemas = 
         **serializer.data,
         'validation_results': validation_results
     }
+
+
+class PermissionsMixin(serializers.Serializer):
+    permissions = DRYPermissionsField()

@@ -1,0 +1,59 @@
+[
+    {
+        "pk": 1,
+        "model": "auth.Group",
+        "fields": {
+            "name": "example_lab_admins"
+        }
+    },
+    {
+        "pk": 1,
+        "model": "galv.Lab",
+        "fields": {
+            "name": "Example Lab",
+            "description": "This Lab exists to demonstrate the system.",
+            "admin_group": 1
+        }
+    },
+    {
+        "pk": 2,
+        "model": "auth.Group",
+        "fields": {
+            "name": "example_team_admins"
+        }
+    },
+    {
+        "pk": 3,
+        "model": "auth.Group",
+        "fields": {
+            "name": "example_team_members"
+        }
+    },
+    {
+        "pk": 1,
+        "model": "galv.Team",
+        "fields": {
+            "lab": 1,
+            "name": "Example Team",
+            "description": "This Team exists to demonstrate the system.",
+            "admin_group": 2,
+            "member_group": 3
+        }
+    },
+    {
+        "pk": 1,
+        "model": "auth.User_Groups",
+        "fields": {
+            "user_id": 1,
+            "group_id": 1
+        }
+    },
+    {
+        "pk": 2,
+        "model": "auth.User_Groups",
+        "fields": {
+            "user_id": 1,
+            "group_id": 2
+        }
+    }
+]

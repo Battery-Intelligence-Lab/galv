@@ -3,6 +3,7 @@
         "pk": 1,
         "model": "galv.ValidationSchema",
         "fields": {
+            "team": 1,
             "name": "Galv Minimal Schema",
             "schema": {
                 "$schema": "https://json-schema.org/draft/2020-12/schema",

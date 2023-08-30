@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: BSD-2-Clause
 # Copyright  (c) 2020-2023, The Chancellor, Masters and Scholars of the University
 # of Oxford, and the 'Galv' Developers. All rights reserved.
+import os
 import re
 from typing import Type
 
@@ -24,15 +25,190 @@ class FileState(models.TextChoices):
     IMPORTED = "IMPORTED"
 
 
+class Lab(models.Model):
+    name = models.TextField(
+        unique=True,
+        help_text="Human-friendly Lab identifier"
+    )
+    description = models.TextField(
+        null=True,
+        help_text="Description of the Lab"
+    )
+    admin_group = models.ForeignKey(
+        to=Group,
+        on_delete=models.CASCADE,
+        null=True,
+        related_name='editable_labs',
+        help_text="Users authorised to make changes to the Lab"
+    )
+
+    @staticmethod
+    def has_read_permission(request):
+        return True
+
+    @staticmethod
+    def has_create_permission(request):
+        return request.user.is_staff or request.user.is_superuser
+
+    def has_object_read_permission(self, request):
+        return (
+                request.user.is_staff or
+                request.user.is_superuser or
+                self in user_editable_labs(request.user) or
+                self in user_teams(request.user)
+        )
+
+    def has_object_write_permission(self, request):
+        return (
+                request.user.is_staff or
+                request.user.is_superuser or
+                self in user_editable_labs(request.user)
+        )
+
+    def __str__(self):
+        return f"{self.name} [Lab {self.pk}]"
+
+
+class Team(models.Model):
+    name = models.TextField(
+        unique=True,
+        help_text="Human-friendly Team identifier"
+    )
+    description = models.TextField(
+        null=True,
+        help_text="Description of the Team"
+    )
+    lab = models.ForeignKey(
+        to=Lab,
+        on_delete=models.CASCADE,
+        null=False,
+        related_name='teams',
+        help_text="Lab to which this Team belongs"
+    )
+    admin_group = models.ForeignKey(
+        to=Group,
+        on_delete=models.CASCADE,
+        null=True,
+        related_name='editable_teams',
+        help_text="Users authorised to make changes to the Team"
+    )
+    member_group = models.ForeignKey(
+        to=Group,
+        on_delete=models.CASCADE,
+        null=True,
+        related_name='readable_teams',
+        help_text="Users authorised to view this Team's Experiments"
+    )
+
+    @staticmethod
+    def has_create_permission(request):
+        return request.user.is_authenticated and len(user_editable_labs(request.user)) > 0
+
+    @staticmethod
+    def has_read_permission(request):
+        return True
+
+    @staticmethod
+    def has_write_permission(request):
+        return True
+
+    def has_object_read_permission(self, request):
+        return (
+                self.lab in user_editable_labs(request.user) or
+                self in user_teams(request.user)
+        )
+
+    def has_object_write_permission(self, request):
+        return (
+                self.lab in user_editable_labs(request.user) or
+                self in user_teams(request.user, True)
+        )
+
+    def __str__(self):
+        return f"{self.name} [Team {self.pk}]"
+
+def user_teams(user, editable=False):
+    """
+    Return a list of all teams the user is a member of
+    """
+    try:
+        teams = []
+        for g in user.groups.all():
+            teams += [t for t in g.editable_teams.all()]
+            if not editable:
+                teams += [t for t in g.readable_teams.all()]
+    except AttributeError:
+        return []
+    return teams
+
+
+def user_labs(user):
+    """
+    Return a list of all labs the user is a member of
+    """
+    return [t.lab for t in user_teams(user)]
+
+def user_editable_labs(user):
+    labs = []
+    for g in user.groups.all():
+        labs += [l for l in g.editable_labs.all()]
+    return labs
+
+def user_is_active(user):
+    return len(user_labs(user)) > 0
+
+
+class ResourceModelPermissionsMixin(models.Model):
+    team = models.ForeignKey(
+        to=Team,
+        on_delete=models.CASCADE,
+        null=False,
+        blank=False,
+        related_name="%(class)s_resources"
+    )
+    members_can_edit = models.BooleanField(default=True)
+    any_user_can_read = models.BooleanField(default=False)
+    any_user_can_edit = models.BooleanField(default=False)
+    anonymous_can_read = models.BooleanField(default=False)
+
+    def has_object_read_permission(self, request):
+        return self.anonymous_can_read or \
+            (self.any_user_can_read and user_is_active(request.user)) or \
+            self.team.member_group in request.user.groups.all() or \
+            self.team.admin_group in request.user.groups.all()
+
+    def has_object_write_permission(self, request):
+        return self.team.admin_group in request.user.groups.all() or \
+            (self.members_can_edit and self.team.member_group in request.user.groups.all()) or \
+            (self.any_user_can_edit and user_is_active(request.user))
+
+    @staticmethod
+    def has_create_permission(request):
+        return request.user.is_authenticated and user_is_active(request.user)
+
+    class Meta:
+        abstract = True
+
+
 class BibliographicInfo(models.Model):
     user = models.OneToOneField(to=User, on_delete=models.CASCADE, null=False, blank=False)
     bibjson = models.JSONField(null=False, blank=False)
+
+    def has_object_read_permission(self, request):
+        return self.user == request.user
+
+    def has_object_write_permission(self, request):
+        return self.user == request.user
+
+    @staticmethod
+    def has_create_permission(request):
+        return request.user.is_authenticated and user_is_active(request.user)
 
     def __str__(self):
         return f"{self.user.username} byline"
 
 
-class CellFamily(AdditionalPropertiesModel, ValidatableBySchemaMixin):
+class CellFamily(AdditionalPropertiesModel, ValidatableBySchemaMixin, ResourceModelPermissionsMixin):
     manufacturer = models.ForeignKey(to=CellManufacturers, help_text="Name of the manufacturer", null=True, blank=True, on_delete=models.CASCADE)
     model = models.ForeignKey(to=CellModels, help_text="Model number for the cells", null=False, on_delete=models.CASCADE)
     chemistry = models.ForeignKey(to=CellChemistries, help_text="Chemistry of the cells", null=True, blank=True, on_delete=models.CASCADE)
@@ -54,7 +230,7 @@ class CellFamily(AdditionalPropertiesModel, ValidatableBySchemaMixin):
     class Meta(AdditionalPropertiesModel.Meta):
         unique_together = [['model', 'manufacturer']]
 
-class Cell(JSONModel, ValidatableBySchemaMixin):
+class Cell(JSONModel, ValidatableBySchemaMixin, ResourceModelPermissionsMixin):
     identifier = models.TextField(unique=True, help_text="Unique identifier (e.g. serial number) for the cell", null=False)
     family = models.ForeignKey(to=CellFamily, on_delete=models.CASCADE, null=False, help_text="Cell type", related_name="cells")
 
@@ -79,7 +255,7 @@ class Cell(JSONModel, ValidatableBySchemaMixin):
         )
 
 
-class EquipmentFamily(AdditionalPropertiesModel, ValidatableBySchemaMixin):
+class EquipmentFamily(AdditionalPropertiesModel, ValidatableBySchemaMixin, ResourceModelPermissionsMixin):
     type = models.ForeignKey(to=EquipmentTypes, on_delete=models.CASCADE, null=False, help_text="Type of equipment")
     manufacturer = models.ForeignKey(to=EquipmentManufacturers, on_delete=models.CASCADE, null=False, help_text="Manufacturer of equipment")
     model = models.ForeignKey(to=EquipmentModels, on_delete=models.CASCADE, null=False, help_text="Model of equipment")
@@ -90,7 +266,7 @@ class EquipmentFamily(AdditionalPropertiesModel, ValidatableBySchemaMixin):
     def __str__(self):
         return f"{str(self.manufacturer)} {str(self.model)} ({str(self.type)})"
 
-class Equipment(JSONModel, ValidatableBySchemaMixin):
+class Equipment(JSONModel, ValidatableBySchemaMixin, ResourceModelPermissionsMixin):
     identifier = models.TextField(unique=True, help_text="Unique identifier (e.g. serial number) for the equipment", null=False)
     family = models.ForeignKey(to=EquipmentFamily, on_delete=models.CASCADE, null=False, help_text="Equipment type", related_name="equipment")
     calibration_date = models.DateField(help_text="Date of last calibration", null=True, blank=True)
@@ -111,7 +287,7 @@ class Equipment(JSONModel, ValidatableBySchemaMixin):
         }
 
 
-class ScheduleFamily(AdditionalPropertiesModel, ValidatableBySchemaMixin):
+class ScheduleFamily(AdditionalPropertiesModel, ValidatableBySchemaMixin, ResourceModelPermissionsMixin):
     identifier = models.OneToOneField(to=ScheduleIdentifiers, unique=True, blank=False, null=False, help_text="Type of experiment, e.g. Constant-Current Discharge", on_delete=models.CASCADE)
     description = models.TextField(help_text="Description of the schedule")
     ambient_temperature = models.FloatField(help_text="Ambient temperature during the experiment (in degrees Celsius)", null=True, blank=True)
@@ -128,7 +304,7 @@ class ScheduleFamily(AdditionalPropertiesModel, ValidatableBySchemaMixin):
         return f"{str(self.identifier)}"
 
 
-class Schedule(JSONModel, ValidatableBySchemaMixin):
+class Schedule(JSONModel, ValidatableBySchemaMixin, ResourceModelPermissionsMixin):
     family = models.ForeignKey(to=ScheduleFamily, on_delete=models.CASCADE, null=False, help_text="Schedule type", related_name="schedules")
     schedule_file = models.FileField(help_text="File containing the schedule", null=True, blank=True)
     pybamm_schedule_variables = models.JSONField(help_text="Variables used in the PyBaMM.Experiment representation of the schedule", null=True, blank=True)
@@ -141,7 +317,6 @@ class Schedule(JSONModel, ValidatableBySchemaMixin):
 
 class Harvester(UUIDModel, ValidatableBySchemaMixin):
     name = models.TextField(
-        unique=True,
         help_text="Human-friendly Harvester identifier"
     )
     api_key = models.TextField(
@@ -160,20 +335,34 @@ class Harvester(UUIDModel, ValidatableBySchemaMixin):
         default=True,
         help_text="Whether the Harvester is active"
     )
-    admin_group = models.ForeignKey(
-        to=Group,
+    lab = models.ForeignKey(
+        to=Lab,
         on_delete=models.CASCADE,
-        null=True,
-        related_name='editable_harvesters',
-        help_text="Users authorised to make changes to the Harvester"
+        null=False,
+        help_text="Lab to which this Harvester belongs"
     )
-    user_group = models.ForeignKey(
-        to=Group,
-        on_delete=models.CASCADE,
-        null=True,
-        related_name='readable_harvesters',
-        help_text="Users authorised to create Paths on the Harvester"
-    )
+
+    class Meta:
+        unique_together = [['name', 'lab']]
+
+    @staticmethod
+    def has_create_permission(request):
+        return request.user.is_authenticated and len(user_editable_labs(request.user)) > 0
+
+    def has_object_read_permission(self, request):
+        return self.is_valid_harvester(request) or self.lab.has_object_read_permission(request)
+
+    def has_object_write_permission(self, request):
+        return self.lab.has_object_write_permission(request)
+
+    def is_valid_harvester(self, request):
+        return self.api_key == request.META.get('HTTP_AUTHORIZATION', '').replace("Harvester ", "")
+
+    def has_object_config_permission(self, request):
+        return self.is_valid_harvester(request)
+
+    def has_object_report_permission(self, request):
+        return self.is_valid_harvester(request)
 
     def __str__(self):
         return f"{self.name} [Harvester {self.uuid}]"
@@ -189,7 +378,7 @@ class Harvester(UUIDModel, ValidatableBySchemaMixin):
         super(Harvester, self).save(*args, **kwargs)
 
 
-class ObservedFile(UUIDModel, ValidatableBySchemaMixin):
+class ObservedFile(UUIDModel, ValidatableBySchemaMixin, ResourceModelPermissionsMixin):
     path = models.TextField(help_text="Absolute file path")
     harvester = models.ForeignKey(
         to=Harvester,
@@ -244,6 +433,22 @@ class ObservedFile(UUIDModel, ValidatableBySchemaMixin):
         help_text="Extra metadata from the harvester"
     )
 
+    def has_object_read_permission(self, request):
+        if self.harvester.is_valid_harvester(request):
+            return True
+        try:
+            teams = [t for t in user_teams(request.user) if t.lab == self.harvester.lab]
+            for team in teams:
+                for path in team.monitored_paths.all():
+                    if path.matches(self.path):
+                        return True
+        except AttributeError:
+            return False
+        return False
+
+    def has_object_write_permission(self, request):
+        return self.has_object_read_permission(request)
+
     def missing_required_columns(self):
         errors = []
         for required_column in DataColumnType.objects.filter(is_required=True):
@@ -270,7 +475,7 @@ class ObservedFile(UUIDModel, ValidatableBySchemaMixin):
         unique_together = [['path', 'harvester']]
 
 
-class CyclerTest(JSONModel, ValidatableBySchemaMixin):
+class CyclerTest(JSONModel, ValidatableBySchemaMixin, ResourceModelPermissionsMixin):
     cell_subject = models.ForeignKey(to=Cell, on_delete=models.CASCADE, null=False, help_text="Cell that was tested", related_name="cycler_tests")
     schedule = models.ForeignKey(to=Schedule, null=True, blank=True, on_delete=models.CASCADE, help_text="Schedule used to test the cell", related_name="cycler_tests")
     equipment = models.ManyToManyField(to=Equipment, help_text="Equipment used to test the cell", related_name="cycler_tests")
@@ -287,7 +492,7 @@ class CyclerTest(JSONModel, ValidatableBySchemaMixin):
         return render_pybamm_schedule(self.schedule, self.cell_subject, validate = validate)
 
 
-class Experiment(JSONModel, ValidatableBySchemaMixin):
+class Experiment(JSONModel, ValidatableBySchemaMixin, ResourceModelPermissionsMixin):
     title = models.TextField(help_text="Title of the experiment")
     description = models.TextField(help_text="Description of the experiment", null=True, blank=True)
     authors = models.ManyToManyField(to=User, help_text="Authors of the experiment")
@@ -311,6 +516,12 @@ class HarvesterEnvVar(models.Model):
     value = models.TextField(help_text="Variable value")
     deleted = models.BooleanField(help_text="Whether this variable was deleted", default=False, null=False)
 
+    def has_object_read_permission(self, request):
+        return self.harvester.has_object_read_permission(request)
+
+    def has_object_write_permission(self, request):
+        return self.harvester.has_object_write_permission(request)
+
     def __str__(self):
         return f"{self.key}={self.value}{'*' if self.deleted else ''}"
 
@@ -318,7 +529,7 @@ class HarvesterEnvVar(models.Model):
         unique_together = [['harvester', 'key']]
 
 
-class MonitoredPath(UUIDModel):
+class MonitoredPath(UUIDModel, ResourceModelPermissionsMixin):
     harvester = models.ForeignKey(
         to=Harvester,
         related_name='monitored_paths',
@@ -339,26 +550,24 @@ class MonitoredPath(UUIDModel):
         help_text="Number of seconds files must remain stable to be processed"
     )
     active = models.BooleanField(default=True, null=False)
-    admin_group = models.ForeignKey(
-        to=Group,
+    team = models.ForeignKey(
+        to=Team,
+        related_name='monitored_paths',
         on_delete=models.CASCADE,
         null=True,
-        related_name='editable_paths',
-        help_text="Users authorised to remove and edit this Path. Harvester admins are also authorised"
-    )
-    user_group = models.ForeignKey(
-        to=Group,
-        on_delete=models.CASCADE,
-        null=True,
-        related_name='readable_paths',
-        help_text="Users authorised to view this Path and child Datasets"
+        help_text="Team with access to this Path"
     )
 
     def __str__(self):
         return self.path
 
+    def matches(self, path):
+        if not self.regex:
+            return path.startswith(self.path)
+        return re.search(self.regex, os.path.relpath(path, self.path))
+
     class Meta(UUIDModel.Meta):
-        unique_together = [['harvester', 'path', 'regex']]
+        unique_together = [['harvester', 'path', 'regex', 'team']]
 
 
 class HarvestError(models.Model):
@@ -382,6 +591,9 @@ class HarvestError(models.Model):
         help_text="Date and time error was logged in the database"
     )
 
+    def has_object_read_permission(self, request):
+        return self.harvester.has_object_read_permission(request)
+
     def __str__(self):
         if self.file:
             return f"{self.error} [Harvester_{self.harvester_id}/{self.file}]"
@@ -402,6 +614,17 @@ class DataUnit(models.Model):
         default=False,
         help_text="Whether the Unit is included in the initial list of Units"
     )
+
+    @staticmethod
+    def has_write_permission(request):
+        for harvester in Harvester.objects.all():
+            if harvester.is_valid_harvester(request):
+                return True
+        return request.user.is_staff or request.user.is_superuser
+
+    @staticmethod
+    def has_read_permission(request):
+        return True
 
     def __str__(self):
         if self.symbol:
@@ -432,6 +655,17 @@ class DataColumnType(models.Model, ValidatableBySchemaMixin):
         help_text="If set, this name will be used instead of the Column name in Dataframes"
     )
 
+    @staticmethod
+    def has_write_permission(request):
+        for harvester in Harvester.objects.all():
+            if harvester.is_valid_harvester(request):
+                return True
+        return request.user.is_staff or request.user.is_superuser
+
+    @staticmethod
+    def has_read_permission(request):
+        return True
+
     def __str__(self):
         if self.is_default:
             if self.is_required:
@@ -458,6 +692,20 @@ class DataColumn(models.Model):
     data_type = models.TextField(null=False, help_text="Type of the data in this column")
     name_in_file = models.TextField(null=False, help_text="Column title e.g. in .tsv file headers")
 
+    @staticmethod
+    def has_create_permission(request):
+        for harvester in Harvester.objects.all():
+            if harvester.is_valid_harvester(request):
+                return True
+        return request.user.is_staff or request.user.is_superuser
+
+    @staticmethod
+    def has_read_permission(request):
+        return True
+
+    def has_object_write_permission(self, request):
+        return self.file.has_object_write_permission(request)
+
     def get_name(self):
         return self.type.override_child_name or self.name_in_file
 
@@ -469,47 +717,43 @@ class DataColumn(models.Model):
 
 # Timeseries data comes in different types, so we need to store them separately.
 # These helper functions reduce redundancy in the code that creates the models.
-
-
-def _timeseries_column_field():
-    return models.OneToOneField(
+# TODO: could use Django's GenericColumn (GenericForeignKey?) here
+class TimeseriesBase(models.Model):
+    column = models.OneToOneField(
         to=DataColumn,
         on_delete=models.CASCADE,
         help_text="Column whose data are listed"
     )
+    values = ArrayField(models.Field())
+    def __str__(self):
+        if not self.values:
+            return f"{self.column_id}: []"
+        if len(self.values) > 5:
+            return f"{self.column_id}: [{','.join(self.values[:5])}...]"
+        return f"{self.column_id}: [{','.join(self.values)}]"
 
+    def __repr__(self):
+        return str(self)
 
-def _timeseries_str(self):
-    if not self.values:
-        return f"{self.column_id}: []"
-    if len(self.values) > 5:
-        return f"{self.column_id}: [{','.join(self.values[:5])}...]"
-    return f"{self.column_id}: [{','.join(self.values)}]"
+    def has_object_read_permission(self, request):
+        return self.column.file.has_object_read_permission(request)
 
+    def has_object_write_permission(self, request):
+        return self.column.file.has_object_write_permission(request)
 
-def _timeseries_repr(self):
-    return str(self)
+    class Meta:
+        abstract = True
 
-
-class TimeseriesDataFloat(models.Model):
-    column = _timeseries_column_field()
+class TimeseriesDataFloat(TimeseriesBase):
     values = ArrayField(models.FloatField(null=True), null=True, help_text="Row values (floats) for Column")
-    __str__ = _timeseries_str
-    __repr__ = _timeseries_repr
 
 
-class TimeseriesDataInt(models.Model):
-    column = _timeseries_column_field()
+class TimeseriesDataInt(TimeseriesBase):
     values = ArrayField(models.IntegerField(null=True), null=True, help_text="Row values (integers) for Column")
-    __str__ = _timeseries_str
-    __repr__ = _timeseries_repr
 
 
-class TimeseriesDataStr(models.Model):
-    column = _timeseries_column_field()
+class TimeseriesDataStr(TimeseriesBase):
     values = ArrayField(models.TextField(null=True), null=True, help_text="Row values (str) for Column")
-    __str__ = _timeseries_str
-    __repr__ = _timeseries_repr
 
 
 class UnsupportedTimeseriesDataTypeError(TypeError):
@@ -551,11 +795,17 @@ class TimeseriesRangeLabel(models.Model):
     )
     info = models.TextField(help_text="Additional information")
 
+    def has_object_read_permission(self, request):
+        return self.file.has_object_read_permission(request)
+
+    def has_object_write_permission(self, request):
+        return self.file.has_object_write_permission(request)
+
     def __str__(self) -> str:
         return f"{self.label} [{self.range_start}, {self.range_end}]: {self.info}"
 
 
-class ValidationSchema(models.Model):
+class ValidationSchema(ResourceModelPermissionsMixin):
     """
     JSON schema that can be used for validating components.
     """
@@ -564,26 +814,6 @@ class ValidationSchema(models.Model):
 
     def __str__(self):
         return f"{self.name}"
-
-
-class VouchFor(models.Model):
-    new_user = models.ForeignKey(
-        to=User,
-        related_name='vouched_for',
-        null=False,
-        on_delete=models.DO_NOTHING,
-        help_text="User needing approval"
-    )
-    vouching_user = models.ForeignKey(
-        to=User,
-        related_name='vouched_by',
-        null=False,
-        on_delete=models.DO_NOTHING,
-        help_text="User doing approving"
-    )
-
-    def __str__(self):
-        return f"{self.new_user.username} approved by {self.vouching_user.username}"
 
 
 class KnoxAuthToken(models.Model):

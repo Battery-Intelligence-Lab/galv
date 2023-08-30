@@ -3,6 +3,7 @@
         "pk": "2b7313c9-94c2-4276-a4ee-e9d58d8a641b",
         "model": "galv.CyclerTest",
         "fields": {
+            "team": 1,
             "cell_subject": "6a3a910b-d42e-46f6-9604-6fb3c2f3d059",
             "schedule": "5a2d7da9-393c-44ee-827a-5d15133c48d6",
             "equipment": [
@@ -15,6 +16,7 @@
         "pk": "e5a1a806-ef9e-4da8-9dd4-caa6cb491af9",
         "model": "galv.CyclerTest",
         "fields": {
+            "team": 1,
             "cell_subject": "4281a89b-48ff-4f4a-bcd8-5fe427f87a81",
             "schedule": "7771fc54-7209-4564-9ec7-e87855f7ee67",
             "equipment": [
