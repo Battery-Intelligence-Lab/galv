@@ -191,3 +191,15 @@ def validate_against_schemas(serializer: serializers.ModelSerializer, schemas = 
 
 class PermissionsMixin(serializers.Serializer):
     permissions = DRYPermissionsField()
+
+
+def truncated(base_serializer, fields_to_include, *args, **kwargs):
+    """
+    Return a serializer that includes only the specified fields.
+    Serializer is initialized with args and kwargs.
+    """
+    class TruncatedSerializer(base_serializer):
+        class Meta(base_serializer.Meta):
+            fields = fields_to_include
+            read_only_fields = fields_to_include
+    return TruncatedSerializer(*args, **kwargs)

@@ -10,6 +10,8 @@ from django.db import models
 from django.contrib.auth.models import User, Group
 import random
 
+from dry_rest_permissions.generics import allow_staff_or_superuser
+
 from .utils import AdditionalPropertiesModel, JSONModel, LDSources, render_pybamm_schedule, UUIDModel, \
     combine_rdf_props, ValidatableBySchemaMixin
 from .autocomplete_entries import *
@@ -25,6 +27,64 @@ class FileState(models.TextChoices):
     IMPORTED = "IMPORTED"
 
 
+# Proxy User and Group models so that we can apply DRYPermissions
+class UserProxy(User):
+    class Meta:
+        proxy = True
+
+    @staticmethod
+    def has_create_permission(request):
+        return True
+
+    @staticmethod
+    @allow_staff_or_superuser
+    def has_read_permission(request):
+        return True
+
+    @staticmethod
+    def has_write_permission(request):
+        return request.user.is_staff or request.user.is_superuser
+
+    def has_object_write_permission(self, request):
+        return request.user.is_staff or request.user.is_superuser or self == request.user
+
+    def has_object_read_permission(self, request):
+        return request.user.is_staff or request.user.is_superuser or self == request.user
+
+class GroupProxy(Group):
+    class Meta:
+        proxy = True
+
+    @staticmethod
+    def has_create_permission(request):
+        return False
+
+    @staticmethod
+    def has_delete_permission(self, request):
+        return False
+
+    @staticmethod
+    def has_read_permission(request):
+        return True
+
+    @staticmethod
+    def has_write_permission(request):
+        return request.user.is_staff or request.user.is_superuser
+
+    @allow_staff_or_superuser
+    def has_object_write_permission(self, request):
+        owner = self.editable_lab or self.editable_team or self.readable_team
+        if owner is not None:
+            return owner.has_object_write_permission(request) or self in request.user.groups.all()
+        return False
+
+    @allow_staff_or_superuser
+    def has_object_read_permission(self, request):
+        owner = self.editable_lab or self.editable_team or self.readable_team
+        if owner is not None:
+            return owner.has_object_read_permission(request) or self in request.user.groups.all()
+        return self in request.user.groups.all()
+
 class Lab(models.Model):
     name = models.TextField(
         unique=True,
@@ -34,16 +94,20 @@ class Lab(models.Model):
         null=True,
         help_text="Description of the Lab"
     )
-    admin_group = models.ForeignKey(
+    admin_group = models.OneToOneField(
         to=Group,
         on_delete=models.CASCADE,
         null=True,
-        related_name='editable_labs',
+        related_name='editable_lab',
         help_text="Users authorised to make changes to the Lab"
     )
 
     @staticmethod
     def has_read_permission(request):
+        return True
+
+    @staticmethod
+    def has_write_permission(request):
         return True
 
     @staticmethod
@@ -54,7 +118,7 @@ class Lab(models.Model):
         return (
                 request.user.is_staff or
                 request.user.is_superuser or
-                self in user_editable_labs(request.user) or
+                self in user_labs(request.user, True) or
                 self in user_teams(request.user)
         )
 
@@ -62,11 +126,23 @@ class Lab(models.Model):
         return (
                 request.user.is_staff or
                 request.user.is_superuser or
-                self in user_editable_labs(request.user)
+                self in user_labs(request.user, True)
         )
 
     def __str__(self):
         return f"{self.name} [Lab {self.pk}]"
+
+    def save(
+        self, force_insert=False, force_update=False, using=None, update_fields=None
+    ):
+        if self.admin_group is None:
+            # Create groups for Lab
+            self.admin_group = GroupProxy.objects.create(name=f"Lab {self.pk} admins")
+        super(Lab, self).save(force_insert, force_update, using, update_fields)
+
+    def delete(self, using=None, keep_parents=False):
+        self.admin_group.delete()
+        super(Lab, self).delete(using, keep_parents)
 
 
 class Team(models.Model):
@@ -85,24 +161,24 @@ class Team(models.Model):
         related_name='teams',
         help_text="Lab to which this Team belongs"
     )
-    admin_group = models.ForeignKey(
+    admin_group = models.OneToOneField(
         to=Group,
         on_delete=models.CASCADE,
         null=True,
-        related_name='editable_teams',
+        related_name='editable_team',
         help_text="Users authorised to make changes to the Team"
     )
-    member_group = models.ForeignKey(
+    member_group = models.OneToOneField(
         to=Group,
         on_delete=models.CASCADE,
         null=True,
-        related_name='readable_teams',
+        related_name='readable_team',
         help_text="Users authorised to view this Team's Experiments"
     )
 
     @staticmethod
     def has_create_permission(request):
-        return request.user.is_authenticated and len(user_editable_labs(request.user)) > 0
+        return request.user.is_authenticated and len(user_labs(request.user, True)) > 0
 
     @staticmethod
     def has_read_permission(request):
@@ -114,18 +190,34 @@ class Team(models.Model):
 
     def has_object_read_permission(self, request):
         return (
-                self.lab in user_editable_labs(request.user) or
+                self.lab in user_labs(request.user, True) or
                 self in user_teams(request.user)
         )
 
     def has_object_write_permission(self, request):
         return (
-                self.lab in user_editable_labs(request.user) or
+                self.lab in user_labs(request.user, True) or
                 self in user_teams(request.user, True)
         )
 
     def __str__(self):
         return f"{self.name} [Team {self.pk}]"
+
+    def save(
+self, force_insert=False, force_update=False, using=None, update_fields=None
+    ):
+        if self.admin_group is None:
+            # Create groups for Team
+            self.admin_group = GroupProxy.objects.create(name=f"Team {self.pk} admins")
+        if self.member_group is None:
+            self.member_group = GroupProxy.objects.create(name=f"Team {self.pk} members")
+        super(Team, self).save(force_insert, force_update, using, update_fields)
+
+    def delete(self, using=None, keep_parents=False):
+        self.admin_group.delete()
+        self.member_group.delete()
+        super(Team, self).delete(using, keep_parents)
+
 
 def user_teams(user, editable=False):
     """
@@ -142,16 +234,16 @@ def user_teams(user, editable=False):
     return teams
 
 
-def user_labs(user):
+def user_labs(user, editable=False):
     """
     Return a list of all labs the user is a member of
     """
-    return [t.lab for t in user_teams(user)]
-
-def user_editable_labs(user):
+    if not editable:
+        return [t.lab for t in user_teams(user)]
     labs = []
     for g in user.groups.all():
-        labs += [l for l in g.editable_labs.all()]
+        if hasattr(g, 'editable_lab') and g.editable_lab is not None:
+            labs.append(g.editable_lab)
     return labs
 
 def user_is_active(user):
@@ -191,7 +283,7 @@ class ResourceModelPermissionsMixin(models.Model):
 
 
 class BibliographicInfo(models.Model):
-    user = models.OneToOneField(to=User, on_delete=models.CASCADE, null=False, blank=False)
+    user = models.OneToOneField(to=UserProxy, on_delete=models.CASCADE, null=False, blank=False)
     bibjson = models.JSONField(null=False, blank=False)
 
     def has_object_read_permission(self, request):
@@ -347,7 +439,11 @@ class Harvester(UUIDModel, ValidatableBySchemaMixin):
 
     @staticmethod
     def has_create_permission(request):
-        return request.user.is_authenticated and len(user_editable_labs(request.user)) > 0
+        return request.user.is_authenticated and len(user_labs(request.user, True)) > 0
+
+    @staticmethod
+    def has_read_permission(request):
+        return True
 
     def has_object_read_permission(self, request):
         return self.is_valid_harvester(request) or self.lab.has_object_read_permission(request)
@@ -495,7 +591,7 @@ class CyclerTest(JSONModel, ValidatableBySchemaMixin, ResourceModelPermissionsMi
 class Experiment(JSONModel, ValidatableBySchemaMixin, ResourceModelPermissionsMixin):
     title = models.TextField(help_text="Title of the experiment")
     description = models.TextField(help_text="Description of the experiment", null=True, blank=True)
-    authors = models.ManyToManyField(to=User, help_text="Authors of the experiment")
+    authors = models.ManyToManyField(to=UserProxy, help_text="Authors of the experiment")
     protocol = models.JSONField(help_text="Protocol of the experiment", null=True, blank=True)
     protocol_file = models.FileField(help_text="Protocol file of the experiment", null=True, blank=True)
     cycler_tests = models.ManyToManyField(to=CyclerTest, help_text="Cycler tests of the experiment", related_name="experiments")

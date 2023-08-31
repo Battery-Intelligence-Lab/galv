@@ -49,12 +49,11 @@ from .models import Harvester, \
     FileState, \
     KnoxAuthToken, CellFamily, EquipmentTypes, EquipmentModels, EquipmentManufacturers, CellModels, CellManufacturers, \
     CellChemistries, CellFormFactors, ScheduleIdentifiers, EquipmentFamily, Schedule, CyclerTest, ScheduleFamily, \
-    ValidationSchema, Experiment, Lab, Team
+    ValidationSchema, Experiment, Lab, Team, UserProxy, GroupProxy
 from .permissions import HarvesterAccess, ReadOnlyIfInUse, MonitoredPathAccess, VicariousObservedFileAccess, \
-    ObservedFileAccess, GroupEditAccess, HarvesterFilterBackend, TeamFilterBackend, LabFilterBackend
+    ObservedFileAccess, GroupEditAccess, HarvesterFilterBackend, TeamFilterBackend, LabFilterBackend, GroupFilterBackend
 from .serializers.utils import GetOrCreateTextStringSerializer, validate_against_schemas, ValidationSchemaSerializer
 from .utils import get_files_from_path
-from django.contrib.auth.models import User, Group
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.core import validators
@@ -156,7 +155,7 @@ class LoginView(KnoxLoginView):
     http_method_names = ['post', 'options']
 
     def post(self, request, fmt=None):
-        if isinstance(request.user, User):
+        if isinstance(request.user, UserProxy):
             return super(LoginView, self).post(request=request, format=fmt)
         return Response({'detail': "Anonymous login not allowed"}, status=401)
 
@@ -391,8 +390,7 @@ class TeamViewSet(viewsets.ModelViewSet):
         summary="View all Harvesters",
         description="""
 Harvesters monitor a set of MonitoredPaths and send reports about ObservedFiles within those paths.
-You can view all Harvesters on which you are an Administrator or User,
-and those which have MonitoredPaths on which you are an Administrator or User.
+You can view all Harvesters for any Labs you are a member of.
 
 Searchable fields:
 - name
@@ -465,14 +463,14 @@ class HarvesterViewSet(viewsets.ModelViewSet, _WithValidationResultMixin):
     """
     Harvesters monitor a set of MonitoredPaths and send reports about ObservedFiles
     within those paths.
-    A Harvester has Users and Admins, managed by Django's inbuilt User and Group models.
+    A Harvester belongs to a Lab and its Monitored Paths are used by Teams within the Lab.
 
     When Harvesters communicate with the API they do so using special Harvester API Keys.
     These provide access to the report and configuration endpoints.
 
     Harvesters are created by a separate software package available within Galv.
     """
-    permission_classes = [HarvesterAccess]
+    permission_classes = [DRYPermissions]
     filter_backends = [HarvesterFilterBackend]
     filterset_fields = ['name', 'lab_id']
     search_fields = ['@name']
@@ -766,21 +764,12 @@ class MonitoredPathViewSet(viewsets.ModelViewSet, _WithValidationResultMixin):
     MonitoredPaths can be created or updated by a Harvester's admins and users, as
     well as any users who have been given explicit permissions to edit the MonitoredPath.
     """
-    permission_classes = [MonitoredPathAccess]
+    permission_classes = [DRYPermissions]
     # serializer_class = MonitoredPathSerializer
     filterset_fields = ['path', 'harvester__uuid', 'harvester__name']
     search_fields = ['@path']
     queryset = MonitoredPath.objects.all().order_by('-uuid')
     http_method_names = ['get', 'post', 'patch', 'delete', 'options']
-
-    def get_queryset(self):
-        """
-        Return a queryset of MonitoredPaths the user has access to.
-        """
-        return MonitoredPath.objects.filter(
-            Q(user_group__in=self.request.user.groups.all()) |
-            Q(admin_group__in=self.request.user.groups.all())
-        )
 
     def get_serializer_class(self):
         if self.request.method.lower() == "post":
@@ -838,7 +827,7 @@ class ObservedFileViewSet(viewsets.ModelViewSet, _WithValidationResultMixin):
     encountered while importing the file, and/or to Datasets representing the content
     of imported files.
     """
-    permission_classes = [ObservedFileAccess]
+    permission_classes = [DRYPermissions]
     serializer_class = ObservedFileSerializer
     filterset_fields = ['harvester__uuid', 'path', 'state']
     search_fields = ['@path', 'state']
@@ -897,7 +886,7 @@ class HarvestErrorViewSet(viewsets.ReadOnlyModelViewSet):
     HarvestErrors are problems encountered by Harvesters during the crawling of
     MonitoredPaths or the importing or inspection of ObservedFiles.
     """
-    permission_classes = [VicariousObservedFileAccess]
+    permission_classes = [DRYPermissions]
     serializer_class = HarvestErrorSerializer
     filterset_fields = ['file', 'harvester']
     search_fields = ['@error']
@@ -1004,7 +993,7 @@ class CellFamilyViewSet(viewsets.ModelViewSet, _WithValidationResultMixin):
     """
     CellFamilies describe types of Cell.
     """
-    permission_classes = [ReadOnlyIfInUse]
+    permission_classes = [DRYPermissions]
     serializer_class = CellFamilySerializer
     filterset_fields = [
         'model', 'form_factor', 'chemistry', 'nominal_capacity', 'manufacturer'
@@ -1061,7 +1050,7 @@ class CellViewSet(viewsets.ModelViewSet, _WithValidationResultMixin):
     """
     Cells are specific cells which have generated data stored in Datasets/ObservedFiles.
     """
-    permission_classes = [ReadOnlyIfInUse]
+    permission_classes = [DRYPermissions]
     serializer_class = CellSerializer
     filterset_fields = ['identifier', 'family__uuid']
     search_fields = ['@identifier', '@family__model', '@family__manufacturer']
@@ -1126,7 +1115,7 @@ class EquipmentFamilyViewSet(viewsets.ModelViewSet, _WithValidationResultMixin):
     """
     EquipmentFamilies describe types of Equipment.
     """
-    permission_classes = [ReadOnlyIfInUse]
+    permission_classes = [DRYPermissions]
     serializer_class = EquipmentFamilySerializer
     filterset_fields = [
         'model', 'type', 'manufacturer'
@@ -1179,7 +1168,7 @@ class EquipmentViewSet(viewsets.ModelViewSet, _WithValidationResultMixin):
     Equipment can be attached to Datasets and used to view Datasets which
     have used similar equipment.
     """
-    permission_classes = [ReadOnlyIfInUse]
+    permission_classes = [DRYPermissions]
     serializer_class = EquipmentSerializer
     queryset = Equipment.objects.all()
     filterset_fields = ['family__type']
@@ -1236,7 +1225,7 @@ class ScheduleFamilyViewSet(viewsets.ModelViewSet,_WithValidationResultMixin):
     Schedules can be attached to Cycler Tests and used to view Cycler Tests which
     have used similar equipment.
     """
-    permission_classes = [ReadOnlyIfInUse]
+    permission_classes = [DRYPermissions]
     serializer_class = ScheduleFamilySerializer
     queryset = ScheduleFamily.objects.all()
     search_fields = ['@identifier', '@description']
@@ -1286,7 +1275,7 @@ class ScheduleViewSet(viewsets.ModelViewSet, _WithValidationResultMixin):
     Schedules can be attached to Cycler Tests and used to view Cycler Tests which
     have used similar equipment.
     """
-    permission_classes = [ReadOnlyIfInUse]
+    permission_classes = [DRYPermissions]
     serializer_class = ScheduleSerializer
     queryset = Schedule.objects.all()
     search_fields = ['@family__identifier']
@@ -1339,10 +1328,6 @@ class ExperimentViewSet(viewsets.ModelViewSet, _WithValidationResultMixin):
     search_fields = ['@title', '@description']
     http_method_names = ['get', 'post', 'patch', 'delete', 'options']
 
-    def get_queryset(self):
-        if self.request.user and self.request.user.id:
-            return self.queryset.filter(authors__id__contains=self.request.user.id)
-        return self.queryset.none()
 
 @extend_schema_view(
     list=extend_schema(
@@ -1561,11 +1546,11 @@ class UserViewSet(viewsets.ModelViewSet):
     Users are Django User instances custom-serialized for convenience.
     """
     serializer_class = UserSerializer
-    queryset = User.objects.filter(is_active=True)
+    queryset = UserProxy.objects.all()
     http_method_names = ['get', 'patch', 'options']
 
     def partial_update(self, request, *args, **kwargs):
-        user = get_object_or_404(User, id=kwargs.get('pk'))
+        user = get_object_or_404(UserProxy, id=kwargs.get('pk'))
         if user != request.user:
             return error_response("You may only edit your own details", 401)
         email = request.data.get('email')
@@ -1592,13 +1577,11 @@ class GroupViewSet(viewsets.ModelViewSet):
     """
     Groups are Django Group instances custom-serialized for convenience.
     """
-    permission_classes = [GroupEditAccess]
+    permission_classes = [DRYPermissions]
+    filter_backends = [GroupFilterBackend]
     serializer_class = GroupSerializer
-    queryset = Group.objects.none().order_by('-id')
+    queryset = GroupProxy.objects.all().order_by('-id')
     http_method_names = ['patch', 'options', 'get']
-
-    def get_queryset(self):
-        return self.request.user.groups.all().order_by('-id')
 
 
 @extend_schema_view(

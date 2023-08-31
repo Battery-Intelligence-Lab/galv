@@ -23,42 +23,53 @@ from ..models import Harvester, \
     TimeseriesRangeLabel, \
     KnoxAuthToken, CellFamily, EquipmentTypes, CellFormFactors, CellChemistries, CellModels, CellManufacturers, \
     EquipmentManufacturers, EquipmentModels, EquipmentFamily, Schedule, ScheduleIdentifiers, CyclerTest, \
-    render_pybamm_schedule, ScheduleFamily, ValidationSchema, Experiment, Lab, Team
+    render_pybamm_schedule, ScheduleFamily, ValidationSchema, Experiment, Lab, Team, GroupProxy, UserProxy
 from ..models.utils import ScheduleRenderError
 from ..permissions import get_group_owner
 from django.utils import timezone
-from django.contrib.auth.models import User, Group
 from django.conf.global_settings import DATA_UPLOAD_MAX_MEMORY_SIZE
 from rest_framework import serializers
 from knox.models import AuthToken
 
 from .utils import AdditionalPropertiesModelSerializer, GetOrCreateTextField, augment_extra_kwargs, url_help_text, \
-    get_model_field, PermissionsMixin
+    get_model_field, PermissionsMixin, truncated
 
 
-class UserSerializer(serializers.HyperlinkedModelSerializer):
+class UserSerializer(serializers.HyperlinkedModelSerializer, PermissionsMixin):
+    groups = serializers.SerializerMethodField(help_text="Groups this user belongs to")
+
+    def get_groups(self, instance):
+        group_ids = [g.pk for g in instance.groups.all()]
+        return truncated(
+            GroupSerializer,
+            ['url', 'id', 'name', 'permissions'],
+            GroupProxy.objects.filter(id__in=group_ids).order_by('id'),
+            many=True,
+            context=self.context
+        ).data
+
     class Meta:
-        model = User
+        model = UserProxy
         write_fields = ['username', 'email', 'first_name', 'last_name']
         write_only_fields = ['password']
-        read_only_fields = ['url', 'id', 'is_active', 'is_staff', 'is_superuser']
+        read_only_fields = ['url', 'id', 'is_active', 'is_staff', 'is_superuser', 'groups', 'permissions']
         fields = [*write_fields, *read_only_fields, *write_only_fields]
         extra_kwargs = augment_extra_kwargs({
             'password': {'write_only': True, 'help_text': "Password (8 characters minimum)"},
         })
 
-class GroupSerializer(serializers.HyperlinkedModelSerializer):
+class GroupSerializer(serializers.HyperlinkedModelSerializer, PermissionsMixin):
     users = serializers.SerializerMethodField(help_text="Users in the group")
     add_user = serializers.HyperlinkedRelatedField(
         view_name='user-detail',
-        queryset=Group.objects.all(),
+        queryset=GroupProxy.objects.all(),
         write_only=True,
         required=False,
         help_text="User to add"
     )
     remove_user = serializers.HyperlinkedRelatedField(
         view_name='user-detail',
-        queryset=Group.objects.all(),
+        queryset=GroupProxy.objects.all(),
         write_only=True,
         required=False,
         help_text="User to remove"
@@ -66,25 +77,27 @@ class GroupSerializer(serializers.HyperlinkedModelSerializer):
 
     @staticmethod
     def validate_remove_user(value):
-        # Only admin groups have to have at least one user
-        owner = get_group_owner(value)
-        if not owner.admin_group == value:
+        # Only Lab admin groups have to have at least one user
+        if value.editable_labs is None:
             return value
         if len(value.user_set.all()) <= 1:
-            raise ValidationError(f"Removing that user would leave the group empty")
+            raise ValidationError(f"Labs must always have at least one administrator")
         return value
 
     @extend_schema_field(UserSerializer(many=True))
     def get_users(self, instance):
-        return UserSerializer(
-            instance.user_set.all(),
+        user_ids = [u.pk for u in instance.user_set.all()]
+        return truncated(
+            UserSerializer,
+            ['url', 'id', 'username', 'first_name', 'last_name', 'permissions'],
+            UserProxy.objects.filter(id__in=user_ids).order_by('id'),
             many=True,
-            context={'request': self.context['request']}
+            context=self.context
         ).data
 
     class Meta:
-        model = Group
-        read_only_fields = ['id', 'url', 'name', 'users']
+        model = GroupProxy
+        read_only_fields = ['id', 'url', 'name', 'users', 'permissions']
         fields = [*read_only_fields, 'add_user', 'remove_user']
 
 class LabSerializer(serializers.HyperlinkedModelSerializer, PermissionsMixin):
@@ -103,7 +116,7 @@ class TeamSerializer(serializers.HyperlinkedModelSerializer, PermissionsMixin):
             'url', 'id',
             'member_group', 'admin_group',
             'monitored_paths',
-            # 'cell_family_resources', 'cell_resources',
+            'cell_family_resources', 'cell_resources',
             # 'equipment_family_resources', 'equipment_resources',
             # 'schedule_family_resources', 'schedule_resources',
             # 'cycler_test_resources', 'experiment_resources',
@@ -283,7 +296,7 @@ class UserSetSerializer(GroupSerializer):
         return self.my_context(instance, 'is_admin', False)
 
     class Meta:
-        model = Group
+        model = GroupProxy
         fields = ['url', 'id', 'name', 'description', 'is_admin', 'users']
         read_only_fields = fields
         extra_kwargs = augment_extra_kwargs()
@@ -298,7 +311,7 @@ class HarvesterSerializer(serializers.HyperlinkedModelSerializer, PermissionsMix
                 return {}
             return {v.key: v.value for v in value.all() if not v.deleted}
 
-        # respresentation for python object
+        # representation for python object
         def to_internal_value(self, values):
             for k in values.keys():
                 if not re.match(r'^[a-zA-Z0-9_]+$', k):
@@ -320,39 +333,13 @@ class HarvesterSerializer(serializers.HyperlinkedModelSerializer, PermissionsMix
                     v.save()
             return HarvesterEnvVar.objects.filter(harvester=self.root.instance, deleted=False)
 
-    user_sets = serializers.SerializerMethodField(help_text="Roles and the Users assigned to them")
     environment_variables = EnvField(help_text="Environment variables set on this Harvester")
-
-    @extend_schema_field(UserSetSerializer(many=True))
-    def get_user_sets(self, instance):
-        group_ids = [instance.admin_group.id, instance.user_group.id]
-        return UserSetSerializer(
-            Group.objects.filter(id__in=group_ids).order_by('id'),
-            context={
-                'request': self.context.get('request'),
-                instance.admin_group.id: {
-                    'name': 'Admins',
-                    'description': (
-                        'Administrators can change harvester properties, '
-                        'as well as any of the harvester\'s paths or datasets.'
-                    ),
-                    'is_admin': True
-                },
-                instance.user_group.id: {
-                    'name': 'Users',
-                    'description': (
-                        'Users can view harvester properties. '
-                        'They can also add monitored paths.'
-                    )
-                }
-            },
-            many=True
-        ).data
 
     def validate_name(self, value):
         harvesters = Harvester.objects.filter(name=value)
         if self.instance is not None:
             harvesters = harvesters.exclude(uuid=self.instance.uuid)
+            harvesters = harvesters.filter(lab=self.instance.lab)
         if harvesters.exists():
             raise ValidationError('Harvester with that name already exists')
         return value
@@ -367,7 +354,7 @@ class HarvesterSerializer(serializers.HyperlinkedModelSerializer, PermissionsMix
 
     class Meta:
         model = Harvester
-        read_only_fields = ['url', 'uuid', 'last_check_in', 'user_sets', 'permissions']
+        read_only_fields = ['url', 'uuid', 'last_check_in', 'lab', 'permissions']
         fields = [*read_only_fields, 'name', 'sleep_time', 'environment_variables', 'active']
         extra_kwargs = augment_extra_kwargs()
 
@@ -379,7 +366,7 @@ class MonitoredPathSerializer(serializers.HyperlinkedModelSerializer, Permission
     def get_user_sets(self, instance):
         group_ids = [instance.admin_group.id, instance.user_group.id]
         return UserSetSerializer(
-            Group.objects.filter(id__in=group_ids).order_by('id'),
+            GroupProxy.objects.filter(id__in=group_ids).order_by('id'),
             context={
                 'request': self.context.get('request'),
                 instance.admin_group.id: {
@@ -479,10 +466,10 @@ class MonitoredPathCreateSerializer(MonitoredPathSerializer, PermissionsMixin):
                 regex=regex
             )
         # Create user/admin groups
-        monitored_path.admin_group = Group.objects.create(
+        monitored_path.admin_group = GroupProxy.objects.create(
             name=f"path_{monitored_path.uuid}_admins"
         )
-        monitored_path.user_group = Group.objects.create(
+        monitored_path.user_group = GroupProxy.objects.create(
             name=f"path_{monitored_path.uuid}_users"
         )
         monitored_path.save()

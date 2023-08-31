@@ -198,7 +198,11 @@ def register(
 
     # Register
     click.echo(f"Registering new harvester {name} to Lab {lab['name']}")
-    result = query(f"{url}harvesters/", {'lab': lab['url'], 'name': name})
+    result = query(
+        f"{url}harvesters/",
+        {'lab': lab['url'], 'name': name},
+        headers={'Authorization': f"Bearer {api_token}"}
+    )
 
     # Save credentials
     file_name = harvester.settings.get_settings_file()

@@ -49,6 +49,20 @@ class TeamFilterBackend(DRYPermissionFiltersBase):
             return queryset.none()
         return queryset.filter(pk__in=teams)
 
+class GroupFilterBackend(DRYPermissionFiltersBase):
+    action_routing = True
+    def filter_list_queryset(self, request, queryset, view):
+        if request.user.is_superuser or request.user.is_staff:
+            return queryset
+        teams = user_teams(request.user)
+        labs = user_labs(request.user)
+        return queryset.filter(Q(editable_lab__in=labs) | Q(editable_team__in=teams) | Q(readable_team__in=teams))
+
+class MonitoredPathBackend(DRYPermissionFiltersBase):
+    action_routing = True
+    def filter_list_queryset(self, request, queryset, view):
+        return queryset.filter(Q(team__in=user_teams(request.user)) | Q(lab__in=user_labs(request.user, True)))
+
 class HarvesterAccess(permissions.BasePermission):
     """
     Object-level permission to only allow Harvester to edit its own attributes.
