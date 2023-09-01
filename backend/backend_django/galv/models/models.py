@@ -95,7 +95,7 @@ class Lab(models.Model):
         help_text="Description of the Lab"
     )
     admin_group = models.OneToOneField(
-        to=Group,
+        to=GroupProxy,
         on_delete=models.CASCADE,
         null=True,
         related_name='editable_lab',
@@ -162,14 +162,14 @@ class Team(models.Model):
         help_text="Lab to which this Team belongs"
     )
     admin_group = models.OneToOneField(
-        to=Group,
+        to=GroupProxy,
         on_delete=models.CASCADE,
         null=True,
         related_name='editable_team',
         help_text="Users authorised to make changes to the Team"
     )
     member_group = models.OneToOneField(
-        to=Group,
+        to=GroupProxy,
         on_delete=models.CASCADE,
         null=True,
         related_name='readable_team',
@@ -218,19 +218,16 @@ self, force_insert=False, force_update=False, using=None, update_fields=None
         self.member_group.delete()
         super(Team, self).delete(using, keep_parents)
 
-
 def user_teams(user, editable=False):
     """
     Return a list of all teams the user is a member of
     """
-    try:
-        teams = []
-        for g in user.groups.all():
-            teams += [t for t in g.editable_teams.all()]
-            if not editable:
-                teams += [t for t in g.readable_teams.all()]
-    except AttributeError:
-        return []
+    teams = []
+    for g in user.groups.all():
+        if hasattr(g, 'editable_team'):
+            teams.append(g.editable_team)
+        if not editable and hasattr(g, 'readable_team'):
+            teams.append(g.readable_team)
     return teams
 
 
@@ -278,6 +275,14 @@ class ResourceModelPermissionsMixin(models.Model):
     def has_create_permission(request):
         return request.user.is_authenticated and user_is_active(request.user)
 
+    @staticmethod
+    def has_read_permission(request):
+        return True
+
+    @staticmethod
+    def has_write_permission(request):
+        return True
+
     class Meta:
         abstract = True
 
@@ -295,6 +300,10 @@ class BibliographicInfo(models.Model):
     @staticmethod
     def has_create_permission(request):
         return request.user.is_authenticated and user_is_active(request.user)
+
+    @staticmethod
+    def has_read_permission(request):
+        return UserProxy.has_read_permission(request)
 
     def __str__(self):
         return f"{self.user.username} byline"
@@ -443,6 +452,10 @@ class Harvester(UUIDModel, ValidatableBySchemaMixin):
 
     @staticmethod
     def has_read_permission(request):
+        return True
+
+    @staticmethod
+    def has_write_permission(request):
         return True
 
     def has_object_read_permission(self, request):
@@ -618,6 +631,18 @@ class HarvesterEnvVar(models.Model):
     def has_object_write_permission(self, request):
         return self.harvester.has_object_write_permission(request)
 
+    @staticmethod
+    def has_create_permission(request):
+        return Harvester.has_write_permission(request)
+
+    @staticmethod
+    def has_read_permission(request):
+        return Harvester.has_read_permission(request)
+
+    @staticmethod
+    def has_write_permission(request):
+        return Harvester.has_write_permission(request)
+
     def __str__(self):
         return f"{self.key}={self.value}{'*' if self.deleted else ''}"
 
@@ -625,6 +650,8 @@ class HarvesterEnvVar(models.Model):
         unique_together = [['harvester', 'key']]
 
 
+# TODO: Monitored paths can't be automatically added at HarvesterTime unless
+#   a team is specified.
 class MonitoredPath(UUIDModel, ResourceModelPermissionsMixin):
     harvester = models.ForeignKey(
         to=Harvester,
@@ -653,6 +680,8 @@ class MonitoredPath(UUIDModel, ResourceModelPermissionsMixin):
         null=True,
         help_text="Team with access to this Path"
     )
+
+    members_can_edit = models.BooleanField(default=False)
 
     def __str__(self):
         return self.path
@@ -686,6 +715,20 @@ class HarvestError(models.Model):
         null=True,
         help_text="Date and time error was logged in the database"
     )
+
+    @staticmethod
+    def has_create_permission(request):
+        for harvester in Harvester.objects.all():
+            if harvester.is_valid_harvester(request):
+                return True
+        return request.user.is_staff or request.user.is_superuser
+
+    @staticmethod
+    def has_read_permission(request):
+        return Harvester.has_read_permission(request)
+
+    def has_object_write_permission(self, request):
+        return self.harvester.has_object_write_permission(request)
 
     def has_object_read_permission(self, request):
         return self.harvester.has_object_read_permission(request)

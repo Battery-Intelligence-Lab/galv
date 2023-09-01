@@ -100,6 +100,7 @@ class AdditionalPropertiesModelSerializer(serializers.HyperlinkedModelSerializer
     """
     class Meta:
         model: django.db.models.Model
+        include_additional_properties = True
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -108,6 +109,8 @@ class AdditionalPropertiesModelSerializer(serializers.HyperlinkedModelSerializer
             raise ValueError("AdditionalPropertiesModelSerializer must define additional_properties")
 
     def to_representation(self, instance):
+        if hasattr(self.Meta, 'include_additional_properties') and not self.Meta.include_additional_properties:
+            return super().to_representation(instance)
         data = {k: v for k, v in super().to_representation(instance).items() if k != 'additional_properties'}
         for k, v in instance.additional_properties.items():
             if k in data:
@@ -200,6 +203,11 @@ def truncated(base_serializer, fields_to_include, *args, **kwargs):
     """
     class TruncatedSerializer(base_serializer):
         class Meta(base_serializer.Meta):
-            fields = fields_to_include
+            fields = [
+                *[f for f in base_serializer.Meta.fields if f in ['url', 'id', 'uuid']],# 'permissions']],
+                *fields_to_include
+            ]
             read_only_fields = fields_to_include
-    return TruncatedSerializer(*args, **kwargs)
+            include_additional_properties = False
+    serializer = TruncatedSerializer(*args, **kwargs)
+    return serializer

@@ -50,8 +50,8 @@ from .models import Harvester, \
     KnoxAuthToken, CellFamily, EquipmentTypes, EquipmentModels, EquipmentManufacturers, CellModels, CellManufacturers, \
     CellChemistries, CellFormFactors, ScheduleIdentifiers, EquipmentFamily, Schedule, CyclerTest, ScheduleFamily, \
     ValidationSchema, Experiment, Lab, Team, UserProxy, GroupProxy
-from .permissions import HarvesterAccess, ReadOnlyIfInUse, MonitoredPathAccess, VicariousObservedFileAccess, \
-    ObservedFileAccess, GroupEditAccess, HarvesterFilterBackend, TeamFilterBackend, LabFilterBackend, GroupFilterBackend
+from .permissions import HarvesterFilterBackend, TeamFilterBackend, LabFilterBackend, GroupFilterBackend, \
+    MonitoredPathFilterBackend
 from .serializers.utils import GetOrCreateTextStringSerializer, validate_against_schemas, ValidationSchemaSerializer
 from .utils import get_files_from_path
 from django.shortcuts import get_object_or_404
@@ -765,6 +765,7 @@ class MonitoredPathViewSet(viewsets.ModelViewSet, _WithValidationResultMixin):
     well as any users who have been given explicit permissions to edit the MonitoredPath.
     """
     permission_classes = [DRYPermissions]
+    filter_backends = [MonitoredPathFilterBackend]
     # serializer_class = MonitoredPathSerializer
     filterset_fields = ['path', 'harvester__uuid', 'harvester__name']
     search_fields = ['@path']
@@ -833,18 +834,6 @@ class ObservedFileViewSet(viewsets.ModelViewSet, _WithValidationResultMixin):
     search_fields = ['@path', 'state']
     queryset = ObservedFile.objects.all().order_by('-last_observed_time', '-uuid')
     http_method_names = ['get', 'options']
-
-    def get_queryset(self):
-        """
-        Return a queryset of ObservedFiles the user has access to.
-        """
-        uuids = {}
-        for path in MonitoredPath.objects.filter(
-                Q(user_group__in=self.request.user.groups.all()) |
-                Q(admin_group__in=self.request.user.groups.all())
-        ):
-            uuids = {*uuids, *[f.uuid for f in get_files_from_path(path)]}
-        return ObservedFile.objects.filter(uuid__in=uuids)
 
     @action(detail=True, methods=['GET'])
     def reimport(self, request, pk = None):
@@ -1444,16 +1433,6 @@ class DataColumnViewSet(viewsets.ReadOnlyModelViewSet):
     filterset_fields = ['file__name', 'type__unit__symbol', 'file__uuid', 'type__id', 'type__name']
     search_fields = ['@file__name', '@type__name']
     queryset = DataColumn.objects.all().order_by('-file__uuid', '-id')
-
-    def get_queryset(self):
-        user_paths = MonitoredPath.objects.filter(
-            Q(user_group__in=self.request.user.groups.all()) |
-            Q(admin_group__in=self.request.user.groups.all())
-        )
-        files = set()
-        for path in user_paths:
-            files = {*files, *get_files_from_path(path)}
-        return self.queryset.filter(file__in=files)
 
     @action(methods=['GET'], detail=True)
     def values(self, request, pk: int = None):
