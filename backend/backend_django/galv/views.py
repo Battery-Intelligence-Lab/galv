@@ -51,7 +51,7 @@ from .models import Harvester, \
     CellChemistries, CellFormFactors, ScheduleIdentifiers, EquipmentFamily, Schedule, CyclerTest, ScheduleFamily, \
     ValidationSchema, Experiment, Lab, Team, UserProxy, GroupProxy
 from .permissions import HarvesterFilterBackend, TeamFilterBackend, LabFilterBackend, GroupFilterBackend, \
-    MonitoredPathFilterBackend
+    MonitoredPathFilterBackend, ResourceFilterBackend
 from .serializers.utils import GetOrCreateTextStringSerializer, validate_against_schemas, ValidationSchemaSerializer
 from .utils import get_files_from_path
 from django.shortcuts import get_object_or_404
@@ -829,6 +829,7 @@ class ObservedFileViewSet(viewsets.ModelViewSet, _WithValidationResultMixin):
     of imported files.
     """
     permission_classes = [DRYPermissions]
+    filter_backends = [ResourceFilterBackend]
     serializer_class = ObservedFileSerializer
     filterset_fields = ['harvester__uuid', 'path', 'state']
     search_fields = ['@path', 'state']
@@ -983,6 +984,7 @@ class CellFamilyViewSet(viewsets.ModelViewSet, _WithValidationResultMixin):
     CellFamilies describe types of Cell.
     """
     permission_classes = [DRYPermissions]
+    filter_backends = [ResourceFilterBackend]
     serializer_class = CellFamilySerializer
     filterset_fields = [
         'model', 'form_factor', 'chemistry', 'nominal_capacity', 'manufacturer'
@@ -1040,6 +1042,7 @@ class CellViewSet(viewsets.ModelViewSet, _WithValidationResultMixin):
     Cells are specific cells which have generated data stored in Datasets/ObservedFiles.
     """
     permission_classes = [DRYPermissions]
+    filter_backends = [ResourceFilterBackend]
     serializer_class = CellSerializer
     filterset_fields = ['identifier', 'family__uuid']
     search_fields = ['@identifier', '@family__model', '@family__manufacturer']
@@ -1105,6 +1108,7 @@ class EquipmentFamilyViewSet(viewsets.ModelViewSet, _WithValidationResultMixin):
     EquipmentFamilies describe types of Equipment.
     """
     permission_classes = [DRYPermissions]
+    filter_backends = [ResourceFilterBackend]
     serializer_class = EquipmentFamilySerializer
     filterset_fields = [
         'model', 'type', 'manufacturer'
@@ -1158,6 +1162,7 @@ class EquipmentViewSet(viewsets.ModelViewSet, _WithValidationResultMixin):
     have used similar equipment.
     """
     permission_classes = [DRYPermissions]
+    filter_backends = [ResourceFilterBackend]
     serializer_class = EquipmentSerializer
     queryset = Equipment.objects.all()
     filterset_fields = ['family__type']
@@ -1215,6 +1220,7 @@ class ScheduleFamilyViewSet(viewsets.ModelViewSet,_WithValidationResultMixin):
     have used similar equipment.
     """
     permission_classes = [DRYPermissions]
+    filter_backends = [ResourceFilterBackend]
     serializer_class = ScheduleFamilySerializer
     queryset = ScheduleFamily.objects.all()
     search_fields = ['@identifier', '@description']
@@ -1265,6 +1271,7 @@ class ScheduleViewSet(viewsets.ModelViewSet, _WithValidationResultMixin):
     have used similar equipment.
     """
     permission_classes = [DRYPermissions]
+    filter_backends = [ResourceFilterBackend]
     serializer_class = ScheduleSerializer
     queryset = Schedule.objects.all()
     search_fields = ['@family__identifier']
@@ -1280,6 +1287,8 @@ class CyclerTestViewSet(viewsets.ModelViewSet, _WithValidationResultMixin):
     and Cycler Tests can be grouped together into Experiments.
     """
     serializer_class = CyclerTestSerializer
+    permission_classes = [DRYPermissions]
+    filter_backends = [ResourceFilterBackend]
     queryset = CyclerTest.objects.all()
     search_fields = ['@cell__uuid', '@schedule__identifier']
     http_method_names = ['get', 'post', 'patch', 'delete', 'options']
@@ -1313,6 +1322,8 @@ class ExperimentViewSet(viewsets.ModelViewSet, _WithValidationResultMixin):
     Experiments are collections of Cycler Tests which are grouped together for analysis.
     """
     serializer_class = ExperimentSerializer
+    permission_classes = [DRYPermissions]
+    filter_backends = [ResourceFilterBackend]
     queryset = Experiment.objects.all()
     search_fields = ['@title', '@description']
     http_method_names = ['get', 'post', 'patch', 'delete', 'options']
