@@ -25,28 +25,30 @@ from ..models import Harvester, \
     EquipmentManufacturers, EquipmentModels, EquipmentFamily, Schedule, ScheduleIdentifiers, CyclerTest, \
     render_pybamm_schedule, ScheduleFamily, ValidationSchema, Experiment, Lab, Team, GroupProxy, UserProxy
 from ..models.utils import ScheduleRenderError
-from ..permissions import get_group_owner
 from django.utils import timezone
 from django.conf.global_settings import DATA_UPLOAD_MAX_MEMORY_SIZE
 from rest_framework import serializers
 from knox.models import AuthToken
 
 from .utils import AdditionalPropertiesModelSerializer, GetOrCreateTextField, augment_extra_kwargs, url_help_text, \
-    get_model_field, PermissionsMixin, truncated
+    get_model_field, PermissionsMixin, HyperlinkedRelatedIdField, GroupHyperlinkedRelatedIdListField, \
+    UserHyperlinkedRelatedIdListField, TruncatedUserHyperlinkedRelatedIdField, \
+    TruncatedGroupHyperlinkedRelatedIdField, serializer_class_from_string, TruncatedHyperlinkedRelatedIdField
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer, PermissionsMixin):
-    groups = serializers.SerializerMethodField(help_text="Groups this user belongs to")
+    groups = TruncatedGroupHyperlinkedRelatedIdField(
+        'GroupSerializer',
+        ['url', 'id', 'name'],
+        'groupproxy-detail',
+        queryset=GroupProxy.objects.all(),
+        many=True,
+        help_text="Groups this user belongs to"
+    )
 
-    def get_groups(self, instance):
-        group_ids = [g.pk for g in instance.groups.all()]
-        return truncated(
-            GroupSerializer,
-            ['url', 'id', 'name', 'permissions'],
-            GroupProxy.objects.filter(id__in=group_ids).order_by('id'),
-            many=True,
-            context=self.context
-        ).data
+    is_active = serializers.SerializerMethodField(help_text="Whether this user is active")
+    def get_is_active(self, instance):
+        return instance.is_active
 
     class Meta:
         model = UserProxy
@@ -58,18 +60,27 @@ class UserSerializer(serializers.HyperlinkedModelSerializer, PermissionsMixin):
             'password': {'write_only': True, 'help_text': "Password (8 characters minimum)"},
         })
 
+
 class GroupSerializer(serializers.HyperlinkedModelSerializer, PermissionsMixin):
-    users = serializers.SerializerMethodField(help_text="Users in the group")
+    users = TruncatedUserHyperlinkedRelatedIdField(
+        UserSerializer,
+        ['url', 'id', 'username', 'first_name', 'last_name', 'permissions'],
+        'userproxy-detail',
+        queryset=UserProxy.objects.all(),
+        source='user_set',
+        many=True,
+        help_text="Users in the group"
+    )
     add_user = serializers.HyperlinkedRelatedField(
         view_name='userproxy-detail',
-        queryset=GroupProxy.objects.all(),
+        queryset=UserProxy.objects.all(),
         write_only=True,
         required=False,
         help_text="User to add"
     )
     remove_user = serializers.HyperlinkedRelatedField(
         view_name='userproxy-detail',
-        queryset=GroupProxy.objects.all(),
+        queryset=UserProxy.objects.all(),
         write_only=True,
         required=False,
         help_text="User to remove"
@@ -84,16 +95,6 @@ class GroupSerializer(serializers.HyperlinkedModelSerializer, PermissionsMixin):
             raise ValidationError(f"Labs must always have at least one administrator")
         return value
 
-    def get_users(self, instance):
-        user_ids = [u.pk for u in instance.user_set.all()]
-        return truncated(
-            UserSerializer,
-            ['url', 'id', 'username', 'first_name', 'last_name', 'permissions'],
-            UserProxy.objects.filter(id__in=user_ids).order_by('id'),
-            many=True,
-            context=self.context
-        ).data
-
     class Meta:
         model = GroupProxy
         read_only_fields = ['id', 'url', 'name', 'users', 'permissions']
@@ -102,18 +103,77 @@ class GroupSerializer(serializers.HyperlinkedModelSerializer, PermissionsMixin):
 class TeamSerializer(serializers.HyperlinkedModelSerializer, PermissionsMixin):
     member_group = GroupSerializer(help_text="Members of this Team")
     admin_group = GroupSerializer(help_text="Administrators of this Team")
-    cellfamily_resources = serializers.SerializerMethodField(help_text="Cell Families belonging to this Team")
-    cell_resources = serializers.SerializerMethodField(help_text="Cells belonging to this Team")
-    equipmentfamily_resources = serializers.SerializerMethodField(help_text="Equipment Families belonging to this Team")
-    equipment_resources = serializers.SerializerMethodField(help_text="Equipment belonging to this Team")
-    schedulefamily_resources = serializers.SerializerMethodField(help_text="Schedule Families belonging to this Team")
-    schedule_resources = serializers.SerializerMethodField(help_text="Schedules belonging to this Team")
-    cyclertest_resources = serializers.SerializerMethodField(help_text="Cycler Tests belonging to this Team")
-    experiment_resources = serializers.SerializerMethodField(help_text="Experiments belonging to this Team")
-    lab = serializers.SerializerMethodField(help_text="Lab this Team belongs to")
-
-    def get_lab(self, instance):
-        return truncated(LabSerializer, ['name'], instance.lab, context=self.context).data
+    cellfamily_resources = TruncatedHyperlinkedRelatedIdField(
+        'CellFamilySerializer',
+        ['manufacturer', 'model', 'chemistry', 'form_factor'],
+        'cellfamily-detail',
+        queryset=CellFamily.objects.all(),
+        many=True,
+        help_text="Cell Families belonging to this Team"
+    )
+    cell_resources = TruncatedHyperlinkedRelatedIdField(
+        'CellSerializer',
+        ['identifier', 'family'],
+        'cell-detail',
+        queryset=Cell.objects.all(),
+        many=True,
+        help_text="Cells belonging to this Team"
+    )
+    equipmentfamily_resources = TruncatedHyperlinkedRelatedIdField(
+        'EquipmentFamilySerializer',
+        ['type', 'manufacturer', 'model'],
+        'equipmentfamily-detail',
+        queryset=EquipmentFamily.objects.all(),
+        many=True,
+        help_text="Equipment Families belonging to this Team"
+    )
+    equipment_resources = TruncatedHyperlinkedRelatedIdField(
+        'EquipmentSerializer',
+        ['identifier', 'family'],
+        'equipment-detail',
+        queryset=Equipment.objects.all(),
+        many=True,
+        help_text="Equipment belonging to this Team"
+    )
+    schedulefamily_resources = TruncatedHyperlinkedRelatedIdField(
+        'ScheduleFamilySerializer',
+        ['identifier', ],
+        'schedulefamily-detail',
+        queryset=ScheduleFamily.objects.all(),
+        many=True,
+        help_text="Schedule Families belonging to this Team"
+    )
+    schedule_resources = TruncatedHyperlinkedRelatedIdField(
+        'ScheduleSerializer',
+        ['family', ],
+        'schedule-detail',
+        queryset=Schedule.objects.all(),
+        many=True,
+        help_text="Schedules belonging to this Team"
+    )
+    cyclertest_resources = TruncatedHyperlinkedRelatedIdField(
+        'CyclerTestSerializer',
+        ['cell_subject', 'equipment', 'schedule'],
+        'cyclertest-detail',
+        queryset=CyclerTest.objects.all(),
+        many=True,
+        help_text="Cycler Tests belonging to this Team"
+    )
+    experiment_resources = TruncatedHyperlinkedRelatedIdField(
+        'ExperimentSerializer',
+        ['title'],
+        'experiment-detail',
+        queryset=Experiment.objects.all(),
+        many=True,
+        help_text="Experiments belonging to this Team"
+    )
+    lab = TruncatedHyperlinkedRelatedIdField(
+        'LabSerializer',
+        ['name'],
+        'lab-detail',
+        queryset=Lab.objects.all(),
+        help_text="Lab this Team belongs to"
+    )
 
     class Meta:
         model = Team
@@ -131,16 +191,14 @@ class TeamSerializer(serializers.HyperlinkedModelSerializer, PermissionsMixin):
 
 class LabSerializer(serializers.HyperlinkedModelSerializer, PermissionsMixin):
     admin_group = GroupSerializer(help_text="Group of users who can edit this Lab")
-    teams = serializers.SerializerMethodField(help_text="Teams in this Lab")
-
-    def get_teams(self, instance):
-        return truncated(
-            TeamSerializer,
-            ['name', 'admin_group', 'member_group'],
-            instance.teams,
-            many=True,
-            context=self.context
-        ).data
+    teams = TruncatedHyperlinkedRelatedIdField(
+        'TeamSerializer',
+        ['name', 'admin_group', 'member_group'],
+        'team-detail',
+        queryset=Team.objects.all(),
+        many=True,
+        help_text="Teams in this Lab"
+    )
 
     class Meta:
         model = Lab
@@ -148,22 +206,35 @@ class LabSerializer(serializers.HyperlinkedModelSerializer, PermissionsMixin):
         read_only_fields = ['url', 'id', 'teams', 'admins', 'permissions']
 
 class WithTeamMixin(serializers.Serializer):
-    team = serializers.SerializerMethodField(help_text="Team this Cell belongs to")
-
-    def get_team(self, instance):
-        return truncated(TeamSerializer, ['name', 'lab'], instance.team, context=self.context).data
+    team = TruncatedHyperlinkedRelatedIdField(
+        'TeamSerializer',
+        ['name'],
+        'team-detail',
+        queryset=Team.objects.all(),
+        help_text="Team this resource belongs to"
+    )
 
 class CellSerializer(AdditionalPropertiesModelSerializer, PermissionsMixin, WithTeamMixin):
-    family = serializers.SerializerMethodField(help_text="Cell Family this Cell belongs to")
-    cycler_tests = serializers.SerializerMethodField(help_text="Cycles this Cell has performed")
+    family = TruncatedHyperlinkedRelatedIdField(
+        'CellFamilySerializer',
+        ['manufacturer', 'model', 'chemistry', 'form_factor'],
+        'cellfamily-detail',
+        queryset=CellFamily.objects.all(),
+        help_text="Cell Family this Cell belongs to"
+    )
+    cycler_tests = TruncatedHyperlinkedRelatedIdField(
+        'CyclerTestSerializer',
+        ['equipment', 'schedule'],
+        'cyclertest-detail',
+        queryset=CyclerTest.objects.all(),
+        many=True,
+        help_text="Cycler Tests using this Cell"
+    )
 
     class Meta:
         model = Cell
         fields = ['url', 'uuid', 'identifier', 'family', 'cycler_tests', 'in_use', 'team', 'permissions']
         read_only_fields = ['url', 'uuid', 'cycler_tests', 'in_use', 'permissions']
-        extra_kwargs = augment_extra_kwargs({
-            'cycler_tests': {'help_text': "Cycler Tests using this Cell"}
-        })
 
 
 class CellFamilySerializer(AdditionalPropertiesModelSerializer, PermissionsMixin, WithTeamMixin):
@@ -171,7 +242,14 @@ class CellFamilySerializer(AdditionalPropertiesModelSerializer, PermissionsMixin
     model = GetOrCreateTextField(foreign_model=CellModels, help_text="Model number")
     chemistry = GetOrCreateTextField(foreign_model=CellChemistries, help_text="Chemistry type")
     form_factor = GetOrCreateTextField(foreign_model=CellFormFactors, help_text="Physical form factor")
-    cells = serializers.SerializerMethodField(help_text="Cells belonging to this Cell Family")
+    cells = TruncatedHyperlinkedRelatedIdField(
+        'CellSerializer',
+        ['identifier'],
+        'cell-detail',
+        queryset=Cell.objects.all(),
+        many=True,
+        help_text="Cells belonging to this Cell Family"
+    )
 
     class Meta:
         model = CellFamily
@@ -201,7 +279,14 @@ class EquipmentFamilySerializer(AdditionalPropertiesModelSerializer, Permissions
     type = GetOrCreateTextField(foreign_model=EquipmentTypes, help_text="Equipment type")
     manufacturer = GetOrCreateTextField(foreign_model=EquipmentManufacturers, help_text="Manufacturer name")
     model = GetOrCreateTextField(foreign_model=EquipmentModels, help_text="Model number")
-    equipment = serializers.SerializerMethodField(help_text="Equipment belonging to this Equipment Family")
+    equipment = TruncatedHyperlinkedRelatedIdField(
+        'EquipmentSerializer',
+        ['identifier'],
+        'equipment-detail',
+        queryset=Equipment.objects.all(),
+        many=True,
+        help_text="Equipment belonging to this Equipment Family"
+    )
 
     class Meta:
         model = EquipmentFamily
@@ -220,21 +305,37 @@ class EquipmentFamilySerializer(AdditionalPropertiesModelSerializer, Permissions
 
 
 class EquipmentSerializer(AdditionalPropertiesModelSerializer, PermissionsMixin, WithTeamMixin):
-    family = serializers.SerializerMethodField(help_text="Equipment Family this Equipment belongs to")
-    cycler_tests = serializers.SerializerMethodField(help_text="Cycles this Equipment has performed")
+    family = TruncatedHyperlinkedRelatedIdField(
+        'EquipmentFamilySerializer',
+        ['type', 'manufacturer', 'model'],
+        'equipmentfamily-detail',
+        queryset=EquipmentFamily.objects.all(),
+        help_text="Equipment Family this Equipment belongs to"
+    )
+    cycler_tests = TruncatedHyperlinkedRelatedIdField(
+        'CyclerTestSerializer',
+        ['cell_subject', 'schedule'],
+        'cyclertest-detail',
+        queryset=CyclerTest.objects.all(),
+        many=True,
+        help_text="Cycler Tests using this Equipment"
+    )
 
     class Meta:
         model = Equipment
         fields = ['url', 'uuid', 'identifier', 'family', 'calibration_date', 'in_use', 'team', 'cycler_tests', 'permissions']
         read_only_fields = ['url', 'uuid', 'datasets', 'in_use', 'cycler_tests', 'permissions']
-        extra_kwargs = augment_extra_kwargs({
-            'cycler_tests': {'help_text': "Cycler Tests using this Equipment"}
-        })
-
 
 class ScheduleFamilySerializer(AdditionalPropertiesModelSerializer, PermissionsMixin, WithTeamMixin):
     identifier = GetOrCreateTextField(foreign_model=ScheduleIdentifiers)
-    schedules = serializers.SerializerMethodField(help_text="Schedules belonging to this Schedule Family")
+    schedules = TruncatedHyperlinkedRelatedIdField(
+        'ScheduleSerializer',
+        ['family'],
+        'schedule-detail',
+        queryset=Schedule.objects.all(),
+        many=True,
+        help_text="Schedules belonging to this Schedule Family"
+    )
 
     def validate_pybamm_template(self, value):
         # TODO: validate pybamm template against pybamm.step.string
@@ -251,8 +352,21 @@ class ScheduleFamilySerializer(AdditionalPropertiesModelSerializer, PermissionsM
 
 
 class ScheduleSerializer(AdditionalPropertiesModelSerializer, PermissionsMixin, WithTeamMixin):
-    family = serializers.SerializerMethodField(help_text="Schedule Family this Schedule belongs to")
-    cycler_tests = serializers.SerializerMethodField(help_text="Cycles this Schedule has performed")
+    family = TruncatedHyperlinkedRelatedIdField(
+        'ScheduleFamilySerializer',
+        ['identifier'],
+        'schedulefamily-detail',
+        queryset=ScheduleFamily.objects.all(),
+        help_text="Schedule Family this Schedule belongs to"
+    )
+    cycler_tests = TruncatedHyperlinkedRelatedIdField(
+        'CyclerTestSerializer',
+        ['cell_subject', 'equipment'],
+        'cyclertest-detail',
+        queryset=CyclerTest.objects.all(),
+        many=True,
+        help_text="Cycler Tests using this Schedule"
+    )
 
     def validate_pybamm_schedule_variables(self, value):
         template = self.instance.family.pybamm_template
@@ -287,16 +401,32 @@ class ScheduleSerializer(AdditionalPropertiesModelSerializer, PermissionsMixin, 
             'in_use', 'team', 'cycler_tests', 'permissions'
         ]
         read_only_fields = ['url', 'uuid', 'in_use', 'cycler_tests', 'permissions']
-        extra_kwargs = augment_extra_kwargs({
-            'cycler_tests': {'help_text': "Cycler Tests using this Equipment"}
-        })
 
 
 class CyclerTestSerializer(AdditionalPropertiesModelSerializer, PermissionsMixin, WithTeamMixin):
     rendered_schedule = serializers.SerializerMethodField(help_text="Rendered schedule")
-    schedule = serializers.SerializerMethodField(help_text="Schedule this Cycler Test uses")
-    cell_subject = serializers.SerializerMethodField(help_text="Cell this Cycler Test uses")
-    equipment = serializers.SerializerMethodField(help_text="Equipment this Cycler Test uses")
+    schedule = TruncatedHyperlinkedRelatedIdField(
+        'ScheduleSerializer',
+        ['family'],
+        'schedule-detail',
+        queryset=Schedule.objects.all(),
+        help_text="Schedule this Cycler Test uses"
+    )
+    cell_subject = TruncatedHyperlinkedRelatedIdField(
+        'CellSerializer',
+        ['identifier', 'family'],
+        'cell-detail',
+        queryset=Cell.objects.all(),
+        help_text="Cell this Cycler Test uses"
+    )
+    equipment = TruncatedHyperlinkedRelatedIdField(
+        'EquipmentSerializer',
+        ['identifier', 'family'],
+        'equipment-detail',
+        queryset=Equipment.objects.all(),
+        many=True,
+        help_text="Equipment this Cycler Test uses"
+    )
 
     def get_rendered_schedule(self, instance):
         if instance.schedule is None:
@@ -320,10 +450,13 @@ class CyclerTestSerializer(AdditionalPropertiesModelSerializer, PermissionsMixin
 
 
 class HarvesterSerializer(serializers.HyperlinkedModelSerializer, PermissionsMixin):
-    lab = serializers.SerializerMethodField(help_text="Lab this Harvester belongs to")
-
-    def get_lab(self, instance):
-        return truncated(LabSerializer, ['name'], instance.lab, context=self.context).data
+    lab = TruncatedHyperlinkedRelatedIdField(
+        'LabSerializer',
+        ['name'],
+        'lab-detail',
+        queryset=Lab.objects.all(),
+        help_text="Lab this Harvester belongs to"
+    )
 
     class EnvField(serializers.DictField):
         # respresentation for json
@@ -742,145 +875,3 @@ class HarvesterCreateSerializer(HarvesterSerializer, PermissionsMixin):
         fields = ['name', 'lab', 'permissions']
         read_only_fields = ['permissions']
         extra_kwargs = {'name': {'required': True}}
-
-# After all the resource classes are defined, we monkey patch them into Serializers.
-# We can't define them in the class definition because the classes don't exist yet (circular dependency).
-TeamSerializer.get_cellfamily_resources = lambda self, instance: truncated(
-    CellFamilySerializer,
-    ['manufacturer', 'model', 'chemistry', 'form_factor'],
-    instance.cellfamily_resources,
-    many=True,
-    context=self.context
-).data
-TeamSerializer.get_cell_resources = lambda self, instance: truncated(
-    CellSerializer,
-    ['identifier', 'family'],
-    instance.cell_resources,
-    many=True,
-    context=self.context
-).data
-TeamSerializer.get_equipmentfamily_resources = lambda self, instance: truncated(
-    EquipmentFamilySerializer,
-    ['type', 'manufacturer', 'model'],
-    instance.equipmentfamily_resources,
-    many=True,
-    context=self.context
-).data
-TeamSerializer.get_equipment_resources = lambda self, instance: truncated(
-    EquipmentSerializer,
-    ['identifier', 'family'],
-    instance.equipment_resources,
-    many=True,
-    context=self.context
-).data
-TeamSerializer.get_schedulefamily_resources = lambda self, instance: truncated(
-    ScheduleFamilySerializer,
-    ['identifier'],
-    instance.schedulefamily_resources,
-    many=True,
-    context=self.context
-).data
-TeamSerializer.get_schedule_resources = lambda self, instance: truncated(
-    ScheduleSerializer,
-    ['family'],
-    instance.schedule_resources,
-    many=True,
-    context=self.context
-).data
-TeamSerializer.get_cyclertest_resources = lambda self, instance: truncated(
-    CyclerTestSerializer,
-    ['cell_subject', 'equipment', 'schedule'],
-    instance.cyclertest_resources,
-    many=True,
-    context=self.context
-).data
-TeamSerializer.get_experiment_resources = lambda self, instance: truncated(
-    ExperimentSerializer,
-    ['title'],
-    instance.experiment_resources,
-    many=True,
-    context=self.context
-).data
-
-CellSerializer.get_family = lambda self, instance: truncated(
-    CellFamilySerializer,
-    ['manufacturer', 'model', 'chemistry', 'form_factor'],
-    instance.family,
-    context=self.context
-).data
-CellSerializer.get_cycler_tests = lambda self, instance: truncated(
-    CyclerTestSerializer,
-    ['equipment', 'schedule'],
-    instance.cycler_tests,
-    many=True,
-    context=self.context
-).data
-CellFamilySerializer.get_cells = lambda self, instance: truncated(
-    CellSerializer,
-    ['identifier'],
-    instance.cells,
-    many=True,
-    context=self.context
-).data
-
-EquipmentSerializer.get_family = lambda self, instance: truncated(
-    EquipmentFamilySerializer,
-    ['type', 'manufacturer', 'model'],
-    instance.family,
-    context=self.context
-).data
-EquipmentSerializer.get_cycler_tests = lambda self, instance: truncated(
-    CyclerTestSerializer,
-    ['cell_subject', 'equipment', 'schedule'],
-    instance.cycler_tests,
-    many=True,
-    context=self.context
-).data
-EquipmentFamilySerializer.get_equipment = lambda self, instance: truncated(
-    EquipmentSerializer,
-    ['identifier'],
-    instance.equipment,
-    many=True,
-    context=self.context
-).data
-
-ScheduleSerializer.get_family = lambda self, instance: truncated(
-    ScheduleFamilySerializer,
-    ['identifier'],
-    instance.family,
-    context=self.context
-).data
-ScheduleSerializer.get_cycler_tests = lambda self, instance: truncated(
-    CyclerTestSerializer,
-    ['cell_subject', 'equipment'],
-    instance.cycler_tests,
-    many=True,
-    context=self.context
-).data
-ScheduleFamilySerializer.get_schedules = lambda self, instance: truncated(
-    ScheduleSerializer,
-    ['family'],
-    instance.schedules,
-    many=True,
-    context=self.context
-).data
-
-CyclerTestSerializer.get_schedule = lambda self, instance: truncated(
-    ScheduleSerializer,
-    ['family'],
-    instance.schedule,
-    context=self.context
-).data
-CyclerTestSerializer.get_cell_subject = lambda self, instance: truncated(
-    CellSerializer,
-    ['identifier', 'family'],
-    instance.cell_subject,
-    context=self.context
-).data
-CyclerTestSerializer.get_equipment = lambda self, instance: truncated(
-    EquipmentSerializer,
-    ['identifier', 'family'],
-    instance.equipment,
-    many=True,
-    context=self.context
-).data

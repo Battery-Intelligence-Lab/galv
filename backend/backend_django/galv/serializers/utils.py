@@ -1,14 +1,34 @@
 import json
+from collections import OrderedDict
+
 import django.db.models
 import jsonschema
 from dry_rest_permissions.generics import DRYPermissionsField
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from galv.models import ValidationSchema
+from galv.models import ValidationSchema, GroupProxy, UserProxy
 
 url_help_text = "Canonical URL for this object"
 
+
+def serializer_class_from_string(class_name: str):
+    """
+    Get a class from a string.
+    """
+    if class_name not in [
+        'UserSerializer', 'GroupSerializer', 'LabSerializer', 'TeamSerializer', 'HarvesterSerializer',
+        'HarvestErrorSerializer', 'MonitoredPathSerializer', 'ObservedFileSerializer', 'DataColumnSerializer',
+        'DataColumnTypeSerializer', 'DataUnitSerializer', 'CellFamilySerializer', 'CellSerializer',
+        'EquipmentFamilySerializer', 'EquipmentSerializer', 'ScheduleFamilySerializer', 'ScheduleSerializer',
+        'CyclerTestSerializer', 'ExperimentSerializer', 'ValidationSchemaSerializer', 'EquipmentTypesSerializer',
+        'EquipmentModelsSerializer', 'EquipmentManufacturersSerializer', 'CellModelsSerializer',
+        'CellManufacturersSerializer', 'CellChemistriesSerializer', 'CellFormFactorsSerializer',
+        'ScheduleIdentifiersSerializer'
+    ]:
+        raise ValueError(f"serializer_class_from_string will only retrieve custom Serializers, not {class_name}")
+    s = __import__('galv.serializers', fromlist=[class_name])
+    return getattr(s, class_name)
 
 def augment_extra_kwargs(extra_kwargs: dict[str, dict] = None):
     def _augment(name: str, content: dict):
@@ -196,18 +216,127 @@ class PermissionsMixin(serializers.Serializer):
     permissions = DRYPermissionsField()
 
 
-def truncated(base_serializer, fields_to_include, *args, **kwargs):
+class GroupProxyField(serializers.Field):
     """
-    Return a serializer that includes only the specified fields.
-    Serializer is initialized with args and kwargs.
+    Fetch proxied User/Group objects.
     """
-    class TruncatedSerializer(base_serializer):
-        class Meta(base_serializer.Meta):
-            fields = [
-                *[f for f in base_serializer.Meta.fields if f in ['url', 'id', 'uuid']],# 'permissions']],
-                *fields_to_include
-            ]
-            read_only_fields = fields_to_include
-            include_additional_properties = False
-    serializer = TruncatedSerializer(*args, **kwargs)
-    return serializer
+    def to_internal_value(self, data):
+        target = super().to_internal_value(data)
+        target.__class__ = GroupProxy
+        return target
+
+class UserProxyField(serializers.Field):
+    """
+    Fetch proxied User/Group objects.
+    """
+    def to_internal_value(self, data):
+        target = super().to_internal_value(data)
+        target.__class__ = UserProxy
+        return target
+
+
+class HyperlinkedRelatedIdField(serializers.HyperlinkedRelatedField):
+    """
+    A HyperlinkedRelatedField that can be written to more flexibly.
+    Lookup priority is, in order:
+    A string or integer primary key value
+    An object with a 'pk', 'id', or 'uuid' property
+    An object with a 'url' property
+    A URL string
+    """
+    def to_internal_value(self, data):
+        if isinstance(data, dict):
+            if 'pk' in data:
+                data = data['pk']
+            elif 'id' in data:
+                data = data['id']
+            elif 'uuid' in data:
+                data = data['uuid']
+            elif 'url' in data:
+                data = data['url']
+            else:
+                raise ValidationError("Object must have a 'pk', 'id', 'uuid', or 'url' property")
+        try:
+            return self.get_queryset().get(pk=data)
+        except (TypeError, ValueError, self.queryset.model.DoesNotExist):
+            return super().to_internal_value(data)
+
+    def to_representation(self, value):
+        return super().to_representation(value)
+
+class GroupHyperlinkedRelatedIdListField(HyperlinkedRelatedIdField, GroupProxyField):
+    pass
+
+class UserHyperlinkedRelatedIdListField(HyperlinkedRelatedIdField, UserProxyField):
+    pass
+
+class TruncatedHyperlinkedRelatedIdField(HyperlinkedRelatedIdField):
+    """
+    A HyperlinkedRelatedField that reads as a truncated representation of the target object,
+    and writes as the target object's URL.
+
+    The 'url' and '[id|uuid]' fields are always included.
+    Other fields are specified by the 'fields' argument to the constructor.
+    """
+    def __init__(self, child_serializer_class, fields, *args, **kwargs):
+        self.child = child_serializer_class
+        if isinstance(fields, str):
+            fields = [fields]
+        if not isinstance(fields, list):
+            raise ValueError("fields must be a list")
+        self.fields = fields
+        super().__init__(*args, **kwargs)
+
+    def to_representation(self, instance):
+        if isinstance(self.child, str):
+            child = serializer_class_from_string(self.child)
+            self.child = child  # cache result
+        else:
+            child = self.child
+        fields = list({
+            *[f for f in self.child.Meta.fields if f in ['url', 'id', 'uuid']],# 'permissions']],
+            *self.fields
+        })
+
+        class TruncatedSerializer(child):
+            def __init__(self, obj, include_fields, *args, **kwargs):
+                self.Meta.fields = include_fields
+                self.Meta.read_only_fields = include_fields
+                super().__init__(obj, *args, **kwargs)
+            class Meta(child.Meta):
+                include_additional_properties = False
+
+        serializer = TruncatedSerializer(instance, fields, context=self.context)
+        return serializer.data
+
+    def get_choices(self, cutoff=None):
+        queryset = self.get_queryset()
+        if queryset is None:
+            # Ensure that field.choices returns something sensible
+            # even when accessed with a read-only field.
+            return {}
+
+        if cutoff is not None:
+            queryset = queryset[:cutoff]
+
+        return OrderedDict([
+            (
+                item.pk,
+                self.display_value(item)
+            )
+            for item in queryset
+        ])
+
+    def use_pk_only_optimization(self):
+        return False
+
+
+class TruncatedGroupHyperlinkedRelatedIdField(TruncatedHyperlinkedRelatedIdField, GroupProxyField):
+    def to_representation(self, instance):
+        instance.__class__ = GroupProxy
+        return super().to_representation(instance)
+
+class TruncatedUserHyperlinkedRelatedIdField(TruncatedHyperlinkedRelatedIdField, UserProxyField):
+    def to_representation(self, instance):
+        instance.__class__ = UserProxy
+        return super().to_representation(instance)
