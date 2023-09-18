@@ -61,7 +61,7 @@ class GroupFilterBackend(DRYPermissionFiltersBase):
 class MonitoredPathFilterBackend(DRYPermissionFiltersBase):
     action_routing = True
     def filter_list_queryset(self, request, queryset, view):
-        return queryset.filter(Q(team__in=user_teams(request.user)) | Q(lab__in=user_labs(request.user, True)))
+        return queryset.filter(Q(team__in=user_teams(request.user)) | Q(harvester__lab__in=user_labs(request.user, True)))
 
 class ResourceFilterBackend(DRYPermissionFiltersBase):
     action_routing = True

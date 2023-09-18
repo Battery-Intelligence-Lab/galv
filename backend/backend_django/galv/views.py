@@ -18,7 +18,6 @@ from .serializers import HarvesterSerializer, \
     HarvesterCreateSerializer, \
     HarvesterConfigSerializer, \
     MonitoredPathSerializer, \
-    MonitoredPathCreateSerializer, \
     ObservedFileSerializer, \
     CellSerializer, \
     EquipmentSerializer, \
@@ -730,7 +729,7 @@ Register a new directory on for a Harvester to crawl.
 Files in that directory will be scanned periodically by the Harvester,
 becoming ObservedFiles once they are reported to Galv by the Harvester.
         """,
-        request=MonitoredPathCreateSerializer(),
+        request=MonitoredPathSerializer(),
         responses={
             201: MonitoredPathSerializer()
         }
@@ -766,16 +765,16 @@ class MonitoredPathViewSet(viewsets.ModelViewSet, _WithValidationResultMixin):
     """
     permission_classes = [DRYPermissions]
     filter_backends = [MonitoredPathFilterBackend]
-    # serializer_class = MonitoredPathSerializer
+    serializer_class = MonitoredPathSerializer
     filterset_fields = ['path', 'harvester__uuid', 'harvester__name']
     search_fields = ['@path']
     queryset = MonitoredPath.objects.all().order_by('-uuid')
     http_method_names = ['get', 'post', 'patch', 'delete', 'options']
 
-    def get_serializer_class(self):
-        if self.request.method.lower() == "post":
-            return MonitoredPathCreateSerializer
-        return MonitoredPathSerializer
+    # def get_serializer_class(self):
+    #     if self.request.method.lower() == "post":
+    #         return MonitoredPathCreateSerializer
+    #     return MonitoredPathSerializer
 
 
 @extend_schema_view(

@@ -30,6 +30,23 @@ def serializer_class_from_string(class_name: str):
     s = __import__('galv.serializers', fromlist=[class_name])
     return getattr(s, class_name)
 
+class CreateOnlyMixin(serializers.ModelSerializer):
+    """
+    A Serializer that supports create_only fields.
+    create_only fields will be marked as 'read_only' if the view.action is not 'create'.
+    Otherwise, they will retain their original keywords such as 'required' and 'allow_null'.
+    """
+    def get_extra_kwargs(self):
+        extra_kwargs_for_edit = super().get_extra_kwargs()
+        if "view" not in self.context or self.context['view'].action != 'create':
+            for field_name in extra_kwargs_for_edit:
+                kwargs = extra_kwargs_for_edit.get(field_name, {})
+                kwargs['read_only'] = True
+                extra_kwargs_for_edit[field_name] = kwargs
+
+        return extra_kwargs_for_edit
+
+
 def augment_extra_kwargs(extra_kwargs: dict[str, dict] = None):
     def _augment(name: str, content: dict):
         if name == 'url':

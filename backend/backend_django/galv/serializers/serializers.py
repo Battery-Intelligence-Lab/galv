@@ -33,7 +33,8 @@ from knox.models import AuthToken
 from .utils import AdditionalPropertiesModelSerializer, GetOrCreateTextField, augment_extra_kwargs, url_help_text, \
     get_model_field, PermissionsMixin, HyperlinkedRelatedIdField, GroupHyperlinkedRelatedIdListField, \
     UserHyperlinkedRelatedIdListField, TruncatedUserHyperlinkedRelatedIdField, \
-    TruncatedGroupHyperlinkedRelatedIdField, serializer_class_from_string, TruncatedHyperlinkedRelatedIdField
+    TruncatedGroupHyperlinkedRelatedIdField, serializer_class_from_string, TruncatedHyperlinkedRelatedIdField, \
+    CreateOnlyMixin
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer, PermissionsMixin):
@@ -66,7 +67,7 @@ class GroupSerializer(serializers.HyperlinkedModelSerializer, PermissionsMixin):
         UserSerializer,
         ['url', 'id', 'username', 'first_name', 'last_name', 'permissions'],
         'userproxy-detail',
-        queryset=UserProxy.objects.all(),
+        read_only=True,
         source='user_set',
         many=True,
         help_text="Users in the group"
@@ -107,7 +108,7 @@ class TeamSerializer(serializers.HyperlinkedModelSerializer, PermissionsMixin):
         'CellFamilySerializer',
         ['manufacturer', 'model', 'chemistry', 'form_factor'],
         'cellfamily-detail',
-        queryset=CellFamily.objects.all(),
+        read_only=True,
         many=True,
         help_text="Cell Families belonging to this Team"
     )
@@ -115,7 +116,7 @@ class TeamSerializer(serializers.HyperlinkedModelSerializer, PermissionsMixin):
         'CellSerializer',
         ['identifier', 'family'],
         'cell-detail',
-        queryset=Cell.objects.all(),
+        read_only=True,
         many=True,
         help_text="Cells belonging to this Team"
     )
@@ -123,7 +124,7 @@ class TeamSerializer(serializers.HyperlinkedModelSerializer, PermissionsMixin):
         'EquipmentFamilySerializer',
         ['type', 'manufacturer', 'model'],
         'equipmentfamily-detail',
-        queryset=EquipmentFamily.objects.all(),
+        read_only=True,
         many=True,
         help_text="Equipment Families belonging to this Team"
     )
@@ -131,7 +132,7 @@ class TeamSerializer(serializers.HyperlinkedModelSerializer, PermissionsMixin):
         'EquipmentSerializer',
         ['identifier', 'family'],
         'equipment-detail',
-        queryset=Equipment.objects.all(),
+        read_only=True,
         many=True,
         help_text="Equipment belonging to this Team"
     )
@@ -139,7 +140,7 @@ class TeamSerializer(serializers.HyperlinkedModelSerializer, PermissionsMixin):
         'ScheduleFamilySerializer',
         ['identifier', ],
         'schedulefamily-detail',
-        queryset=ScheduleFamily.objects.all(),
+        read_only=True,
         many=True,
         help_text="Schedule Families belonging to this Team"
     )
@@ -147,7 +148,7 @@ class TeamSerializer(serializers.HyperlinkedModelSerializer, PermissionsMixin):
         'ScheduleSerializer',
         ['family', ],
         'schedule-detail',
-        queryset=Schedule.objects.all(),
+        read_only=True,
         many=True,
         help_text="Schedules belonging to this Team"
     )
@@ -155,7 +156,7 @@ class TeamSerializer(serializers.HyperlinkedModelSerializer, PermissionsMixin):
         'CyclerTestSerializer',
         ['cell_subject', 'equipment', 'schedule'],
         'cyclertest-detail',
-        queryset=CyclerTest.objects.all(),
+        read_only=True,
         many=True,
         help_text="Cycler Tests belonging to this Team"
     )
@@ -163,7 +164,7 @@ class TeamSerializer(serializers.HyperlinkedModelSerializer, PermissionsMixin):
         'ExperimentSerializer',
         ['title'],
         'experiment-detail',
-        queryset=Experiment.objects.all(),
+        read_only=True,
         many=True,
         help_text="Experiments belonging to this Team"
     )
@@ -195,7 +196,7 @@ class LabSerializer(serializers.HyperlinkedModelSerializer, PermissionsMixin):
         'TeamSerializer',
         ['name', 'admin_group', 'member_group'],
         'team-detail',
-        queryset=Team.objects.all(),
+        read_only=True,
         many=True,
         help_text="Teams in this Lab"
     )
@@ -203,7 +204,7 @@ class LabSerializer(serializers.HyperlinkedModelSerializer, PermissionsMixin):
     class Meta:
         model = Lab
         fields = ['url', 'id', 'name', 'description', 'admin_group', 'teams', 'permissions']
-        read_only_fields = ['url', 'id', 'teams', 'admins', 'permissions']
+        read_only_fields = ['url', 'id', 'teams', 'admin_group', 'permissions']
 
 class WithTeamMixin(serializers.Serializer):
     team = TruncatedHyperlinkedRelatedIdField(
@@ -226,7 +227,7 @@ class CellSerializer(AdditionalPropertiesModelSerializer, PermissionsMixin, With
         'CyclerTestSerializer',
         ['equipment', 'schedule'],
         'cyclertest-detail',
-        queryset=CyclerTest.objects.all(),
+        read_only=True,
         many=True,
         help_text="Cycler Tests using this Cell"
     )
@@ -246,7 +247,7 @@ class CellFamilySerializer(AdditionalPropertiesModelSerializer, PermissionsMixin
         'CellSerializer',
         ['identifier'],
         'cell-detail',
-        queryset=Cell.objects.all(),
+        read_only=True,
         many=True,
         help_text="Cells belonging to this Cell Family"
     )
@@ -283,7 +284,7 @@ class EquipmentFamilySerializer(AdditionalPropertiesModelSerializer, Permissions
         'EquipmentSerializer',
         ['identifier'],
         'equipment-detail',
-        queryset=Equipment.objects.all(),
+        read_only=True,
         many=True,
         help_text="Equipment belonging to this Equipment Family"
     )
@@ -316,7 +317,7 @@ class EquipmentSerializer(AdditionalPropertiesModelSerializer, PermissionsMixin,
         'CyclerTestSerializer',
         ['cell_subject', 'schedule'],
         'cyclertest-detail',
-        queryset=CyclerTest.objects.all(),
+        read_only=True,
         many=True,
         help_text="Cycler Tests using this Equipment"
     )
@@ -332,7 +333,7 @@ class ScheduleFamilySerializer(AdditionalPropertiesModelSerializer, PermissionsM
         'ScheduleSerializer',
         ['family'],
         'schedule-detail',
-        queryset=Schedule.objects.all(),
+        read_only=True,
         many=True,
         help_text="Schedules belonging to this Schedule Family"
     )
@@ -363,7 +364,7 @@ class ScheduleSerializer(AdditionalPropertiesModelSerializer, PermissionsMixin, 
         'CyclerTestSerializer',
         ['cell_subject', 'equipment'],
         'cyclertest-detail',
-        queryset=CyclerTest.objects.all(),
+        read_only=True,
         many=True,
         help_text="Cycler Tests using this Schedule"
     )
@@ -514,8 +515,14 @@ class HarvesterSerializer(serializers.HyperlinkedModelSerializer, PermissionsMix
         extra_kwargs = augment_extra_kwargs()
 
 
-class MonitoredPathSerializer(serializers.HyperlinkedModelSerializer, PermissionsMixin, WithTeamMixin):
-    harvester = serializers.SerializerMethodField(help_text="Harvester this MonitoredPath belongs to")
+class MonitoredPathSerializer(serializers.HyperlinkedModelSerializer, PermissionsMixin, WithTeamMixin, CreateOnlyMixin):
+    harvester = TruncatedHyperlinkedRelatedIdField(
+        'HarvesterSerializer',
+        ['name'],
+        'harvester-detail',
+        queryset=Harvester.objects.all(),
+        help_text="Harvester this MonitoredPath belongs to"
+    )
 
     def validate_path(self, value):
         try:
@@ -523,12 +530,6 @@ class MonitoredPathSerializer(serializers.HyperlinkedModelSerializer, Permission
         except BaseException as e:
             raise ValidationError(f"Invalid path: {e.__context__}")
         abs_path = os.path.abspath(value)
-        # if self.instance is None:
-        #     try:
-        #         pk = resolve(urlparse(self.initial_data['harvester']).path).kwargs['pk']
-        #         Harvester.objects.get(id=pk)
-        #     except BaseException:
-        #         raise ValidationError("Harvester not found")
         return abs_path
 
     def validate_stable_time(self, value):
@@ -552,57 +553,9 @@ class MonitoredPathSerializer(serializers.HyperlinkedModelSerializer, Permission
     class Meta:
         model = MonitoredPath
         fields = ['url', 'uuid', 'path', 'regex', 'stable_time', 'active', 'harvester', 'team', 'permissions']
-        read_only_fields = ['url', 'uuid', 'harvester', 'team', 'permissions']
-        extra_kwargs = augment_extra_kwargs()
-
-
-class MonitoredPathCreateSerializer(MonitoredPathSerializer, PermissionsMixin):
-
-    def create(self, validated_data):
-        stable_time = validated_data.get('stable_time', 60)
-        regex = validated_data.get('regex')
-        # Default path admin is requesting user or harvester's first admin (if Harvester is requesting path creation)
-        admin = self.context['request'].user
-        if admin is None or not admin.is_authenticated:
-            if self.context['request'].META.get('HTTP_AUTHORIZATION', '') == \
-                    f"Harvester {validated_data['harvester'].api_key}":
-                admin = validated_data['harvester'].admin_group.user_set.all().first()
-        if admin is None:
-            raise ValidationError("Unable to determine admin user for path creation")
-        # Create Path
-        try:
-            monitored_path = MonitoredPath.objects.create(
-                path=validated_data['path'],
-                harvester=validated_data['harvester'],
-                stable_time=stable_time,
-                regex=regex
-            )
-        except (TypeError, ValueError):
-            monitored_path = MonitoredPath.objects.create(
-                path=validated_data['path'],
-                harvester=validated_data['harvester'],
-                regex=regex
-            )
-        # Create user/admin groups
-        monitored_path.admin_group = GroupProxy.objects.create(
-            name=f"path_{monitored_path.uuid}_admins"
-        )
-        monitored_path.user_group = GroupProxy.objects.create(
-            name=f"path_{monitored_path.uuid}_users"
-        )
-        monitored_path.save()
-        admin.groups.add(monitored_path.admin_group)
-        return monitored_path
-
-    def to_representation(self, instance):
-        return MonitoredPathSerializer(context=self.context).to_representation(instance)
-
-    class Meta:
-        model = MonitoredPath
-        fields = ['path', 'regex', 'stable_time', 'harvester', 'team', 'permissions']
-        read_only_fields = ['permissions']
+        read_only_fields = ['url', 'uuid', 'team', 'permissions']
         extra_kwargs = augment_extra_kwargs({
-            'stable_time': {'required': False},
+            'harvester': {'create_only': True}
         })
 
 
