@@ -8,6 +8,7 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 import logging
 
+from backend.backend_django.galv.tests.utils import assert_response_property
 from .factories import UserFactory, \
     HarvesterFactory, \
     MonitoredPathFactory, \
@@ -38,6 +39,14 @@ class ObservedFileTests(APITestCase):
         self.client.force_login(self.admin_user)
         print("Test view path")
         self.assertEqual(self.client.get(self.url).status_code, status.HTTP_200_OK)
+        print("OK")
+
+    def test_path_list(self):
+        self.client.force_login(self.admin_user)
+        print("Test list paths")
+        response = self.client.get(reverse('observedfile-paths', args=(self.files[0].uuid,)))
+        assert_response_property(self, response, self.assertEqual, response.status_code, status.HTTP_200_OK)
+        self.assertIn(str(self.path.uuid), [p['uuid'] for p in response.json()])
         print("OK")
 
     def test_reimport(self):

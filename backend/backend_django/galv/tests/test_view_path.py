@@ -8,9 +8,10 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 import logging
 
+from backend.backend_django.galv.tests.utils import assert_response_property
 from .factories import UserFactory, \
     HarvesterFactory, \
-    MonitoredPathFactory
+    MonitoredPathFactory, ObservedFileFactory
 from galv.models import Harvester, \
     MonitoredPath
 
@@ -102,6 +103,18 @@ class MonitoredPathTests(APITestCase):
         )
         print("OK")
 
+    def test_file_list(self):
+        path = MonitoredPathFactory.create(path=self.path, harvester=self.harvester, regex=r'\.txt$')
+        txt_file = ObservedFileFactory.create(path=self.path + '/file.txt')
+        no_file = ObservedFileFactory.create(path=self.path + '/file.no')
+        url = reverse('monitoredpath-files', args=(path.uuid,))
+        print("Test file list okay")
+        self.client.force_login(self.admin_user)
+        response = self.client.get(url)
+        assert_response_property(self, response, self.assertEqual, response.status_code, status.HTTP_200_OK)
+        self.assertIn(str(txt_file.uuid), [f.get('uuid') for f in response.data])
+        self.assertNotIn(str(no_file.uuid), [f.get('uuid') for f in response.data])
+        print("OK")
 
 if __name__ == '__main__':
     unittest.main()
