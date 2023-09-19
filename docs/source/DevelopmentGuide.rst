@@ -147,18 +147,15 @@ The following 3rd party additions are also included:
 
 * `drf-spectacular <https://drf-spectacular.readthedocs.io/en/latest/readme.html>`_
 
-* OpenAPI REST API specification
+	* OpenAPI REST API specification
+
+* `django-dry-rest-permissions <https://github.com/FJNR-inc/dry-rest-permissions>`_
+
+	* Model-based permissions
 
 There are tweaks to the basic Django systems for:
 
-* providing an unmanaged database table for Timeseries data
-
-  * table created in ``backend/backend_django/galv/management/commands/init_db.py``
-
-    * called in ``backend/server.sh``
-    * unmanaged model included in ``backend/backend_django/galv/models.py``
-
-* prefilling the database with default columns and units
+* prefilling the database with default columns and units, as well as example data values
 
   * ``backend/backend_django/galv/fixtures/`` contains fixture files
 
@@ -171,18 +168,41 @@ There are tweaks to the basic Django systems for:
     * called in ``backend/server.sh``
     * configuration via ``.env.secret``'s ``DJANGO_SUPERUSER_PASSWORD`` entry
 
-* providing custom permission mechanisms for Harvesters and Cell/Cell Family/Equipment
+* handling permissions is done with a model-based approach from DRYPermissions
+	* model permission code in ``backend/backend_django/galv/models/models.py``
+  * filterset code in ``backend/backend_django/galv/permissions.py``
+  *  used in ``backend/backend_django/galv/views.py``
 
-  * code in ``backend/backend_django/galv/permissions.py``
+* there are a few places where the read and write representations of objects differ. This convenience enables:
 
-    *  used in ``backend/backend_django/galv/views.py``
+	* presenting semi-nested representations of objects for convenience
+		* A ``TruncatedHyperlinkedRelatedIdField`` is used to present a nested representation of objects
+			* code in ``backend/backend_django/galv/serializers/utils.py``
+			* allows specification of fields to include
+			* writes can be done with an object id or a full object representation
+				* new objects cannot be created at write-time
+
+	* support for arbitrarily extending model properties with additional fields
+		* code in ``backend/backend_django/galv/models/utils.py``
+
+	* support for validating models against schemas
+		* code in ``backend/backend_django/galv/serializers/utils.py``
+
+	* support for fields which are read-only unless they are being created (create_only)
+		* code in ``backend/backend_django/galv/serializers/utils.py``
+
+	* support for Relational Data Format (RDF, JSON-LD) representations of objects
+		* code in ``backend/backend_django/galv/models/utils.py``
+
+	* support for autocomplete objects that behave as strings in the API but are stored as objects in database
+		* code in ``backend/backend_django/galv/models/autocomplete_entries.py``
+		* database objects can have JSON-LD representations
 
 * extending ``drf-spectacular`` to play nicely with ``django-rest-knox``
 
   * code in ``backend/backend_django/galv/schema.py``
 
 * providing a mechanism for yielding data rapidly into the database via SQL's COPY directive
-
   * code in ``backend/backend_django/galv/utils.py``
 
 Additionally, there are some tricks here and there in 
