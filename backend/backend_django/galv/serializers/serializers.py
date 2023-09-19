@@ -560,11 +560,26 @@ class MonitoredPathSerializer(serializers.HyperlinkedModelSerializer, Permission
 
 
 class ObservedFileSerializer(serializers.HyperlinkedModelSerializer, PermissionsMixin):
+    harvester = TruncatedHyperlinkedRelatedIdField(
+        'HarvesterSerializer',
+        ['name'],
+        'harvester-detail',
+        read_only=True,
+        help_text="Harvester this File belongs to"
+    )
     upload_info = serializers.SerializerMethodField(
         help_text="Metadata required for harvester program to resume file parsing"
     )
     has_required_columns = serializers.SerializerMethodField(
         help_text="Whether the file has all required columns"
+    )
+    columns = TruncatedHyperlinkedRelatedIdField(
+        'DataColumnSerializer',
+        ['name', 'data_type', 'unit', 'values'],
+        view_name='datacolumn-detail',
+        read_only=True,
+        many=True,
+        help_text="Columns extracted from this File"
     )
     column_errors = serializers.SerializerMethodField(
         help_text="Errors in uploaded columns"
@@ -612,8 +627,7 @@ class ObservedFileSerializer(serializers.HyperlinkedModelSerializer, Permissions
         ]
         fields = [*read_only_fields, 'name']
         extra_kwargs = augment_extra_kwargs({
-            'upload_errors': {'help_text': "Errors associated with this File"},
-            'columns': {'help_text': "Columns extracted from this File"}
+            'upload_errors': {'help_text': "Errors associated with this File"}
         })
 
 
@@ -660,6 +674,14 @@ class DataColumnSerializer(serializers.HyperlinkedModelSerializer, PermissionsMi
     description = serializers.SerializerMethodField(help_text=get_model_field(DataColumnType, 'description').help_text)
     unit = serializers.SerializerMethodField(help_text=get_model_field(DataColumnType, 'unit').help_text)
     values = serializers.SerializerMethodField(help_text="Column values")
+    file = TruncatedHyperlinkedRelatedIdField(
+        'ObservedFileSerializer',
+        ['harvester', 'path'],
+        view_name='observedfile-detail',
+        read_only=True,
+        help_text="File this Column belongs to"
+    )
+
 
     def uri(self, rel_url: str) -> str:
         return self.context['request'].build_absolute_uri(rel_url)
@@ -676,9 +698,13 @@ class DataColumnSerializer(serializers.HyperlinkedModelSerializer, PermissionsMi
     def get_description(self, instance) -> str:
         return instance.type.description
 
-    @extend_schema_field(DataUnitSerializer())
     def get_unit(self, instance):
-        return DataUnitSerializer(instance.type.unit, context=self.context).data
+        return {
+            k: v for k, v in
+            DataUnitSerializer(instance.type.unit, context=self.context).data.items() \
+            if k in ['url', 'id', 'name', 'symbol']
+        }
+
 
     def get_values(self, instance) -> str:
         return self.uri(reverse('datacolumn-values', args=(instance.id,)))
@@ -704,7 +730,14 @@ class DataColumnSerializer(serializers.HyperlinkedModelSerializer, PermissionsMi
 
 
 class ExperimentSerializer(serializers.HyperlinkedModelSerializer, PermissionsMixin):
-    cycler_tests = serializers.SerializerMethodField(help_text="Cycler Tests using this Experiment")
+    cycler_tests = TruncatedHyperlinkedRelatedIdField(
+        'CyclerTestSerializer',
+        ['cell_subject', 'equipment', 'schedule'],
+        'cyclertest-detail',
+        queryset=CyclerTest.objects.all(),
+        many=True,
+        help_text="Cycler Tests using this Experiment"
+    )
 
     class Meta:
         model = Experiment
