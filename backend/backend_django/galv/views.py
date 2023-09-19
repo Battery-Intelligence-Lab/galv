@@ -50,7 +50,7 @@ from .models import Harvester, \
     CellChemistries, CellFormFactors, ScheduleIdentifiers, EquipmentFamily, Schedule, CyclerTest, ScheduleFamily, \
     ValidationSchema, Experiment, Lab, Team, UserProxy, GroupProxy
 from .permissions import HarvesterFilterBackend, TeamFilterBackend, LabFilterBackend, GroupFilterBackend, \
-    MonitoredPathFilterBackend, ResourceFilterBackend
+    MonitoredPathFilterBackend, ResourceFilterBackend, ObservedFileFilterBackend
 from .serializers.utils import GetOrCreateTextStringSerializer, validate_against_schemas, ValidationSchemaSerializer
 from .utils import get_files_from_path
 from django.shortcuts import get_object_or_404
@@ -643,10 +643,10 @@ class HarvesterViewSet(viewsets.ModelViewSet, _WithValidationResultMixin):
                                         unit, _ = DataUnit.objects.get_or_create(symbol=column_data['unit_symbol'])
                                     try:
                                         column_type = DataColumnType.objects.get(unit=unit, is_default=True)
-                                        # Don't create multiple special columns for the same unit
-                                        if column_type.override_child_name is not None:
-                                            assert not DataColumn.objects.filter(file=file, type=column_type).exists()
-                                    except (DataColumnType.DoesNotExist, AssertionError):
+                                        # # Don't create multiple special columns for the same unit
+                                        # if column_type.override_child_name is not None:
+                                        #     assert not DataColumn.objects.filter(file=file, type=column_type).exists()
+                                    except DataColumnType.DoesNotExist:
                                         column_type = DataColumnType.objects.create(
                                             name=column_data['column_name'],
                                             unit=unit
@@ -828,7 +828,7 @@ class ObservedFileViewSet(viewsets.ModelViewSet, _WithValidationResultMixin):
     of imported files.
     """
     permission_classes = [DRYPermissions]
-    filter_backends = [ResourceFilterBackend]
+    filter_backends = [ObservedFileFilterBackend]
     serializer_class = ObservedFileSerializer
     filterset_fields = ['harvester__uuid', 'path', 'state']
     search_fields = ['@path', 'state']

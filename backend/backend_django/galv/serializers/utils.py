@@ -302,7 +302,15 @@ class TruncatedHyperlinkedRelatedIdField(HyperlinkedRelatedIdField):
         if not isinstance(fields, list):
             raise ValueError("fields must be a list")
         self.fields = fields
+        # Support create_only=True by removing queryset and applying read_only=True
+        self.create_only = kwargs.pop('create_only', False)
         super().__init__(*args, **kwargs)
+
+    def bind(self, field_name, parent):
+        super().bind(field_name, parent)
+        if self.create_only and 'view' in self.context and self.context['view'].action != 'create':
+                self.read_only = True
+                self.queryset = None
 
     def to_representation(self, instance):
         if isinstance(self.child, str):

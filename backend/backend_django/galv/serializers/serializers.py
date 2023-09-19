@@ -455,7 +455,7 @@ class HarvesterSerializer(serializers.HyperlinkedModelSerializer, PermissionsMix
         'LabSerializer',
         ['name'],
         'lab-detail',
-        queryset=Lab.objects.all(),
+        read_only=True,
         help_text="Lab this Harvester belongs to"
     )
 
@@ -559,7 +559,7 @@ class MonitoredPathSerializer(serializers.HyperlinkedModelSerializer, Permission
         })
 
 
-class ObservedFileSerializer(serializers.HyperlinkedModelSerializer, PermissionsMixin, WithTeamMixin):
+class ObservedFileSerializer(serializers.HyperlinkedModelSerializer, PermissionsMixin):
     upload_info = serializers.SerializerMethodField(
         help_text="Metadata required for harvester program to resume file parsing"
     )
@@ -610,7 +610,7 @@ class ObservedFileSerializer(serializers.HyperlinkedModelSerializer, Permissions
             'column_errors',
             'upload_info', 'columns', 'permissions'
         ]
-        fields = [*read_only_fields, 'name', 'team']
+        fields = [*read_only_fields, 'name']
         extra_kwargs = augment_extra_kwargs({
             'upload_errors': {'help_text': "Errors associated with this File"},
             'columns': {'help_text': "Columns extracted from this File"}
@@ -827,4 +827,4 @@ class HarvesterCreateSerializer(HarvesterSerializer, PermissionsMixin):
         model = Harvester
         fields = ['name', 'lab', 'permissions']
         read_only_fields = ['permissions']
-        extra_kwargs = {'name': {'required': True}}
+        extra_kwargs = {'name': {'required': True}, 'lab': {'required': True}}

@@ -8,7 +8,7 @@ from urllib.parse import urlparse
 from django.db.models import Q
 from dry_rest_permissions.generics import DRYPermissionFiltersBase
 from rest_framework import permissions
-from .models import Harvester, MonitoredPath, user_labs, user_teams
+from .models import Harvester, MonitoredPath, user_labs, user_teams, ObservedFile
 from .utils import get_monitored_paths
 
 
@@ -62,6 +62,22 @@ class MonitoredPathFilterBackend(DRYPermissionFiltersBase):
     action_routing = True
     def filter_list_queryset(self, request, queryset, view):
         return queryset.filter(Q(team__in=user_teams(request.user)) | Q(harvester__lab__in=user_labs(request.user, True)))
+
+class ObservedFileFilterBackend(DRYPermissionFiltersBase):
+    action_routing = True
+    def filter_list_queryset(self, request, queryset, view):
+        files = ObservedFile.objects.all()
+        paths = MonitoredPath.objects.filter(
+            Q(team__in=user_teams(request.user)) | Q(harvester__lab__in=user_labs(request.user, True))
+        )
+        file_ids = []
+        # Not sure there's a good way around checking every file against every path
+        for file in files:
+            for path in paths:
+                if path.harvester == file.harvester and path.matches(file.path):
+                    file_ids.append(file.pk)
+                    break
+        return queryset.filter(pk__in=file_ids)
 
 class ResourceFilterBackend(DRYPermissionFiltersBase):
     action_routing = True

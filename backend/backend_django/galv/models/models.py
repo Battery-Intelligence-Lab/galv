@@ -487,7 +487,7 @@ class Harvester(UUIDModel, ValidatableBySchemaMixin):
         super(Harvester, self).save(*args, **kwargs)
 
 
-class ObservedFile(UUIDModel, ValidatableBySchemaMixin, ResourceModelPermissionsMixin):
+class ObservedFile(UUIDModel, ValidatableBySchemaMixin):
     path = models.TextField(help_text="Absolute file path")
     harvester = models.ForeignKey(
         to=Harvester,
@@ -541,6 +541,10 @@ class ObservedFile(UUIDModel, ValidatableBySchemaMixin, ResourceModelPermissions
         null=True,
         help_text="Extra metadata from the harvester"
     )
+
+    @staticmethod
+    def has_read_permission(request):
+        return True
 
     def has_object_read_permission(self, request):
         if self.harvester.is_valid_harvester(request):
