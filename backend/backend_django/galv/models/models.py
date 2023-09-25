@@ -39,17 +39,29 @@ class UserProxy(User):
     @staticmethod
     @allow_staff_or_superuser
     def has_read_permission(request):
-        return True
+        return request.user.is_authenticated
 
     @staticmethod
+    @allow_staff_or_superuser
     def has_write_permission(request):
-        return request.user.is_staff or request.user.is_superuser
+        return request.user.is_authenticated
 
     def has_object_write_permission(self, request):
-        return request.user.is_staff or request.user.is_superuser or self == request.user
+        return self == request.user
 
+    @allow_staff_or_superuser
     def has_object_read_permission(self, request):
-        return request.user.is_staff or request.user.is_superuser or self == request.user
+        """
+        Users can read their own details, or the details of any user in a lab they are a member of.
+        Lab admins can read the details of any user.
+        """
+        if self == request.user or user_is_lab_admin(request.user):
+            return True
+        request_labs = user_labs(request.user)
+        for lab in user_labs(self):
+            if lab in request_labs:
+                return True
+        return False
 
 class GroupProxy(Group):
     class Meta:
@@ -69,18 +81,27 @@ class GroupProxy(Group):
 
     @staticmethod
     def has_write_permission(request):
-        return request.user.is_staff or request.user.is_superuser
+        return True
+
+    def get_owner(self):
+        if hasattr(self, 'editable_lab'):
+            return self.editable_lab
+        if hasattr(self, 'editable_team'):
+            return self.editable_team
+        if hasattr(self, 'readable_team'):
+            return self.readable_team
+        return None
 
     @allow_staff_or_superuser
     def has_object_write_permission(self, request):
-        owner = self.editable_lab or self.editable_team or self.readable_team
+        owner = self.get_owner()
         if owner is not None:
-            return owner.has_object_write_permission(request) or self in request.user.groups.all()
+            return owner.has_object_write_permission(request)# or self in request.user.groups.all()
         return False
 
     @allow_staff_or_superuser
     def has_object_read_permission(self, request):
-        owner = self.editable_lab or self.editable_team or self.readable_team
+        owner = self.get_owner()
         if owner is not None:
             return owner.has_object_read_permission(request) or self in request.user.groups.all()
         return self in request.user.groups.all()
@@ -115,30 +136,26 @@ class Lab(models.Model):
         return request.user.is_staff or request.user.is_superuser
 
     def has_object_read_permission(self, request):
-        return (
-                request.user.is_staff or
-                request.user.is_superuser or
-                self in user_labs(request.user, True) or
-                self in user_teams(request.user)
-        )
+        return request.user.is_staff or \
+            request.user.is_superuser or \
+            self in user_labs(request.user)
 
     def has_object_write_permission(self, request):
-        return (
-                request.user.is_staff or
-                request.user.is_superuser or
-                self in user_labs(request.user, True)
-        )
+        return request.user.is_staff or \
+            request.user.is_superuser or \
+            self in user_labs(request.user, True)
 
     def __str__(self):
         return f"{self.name} [Lab {self.pk}]"
 
     def save(
-        self, force_insert=False, force_update=False, using=None, update_fields=None
+            self, force_insert=False, force_update=False, using=None, update_fields=None
     ):
+        super(Lab, self).save(force_insert, force_update, using, update_fields)
         if self.admin_group is None:
             # Create groups for Lab
             self.admin_group = GroupProxy.objects.create(name=f"Lab {self.pk} admins")
-        super(Lab, self).save(force_insert, force_update, using, update_fields)
+            self.save()
 
     def delete(self, using=None, keep_parents=False):
         self.admin_group.delete()
@@ -189,29 +206,28 @@ class Team(models.Model):
         return True
 
     def has_object_read_permission(self, request):
-        return (
-                self.lab in user_labs(request.user, True) or
-                self in user_teams(request.user)
-        )
+        return self.lab in user_labs(request.user, True) or \
+            self in user_teams(request.user)
 
     def has_object_write_permission(self, request):
-        return (
-                self.lab in user_labs(request.user, True) or
-                self in user_teams(request.user, True)
-        )
+        return self.lab in user_labs(request.user, True) or \
+            self in user_teams(request.user, True)
 
     def __str__(self):
         return f"{self.name} [Team {self.pk}]"
 
     def save(
-self, force_insert=False, force_update=False, using=None, update_fields=None
+            self, force_insert=False, force_update=False, using=None, update_fields=None
     ):
-        if self.admin_group is None:
-            # Create groups for Team
-            self.admin_group = GroupProxy.objects.create(name=f"Team {self.pk} admins")
-        if self.member_group is None:
-            self.member_group = GroupProxy.objects.create(name=f"Team {self.pk} members")
         super(Team, self).save(force_insert, force_update, using, update_fields)
+        if self.admin_group is None or self.member_group is None:
+            if self.admin_group is None:
+                # Create groups for Team
+                self.admin_group = GroupProxy.objects.create(name=f"Team {self.pk} admins")
+            if self.member_group is None:
+                self.member_group = GroupProxy.objects.create(name=f"Team {self.pk} members")
+            self.save()
+
 
     def delete(self, using=None, keep_parents=False):
         self.admin_group.delete()
@@ -235,16 +251,22 @@ def user_labs(user, editable=False):
     """
     Return a list of all labs the user is a member of
     """
-    if not editable:
-        return [t.lab for t in user_teams(user)]
     labs = []
     for g in user.groups.all():
         if hasattr(g, 'editable_lab') and g.editable_lab is not None:
             labs.append(g.editable_lab)
+    if editable:
+        return labs
+    for t in user_teams(user):
+        if t.lab not in labs:
+            labs.append(t.lab)
     return labs
 
 def user_is_active(user):
     return len(user_labs(user)) > 0
+
+def user_is_lab_admin(user):
+    return len(user_labs(user, True)) > 0
 
 
 class ResourceModelPermissionsMixin(models.Model):
@@ -282,6 +304,13 @@ class ResourceModelPermissionsMixin(models.Model):
     @staticmethod
     def has_write_permission(request):
         return True
+
+    def save(
+        self, force_insert=False, force_update=False, using=None, update_fields=None
+    ):
+        if self.any_user_can_edit and not self.any_user_can_read:
+            self.any_user_can_read = True
+        super(ResourceModelPermissionsMixin, self).save(force_insert, force_update, using, update_fields)
 
     class Meta:
         abstract = True
@@ -330,6 +359,11 @@ class CellFamily(AdditionalPropertiesModel, ValidatableBySchemaMixin, ResourceMo
 
     class Meta(AdditionalPropertiesModel.Meta):
         unique_together = [['model', 'manufacturer']]
+
+    def save(
+        self, force_insert=False, force_update=False, using=None, update_fields=None
+    ):
+        super(CellFamily, self).save(force_insert, force_update, using, update_fields)
 
 class Cell(JSONModel, ValidatableBySchemaMixin, ResourceModelPermissionsMixin):
     identifier = models.TextField(unique=True, help_text="Unique identifier (e.g. serial number) for the cell", null=False)

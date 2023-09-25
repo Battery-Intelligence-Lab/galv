@@ -8,7 +8,7 @@ from django.urls import reverse
 from rest_framework import status
 import logging
 
-from .utils import assert_response_property, GalvTestCase
+from .utils import assert_response_property, APITestCase
 from .factories import ExperimentFactory, CellFactory, ScheduleFactory, EquipmentFactory, ObservedFileFactory, \
     CyclerTestFactory, UserFactory
 from galv.models import Experiment
@@ -17,7 +17,7 @@ logger = logging.getLogger(__file__)
 logger.setLevel(logging.INFO)
 
 
-class ExperimentTests(GalvTestCase):
+class ExperimentTests(APITestCase):
     def test_create(self):
         # Create Experiment properties
         cycler_tests = CyclerTestFactory.create_batch(size=4)

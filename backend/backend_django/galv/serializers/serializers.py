@@ -10,6 +10,8 @@ from drf_spectacular.utils import extend_schema_field
 from rest_framework.exceptions import ValidationError
 from urllib.parse import urlparse
 
+from rest_framework.status import HTTP_403_FORBIDDEN
+
 from ..models import Harvester, \
     HarvesterEnvVar, \
     HarvestError, \
@@ -23,7 +25,8 @@ from ..models import Harvester, \
     TimeseriesRangeLabel, \
     KnoxAuthToken, CellFamily, EquipmentTypes, CellFormFactors, CellChemistries, CellModels, CellManufacturers, \
     EquipmentManufacturers, EquipmentModels, EquipmentFamily, Schedule, ScheduleIdentifiers, CyclerTest, \
-    render_pybamm_schedule, ScheduleFamily, ValidationSchema, Experiment, Lab, Team, GroupProxy, UserProxy
+    render_pybamm_schedule, ScheduleFamily, ValidationSchema, Experiment, Lab, Team, GroupProxy, UserProxy, user_labs, \
+    user_teams
 from ..models.utils import ScheduleRenderError
 from django.utils import timezone
 from django.conf.global_settings import DATA_UPLOAD_MAX_MEMORY_SIZE
@@ -38,11 +41,18 @@ from .utils import AdditionalPropertiesModelSerializer, GetOrCreateTextField, au
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer, PermissionsMixin):
+    current_password = serializers.CharField(
+        write_only=True,
+        allow_blank=True,
+        required=False,
+        style={'input_type': 'password'},
+        help_text="Current password"
+    )
     groups = TruncatedGroupHyperlinkedRelatedIdField(
         'GroupSerializer',
         ['url', 'id', 'name'],
         'groupproxy-detail',
-        queryset=GroupProxy.objects.all(),
+        read_only=True,
         many=True,
         help_text="Groups this user belongs to"
     )
@@ -51,10 +61,31 @@ class UserSerializer(serializers.HyperlinkedModelSerializer, PermissionsMixin):
     def get_is_active(self, instance):
         return instance.is_active
 
+    @staticmethod
+    def validate_password(value):
+        if len(value) < 8:
+            raise ValidationError("Password must be at least 8 characters")
+        return value
+
+    def validate(self, attrs):
+        current_password = attrs.pop('current_password', None)
+        if self.instance and not self.instance.check_password(current_password):
+            raise ValidationError(f"Current password is incorrect")
+        return attrs
+
+    def create(self, validated_data):
+        user = UserProxy.objects.create_user(**validated_data)
+        return user
+
+    def update(self, instance, validated_data):
+        if 'password' in validated_data:
+            instance.set_password(validated_data.pop('password'))
+        return super().update(instance, validated_data)
+
     class Meta:
         model = UserProxy
         write_fields = ['username', 'email', 'first_name', 'last_name']
-        write_only_fields = ['password']
+        write_only_fields = ['password', 'current_password']
         read_only_fields = ['url', 'id', 'is_active', 'is_staff', 'is_superuser', 'groups', 'permissions']
         fields = [*write_fields, *read_only_fields, *write_only_fields]
         extra_kwargs = augment_extra_kwargs({
@@ -66,44 +97,55 @@ class GroupSerializer(serializers.HyperlinkedModelSerializer, PermissionsMixin):
     users = TruncatedUserHyperlinkedRelatedIdField(
         UserSerializer,
         ['url', 'id', 'username', 'first_name', 'last_name', 'permissions'],
-        'userproxy-detail',
+        view_name='userproxy-detail',
         read_only=True,
         source='user_set',
         many=True,
         help_text="Users in the group"
     )
-    add_user = serializers.HyperlinkedRelatedField(
+    add_users = TruncatedUserHyperlinkedRelatedIdField(
+        UserSerializer,
+        ['url', 'id', 'username', 'first_name', 'last_name', 'permissions'],
         view_name='userproxy-detail',
         queryset=UserProxy.objects.all(),
+        many=True,
         write_only=True,
         required=False,
-        help_text="User to add"
+        help_text="Users to add"
     )
-    remove_user = serializers.HyperlinkedRelatedField(
+    remove_users = TruncatedUserHyperlinkedRelatedIdField(
+        UserSerializer,
+        ['url', 'id', 'username', 'first_name', 'last_name', 'permissions'],
         view_name='userproxy-detail',
         queryset=UserProxy.objects.all(),
+        many=True,
         write_only=True,
         required=False,
-        help_text="User to remove"
+        help_text="Users to remove"
     )
 
-    @staticmethod
-    def validate_remove_user(value):
+    def validate_remove_users(self, value):
         # Only Lab admin groups have to have at least one user
-        if value.editable_labs is None:
-            return value
-        if len(value.user_set.all()) <= 1:
-            raise ValidationError(f"Labs must always have at least one administrator")
+        if hasattr(self.instance, 'editable_lab'):
+            if len(self.instance.user_set.all()) <= len(value):
+                raise ValidationError(f"Labs must always have at least one administrator")
         return value
+
+    def update(self, instance, validated_data):
+        if 'add_users' in validated_data:
+            [instance.user_set.add(u) for u in validated_data.pop('add_users')]
+        if 'remove_users' in validated_data:
+            [instance.user_set.remove(u) for u in validated_data.pop('remove_users')]
+        return instance
 
     class Meta:
         model = GroupProxy
         read_only_fields = ['id', 'url', 'name', 'users', 'permissions']
-        fields = [*read_only_fields, 'add_user', 'remove_user']
+        fields = [*read_only_fields, 'add_users', 'remove_users']
 
 class TeamSerializer(serializers.HyperlinkedModelSerializer, PermissionsMixin):
-    member_group = GroupSerializer(help_text="Members of this Team")
-    admin_group = GroupSerializer(help_text="Administrators of this Team")
+    member_group = GroupSerializer(read_only=True, help_text="Members of this Team")
+    admin_group = GroupSerializer(read_only=True, help_text="Administrators of this Team")
     cellfamily_resources = TruncatedHyperlinkedRelatedIdField(
         'CellFamilySerializer',
         ['manufacturer', 'model', 'chemistry', 'form_factor'],
@@ -176,6 +218,16 @@ class TeamSerializer(serializers.HyperlinkedModelSerializer, PermissionsMixin):
         help_text="Lab this Team belongs to"
     )
 
+    def validate_lab(self, value):
+        """
+        Only lab admins can create teams in their lab
+        """
+        try:
+            assert value in user_labs(self.context['request'].user, True)
+        except:
+            raise ValidationError("You may only create Teams in your own lab(s)")
+        return value
+
     class Meta:
         model = Team
         read_only_fields = [
@@ -214,6 +266,23 @@ class WithTeamMixin(serializers.Serializer):
         queryset=Team.objects.all(),
         help_text="Team this resource belongs to"
     )
+
+    def validate_team(self, value):
+        """
+        Only team members can create resources in their team.
+        If a resource is being moved from one team to another, the user must be a member of both teams.
+        """
+        teams = user_teams(self.context['request'].user)
+        try:
+            assert value in teams
+        except:
+            raise ValidationError("You may only create resources in your own team(s)")
+        if self.instance is not None:
+            try:
+                assert self.instance.team in teams
+            except:
+                raise ValidationError("You may only edit resources in your own team(s)")
+        return value
 
 class CellSerializer(AdditionalPropertiesModelSerializer, PermissionsMixin, WithTeamMixin):
     family = TruncatedHyperlinkedRelatedIdField(

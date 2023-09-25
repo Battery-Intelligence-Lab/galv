@@ -7,7 +7,7 @@ from django.urls import reverse
 from rest_framework import status
 import logging
 
-from .utils import GalvTestCase, assert_response_property
+from .utils import APITestCase, assert_response_property
 from .factories import UserFactory, \
     HarvesterFactory, \
     MonitoredPathFactory
@@ -24,7 +24,7 @@ logger = logging.getLogger(__file__)
 logger.setLevel(logging.INFO)
 
 
-class HarvesterTests(GalvTestCase):
+class HarvesterTests(APITestCase):
     def test_create(self):
         url = reverse('harvester-list')
         user_id = 1

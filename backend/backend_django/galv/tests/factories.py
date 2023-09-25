@@ -3,11 +3,13 @@
 # of Oxford, and the 'Galv' Developers. All rights reserved.
 import json
 import os
+from functools import partial
+from typing import Dict, Any
 
 import factory
+from factory.base import StubObject
 import faker
 import django.conf.global_settings
-from django.contrib.auth.models import User, Group
 
 from galv.models import EquipmentFamily, Harvester, \
     HarvestError, \
@@ -23,47 +25,76 @@ from galv.models import EquipmentFamily, Harvester, \
     FileState, ScheduleFamily, Schedule, CyclerTest, \
     ScheduleIdentifiers, CellFormFactors, CellChemistries, CellManufacturers, \
     CellModels, EquipmentManufacturers, EquipmentModels, EquipmentTypes, Experiment, \
-    ValidationSchema
+    ValidationSchema, GroupProxy, UserProxy, Lab, Team
 
 fake = faker.Faker(django.conf.global_settings.LANGUAGE_CODE)
+
+class ByValueMixin:
+    value = None
 
 class EquipmentTypesFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = EquipmentTypes
+        django_get_or_create = ('value',)
     value = factory.Faker('bs')
 class EquipmentModelsFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = EquipmentModels
+        django_get_or_create = ('value',)
     value = factory.Faker('catch_phrase')
 class EquipmentManufacturersFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = EquipmentManufacturers
+        django_get_or_create = ('value',)
     value = factory.Faker('company')
 class CellModelsFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = CellModels
+        django_get_or_create = ('value',)
     value = factory.Faker('catch_phrase')
 class CellManufacturersFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = CellManufacturers
+        django_get_or_create = ('value',)
     value = factory.Faker('company')
 class CellChemistriesFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = CellChemistries
+        django_get_or_create = ('value',)
     value = factory.Faker('catch_phrase')
 class CellFormFactorsFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = CellFormFactors
+        django_get_or_create = ('value',)
     value = factory.Faker('bs')
 class ScheduleIdentifiersFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = ScheduleIdentifiers
+        django_get_or_create = ('value',)
     value = factory.Faker('bs')
+
+def generate_dict_factory(factory: factory.Factory):
+    # https://github.com/FactoryBoy/factory_boy/issues/68#issuecomment-636452903
+    def convert_dict_from_stub(stub: StubObject) -> Dict[str, Any]:
+        stub_dict = stub.__dict__
+        if [k for k in stub_dict.keys()] == ['value']:
+            return stub_dict['value']
+        for key, value in stub_dict.items():
+            if isinstance(value, StubObject):
+                stub_dict[key] = convert_dict_from_stub(value)
+        return stub_dict
+
+    def dict_factory(factory, **kwargs):
+        stub = factory.stub(**kwargs)
+        stub_dict = convert_dict_from_stub(stub)
+        return stub_dict
+
+    return partial(dict_factory, factory)
 
 
 class UserFactory(factory.django.DjangoModelFactory):
     class Meta:
-        model = User
+        model = UserProxy
         django_get_or_create = ('username',)
 
     username = factory.Faker('user_name')
@@ -71,12 +102,29 @@ class UserFactory(factory.django.DjangoModelFactory):
 
 class GroupFactory(factory.django.DjangoModelFactory):
     class Meta:
-        model = Group
+        model = GroupProxy
         django_get_or_create = ('name',)
         exclude = ('n',)
 
     n = factory.Faker('random_int', min=1, max=100000)
     name = factory.LazyAttribute(lambda x: f"group_{x.n}")
+
+
+class LabFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Lab
+        django_get_or_create = ('name',)
+
+    name = factory.Faker('company')
+
+
+class TeamFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Team
+        django_get_or_create = ('name', 'lab',)
+
+    name = factory.Faker('company')
+    lab = factory.SubFactory(LabFactory)
 
 
 class HarvesterFactory(factory.django.DjangoModelFactory):

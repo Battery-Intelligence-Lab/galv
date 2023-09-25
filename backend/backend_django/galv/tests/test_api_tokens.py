@@ -10,14 +10,14 @@ import logging
 
 from galv.models import KnoxAuthToken
 
-from .utils import GalvTestCase, assert_response_property
+from .utils import APITestCase, assert_response_property
 from .factories import UserFactory
 
 logger = logging.getLogger(__file__)
 logger.setLevel(logging.INFO)
 
 
-class TokenTests(GalvTestCase):
+class TokenTests(APITestCase):
     def setUp(self):
         self.user = UserFactory.create(username='test_user')
         self.other_user = UserFactory.create(username='test_user_other')

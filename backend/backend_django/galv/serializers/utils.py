@@ -273,6 +273,12 @@ class HyperlinkedRelatedIdField(serializers.HyperlinkedRelatedField):
                 data = data['url']
             else:
                 raise ValidationError("Object must have a 'pk', 'id', 'uuid', or 'url' property")
+        elif isinstance(data, str):
+            # Try to parse as an integer, but don't fail if it's not because uuids are stringy
+            try:
+                data = int(data)
+            except ValueError:
+                pass
         try:
             return self.get_queryset().get(pk=data)
         except (TypeError, ValueError, self.queryset.model.DoesNotExist):

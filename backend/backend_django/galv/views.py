@@ -50,7 +50,7 @@ from .models import Harvester, \
     CellChemistries, CellFormFactors, ScheduleIdentifiers, EquipmentFamily, Schedule, CyclerTest, ScheduleFamily, \
     ValidationSchema, Experiment, Lab, Team, UserProxy, GroupProxy
 from .permissions import HarvesterFilterBackend, TeamFilterBackend, LabFilterBackend, GroupFilterBackend, \
-    MonitoredPathFilterBackend, ResourceFilterBackend, ObservedFileFilterBackend
+    MonitoredPathFilterBackend, ResourceFilterBackend, ObservedFileFilterBackend, UserFilterBackend
 from .serializers.utils import GetOrCreateTextStringSerializer, validate_against_schemas, ValidationSchemaSerializer
 from .utils import get_files_from_path
 from django.shortcuts import get_object_or_404
@@ -154,13 +154,15 @@ class LoginView(KnoxLoginView):
     http_method_names = ['post', 'options']
 
     def post(self, request, fmt=None):
-        if isinstance(request.user, UserProxy):
+        from django.contrib.auth.base_user import AbstractBaseUser
+        if isinstance(request.user, AbstractBaseUser):
             return super(LoginView, self).post(request=request, format=fmt)
         return Response({'detail': "Anonymous login not allowed"}, status=401)
 
     def get_post_response_data(self, request, token, instance):
+        user = UserProxy.objects.get(pk=request.user.pk)
         return {
-            **UserSerializer(request.user, context={'request': request}).data,
+            **UserSerializer(user, context={'request': request}).data,
             'token': token
         }
 
@@ -1534,32 +1536,11 @@ class UserViewSet(viewsets.ModelViewSet):
     """
     Users are Django User instances custom-serialized for convenience.
     """
+    permission_classes = [DRYPermissions]
+    filter_backends = [UserFilterBackend]
     serializer_class = UserSerializer
     queryset = UserProxy.objects.all()
-    http_method_names = ['get', 'patch', 'options']
-
-    def partial_update(self, request, *args, **kwargs):
-        user = get_object_or_404(UserProxy, id=kwargs.get('pk'))
-        if user != request.user:
-            return error_response("You may only edit your own details", 401)
-        email = request.data.get('email')
-        if email:
-            try:
-                validators.validate_email(email)
-            except validators.ValidationError:
-                return error_response("Invalid email")
-        password = request.data.get('password')
-        if password and not len(password) > 7:
-            return error_response("Password must be at least 8 characters long")
-        current_password = request.data.get('currentPassword')
-        if not user.check_password(current_password):
-            return error_response("You must include the correct current password", 401)
-        if email:
-            user.email = email
-        if password:
-            user.set_password(password)
-        user.save()
-        return Response(UserSerializer(user, context={'request': request}).data)
+    http_method_names = ['get', 'post', 'patch', 'options']
 
 
 class GroupViewSet(viewsets.ModelViewSet):
@@ -1569,8 +1550,11 @@ class GroupViewSet(viewsets.ModelViewSet):
     permission_classes = [DRYPermissions]
     filter_backends = [GroupFilterBackend]
     serializer_class = GroupSerializer
-    queryset = GroupProxy.objects.all().order_by('-id')
+    queryset = GroupProxy.objects.all()
     http_method_names = ['patch', 'options', 'get']
+
+    def update(self, request, *args, **kwargs):
+        return super().update(request, *args, **kwargs)
 
 
 @extend_schema_view(
