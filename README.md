@@ -6,7 +6,11 @@
     [![Docs website](https://github.com/Battery-Intelligence-Lab/galv/actions/workflows/pages/pages-build-deployment/badge.svg?branch=gh-pages)](https://github.com/Battery-Intelligence-Lab/galv/actions/workflows/pages/pages-build-deployment)
 </a>
 
-Galv is an open-source platform for automated storage of battery data with advanced metadata support for battery scientists. Galv is deployed with [docker](https://docs.docker.com/) to support robust local and cloud instances.
+Galv is an open-source platform for automated storage of battery data with advanced metadata support for battery scientists. Galv is deployed with [Docker](https://docs.docker.com/) to support robust local and cloud instances. An example frontend view is displayed below. 
+
+<p align="center">
+<img src="docs/source/img/galv_frontend_v1.png" width="500" />
+</p>
 
 ## Features:
 - REST API for easy data storage and retrieval
@@ -14,6 +18,7 @@ Galv is an open-source platform for automated storage of battery data with advan
 - Metadata support using ontology definitions from BattINFO/EMMO
 - A distributed platform with local data harvesters
 - Docker based deployment
+
 
 ## Getting Started
 Deploying a [Galv](https://Battery-Intelligence-Lab.github.io/galv/UserGuide.html#galv-server) instance in a battery lab can make it easy to access, analyse, and share experimental data. The steps to achieve this are:
