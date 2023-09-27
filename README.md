@@ -9,7 +9,7 @@
 Galv is an open-source platform for automated storage of battery data with advanced metadata support for battery scientists. Galv is deployed with [Docker](https://docs.docker.com/) to support robust local and cloud instances. An example frontend view is displayed below. 
 
 <p align="center">
-<img src="docs/source/img/galv_frontend_v1.png" width="500" />
+<img src="docs/source/img/galv_frontend_v1.png" width="900" />
 </p>
 
 ## Features:
