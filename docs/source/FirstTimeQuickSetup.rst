@@ -152,23 +152,19 @@ If you're running on the same server as the Galv server, this will be ``http://a
 otherwise it will be the path you entered above to connect to the web frontend, 
 but using the ``api`` subdomain. So if you went to ``http://example.com``, go to ``http://api.example.com``.
 
+Next, you'll be asked for your credentials, either as an API token or a username/password.
+You'll need to set up a Lab in the Galv web frontend first, and then create a Lab admin user account.
+
 Next, you'll be asked to specify a name for the new Harvester. 
 
-Each Harvester needs at least one administrator.
-You'll be given a list of (approved) user accounts, and will select one to be the
-Harvester administrator. 
-If you're following this guide, you'll see the Django superuser account and the
-regular user account you just created.
-Select the regular user account.
-You can add other administrators and users to the Harvester using the web frontend later.
-
-When an administrator has been selected the Harvester will register itself with
-the Galv server and begin to monitor for data files.
+The Harvester will register itself with the Galv server and begin to monitor for data files.
 Of course, it currently has no directories to monitor, so the last step is to
 go to the web frontend and configure at least one monitored path for the Harvester.
 
-Open up the web frontend in a browser, log in as the Harvester administrator user,
-and select the 'Harvesters' tab.
+Monitored Paths belong to Teams, so create a Team in the Harvester's Lab if you haven't done so already.
+You should add a user (it can be yourself) to the Team, either as an admin or a regular user.
+
+With the Team account, open up the web frontend in a browser and select the 'Harvesters' tab.
 Click on the magnifying glass icon to see details for your new Harvester.
 Enter a path for the Harvester to monitor (relative to the Harvester's system), 
 and click the plus icon to save your new path.

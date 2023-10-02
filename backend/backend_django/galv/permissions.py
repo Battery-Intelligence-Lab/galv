@@ -95,9 +95,11 @@ class ObservedFileFilterBackend(DRYPermissionFiltersBase):
 class ResourceFilterBackend(DRYPermissionFiltersBase):
     action_routing = True
     def filter_list_queryset(self, request, queryset, view):
-        user_approved = len(user_labs(request.user)) > 0
+        labs = user_labs(request.user)
+        user_approved = len(labs) > 0
         return queryset.filter(
             Q(team__in=user_teams(request.user)) |
-            (Q(any_user_can_read=True) & (Q(any_user_can_read=user_approved))) |
+            (Q(lab_members_can_read=True) & Q(team__lab__in=labs)) |
+            (Q(any_user_can_read=True) & Q(any_user_can_read=user_approved)) |
             Q(anonymous_can_read=True)
         )

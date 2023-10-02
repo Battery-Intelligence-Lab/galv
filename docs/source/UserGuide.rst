@@ -22,42 +22,50 @@ User accounts
 -------------------------------------------------------------------------------
 
 User accounts are created via the :ref:`web-frontend`.
-Each user account must be approved by an existing user before it can log on
-to the system.
-Once user accounts are created and approved, they can be assigned roles
-on Harvesters and Paths.
+Users can be assigned to Teams by Lab and Team administrators.
 
-User roles
+Permissions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Each :ref:`Harvester <harvesters>` requires at least one administrator, and may
-have as many additional administrators as required.
-Each Harvester administrator has the following rights:
+Permissions are based on Lab and Team membership.
 
-* Edit Harvester details (name, sleep time)
-* Appoint other users to administrator role
-* Remove administrators (except the last administrator)
-* Create new :ref:`monitored-paths`
-* Perform any of the administrator actions for any of the Harvester's Paths
+Users can be assigned to a Team by a Lab administrator or Team administrator.
+Lab administrators can be appointed by the Galv server administrator or other
 
-Harvesters have :ref:`monitored-paths` - directories which are monitored for data files.
-Each Path may have any number of administrators and users.
-The Path's Harvester administrators have the same rights as the Path's administrators.
-Path administrators may:
+:ref:`Harvester <harvesters>` access is based on Lab membership.
+You are a member of any Lab that you are a member of a Team for.
+Having access to a :ref:`Harvester <harvesters>` means that you can
+create :ref:`monitored-paths` on that Harvester for your Team.
 
-* Edit Path details (path, stable time)
-* Appoint other users to administrator and user roles
-* Remove users from administrator and user roles
-* Perform any of the Path user actions
+Resources, e.g. :ref:`cells` and :ref:`equipment`,
+are owned by the Team that created them.
+They use a permission table to determine who can view and edit them.
 
-Path users may:
+.. csv-table:: Permission table (**default** | alternative)
+   :header: "User role", "Action", "Allowed"
 
-* View and edit details of datafiles found in the Path directory
-* View and edit datasets produced when those datafiles are imported
+  "Team admin", "Create",  "**yes**"
+  "Team admin", "Read",    "**yes**"
+  "Team admin", "Update",  "**yes**"
+  "Team admin", "Delete",  "**yes**"
+  "Team member", "Create", "**yes**"
+  "Team member", "Read",   "**yes**"
+  "Team member", "Update", "**yes** | no"
+  "Team member", "Delete", "**yes** | no"
+  "Lab user", "Create", "**no**"
+  "Lab user", "Read",   "**yes** | no"
+  "Lab user", "Update", "**no**"
+  "Lab user", "Delete", "**no**"
+  "Approved user", "Create", "**no**"
+  "Approved user", "Read",   "yes | **no**"
+  "Approved user", "Update", "yes | **no**"
+  "Approved user", "Delete", "**no**"
+  "Guest user", "Create", "**no**"
+  "Guest user", "Read",   "yes | **no**"
+  "Guest user", "Update", "**no**"
+  "Guest user", "Delete", "**no**"
 
-Additionally, any registered user may create, and view Cell and Equipment details.
-They may also edit and delete those Cell and Equipment instances provided that no
-datasets are using them.
+An **approved user** is a user who is a member of any Lab (not necessarily the Lab that the Team belongs to).
 
 REST API
 -------------------------------------------------------------------------------

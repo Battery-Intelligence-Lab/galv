@@ -8,7 +8,7 @@ from unittest import SkipTest
 from django.urls import reverse
 from rest_framework.test import APITestCase, APIClient
 
-from backend.backend_django.galv.tests.factories import LabFactory, TeamFactory, UserFactory, generate_dict_factory
+from backend.backend_django.galv.tests.factories import LabFactory, TeamFactory, UserFactory, generate_create_dict
 
 
 def assert_response_property(self, response, assertion, *args, **kwargs):
@@ -24,37 +24,67 @@ class GalvTeamResourceTestCase(APITestCase):
     It has convenience methods for creating users and resources, and for creating
     tests for access to those resources.
 
+    It comes packaged with CRUD tests for the resource,
+    tested against several different user profiles.
+
+    Children should define:
+    - self.factory: the factory for creating resources
+    - self.stub: the stub name of the resource for URL lookups, e.g. 'cell'
+    - self.get_edit_kwargs(): the kwargs to send to update calls
+
     Access is governed by a waterfall model such that the most open criterion
     is tested first.
     The access is tested in this order:
+    * Create requests allowed if:
+        * user is a member of the team
     * Read requests allowed if any of:
         * anonymous_can_read=True
         * any_user_can_read=True and user is in a lab
+        * lab_members_can_read and user is in Team's Lab
         * user is a member of the team
     * Write requests allowed if any of:
         * any_user_can_write=True and user is in a lab
-        * members_can_edit=True and user is a member of the team
+        * lab_members_can_edit and user is in Team's Lab
+        * team_members_can_edit=True and user is a member of the team
         * user is an admin of the team
-    * Create requests allowed if:
+    * Delete requests allowed if:
         * user is a member of the team
     """
-    edit_kwargs = None
-    stub = None
-    factory = None
+    edit_kwargs = None  # a dict of kwargs to send to update calls. Can be overriden with self.get_edit_kwargs()
+    stub = None  # the stub name of the resource, e.g. 'cell'
+    factory = None  # the factory for creating resources
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.create_resource_users_run = False
-        self.create_access_test_resources_run = False
+        self.create_test_resources_run = False
         if self.__class__.__name__ == 'GalvTeamResourceTestCase':
             return
         if self.factory is None:
             raise AssertionError("Children of GalvTeamResourceTestCase must define a self.factory")
         if self.stub is None:
             raise AssertionError("Children of GalvTeamResourceTestCase must define a self.stub")
-        if self.edit_kwargs is None:
-            raise AssertionError("Children of GalvTeamResourceTestCase must define a self.edit_kwargs")
-        self.dict_factory = generate_dict_factory(self.factory)
+        if self.edit_kwargs is None and type(self).get_edit_kwargs == GalvTeamResourceTestCase.get_edit_kwargs:
+            raise AssertionError("Children of GalvTeamResourceTestCase must define self.edit_kwargs or self.get_edit_kwargs()")
+        self.dict_factory = generate_create_dict(self.factory)
+
+    def get_edit_kwargs(self):
+        """
+        Return the kwargs to send to update calls.
+        """
+        return self.edit_kwargs
+
+    def get_create_kwargs(self):
+        """
+        Return the kwargs to send to create calls.
+
+        This method will create a new database entry, including dependents,
+        serialize the base object to a dict, and delete the database entry.
+        """
+        new_resource = self.factory.create(team=self.lab_team)
+        new_resource_dict = new_resource.to_dict()
+        new_resource.delete()
+        return new_resource_dict
 
     def create_resource_users(self) -> None:
         """
@@ -83,22 +113,28 @@ class GalvTeamResourceTestCase(APITestCase):
 
         self.create_resource_users_run = True
 
-    def create_access_test_resources(self):
+    def create_with_perms(self, **perms):
+        return self.factory.create(team=self.lab_team, **perms)
+
+    def create_test_resources(self):
         """
         Helper method for creating access test resources.
         """
-        if hasattr(self, 'create_access_test_resources_run') and self.create_access_test_resources_run:
+        if hasattr(self, 'create_test_resources_run') and self.create_test_resources_run:
             return
-        def create_with_perms(**perms):
-            return self.factory.create(team=self.lab_team, **perms)
 
-        self.access_test_default = create_with_perms()
-        self.access_test_admin_only = create_with_perms(members_can_edit=False)
-        self.access_test_authorised_read = create_with_perms(any_user_can_read=True)
-        self.access_test_authorised_write = create_with_perms(any_user_can_edit=True)
-        self.access_test_open = create_with_perms(anonymous_can_read=True)
+        self.access_test_default = self.create_with_perms()
+        self.access_test_team_no_write = self.create_with_perms(
+            team_members_can_edit=False,
+            team_members_can_delete=False
+        )
+        self.access_test_lab_no_read = self.create_with_perms(lab_members_can_read=False)
+        self.access_test_lab_write = self.create_with_perms(lab_members_can_edit=True)
+        self.access_test_authorised_read = self.create_with_perms(any_user_can_read=True)
+        self.access_test_authorised_write = self.create_with_perms(any_user_can_edit=True)
+        self.access_test_open = self.create_with_perms(anonymous_can_read=True)
 
-        self.create_access_test_resources_run = True
+        self.create_test_resources_run = True
 
     def assertResourceInResult(self, resource, result, assert_single_result=True, assert_reachable=True):
         json = result.json()
@@ -123,128 +159,9 @@ class GalvTeamResourceTestCase(APITestCase):
         if self.__class__.__name__ == 'GalvTeamResourceTestCase':
             raise self.skipTest("This is an abstract base class")
         self.create_resource_users()
-        self.create_access_test_resources()
+        self.create_test_resources()
 
-    def test_read_access_anonymous(self):
-        """
-        * Read requests allowed if any of:
-            * anonymous_can_read=True
-        """
-        self.client.logout()
-        response = self.client.get(reverse(f'{self.stub}-list'))
-        assert_response_property(self, response, self.assertEqual, response.status_code, 200)
-        self.assertEqual(len(response.json()), 1)
-        self.assertResourceInResult(self.access_test_open, response)
-
-    def test_read_access_authorised(self):
-        """
-        * Read requests allowed if any of:
-            * anonymous_can_read=True
-            * any_user_can_read=True and user is in a lab
-        """
-        for user in [self.strange_lab_admin, self.lab_admin]:
-            self.client.force_authenticate(user)
-            response = self.client.get(reverse(f'{self.stub}-list'))
-            assert_response_property(self, response, self.assertEqual, response.status_code, 200)
-            self.assertEqual(len(response.json()), 3)
-            self.assertResourceInResult(self.access_test_open, response)
-            self.assertResourceInResult(self.access_test_authorised_read, response)
-            self.assertResourceInResult(self.access_test_authorised_write, response)
-
-
-    def test_read_access_member(self):
-        """
-        * Read requests allowed if any of:
-            * anonymous_can_read=True
-            * any_user_can_read=True and user is in a lab
-            * user is a member of the team
-        """
-        for user in [self.admin, self.user]:
-            self.client.force_authenticate(user)
-            response = self.client.get(reverse(f'{self.stub}-list'))
-            assert_response_property(self, response, self.assertEqual, response.status_code, 200)
-            self.assertEqual(len(response.json()), 5)
-            self.assertResourceInResult(self.access_test_open, response)
-            self.assertResourceInResult(self.access_test_authorised_read, response)
-            self.assertResourceInResult(self.access_test_authorised_write, response)
-            self.assertResourceInResult(self.access_test_default, response)
-            self.assertResourceInResult(self.access_test_admin_only, response)
-
-    def test_write_access_anonymous(self):
-        """
-        * Write requests disallowed
-        """
-        self.client.logout()
-        for resource in [
-            self.access_test_default,
-            self.access_test_admin_only,
-            self.access_test_authorised_read,
-            self.access_test_authorised_write,
-            self.access_test_open
-        ]:
-            url = reverse(f'{self.stub}-detail', args=(resource.pk,))
-            response = self.client.patch(url, self.edit_kwargs)
-            assert_response_property(self, response, self.assertEqual, response.status_code, 401)
-
-    def test_write_access_authorised(self):
-        """
-        * Write requests allowed if any of:
-            * any_user_can_write=True and user is in a lab
-        """
-        for user in [self.strange_lab_admin, self.lab_admin]:
-            self.client.force_authenticate(user)
-            for resource, code in [
-                (self.access_test_default, 403),
-                (self.access_test_admin_only, 403),
-                (self.access_test_authorised_read, 403),
-                (self.access_test_authorised_write, 200),
-                (self.access_test_open, 403)
-            ]:
-                url = reverse(f'{self.stub}-detail', args=(resource.pk,))
-                response = self.client.patch(url, self.edit_kwargs)
-                assert_response_property(
-                    self, response, self.assertEqual, response.status_code,
-                    code, msg=f"Check {user.username} gets HTTP {code} on {resource} [got {response.status_code} instead]"
-                )
-
-    def test_write_access_member(self):
-        """
-        * Write requests allowed if any of:
-            * any_user_can_write=True and user is in a lab
-            * members_can_edit=True and user is a member of the team
-        """
-        self.client.force_authenticate(self.user)
-        for resource, code in [
-            (self.access_test_default, 200),
-            (self.access_test_admin_only, 403),
-            (self.access_test_authorised_read, 200),
-            (self.access_test_authorised_write, 200),
-            (self.access_test_open, 200)
-        ]:
-            url = reverse(f'{self.stub}-detail', args=(resource.pk,))
-            response = self.client.patch(url, self.edit_kwargs)
-            assert_response_property(self, response, self.assertEqual, response.status_code, code)
-
-    def test_write_access_admin(self):
-        """
-        * Write requests allowed if any of:
-            * any_user_can_write=True and user is in a lab
-            * members_can_edit=True and user is a member of the team
-            * user is an admin of the team
-        """
-        self.client.force_authenticate(self.admin)
-        for resource in [
-            self.access_test_default,
-            self.access_test_admin_only,
-            self.access_test_authorised_read,
-            self.access_test_authorised_write,
-            self.access_test_open
-        ]:
-            url = reverse(f'{self.stub}-detail', args=(resource.pk,))
-            response = self.client.patch(url, self.edit_kwargs)
-            assert_response_property(self, response, self.assertEqual, response.status_code, 200)
-
-    def test_create_access_non_member(self):
+    def test_create_non_team_member(self):
         """
         * Create requests disallowed
         """
@@ -255,14 +172,14 @@ class GalvTeamResourceTestCase(APITestCase):
         ]):
             login()
             url = reverse(f'{self.stub}-list')
-            create_dict = self.dict_factory(team=self.lab_team.id)
+            create_dict = self.dict_factory(team={'id': self.lab_team.id})
             response = self.client.post(url, create_dict, format='json')
             assert_response_property(
                 self, response, self.assertGreaterEqual, response.status_code,
                 400, msg=f"Check can't create resources on {self.lab_team}[login{i}]"
             )
 
-    def test_create_access_member(self):
+    def test_create_team_member(self):
         """
         * Create requests allowed if:
             * user is a member of the team
@@ -270,9 +187,220 @@ class GalvTeamResourceTestCase(APITestCase):
         for user in [self.admin, self.user]:
             self.client.force_authenticate(user)
             url = reverse(f'{self.stub}-list')
-            create_dict = self.dict_factory(team=self.lab_team.id)
+            create_dict = self.dict_factory(team={'id': self.lab_team.id})
             response = self.client.post(url, create_dict, format='json')
             assert_response_property(
                 self, response, self.assertEqual, response.status_code,
                 201, msg=f"Check {user.username} can create resources on {self.lab_team}"
             )
+
+    def test_read_anonymous(self):
+        """
+        * Read requests allowed if any of:
+            * anonymous_can_read=True
+        """
+        self.client.logout()
+        response = self.client.get(reverse(f'{self.stub}-list'))
+        assert_response_property(self, response, self.assertEqual, response.status_code, 200)
+        self.assertEqual(len(response.json()), 1)
+        self.assertResourceInResult(self.access_test_open, response)
+
+    def test_read_authorised(self):
+        """
+        * Read requests allowed if any of:
+            * anonymous_can_read=True
+            * any_user_can_read=True and user is in a lab
+        """
+        self.client.force_authenticate(self.strange_lab_admin)
+        response = self.client.get(reverse(f'{self.stub}-list'))
+        assert_response_property(self, response, self.assertEqual, response.status_code, 200)
+        self.assertEqual(len(response.json()), 3)
+        self.assertResourceInResult(self.access_test_open, response)
+        self.assertResourceInResult(self.access_test_authorised_read, response)
+        self.assertResourceInResult(self.access_test_authorised_write, response)
+
+    def test_read_lab_member(self):
+        """
+        * Read requests allowed if any of:
+            * anonymous_can_read=True
+            * any_user_can_read=True and user is in a lab
+            * lab_members_can_read and user is in Team's Lab
+        """
+        self.client.force_authenticate(self.lab_admin)
+        response = self.client.get(reverse(f'{self.stub}-list'))
+        assert_response_property(self, response, self.assertEqual, response.status_code, 200)
+        self.assertEqual(len(response.json()), 6)
+        for resource in [
+            self.access_test_open,
+            self.access_test_authorised_read,
+            self.access_test_authorised_write,
+            self.access_test_default,
+            self.access_test_lab_write,
+            self.access_test_team_no_write
+        ]:
+            self.assertResourceInResult(resource, response)
+
+
+    def test_read_team_member(self):
+        """
+        * Read requests allowed if any of:
+            * anonymous_can_read=True
+            * any_user_can_read=True and user is in a lab
+            * user is a member of the team
+        """
+        for user in [self.admin, self.user]:
+            self.client.force_authenticate(user)
+            response = self.client.get(reverse(f'{self.stub}-list'))
+            assert_response_property(self, response, self.assertEqual, response.status_code, 200)
+            self.assertEqual(len(response.json()), 7)
+            for resource in [
+                self.access_test_open,
+                self.access_test_authorised_read,
+                self.access_test_authorised_write,
+                self.access_test_default,
+                self.access_test_lab_write,
+                self.access_test_team_no_write,
+                self.access_test_lab_no_read
+            ]:
+                self.assertResourceInResult(resource, response)
+
+    def test_update_anonymous(self):
+        """
+        * Write requests disallowed
+        """
+        self.client.logout()
+        for resource in [
+            self.access_test_default,
+            self.access_test_team_no_write,
+            self.access_test_lab_no_read,
+            self.access_test_lab_write,
+            self.access_test_authorised_read,
+            self.access_test_authorised_write,
+            self.access_test_open
+        ]:
+            url = reverse(f'{self.stub}-detail', args=(resource.pk,))
+            response = self.client.patch(url, self.get_edit_kwargs())
+            assert_response_property(self, response, self.assertEqual, response.status_code, 401)
+
+    def test_update_authorised(self):
+        """
+        * Write requests allowed if any of:
+            * any_user_can_write=True and user is in a lab
+        """
+        self.client.force_authenticate(self.strange_lab_admin)
+        for resource, code in [
+            (self.access_test_default, 403),
+            (self.access_test_team_no_write, 403),
+            (self.access_test_authorised_read, 403),
+            (self.access_test_authorised_write, 200),
+            (self.access_test_lab_no_read, 403),
+            (self.access_test_lab_write, 403),
+            (self.access_test_open, 403)
+        ]:
+            url = reverse(f'{self.stub}-detail', args=(resource.pk,))
+            response = self.client.patch(url, self.get_edit_kwargs())
+            assert_response_property(
+                self, response, self.assertEqual, response.status_code,
+                code, msg=f"Check {self.strange_lab_admin.username} gets HTTP {code} on {resource} [got {response.status_code} instead]"
+            )
+    def test_update_lab_member(self):
+        """
+        * Write requests allowed if any of:
+            * any_user_can_write=True and user is in a lab
+            * lab_members_can_edit and user is in Team's Lab
+        """
+        self.client.force_authenticate(self.lab_admin)
+        for resource, code in [
+            (self.access_test_default, 403),
+            (self.access_test_team_no_write, 403),
+            (self.access_test_authorised_read, 403),
+            (self.access_test_authorised_write, 200),
+            (self.access_test_lab_no_read, 403),
+            (self.access_test_lab_write, 200),
+            (self.access_test_open, 403)
+        ]:
+            url = reverse(f'{self.stub}-detail', args=(resource.pk,))
+            response = self.client.patch(url, self.get_edit_kwargs())
+            assert_response_property(
+                self, response, self.assertEqual, response.status_code,
+                code, msg=f"Check {self.lab_admin.username} gets HTTP {code} on {resource} [got {response.status_code} instead]"
+            )
+
+    def test_update_team_member(self):
+        """
+        * Write requests allowed if any of:
+            * any_user_can_write=True and user is in a lab
+            * team_members_can_edit=True and user is a member of the team
+        """
+        self.client.force_authenticate(self.user)
+        for resource, code in [
+            (self.access_test_default, 200),
+            (self.access_test_team_no_write, 403),
+            (self.access_test_lab_no_read, 200),
+            (self.access_test_lab_write, 200),
+            (self.access_test_authorised_read, 200),
+            (self.access_test_authorised_write, 200),
+            (self.access_test_open, 200)
+        ]:
+            url = reverse(f'{self.stub}-detail', args=(resource.pk,))
+            response = self.client.patch(url, self.get_edit_kwargs())
+            assert_response_property(self, response, self.assertEqual, response.status_code, code)
+
+    def test_update_team_admin(self):
+        """
+        * Write requests allowed if any of:
+            * any_user_can_write=True and user is in a lab
+            * team_members_can_edit=True and user is a member of the team
+            * user is an admin of the team
+        """
+        self.client.force_authenticate(self.admin)
+        for resource in [
+            self.access_test_default,
+            self.access_test_team_no_write,
+            self.access_test_lab_no_read,
+            self.access_test_lab_write,
+            self.access_test_authorised_read,
+            self.access_test_authorised_write,
+            self.access_test_open
+        ]:
+            url = reverse(f'{self.stub}-detail', args=(resource.pk,))
+            response = self.client.patch(url, self.get_edit_kwargs())
+            assert_response_property(self, response, self.assertEqual, response.status_code, 200)
+
+    def test_destroy_non_team_member(self):
+        """
+        * Delete requests disallowed
+        """
+        for i, login in enumerate([
+            lambda: self.client.force_authenticate(self.lab_admin),
+            lambda: self.client.force_authenticate(self.strange_lab_admin),
+            lambda: self.client.logout()
+        ]):
+            for perms, code in [
+                ({'team_members_can_delete': True}, 403 if i < 2 else 401),
+                ({'team_members_can_delete': False}, 403 if i < 2 else 401)
+            ]:
+                login()
+                resource = self.create_with_perms(**perms)
+                url = reverse(f'{self.stub}-detail', args=(resource.pk,))
+                response = self.client.delete(url)
+                assert_response_property(
+                    self, response, self.assertEqual, response.status_code,
+                    code, msg=f"Check can't delete resources on {self.lab_team}[login{i}]"
+                )
+
+    def test_destroy_team_member(self):
+        """
+        * Delete requests allowed if:
+            * user is a member of the team
+        """
+        for user in [self.admin, self.user]:
+            for perms, code in [
+                ({'team_members_can_delete': True}, 204),
+                ({'team_members_can_delete': False}, 204 if user == self.admin else 403)
+            ]:
+                self.client.force_authenticate(user)
+                resource = self.create_with_perms(**perms)
+                url = reverse(f'{self.stub}-detail', args=(resource.pk,))
+                response = self.client.delete(url)
+                assert_response_property(self, response, self.assertEqual, response.status_code, code)

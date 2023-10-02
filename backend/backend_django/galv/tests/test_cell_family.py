@@ -5,17 +5,17 @@
 import unittest
 import logging
 
-from .utils import GalvTeamResourceTestCase
-from .factories import CellFactory
+from .utils import  GalvTeamResourceTestCase
+from .factories import CellFamilyFactory
 
 logger = logging.getLogger(__file__)
 logger.setLevel(logging.INFO)
 
 
-class CellTests(GalvTeamResourceTestCase):
-    stub = 'cell'
-    factory = CellFactory
-    edit_kwargs = {'identifier': 'test'}
+class CellFamilyTests(GalvTeamResourceTestCase):
+    stub = 'cellfamily'
+    factory = CellFamilyFactory
+    edit_kwargs = {'form_factor': 'test'}
 
 if __name__ == '__main__':
     unittest.main()

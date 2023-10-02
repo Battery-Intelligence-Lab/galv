@@ -25,12 +25,15 @@ from galv.models import EquipmentFamily, Harvester, \
     FileState, ScheduleFamily, Schedule, CyclerTest, \
     ScheduleIdentifiers, CellFormFactors, CellChemistries, CellManufacturers, \
     CellModels, EquipmentManufacturers, EquipmentModels, EquipmentTypes, Experiment, \
-    ValidationSchema, GroupProxy, UserProxy, Lab, Team
+    ValidationSchema, GroupProxy, UserProxy, Lab, Team, AutoCompleteEntry
 
 fake = faker.Faker(django.conf.global_settings.LANGUAGE_CODE)
 
 class ByValueMixin:
     value = None
+    
+def fix_additional_properties(obj):
+    return {k: v for k, v in obj.ap.items() if k not in obj._Resolver__step.builder.factory_meta.declarations.keys()}
 
 class EquipmentTypesFactory(factory.django.DjangoModelFactory):
     class Meta:
@@ -73,23 +76,28 @@ class ScheduleIdentifiersFactory(factory.django.DjangoModelFactory):
         django_get_or_create = ('value',)
     value = factory.Faker('bs')
 
-def generate_dict_factory(factory: factory.Factory):
-    # https://github.com/FactoryBoy/factory_boy/issues/68#issuecomment-636452903
-    def convert_dict_from_stub(stub: StubObject) -> Dict[str, Any]:
-        stub_dict = stub.__dict__
-        if [k for k in stub_dict.keys()] == ['value']:
-            return stub_dict['value']
-        for key, value in stub_dict.items():
-            if isinstance(value, StubObject):
-                stub_dict[key] = convert_dict_from_stub(value)
-        return stub_dict
+def generate_create_dict(root_factory: factory.django.DjangoModelFactory):
+    def dict_factory(client_factory, **kwargs):
+        dict = client_factory.stub(**kwargs).__dict__
+        # Create children
+        for key, value in client_factory._meta.declarations.items():
+            if isinstance(value, factory.SubFactory):
+                child_kwargs = kwargs.pop(key, {})
+                try:
+                    obj = value.factory_wrapper.factory._meta.model.objects.get(**child_kwargs)
+                except (
+                        value.factory_wrapper.factory._meta.model.DoesNotExist,
+                        value.factory_wrapper.factory._meta.model.MultipleObjectsReturned
+                ):
+                    obj = value.factory_wrapper.factory.create(**child_kwargs)
+                # Check for autocomplete entries
+                if isinstance(obj, AutoCompleteEntry):
+                    dict[key] = obj.value
+                else:
+                    dict[key] = obj.pk
+        return dict
 
-    def dict_factory(factory, **kwargs):
-        stub = factory.stub(**kwargs)
-        stub_dict = convert_dict_from_stub(stub)
-        return stub_dict
-
-    return partial(dict_factory, factory)
+    return partial(dict_factory, root_factory)
 
 
 class UserFactory(factory.django.DjangoModelFactory):
@@ -157,6 +165,7 @@ class MonitoredPathFactory(factory.django.DjangoModelFactory):
             depth=factory.Faker('random_int', min=1, max=10)
         )
 
+    team = factory.SubFactory(TeamFactory)
     path = factory.LazyAttribute(lambda x: os.path.dirname(x.p))
     regex = ".*"
     harvester = factory.SubFactory(HarvesterFactory)
@@ -182,7 +191,11 @@ class ObservedFileFactory(factory.django.DjangoModelFactory):
 class CellFamilyFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = CellFamily
+        exclude = ('ap',)
 
+    ap = factory.Faker('pydict', value_types=['str', 'int', 'float', 'dict', 'list'])
+    additional_properties = factory.LazyAttribute(fix_additional_properties)
+    team = factory.SubFactory(TeamFactory)
     manufacturer = factory.SubFactory(CellManufacturersFactory)
     model = factory.SubFactory(CellModelsFactory)
     form_factor = factory.SubFactory(CellFormFactorsFactory)
@@ -194,64 +207,82 @@ class CellFamilyFactory(factory.django.DjangoModelFactory):
     initial_dc_resistance = factory.Faker('pyfloat', min_value=1.0, max_value=1000000.0)
     energy_density = factory.Faker('pyfloat', min_value=1.0, max_value=1000000.0)
     power_density = factory.Faker('pyfloat', min_value=1.0, max_value=1000000.0)
-    additional_properties = factory.Faker('pydict', value_types=['str', 'int', 'float', 'dict', 'list'])
+
 
 class CellFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Cell
+        exclude = ('ap',)
 
+    ap = factory.Faker('pydict', value_types=['str', 'int', 'float', 'dict', 'list'])
+    additional_properties = factory.LazyAttribute(fix_additional_properties)
+    team = factory.SubFactory(TeamFactory)
     identifier = factory.Faker('bothify', text='?????-##??#-#?#??-?####-?#???')
     family = factory.SubFactory(CellFamilyFactory)
-    additional_properties = factory.Faker('pydict', value_types=['str', 'int', 'float', 'dict', 'list'])
 
 
 class EquipmentFamilyFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = EquipmentFamily
+        exclude = ('ap',)
 
+    ap = factory.Faker('pydict', value_types=['str', 'int', 'float', 'dict', 'list'])
+    additional_properties = factory.LazyAttribute(fix_additional_properties)
+    team = factory.SubFactory(TeamFactory)
     type = factory.SubFactory(EquipmentTypesFactory)
     manufacturer = factory.SubFactory(EquipmentManufacturersFactory)
     model = factory.SubFactory(EquipmentModelsFactory)
-    additional_properties = factory.Faker('pydict', value_types=['str', 'int', 'float', 'dict', 'list'])
 
 
 class EquipmentFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Equipment
+        exclude = ('ap',)
 
+    ap = factory.Faker('pydict', value_types=['str', 'int', 'float', 'dict', 'list'])
+    additional_properties = factory.LazyAttribute(fix_additional_properties)
+    team = factory.SubFactory(TeamFactory)
     identifier = factory.Faker('bothify', text='?????-##??#-#?#??-?####-?#???')
     family = factory.SubFactory(EquipmentFamilyFactory)
     calibration_date = factory.Faker('date')
-    additional_properties = factory.Faker('pydict', value_types=['str', 'int', 'float', 'dict', 'list'])
 
 
 class ScheduleFamilyFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = ScheduleFamily
+        exclude = ('ap',)
 
+    ap = factory.Faker('pydict', value_types=['str', 'int', 'float', 'dict', 'list'])
+    additional_properties = factory.LazyAttribute(fix_additional_properties)
+    team = factory.SubFactory(TeamFactory)
     identifier = factory.SubFactory(ScheduleIdentifiersFactory)
     description = factory.Faker('sentence')
     ambient_temperature = factory.Faker('pyfloat', min_value=0.0, max_value=1000.0)
     pybamm_template = None
-    additional_properties = factory.Faker('pydict', value_types=['str', 'int', 'float', 'dict', 'list'])
 
 
 class ScheduleFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Schedule
+        exclude = ('ap',)
 
+    ap = factory.Faker('pydict', value_types=['str', 'int', 'float', 'dict', 'list'])
+    additional_properties = factory.LazyAttribute(fix_additional_properties)
+    team = factory.SubFactory(TeamFactory)
     family = factory.SubFactory(ScheduleFamilyFactory)
     schedule_file = None
-    additional_properties = factory.Faker('pydict', value_types=['str', 'int', 'float', 'dict', 'list'])
 
 
 class CyclerTestFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = CyclerTest
+        exclude = ('ap',)
 
-    cell_subject = factory.SubFactory(CellFactory)
-    schedule = factory.SubFactory(ScheduleFactory)
-    additional_properties = factory.Faker('pydict', value_types=['str', 'int', 'float', 'dict', 'list'])
+    ap = factory.Faker('pydict', value_types=['str', 'int', 'float', 'dict', 'list'])
+    additional_properties = factory.LazyAttribute(fix_additional_properties)
+    team = factory.SubFactory(TeamFactory)
+    cell_subject = factory.SubFactory(CellFactory, team=team)
+    schedule = factory.SubFactory(ScheduleFactory, team=team)
 
     @factory.post_generation
     def equipment(self, create, extracted, **kwargs):
@@ -266,10 +297,13 @@ class CyclerTestFactory(factory.django.DjangoModelFactory):
 class ExperimentFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Experiment
+        exclude = ('ap',)
 
+    ap = factory.Faker('pydict', value_types=['str', 'int', 'float', 'dict', 'list'])
+    additional_properties = factory.LazyAttribute(fix_additional_properties)
+    team = factory.SubFactory(TeamFactory)
     title = factory.Faker('sentence')
     description = factory.Faker('sentence')
-    additional_properties = factory.Faker('pydict', value_types=['str', 'int', 'float', 'dict', 'list'])
 
     @factory.post_generation
     def cycler_tests(self, create, extracted, **kwargs):

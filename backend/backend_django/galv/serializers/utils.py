@@ -151,7 +151,7 @@ class AdditionalPropertiesModelSerializer(serializers.HyperlinkedModelSerializer
         data = {k: v for k, v in super().to_representation(instance).items() if k != 'additional_properties'}
         for k, v in instance.additional_properties.items():
             if k in data:
-                raise ValueError(f"Basic model property {k} duplicated in additional_properties")
+                raise ValueError(f"Basic model property '{k}' duplicated in additional_properties")
         return {**data, **instance.additional_properties}
 
     def to_internal_value(self, data):

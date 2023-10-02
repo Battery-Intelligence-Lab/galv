@@ -63,6 +63,14 @@ class UserProxy(User):
                 return True
         return False
 
+    def has_object_destroy_permission(self, request):
+        if self != request.user:
+            return False
+        for lab in user_labs(self, True):
+            if len(lab.admin_group.user_set.all()) == 1:
+                return False
+        return True
+
 class GroupProxy(Group):
     class Meta:
         proxy = True
@@ -72,7 +80,7 @@ class GroupProxy(Group):
         return False
 
     @staticmethod
-    def has_delete_permission(self, request):
+    def has_destroy_permission(request):
         return False
 
     @staticmethod
@@ -277,7 +285,10 @@ class ResourceModelPermissionsMixin(models.Model):
         blank=False,
         related_name="%(class)s_resources"
     )
-    members_can_edit = models.BooleanField(default=True)
+    team_members_can_edit = models.BooleanField(default=True)
+    team_members_can_delete = models.BooleanField(default=True)
+    lab_members_can_read = models.BooleanField(default=True)
+    lab_members_can_edit = models.BooleanField(default=False)
     any_user_can_read = models.BooleanField(default=False)
     any_user_can_edit = models.BooleanField(default=False)
     anonymous_can_read = models.BooleanField(default=False)
@@ -285,13 +296,19 @@ class ResourceModelPermissionsMixin(models.Model):
     def has_object_read_permission(self, request):
         return self.anonymous_can_read or \
             (self.any_user_can_read and user_is_active(request.user)) or \
+            (self.lab_members_can_read and self.team.lab in user_labs(request.user)) or \
             self.team.member_group in request.user.groups.all() or \
             self.team.admin_group in request.user.groups.all()
 
     def has_object_write_permission(self, request):
         return self.team.admin_group in request.user.groups.all() or \
-            (self.members_can_edit and self.team.member_group in request.user.groups.all()) or \
+            (self.lab_members_can_edit and self.team.lab in user_labs(request.user)) or \
+            (self.team_members_can_edit and self.team.member_group in request.user.groups.all()) or \
             (self.any_user_can_edit and user_is_active(request.user))
+
+    def has_object_destroy_permission(self, request):
+        return self.team.admin_group in request.user.groups.all() or \
+            (self.team_members_can_delete and self.team.member_group in request.user.groups.all())
 
     @staticmethod
     def has_create_permission(request):
@@ -310,6 +327,12 @@ class ResourceModelPermissionsMixin(models.Model):
     ):
         if self.any_user_can_edit and not self.any_user_can_read:
             self.any_user_can_read = True
+        if self.lab_members_can_edit and not self.team_members_can_edit:
+            self.team_members_can_edit = True
+        if self.lab_members_can_edit and not self.lab_members_can_read:
+            self.lab_members_can_read = True
+        if self.team_members_can_delete and not self.team_members_can_edit:
+            self.team_members_can_edit = True
         super(ResourceModelPermissionsMixin, self).save(force_insert, force_update, using, update_fields)
 
     class Meta:
@@ -719,7 +742,7 @@ class MonitoredPath(UUIDModel, ResourceModelPermissionsMixin):
         help_text="Team with access to this Path"
     )
 
-    members_can_edit = models.BooleanField(default=False)
+    team_members_can_edit = models.BooleanField(default=False)
 
     def __str__(self):
         return self.path
