@@ -6,19 +6,16 @@ import unittest
 import logging
 
 from .utils import GalvTeamResourceTestCase
-from .factories import CyclerTestFactory, CellFactory
+from .factories import ValidationSchemaFactory, to_validation_schema
 
 logger = logging.getLogger(__file__)
 logger.setLevel(logging.INFO)
 
 
-class CyclerTestTests(GalvTeamResourceTestCase):
-    stub = 'cyclertest'
-    factory = CyclerTestFactory
-
-    def get_edit_kwargs(self):
-        cell_subject = CellFactory.create()
-        return {'cell_subject': cell_subject.pk}
+class ValidationSchemaTests(GalvTeamResourceTestCase):
+    stub = 'validationschema'
+    factory = ValidationSchemaFactory
+    edit_kwargs = {'schema': to_validation_schema({'type': 'object'})}
 
 if __name__ == '__main__':
     unittest.main()

@@ -1,14 +1,16 @@
 # SPDX-License-Identifier: BSD-2-Clause
 # Copyright  (c) 2020-2023, The Chancellor, Masters and Scholars of the University
 # of Oxford, and the 'Galv' Developers. All rights reserved.
-import json
+
 import os
 from functools import partial
-from typing import Dict, Any
 
 import factory
 from factory.base import StubObject
 import faker
+from faker_file.providers.xml_file import XmlFileProvider
+from faker_file.storages.filesystem import FileSystemStorage
+import faker_file.base
 import django.conf.global_settings
 
 from galv.models import EquipmentFamily, Harvester, \
@@ -28,12 +30,17 @@ from galv.models import EquipmentFamily, Harvester, \
     ValidationSchema, GroupProxy, UserProxy, Lab, Team, AutoCompleteEntry
 
 fake = faker.Faker(django.conf.global_settings.LANGUAGE_CODE)
+FS_STORAGE = FileSystemStorage(
+    root_path=django.conf.global_settings.MEDIA_ROOT,
+    rel_path=".tmp/test"
+)
+factory.Faker.add_provider(XmlFileProvider)
 
 class ByValueMixin:
     value = None
     
 def fix_additional_properties(obj):
-    return {k: v for k, v in obj.ap.items() if k not in obj._Resolver__step.builder.factory_meta.declarations.keys()}
+    return {k: v for k, v in obj.ap.items() if k not in obj._Resolver__declarations.declarations.keys()}
 
 class EquipmentTypesFactory(factory.django.DjangoModelFactory):
     class Meta:
@@ -77,24 +84,32 @@ class ScheduleIdentifiersFactory(factory.django.DjangoModelFactory):
     value = factory.Faker('bs')
 
 def generate_create_dict(root_factory: factory.django.DjangoModelFactory):
+    def stub_to_entry(stub, **kwargs):
+        try:
+            obj = stub.factory_wrapper.factory._meta.model.objects.get(**kwargs)
+        except (
+                stub.factory_wrapper.factory._meta.model.DoesNotExist,
+                stub.factory_wrapper.factory._meta.model.MultipleObjectsReturned
+        ):
+            obj = stub.factory_wrapper.factory.create(**kwargs)
+        # Check for autocomplete entries
+        if isinstance(obj, AutoCompleteEntry):
+            return obj.value
+        else:
+            return obj.pk
+
     def dict_factory(client_factory, **kwargs):
         dict = client_factory.stub(**kwargs).__dict__
         # Create children
         for key, value in client_factory._meta.declarations.items():
             if isinstance(value, factory.SubFactory):
+                dict[key] = stub_to_entry(value, **kwargs.pop(key, {}))
+            elif isinstance(value, list) and len(value) > 0 and isinstance(value[0], factory.SubFactory):
                 child_kwargs = kwargs.pop(key, {})
-                try:
-                    obj = value.factory_wrapper.factory._meta.model.objects.get(**child_kwargs)
-                except (
-                        value.factory_wrapper.factory._meta.model.DoesNotExist,
-                        value.factory_wrapper.factory._meta.model.MultipleObjectsReturned
-                ):
-                    obj = value.factory_wrapper.factory.create(**child_kwargs)
-                # Check for autocomplete entries
-                if isinstance(obj, AutoCompleteEntry):
-                    dict[key] = obj.value
-                else:
-                    dict[key] = obj.pk
+                dict[key] = [stub_to_entry(v, **child_kwargs) for v in value]
+            elif isinstance(value, faker_file.base.StringValue):
+                with open(str(value), 'r') as f:
+                    dict[key] = f.read()
         return dict
 
     return partial(dict_factory, root_factory)
@@ -264,13 +279,11 @@ class ScheduleFamilyFactory(factory.django.DjangoModelFactory):
 class ScheduleFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Schedule
-        exclude = ('ap',)
 
-    ap = factory.Faker('pydict', value_types=['str', 'int', 'float', 'dict', 'list'])
-    additional_properties = factory.LazyAttribute(fix_additional_properties)
+    # Don't test Schedule additional_properties because we can't use JSON format to upload files
     team = factory.SubFactory(TeamFactory)
     family = factory.SubFactory(ScheduleFamilyFactory)
-    schedule_file = None
+    schedule_file = factory.Faker("xml_file", storage=FS_STORAGE)
 
 
 class CyclerTestFactory(factory.django.DjangoModelFactory):
@@ -287,6 +300,11 @@ class CyclerTestFactory(factory.django.DjangoModelFactory):
     @factory.post_generation
     def equipment(self, create, extracted, **kwargs):
         if not create or not extracted:
+            # Stub build - horrible hack to create child objects and return ids
+            # We _really_ shouldn't be creating children from a parent stub call, but we are.
+            if isinstance(self, StubObject):
+                equipment = [EquipmentFactory.create(**kwargs) for _ in range(3)]
+                self.equipment = [e.pk for e in equipment]
             # Simple build, or nothing to add, do nothing.
             return
 
@@ -308,6 +326,9 @@ class ExperimentFactory(factory.django.DjangoModelFactory):
     @factory.post_generation
     def cycler_tests(self, create, extracted, **kwargs):
         if not create:
+            if isinstance(self, StubObject):
+                cycler_tests = [CyclerTestFactory.create(**kwargs) for _ in range(3)]
+                self.cycler_tests = [c.pk for c in cycler_tests]
             # Simple build, or nothing to add, do nothing.
             return
         if not extracted:
@@ -318,6 +339,9 @@ class ExperimentFactory(factory.django.DjangoModelFactory):
     @factory.post_generation
     def authors(self, create, extracted, **kwargs):
         if not create:
+            if isinstance(self, StubObject):
+                authors = [UserFactory.create(**kwargs) for _ in range(3)]
+                self.authors = [a.pk for a in authors]
             # Simple build, or nothing to add, do nothing.
             return
         if not extracted:
@@ -325,10 +349,17 @@ class ExperimentFactory(factory.django.DjangoModelFactory):
         # Add the iterable of cycler tests using bulk addition
         self.authors.add(*extracted)
 
+def to_validation_schema(obj):
+    return {'$id': 'abc', '$defs': {}, **obj}
 
 class ValidationSchemaFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = ValidationSchema
+        exclude = ('ap', 's',)
 
+    ap = factory.Faker('pydict', value_types=['str', 'int', 'float', 'dict', 'list'])
+    additional_properties = factory.LazyAttribute(fix_additional_properties)
+    team = factory.SubFactory(TeamFactory)
     name = factory.Faker('sentence')
-    schema = factory.Faker('pydict', value_types=['str', 'int', 'float', 'dict', 'list'])
+    s = factory.Faker('pydict', value_types=['str', 'int', 'float', 'dict', 'list'])
+    schema = factory.LazyAttribute(lambda s: to_validation_schema(s.s))

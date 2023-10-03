@@ -172,7 +172,7 @@ class Lab(models.Model):
 
 class Team(models.Model):
     name = models.TextField(
-        unique=True,
+        unique=False,
         help_text="Human-friendly Team identifier"
     )
     description = models.TextField(
@@ -241,6 +241,9 @@ class Team(models.Model):
         self.admin_group.delete()
         self.member_group.delete()
         super(Team, self).delete(using, keep_parents)
+
+    class Meta:
+        unique_together = [['name', 'lab']]
 
 def user_teams(user, editable=False):
     """
@@ -389,7 +392,7 @@ class CellFamily(AdditionalPropertiesModel, ValidatableBySchemaMixin, ResourceMo
         super(CellFamily, self).save(force_insert, force_update, using, update_fields)
 
 class Cell(JSONModel, ValidatableBySchemaMixin, ResourceModelPermissionsMixin):
-    identifier = models.TextField(unique=True, help_text="Unique identifier (e.g. serial number) for the cell", null=False)
+    identifier = models.TextField(unique=False, help_text="Unique identifier (e.g. serial number) for the cell", null=False)
     family = models.ForeignKey(to=CellFamily, on_delete=models.CASCADE, null=False, help_text="Cell type", related_name="cells")
 
     def in_use(self):
@@ -411,6 +414,9 @@ class Cell(JSONModel, ValidatableBySchemaMixin, ResourceModelPermissionsMixin):
                 # TODO: Add more fields from CellFamily
             }
         )
+
+    class Meta(JSONModel.Meta):
+        unique_together = [['identifier', 'family']]
 
 
 class EquipmentFamily(AdditionalPropertiesModel, ValidatableBySchemaMixin, ResourceModelPermissionsMixin):
@@ -1005,7 +1011,7 @@ class TimeseriesRangeLabel(models.Model):
         return f"{self.label} [{self.range_start}, {self.range_end}]: {self.info}"
 
 
-class ValidationSchema(ResourceModelPermissionsMixin):
+class ValidationSchema(AdditionalPropertiesModel, ResourceModelPermissionsMixin):
     """
     JSON schema that can be used for validating components.
     """
@@ -1013,7 +1019,7 @@ class ValidationSchema(ResourceModelPermissionsMixin):
     schema = models.JSONField(help_text="JSON Schema")
 
     def __str__(self):
-        return f"{self.name}"
+        return f"{self.name} [ValidationSchema {self.uuid}]"
 
 
 class KnoxAuthToken(models.Model):

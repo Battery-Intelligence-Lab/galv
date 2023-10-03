@@ -3,10 +3,12 @@
 # of Oxford, and the 'Galv' Developers. All rights reserved.
 
 import base64
+import os
 from unittest import SkipTest
 
 from django.urls import reverse
-from rest_framework.test import APITestCase, APIClient
+from rest_framework.test import APITestCase
+from django.core.files.uploadedfile import SimpleUploadedFile
 
 from backend.backend_django.galv.tests.factories import LabFactory, TeamFactory, UserFactory, generate_create_dict
 
@@ -92,7 +94,7 @@ class GalvTeamResourceTestCase(APITestCase):
         Of particular note, this creates a self.user and self.admin
         who are member/admin in self.lab_team.
         """
-        if hasattr(self, 'create_resource_users_run') and self.create_resource_users_run:
+        if getattr(self, 'create_resource_users_run', False):
             return
 
         prefix = self.stub
@@ -114,13 +116,16 @@ class GalvTeamResourceTestCase(APITestCase):
         self.create_resource_users_run = True
 
     def create_with_perms(self, **perms):
+        # Pass team prop to the correct object
+        # if self.factory.__name__ in ['CellFactory', 'EquipmentFactory', 'ScheduleFactory']:
+        #     return self.factory.create(family__team=self.lab_team, **perms)
         return self.factory.create(team=self.lab_team, **perms)
 
     def create_test_resources(self):
         """
         Helper method for creating access test resources.
         """
-        if hasattr(self, 'create_test_resources_run') and self.create_test_resources_run:
+        if getattr(self, 'create_test_resources_run', False):
             return
 
         self.access_test_default = self.create_with_perms()
@@ -161,6 +166,24 @@ class GalvTeamResourceTestCase(APITestCase):
         self.create_resource_users()
         self.create_test_resources()
 
+    def file_safe_request(self, request_method, url, content, **kwargs):
+        """
+        Helper method for making requests with file content.
+        """
+        return_value = None
+        if 'schedule_file' in content:
+            return_value = request_method(url, content, **kwargs)
+            try:
+                os.unlink(content['schedule_file'].name)
+            except FileNotFoundError:
+                try:
+                    os.unlink(f".tmp/test/{content['schedule_file'].name}")
+                except FileNotFoundError:
+                    pass
+        else:
+            return_value = request_method(url, content, **{'format': 'json', **kwargs})
+        return return_value
+
     def test_create_non_team_member(self):
         """
         * Create requests disallowed
@@ -172,8 +195,11 @@ class GalvTeamResourceTestCase(APITestCase):
         ]):
             login()
             url = reverse(f'{self.stub}-list')
-            create_dict = self.dict_factory(team={'id': self.lab_team.id})
-            response = self.client.post(url, create_dict, format='json')
+            create_dict = self.dict_factory(team={'name': self.lab_team.name, 'lab': self.lab_team.lab})
+            if 'schedule_file' in create_dict:
+                with open(create_dict['schedule_file'], 'rb') as f:
+                    create_dict['schedule_file'] = SimpleUploadedFile(create_dict['schedule_file'], f.read(), content_type="xml")
+            response = self.file_safe_request(self.client.post, url, create_dict)
             assert_response_property(
                 self, response, self.assertGreaterEqual, response.status_code,
                 400, msg=f"Check can't create resources on {self.lab_team}[login{i}]"
@@ -187,8 +213,11 @@ class GalvTeamResourceTestCase(APITestCase):
         for user in [self.admin, self.user]:
             self.client.force_authenticate(user)
             url = reverse(f'{self.stub}-list')
-            create_dict = self.dict_factory(team={'id': self.lab_team.id})
-            response = self.client.post(url, create_dict, format='json')
+            create_dict = self.dict_factory(team={'name': self.lab_team.name, 'lab': self.lab_team.lab})
+            if 'schedule_file' in create_dict:
+                with open(create_dict['schedule_file'], 'rb') as f:
+                    create_dict['schedule_file'] = SimpleUploadedFile(create_dict['schedule_file'], f.read(), content_type="xml")
+            response = self.file_safe_request(self.client.post, url, create_dict)
             assert_response_property(
                 self, response, self.assertEqual, response.status_code,
                 201, msg=f"Check {user.username} can create resources on {self.lab_team}"
@@ -279,7 +308,7 @@ class GalvTeamResourceTestCase(APITestCase):
             self.access_test_open
         ]:
             url = reverse(f'{self.stub}-detail', args=(resource.pk,))
-            response = self.client.patch(url, self.get_edit_kwargs())
+            response = self.file_safe_request(self.client.patch, url, self.get_edit_kwargs())
             assert_response_property(self, response, self.assertEqual, response.status_code, 401)
 
     def test_update_authorised(self):
@@ -298,7 +327,7 @@ class GalvTeamResourceTestCase(APITestCase):
             (self.access_test_open, 403)
         ]:
             url = reverse(f'{self.stub}-detail', args=(resource.pk,))
-            response = self.client.patch(url, self.get_edit_kwargs())
+            response = self.file_safe_request(self.client.patch, url, self.get_edit_kwargs())
             assert_response_property(
                 self, response, self.assertEqual, response.status_code,
                 code, msg=f"Check {self.strange_lab_admin.username} gets HTTP {code} on {resource} [got {response.status_code} instead]"
@@ -320,7 +349,7 @@ class GalvTeamResourceTestCase(APITestCase):
             (self.access_test_open, 403)
         ]:
             url = reverse(f'{self.stub}-detail', args=(resource.pk,))
-            response = self.client.patch(url, self.get_edit_kwargs())
+            response = self.file_safe_request(self.client.patch, url, self.get_edit_kwargs())
             assert_response_property(
                 self, response, self.assertEqual, response.status_code,
                 code, msg=f"Check {self.lab_admin.username} gets HTTP {code} on {resource} [got {response.status_code} instead]"
@@ -343,7 +372,7 @@ class GalvTeamResourceTestCase(APITestCase):
             (self.access_test_open, 200)
         ]:
             url = reverse(f'{self.stub}-detail', args=(resource.pk,))
-            response = self.client.patch(url, self.get_edit_kwargs())
+            response = self.file_safe_request(self.client.patch, url, self.get_edit_kwargs())
             assert_response_property(self, response, self.assertEqual, response.status_code, code)
 
     def test_update_team_admin(self):
@@ -364,7 +393,7 @@ class GalvTeamResourceTestCase(APITestCase):
             self.access_test_open
         ]:
             url = reverse(f'{self.stub}-detail', args=(resource.pk,))
-            response = self.client.patch(url, self.get_edit_kwargs())
+            response = self.file_safe_request(self.client.patch, url, self.get_edit_kwargs())
             assert_response_property(self, response, self.assertEqual, response.status_code, 200)
 
     def test_destroy_non_team_member(self):

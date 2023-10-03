@@ -6,19 +6,16 @@ import unittest
 import logging
 
 from .utils import GalvTeamResourceTestCase
-from .factories import CyclerTestFactory, CellFactory
+from .factories import ExperimentFactory
 
 logger = logging.getLogger(__file__)
 logger.setLevel(logging.INFO)
 
 
-class CyclerTestTests(GalvTeamResourceTestCase):
-    stub = 'cyclertest'
-    factory = CyclerTestFactory
-
-    def get_edit_kwargs(self):
-        cell_subject = CellFactory.create()
-        return {'cell_subject': cell_subject.pk}
+class ExperimentTests(GalvTeamResourceTestCase):
+    stub = 'experiment'
+    factory = ExperimentFactory
+    edit_kwargs = {'description': 'test'}
 
 if __name__ == '__main__':
     unittest.main()

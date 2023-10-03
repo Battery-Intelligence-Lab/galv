@@ -29,7 +29,7 @@ from .serializers import HarvesterSerializer, \
     KnoxTokenSerializer, \
     KnoxTokenFullSerializer, CellFamilySerializer, EquipmentFamilySerializer, \
     ScheduleSerializer, CyclerTestSerializer, ScheduleFamilySerializer, DataColumnTypeSerializer, DataColumnSerializer, \
-    ExperimentSerializer, LabSerializer, TeamSerializer
+    ExperimentSerializer, LabSerializer, TeamSerializer, ValidationSchemaSerializer
 from .models import Harvester, \
     HarvestError, \
     MonitoredPath, \
@@ -51,7 +51,7 @@ from .models import Harvester, \
     ValidationSchema, Experiment, Lab, Team, UserProxy, GroupProxy
 from .permissions import HarvesterFilterBackend, TeamFilterBackend, LabFilterBackend, GroupFilterBackend, \
     MonitoredPathFilterBackend, ResourceFilterBackend, ObservedFileFilterBackend, UserFilterBackend
-from .serializers.utils import GetOrCreateTextStringSerializer, validate_against_schemas, ValidationSchemaSerializer
+from .serializers.utils import GetOrCreateTextStringSerializer, validate_against_schemas
 from .utils import get_files_from_path
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -1619,8 +1619,10 @@ This endpoint provides the names and list URLs for each Galv object that can be 
     )
 )
 class ValidationSchemaViewSet(viewsets.ModelViewSet):
+    permission_classes = [DRYPermissions]
+    filter_backends = [ResourceFilterBackend]
     serializer_class = ValidationSchemaSerializer
-    queryset = ValidationSchema.objects.all().order_by('-id')
+    queryset = ValidationSchema.objects.all().order_by('-uuid')
 
     @action(methods=['get'], detail=False)
     def keys(self, request):

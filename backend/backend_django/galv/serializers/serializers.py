@@ -4,6 +4,7 @@
 import os.path
 import re
 
+import jsonschema
 from django.db.models import Q
 from django.urls import reverse, resolve
 from drf_spectacular.utils import extend_schema_field
@@ -798,7 +799,7 @@ class DataColumnSerializer(serializers.HyperlinkedModelSerializer, PermissionsMi
         extra_kwargs = augment_extra_kwargs()
 
 
-class ExperimentSerializer(serializers.HyperlinkedModelSerializer, PermissionsMixin):
+class ExperimentSerializer(serializers.HyperlinkedModelSerializer, PermissionsMixin, WithTeamMixin):
     cycler_tests = TruncatedHyperlinkedRelatedIdField(
         'CyclerTestSerializer',
         ['cell_subject', 'equipment', 'schedule'],
@@ -806,6 +807,14 @@ class ExperimentSerializer(serializers.HyperlinkedModelSerializer, PermissionsMi
         queryset=CyclerTest.objects.all(),
         many=True,
         help_text="Cycler Tests using this Experiment"
+    )
+    authors = TruncatedHyperlinkedRelatedIdField(
+        'UserSerializer',
+        ['username', 'first_name', 'last_name'],
+        'userproxy-detail',
+        queryset=UserProxy.objects.all(),
+        many=True,
+        help_text="Users who created this Experiment"
     )
 
     class Meta:
@@ -819,11 +828,25 @@ class ExperimentSerializer(serializers.HyperlinkedModelSerializer, PermissionsMi
             'protocol',
             'protocol_file',
             'cycler_tests',
+            'team',
             'permissions'
         ]
         read_only_fields = ['url', 'uuid', 'permissions']
         extra_kwargs = augment_extra_kwargs()
 
+class ValidationSchemaSerializer(serializers.HyperlinkedModelSerializer, PermissionsMixin, WithTeamMixin):
+    def validate_schema(self, value):
+        try:
+            jsonschema.validate({}, value)
+        except jsonschema.exceptions.SchemaError as e:
+            raise ValidationError(e)
+        except jsonschema.exceptions.ValidationError:
+            pass
+        return value
+
+    class Meta:
+        model = ValidationSchema
+        fields = ['url', 'uuid', 'team', 'name', 'schema', 'permissions']
 
 class KnoxTokenSerializer(serializers.HyperlinkedModelSerializer):
     created = serializers.SerializerMethodField(help_text="Date and time of creation")

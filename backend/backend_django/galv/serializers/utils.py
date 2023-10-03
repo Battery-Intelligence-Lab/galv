@@ -3,6 +3,7 @@ from collections import OrderedDict
 
 import django.db.models
 import jsonschema
+from django.urls import reverse
 from dry_rest_permissions.generics import DRYPermissionsField
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
@@ -173,21 +174,6 @@ class AdditionalPropertiesModelSerializer(serializers.HyperlinkedModelSerializer
         return new_data
 
 
-class ValidationSchemaSerializer(serializers.HyperlinkedModelSerializer):
-    def validate_schema(self, value):
-        try:
-            jsonschema.validate({}, value)
-        except jsonschema.exceptions.SchemaError as e:
-            raise ValidationError(e)
-        except jsonschema.exceptions.ValidationError:
-            pass
-        return value
-
-    class Meta:
-        model = ValidationSchema
-        fields = ['url', 'id', 'name', 'schema']
-
-
 def validate_against_schemas(serializer: serializers.ModelSerializer, schemas = None):
     """
     Validate a serializer against a list of JSON schemas.
@@ -204,14 +190,14 @@ def validate_against_schemas(serializer: serializers.ModelSerializer, schemas = 
             data = serializer.data if isinstance(serializer, serializers.ListSerializer) else [serializer.data]
             result = jsonschema.validate(data, s)
             validation_results.append({
-                'schema': ValidationSchemaSerializer(schema, context=serializer.context).data.get('url'),
+                'schema': reverse('validationschema-detail', args=[schema.pk]),
                 'schema_name': schema.name,
                 'error': None,
                 'result': result
             })
         except jsonschema.exceptions.ValidationError as e:
             validation_results.append({
-                'schema': ValidationSchemaSerializer(schema, context=serializer.context).data.get('url'),
+                'schema': reverse('validationschema-detail', args=[schema.pk]),
                 'schema_name': schema.name,
                 'error': {
                     'message': e.message,
