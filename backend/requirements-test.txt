@@ -1,3 +1,2 @@
 factory_boy==3.2.1
 faker==17.0.0
-faker_file==0.17.8

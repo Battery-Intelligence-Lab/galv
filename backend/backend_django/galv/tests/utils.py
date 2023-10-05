@@ -6,6 +6,8 @@ import base64
 import os
 from unittest import SkipTest
 
+from django.core.files.storage import FileSystemStorage
+from django.test import override_settings
 from django.urls import reverse
 from rest_framework.test import APITestCase
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -20,6 +22,7 @@ def assert_response_property(self, response, assertion, *args, **kwargs):
         raise AssertionError(f"{e}\nResponse: {response.json()}")
 
 
+@override_settings(MEDIA_ROOT='/tmp')
 class GalvTeamResourceTestCase(APITestCase):
     """
     This class provides a set of methods for testing access to resources.
@@ -173,13 +176,6 @@ class GalvTeamResourceTestCase(APITestCase):
         return_value = None
         if 'schedule_file' in content:
             return_value = request_method(url, content, **kwargs)
-            try:
-                os.unlink(content['schedule_file'].name)
-            except FileNotFoundError:
-                try:
-                    os.unlink(f".tmp/test/{content['schedule_file'].name}")
-                except FileNotFoundError:
-                    pass
         else:
             return_value = request_method(url, content, **{'format': 'json', **kwargs})
         return return_value
@@ -196,9 +192,9 @@ class GalvTeamResourceTestCase(APITestCase):
             login()
             url = reverse(f'{self.stub}-list')
             create_dict = self.dict_factory(team={'name': self.lab_team.name, 'lab': self.lab_team.lab})
-            if 'schedule_file' in create_dict:
-                with open(create_dict['schedule_file'], 'rb') as f:
-                    create_dict['schedule_file'] = SimpleUploadedFile(create_dict['schedule_file'], f.read(), content_type="xml")
+            # if 'schedule_file' in create_dict:
+            #     with open(str(create_dict['schedule_file']), 'rb') as f:
+            #         create_dict['schedule_file'] = SimpleUploadedFile(str(create_dict['schedule_file']), f.read(), content_type="xml")
             response = self.file_safe_request(self.client.post, url, create_dict)
             assert_response_property(
                 self, response, self.assertGreaterEqual, response.status_code,
@@ -214,9 +210,13 @@ class GalvTeamResourceTestCase(APITestCase):
             self.client.force_authenticate(user)
             url = reverse(f'{self.stub}-list')
             create_dict = self.dict_factory(team={'name': self.lab_team.name, 'lab': self.lab_team.lab})
-            if 'schedule_file' in create_dict:
-                with open(create_dict['schedule_file'], 'rb') as f:
-                    create_dict['schedule_file'] = SimpleUploadedFile(create_dict['schedule_file'], f.read(), content_type="xml")
+            # if 'schedule_file' in create_dict:
+                # with open(str(create_dict['schedule_file']), 'rb') as f:
+                #     create_dict['schedule_file'] = SimpleUploadedFile(
+                #         create_dict['schedule_file'].file.name,
+                #         f.read(),
+                #         content_type="xml"
+                #     )
             response = self.file_safe_request(self.client.post, url, create_dict)
             assert_response_property(
                 self, response, self.assertEqual, response.status_code,

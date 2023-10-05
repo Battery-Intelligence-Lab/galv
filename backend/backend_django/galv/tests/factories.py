@@ -3,14 +3,14 @@
 # of Oxford, and the 'Galv' Developers. All rights reserved.
 
 import os
+import tempfile
 from functools import partial
 
 import factory
+from django.core.files.storage import Storage
+from django.core.files.uploadedfile import TemporaryUploadedFile, InMemoryUploadedFile, SimpleUploadedFile
 from factory.base import StubObject
 import faker
-from faker_file.providers.xml_file import XmlFileProvider
-from faker_file.storages.filesystem import FileSystemStorage
-import faker_file.base
 import django.conf.global_settings
 
 from galv.models import EquipmentFamily, Harvester, \
@@ -30,17 +30,22 @@ from galv.models import EquipmentFamily, Harvester, \
     ValidationSchema, GroupProxy, UserProxy, Lab, Team, AutoCompleteEntry
 
 fake = faker.Faker(django.conf.global_settings.LANGUAGE_CODE)
-FS_STORAGE = FileSystemStorage(
-    root_path=django.conf.global_settings.MEDIA_ROOT,
-    rel_path=".tmp/test"
-)
-factory.Faker.add_provider(XmlFileProvider)
+
+def fix_additional_properties(obj):
+    return {k: v for k, v in obj.ap.items() if k not in obj._Resolver__declarations.declarations.keys()}
+
+def make_tmp_file():
+    length = fake.pyint(min_value=1, max_value=1000000)
+    content = fake.binary(length=length)
+    file = SimpleUploadedFile(
+        name=fake.file_name(extension='tst'),
+        content=content,
+        content_type=fake.mime_type()
+    )
+    return file
 
 class ByValueMixin:
     value = None
-    
-def fix_additional_properties(obj):
-    return {k: v for k, v in obj.ap.items() if k not in obj._Resolver__declarations.declarations.keys()}
 
 class EquipmentTypesFactory(factory.django.DjangoModelFactory):
     class Meta:
@@ -107,9 +112,6 @@ def generate_create_dict(root_factory: factory.django.DjangoModelFactory):
             elif isinstance(value, list) and len(value) > 0 and isinstance(value[0], factory.SubFactory):
                 child_kwargs = kwargs.pop(key, {})
                 dict[key] = [stub_to_entry(v, **child_kwargs) for v in value]
-            elif isinstance(value, faker_file.base.StringValue):
-                with open(str(value), 'r') as f:
-                    dict[key] = f.read()
         return dict
 
     return partial(dict_factory, root_factory)
@@ -283,8 +285,7 @@ class ScheduleFactory(factory.django.DjangoModelFactory):
     # Don't test Schedule additional_properties because we can't use JSON format to upload files
     team = factory.SubFactory(TeamFactory)
     family = factory.SubFactory(ScheduleFamilyFactory)
-    schedule_file = factory.Faker("xml_file", storage=FS_STORAGE)
-
+    schedule_file = factory.LazyFunction(make_tmp_file)
 
 class CyclerTestFactory(factory.django.DjangoModelFactory):
     class Meta:
