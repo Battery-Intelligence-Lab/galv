@@ -933,17 +933,22 @@ class HarvesterConfigSerializer(HarvesterSerializer, PermissionsMixin):
 
 
 class HarvesterCreateSerializer(HarvesterSerializer, PermissionsMixin):
+    lab = TruncatedHyperlinkedRelatedIdField(
+        'LabSerializer',
+        ['name'],
+        'lab-detail',
+        queryset=Lab.objects.all(),
+        required=True,
+        help_text="Lab this Harvester belongs to"
+    )
 
-    def create(self, validated_data):
-        """
-        Create a Harvester and the user Groups required to control it.
-        """
-        # Create Harvester
-        harvester = Harvester.objects.create(name=validated_data['name'], lab=validated_data['lab'])
-        harvester.save()
-        # Add user as admin
-
-        return harvester
+    def validate_lab(self, value):
+        try:
+            if value in user_labs(self.context['request'].user, True):
+                return value
+        except:
+            pass
+        raise ValidationError("You may only create Harvesters in your own lab(s)", code=403)
 
     def to_representation(self, instance):
         return HarvesterConfigSerializer(context=self.context).to_representation(instance)

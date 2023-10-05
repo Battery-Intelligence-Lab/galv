@@ -155,19 +155,12 @@ class TeamFactory(factory.django.DjangoModelFactory):
 class HarvesterFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Harvester
-        django_get_or_create = ('name',)
+        django_get_or_create = ('name', 'lab',)
         exclude = ('first_name',)
 
     first_name = fake.unique.first_name()
     name = factory.LazyAttribute(lambda x: f"Harvester {x.first_name}")
-
-    @factory.post_generation
-    def groups(obj, *args, **kwargs):
-        user_group = GroupFactory.create(name=f"harvester_{obj.uuid}_user_group")
-        admin_group = GroupFactory.create(name=f"harvester_{obj.uuid}_admin_group")
-        obj.user_group = user_group
-        obj.admin_group = admin_group
-        obj.save()
+    lab = factory.SubFactory(LabFactory)
 
 
 class MonitoredPathFactory(factory.django.DjangoModelFactory):
