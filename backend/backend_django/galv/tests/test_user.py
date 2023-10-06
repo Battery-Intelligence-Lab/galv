@@ -65,19 +65,11 @@ class UserTests(APITestCase):
                 self.assertIn(u, contents)
             return result
 
-        print("Test list users (anonymous)")
         result = self.client.get(reverse(f'{stub}-list'))
         assert_response_property(self, result, self.assertEqual, result.status_code, status.HTTP_401_UNAUTHORIZED)
-        print("OK")
-        print("Test list users (user)")
         assert_user_list(user, [user, colleague, admin])
-        print("OK")
-        print("Test list users (admin)")
         assert_user_list(admin, [user, colleague, admin, stranger, strange_admin, mystery_guest, self.user, self.non_user])
-        print("OK")
-        print("Test list users (mystery guest)")
         assert_user_list(mystery_guest, [])
-        print("OK")
 
     def test_create(self):
         """
@@ -86,63 +78,47 @@ class UserTests(APITestCase):
         """
         url = reverse(f'{stub}-list')
         data = {'username': 'new_user'}
-        print("Test Create User rejection (no username)")
         self.assertEqual(
             self.client.post(url, {}).status_code,
             status.HTTP_400_BAD_REQUEST
         )
-        print("OK")
-        print("Test Create User rejection (no password)")
         self.assertEqual(
             self.client.post(url, data).status_code,
             status.HTTP_400_BAD_REQUEST
         )
-        print("OK")
         data['password'] = 'pw'
-        print("Test Create User rejection (no email)")
         self.assertEqual(
             self.client.post(url, data).status_code,
             status.HTTP_400_BAD_REQUEST
         )
-        print("OK")
         data['email'] = 'x@example.com'
-        print("Test Create User rejection (short password)")
         self.assertEqual(
             self.client.post(url, data).status_code,
             status.HTTP_400_BAD_REQUEST
         )
-        print("OK")
         data['password'] = 'password'
-        print("Test Create User rejection (username in use)")
         self.assertEqual(
             self.client.post(url, {**data, 'username': self.non_user.username}).status_code,
             status.HTTP_400_BAD_REQUEST
         )
-        print("OK")
-        print("Test Create User success")
         response = self.client.post(url, data)
         assert_response_property(self, response, self.assertEqual, response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.json()['username'], data['username'])
-        print("Attempting login")
         response_user = response.json()
         self.client.force_authenticate(User.objects.get(id=response_user['id']))
         self.assertEqual(self.client.get(response_user['url']).status_code, status.HTTP_200_OK)
-        print("OK")
 
     def test_update(self):
         """
         * Users can view and update their own details
         """
         url = reverse(f'{stub}-detail', args=(self.user.id,))
-        print("Test update rejected (no current password)")
         self.client.force_authenticate(self.user)
         body = {'email': 'test.user@example.com', 'password': 'complex_password'}
         self.assertEqual(
             self.client.patch(url, body).status_code,
             status.HTTP_400_BAD_REQUEST
         )
-        print("OK")
-        print("Test update rejected (no access to others)")
         body['current_password'] = 'password'
         self.user.set_password(body['current_password'])
         self.user.save()
@@ -150,20 +126,15 @@ class UserTests(APITestCase):
             self.client.patch(reverse(f'{stub}-detail', args=(self.non_user.id,)), body).status_code,
             status.HTTP_403_FORBIDDEN
         )
-        print("OK")
-        print("Test update rejected (invalid email)")
         self.assertEqual(
             self.client.patch(url, {**body, 'email': 'bad-email'}).status_code,
             status.HTTP_400_BAD_REQUEST
         )
-        print("OK")
-        print("Test update okay")
         response = self.client.patch(url, body)
         json = response.json()
         assert_response_property(self, response, self.assertEqual, response.status_code, status.HTTP_200_OK)
         self.assertEqual(json['email'], body['email'])
         self.assertTrue(User.objects.get(id=self.user.id).check_password(body['password']))
-        print("OK")
 
 
 if __name__ == '__main__':

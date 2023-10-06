@@ -948,7 +948,7 @@ class HarvesterCreateSerializer(HarvesterSerializer, PermissionsMixin):
                 return value
         except:
             pass
-        raise ValidationError("You may only create Harvesters in your own lab(s)", code=403)
+        raise ValidationError("You may only create Harvesters in your own lab(s)")
 
     def to_representation(self, instance):
         return HarvesterConfigSerializer(context=self.context).to_representation(instance)

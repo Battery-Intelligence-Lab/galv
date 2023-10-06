@@ -50,7 +50,7 @@ from .models import Harvester, \
     CellChemistries, CellFormFactors, ScheduleIdentifiers, EquipmentFamily, Schedule, CyclerTest, ScheduleFamily, \
     ValidationSchema, Experiment, Lab, Team, UserProxy, GroupProxy
 from .permissions import HarvesterFilterBackend, TeamFilterBackend, LabFilterBackend, GroupFilterBackend, \
-    MonitoredPathFilterBackend, ResourceFilterBackend, ObservedFileFilterBackend, UserFilterBackend
+    ResourceFilterBackend, ObservedFileFilterBackend, UserFilterBackend
 from .serializers.utils import GetOrCreateTextStringSerializer, validate_against_schemas
 from .utils import get_files_from_path
 from django.shortcuts import get_object_or_404
@@ -422,16 +422,16 @@ Those details are updated using this endpoint.
 Only Harvester Administrators are authorised to make these changes.
         """
     ),
-    destroy=extend_schema(
-        summary="Deactivate a Harvester",
-        description="""
-**Use with caution.**
-
-Only Harvester Administrators are authorised to delete harvesters.
-Deleting a Harvester will not stop the harvester program running,
-it will instead deactivate its API access.
-        """
-    ),
+#     destroy=extend_schema(
+#         summary="Deactivate a Harvester",
+#         description="""
+# **Use with caution.**
+#
+# Only Harvester Administrators are authorised to delete harvesters.
+# Deleting a Harvester will not stop the harvester program running,
+# it will instead deactivate its API access.
+#         """
+#     ),
     config=extend_schema(
         exclude=not GENERATE_HARVESTER_API_SCHEMA,
         summary="Full configuration information for a Harvester",
@@ -476,19 +476,28 @@ class HarvesterViewSet(viewsets.ModelViewSet, _WithValidationResultMixin):
     filterset_fields = ['name', 'lab_id']
     search_fields = ['@name']
     queryset = Harvester.objects.all().order_by('-last_check_in', '-uuid')
-    http_method_names = ['get', 'post', 'patch', 'delete', 'options']
+    http_method_names = ['get', 'post', 'patch', 'options']
 
     def get_serializer_class(self):
         if self.request.method.lower() == "post":
             return HarvesterCreateSerializer
         return HarvesterSerializer
 
-    # We do not actually destroy harvesters, just deactivate them
-    def destroy(self, request, *args, **kwargs):
-        self.check_object_permissions(self.request, self.get_object())
-        self.get_object().active = False
-        self.get_object().save()
-        return Response(self.get_serializer(self.get_object()).data, status=200)
+    # # We do not actually destroy harvesters, just deactivate them
+    # def destroy(self, request, *args, **kwargs):
+    #     self.check_object_permissions(self.request, self.get_object())
+    #     self.get_object().active = False
+    #     self.get_object().save()
+    #     return Response(self.get_serializer(self.get_object()).data, status=200)
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.check_object_permissions(self.request, instance)
+        # Strip out envvars unless this is an admin
+        data = HarvesterSerializer(instance, context={'request': request}).data
+        if not instance.has_object_write_permission(request):
+            data.pop('environment_variables')
+        return Response(data)
 
     @action(detail=True, methods=['GET'])
     def config(self, request, pk = None):
@@ -510,6 +519,54 @@ class HarvesterViewSet(viewsets.ModelViewSet, _WithValidationResultMixin):
         Process a Harvester's report on its activity.
         This will spawn various other database updates depending on payload content.
 
+        Reports come with a 'status' field, which can be one of:
+        - error: The harvester encountered an error and is reporting it.
+        - success: The harvester is reporting a successful task.
+
+        If the status is 'error', the report must include an 'error' field.
+        This field is in JSON or string format.
+        The report may also include 'path' and 'monitored_path_uuid' fields.
+        A blank response will be returned ({}).
+
+        If the status is 'success', the report must include 'task', 'path', and 'monitored_path_uuid' fields.
+        Path is the absolute path of the file being reported on.
+        Monitored path uuid is the uuid of the monitored path the file was found in.
+        The task field can be one of:
+        - file_size: The harvester is reporting the size of a file.
+        - import: The harvester is reporting the result of an import.
+
+        If the task is 'file_size', the content must include a 'size' field.
+        A representation of the file will be returned.
+
+        If the task is 'import', the content must include a 'status' field.
+        The status field can be one of:
+        - begin: The harvester is beginning an import.
+        - in_progress: The harvester is reporting progress on an import.
+        - complete: The harvester has completed an import.
+        - failed: The harvester has failed to import a file.
+
+        If the status is 'begin', the content must include 'test_date', 'core_metadata' and 'extra_metadata' fields.
+        It may also include a 'parser' field identifying the parser used to import the file.
+        The core_metadata and extra_metadata fields must be dictionaries.
+        - core_metadata may include:
+            - Machine Type: The type of machine used to generate the file.
+            - Dataset Name: The name of the dataset.
+            - num_rows: The number of rows in the dataset.
+            - first_sample_no: The number of the first sample in the dataset.
+            - last_sample_no: The number of the last sample in the dataset.
+        Extra metadata will be stored as a JSON.
+
+        If the status is 'in_progress', the content must include a 'data' field.
+        This field will be a list of dictionaries, each representing a column of data.
+        Each dictionary must include a 'data_type' field.
+        Each dictionary must include one of 'column_id' or 'unit_id' or 'unit_symbol'.
+        Dictionaries that specify 'unit_id' or 'unit_symbol' may also specify 'column_name'.
+        Dictionaries must include a 'values' field, which is a list of values.
+
+        A representation of the file will be returned.
+
+        If the status is 'complete' or 'failed', no additional content is required.
+
         Only Harvesters are authorised to issue reports.
         """
         harvester = get_object_or_404(Harvester, uuid=pk)
@@ -522,6 +579,8 @@ class HarvesterViewSet(viewsets.ModelViewSet, _WithValidationResultMixin):
             path = request.data.get('path')
             if request.data.get('status') != 'error':
                 assert path is not None
+            if path is not None:
+                path = os.path.abspath(path)
         except AssertionError:
             return error_response('Harvester report must specify a path')
         try:
@@ -537,6 +596,8 @@ class HarvesterViewSet(viewsets.ModelViewSet, _WithValidationResultMixin):
             return error_response('Harvester report must specify a valid monitored_path_uuid', 404)
         if request.data['status'] == 'error':
             error = request.data.get('error')
+            if error is None:
+                return error_response('error field required when status=error')
             if not isinstance(error, str):
                 try:
                     error = json.dumps(error)
@@ -564,12 +625,12 @@ class HarvesterViewSet(viewsets.ModelViewSet, _WithValidationResultMixin):
             if content is None:
                 return error_response('content field required when status=success')
             if content['task'] == 'file_size':
+                if content.get('size') is None:
+                    return error_response('file_size task requires content to include size field')
+
                 # Harvester is reporting the size of a file
                 # Update our database record and return a file status
                 file, _ = ObservedFile.objects.get_or_create(harvester=harvester, path=path)
-
-                if content.get('size') is None:
-                    return error_response('file_size task requires content to include size field')
 
                 size = content['size']
                 if size < file.last_observed_size:
@@ -595,6 +656,10 @@ class HarvesterViewSet(viewsets.ModelViewSet, _WithValidationResultMixin):
                     file = ObservedFile.objects.get(harvester=harvester, path=path)
                 except ObservedFile.DoesNotExist:
                     return error_response("ObservedFile does not exist")
+                if 'status' not in content:
+                    return error_response("'status' field must be present where task=import")
+                if content['status'] not in ['begin', 'in_progress', 'complete', 'failed']:
+                    return error_response("Unknown status")
                 if content['status'] in ['begin', 'in_progress', 'complete']:
                     try:
                         if content['status'] == 'begin':
@@ -627,7 +692,7 @@ class HarvesterViewSet(viewsets.ModelViewSet, _WithValidationResultMixin):
                                 time_col_start = time.time()
                                 logger.warning(f"Column {column_data.get('column_name', column_data.get('column_id'))}")
                                 try:
-                                    data_type = column_data.get('data_type')
+                                    data_type = column_data['data_type']
                                 except KeyError:
                                     return error_response(f"Could not find sample data for column {column_data}")
                                 try:
@@ -766,7 +831,7 @@ class MonitoredPathViewSet(viewsets.ModelViewSet, _WithValidationResultMixin):
     well as any users who have been given explicit permissions to edit the MonitoredPath.
     """
     permission_classes = [DRYPermissions]
-    filter_backends = [MonitoredPathFilterBackend]
+    filter_backends = [ResourceFilterBackend]
     serializer_class = MonitoredPathSerializer
     filterset_fields = ['path', 'harvester__uuid', 'harvester__name']
     search_fields = ['@path']
@@ -835,7 +900,7 @@ class ObservedFileViewSet(viewsets.ModelViewSet, _WithValidationResultMixin):
     filterset_fields = ['harvester__uuid', 'path', 'state']
     search_fields = ['@path', 'state']
     queryset = ObservedFile.objects.all().order_by('-last_observed_time', '-uuid')
-    http_method_names = ['get', 'options']
+    http_method_names = ['get', 'patch', 'options']
 
     @action(detail=True, methods=['GET'])
     def reimport(self, request, pk = None):

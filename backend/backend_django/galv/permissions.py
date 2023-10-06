@@ -71,10 +71,6 @@ class UserFilterBackend(DRYPermissionFiltersBase):
                     break
         return queryset.filter(pk__in=[u.pk for u in users_to_return])
 
-class MonitoredPathFilterBackend(DRYPermissionFiltersBase):
-    action_routing = True
-    def filter_list_queryset(self, request, queryset, view):
-        return queryset.filter(Q(team__in=user_teams(request.user)) | Q(harvester__lab__in=user_labs(request.user, True)))
 
 class ObservedFileFilterBackend(DRYPermissionFiltersBase):
     action_routing = True

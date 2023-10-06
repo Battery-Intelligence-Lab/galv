@@ -609,6 +609,10 @@ class ObservedFile(UUIDModel, ValidatableBySchemaMixin):
     def has_read_permission(request):
         return True
 
+    @staticmethod
+    def has_write_permission(request):
+        return True
+
     def has_object_read_permission(self, request):
         if self.harvester.is_valid_harvester(request):
             return True

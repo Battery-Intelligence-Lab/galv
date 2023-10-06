@@ -167,34 +167,21 @@ class MonitoredPathFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = MonitoredPath
         django_get_or_create = ('path', 'harvester',)
-        exclude = ('p',)
-
-    p = factory.Faker(
-            'file_path',
-            absolute=False,
-            depth=factory.Faker('random_int', min=1, max=10)
-        )
 
     team = factory.SubFactory(TeamFactory)
-    path = factory.LazyAttribute(lambda x: os.path.dirname(x.p))
+    path = factory.LazyAttribute(lambda x: os.path.dirname(fake.file_path(absolute=False, depth=2)))
     regex = ".*"
     harvester = factory.SubFactory(HarvesterFactory)
-
-    @factory.post_generation
-    def groups(obj, *args, **kwargs):
-        user_group = GroupFactory.create(name=f"path_{obj.uuid}_user_group")
-        admin_group = GroupFactory.create(name=f"path_{obj.uuid}_admin_group")
-        obj.user_group = user_group
-        obj.admin_group = admin_group
-        obj.save()
 
 
 class ObservedFileFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = ObservedFile
         django_get_or_create = ('harvester', 'path')
+        exclude = ('path_root',)
 
-    path = factory.Faker('file_path')
+    path_root = factory.Faker('file_path')
+    path = factory.LazyAttribute(lambda x: os.path.join(os.path.abspath(x.path_root), fake.file_path(depth=2)))
     harvester = factory.SubFactory(HarvesterFactory)
 
 

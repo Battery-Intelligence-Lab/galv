@@ -83,6 +83,7 @@ class GalvTestCase(APITestCase):
         self.lab_team.admin_group.user_set.add(self.admin)
         self.lab_admin = UserFactory.create(username=f'{prefix}_lab_admin')
         self.lab.admin_group.user_set.add(self.lab_admin)
+        self.lab_other_team = TeamFactory.create(name=f'{prefix} Other Team', lab=self.lab)
         self.strange_lab = LabFactory.create(name=f'{prefix} Strange Lab')
         self.strange_lab_team = TeamFactory.create(name=f'{prefix} Strange Lab Team', lab=self.strange_lab)
         self.strange_lab_admin = UserFactory.create(username=f'{prefix}_strange_lab_admin')
