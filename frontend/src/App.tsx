@@ -17,13 +17,17 @@ import Login from "./Login"
 import ApproveUsers from "./ApproveUsers"
 import Harvesters from "./Harvesters"
 import Cells from "./Cells"
-import SpeedIcon from '@mui/icons-material/Speed';
-import GroupAddIcon from '@mui/icons-material/GroupAdd';
 import Equipment from "./Equipment"
 import Datasets from "./Datasets"
-import TableChartIcon from '@mui/icons-material/TableChart';
-import BatteryUnknownIcon from '@mui/icons-material/BatteryUnknown';
-import BackupIcon from '@mui/icons-material/Backup';
+import HomeIcon from '@mui/icons-material/Home';
+import PollIcon from '@mui/icons-material/Poll';
+import DatasetLinkedIcon from '@mui/icons-material/DatasetLinked';
+import MultilineChartIcon from '@mui/icons-material/MultilineChart';
+import AssignmentIcon from '@mui/icons-material/Assignment';
+import PrecisionManufacturingIcon from '@mui/icons-material/PrecisionManufacturing';
+import BatteryFullIcon from '@mui/icons-material/BatteryFull';
+import HolidayVillageIcon from '@mui/icons-material/HolidayVillage';
+import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
 import { makeStyles} from "tss-react/mui";
 import CssBaseline from '@mui/material/CssBaseline';
 
@@ -39,7 +43,7 @@ import Button from '@mui/material/Button';
 import MenuIcon from '@mui/icons-material/Menu';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 
-import ListItem from '@mui/material/ListItem';
+import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import { ReactComponent as GalvLogo } from './Galv-logo.svg';
@@ -189,47 +193,63 @@ export default function Core() {
 
   const mainListItems = (
     <Stack>
-      <ListItem button
-                selected={isDatasetPath}
-                component={Link} to={datasetsPath}>
+      <ListItemButton selected={isDatasetPath} component={Link} to={datasetsPath}>
         <ListItemIcon>
-          <TableChartIcon />
+          <HomeIcon />
+        </ListItemIcon>
+        <ListItemText primary="Dashboard" />
+      </ListItemButton>
+      <Divider component="li" />
+      <ListItemButton selected={isHarvestersPath} component={Link} to={harvestersPath}>
+        <ListItemIcon>
+          <DatasetLinkedIcon />
+        </ListItemIcon>
+        <ListItemText primary="Experiments" />
+      </ListItemButton>
+      <ListItemButton selected={isHarvestersPath} component={Link} to={harvestersPath}>
+        <ListItemIcon>
+          <MultilineChartIcon />
+        </ListItemIcon>
+        <ListItemText primary="Cycler Tests" />
+      </ListItemButton>
+      <Divider component="li" />
+      <ListItemButton selected={isDatasetPath} component={Link} to={datasetsPath}>
+        <ListItemIcon>
+          <PollIcon />
         </ListItemIcon>
         <ListItemText primary="Datasets" />
-      </ListItem>
-      <ListItem button
-                selected={isHarvestersPath}
-                component={Link} to={harvestersPath}>
+      </ListItemButton>
+      <ListItemButton selected={isCellsPath} component={Link} to={cellsPath}>
         <ListItemIcon>
-          <BackupIcon />
-        </ListItemIcon>
-        <ListItemText primary="Harvesters" />
-      </ListItem>
-      <ListItem button
-                selected={isCellsPath}
-                component={Link} to={cellsPath}>
-        <ListItemIcon>
-          <BatteryUnknownIcon />
+          <BatteryFullIcon />
         </ListItemIcon>
         <ListItemText primary="Cells" />
-      </ListItem>
-      <ListItem button
-                selected={isEquipmentPath}
-                component={Link} to={equipmentPath}>
+      </ListItemButton>
+      <ListItemButton selected={isEquipmentPath} component={Link} to={equipmentPath}>
         <ListItemIcon>
-          <SpeedIcon/>
+          <PrecisionManufacturingIcon/>
         </ListItemIcon>
         <ListItemText primary="Equipment" />
-      </ListItem>
-      <Divider/>
-      <ListItem button
-                selected={isUsersPath}
-                component={Link} to={usersPath}>
+      </ListItemButton>
+      <ListItemButton selected={isUsersPath} component={Link} to={usersPath}>
         <ListItemIcon>
-          <GroupAddIcon/>
+          <AssignmentIcon/>
         </ListItemIcon>
-        <ListItemText primary="Approve Users" />
-      </ListItem>
+        <ListItemText primary="Schedules" />
+      </ListItemButton>
+      <Divider component="li" />
+      <ListItemButton selected={isUsersPath} component={Link} to={usersPath}>
+        <ListItemIcon>
+          <HolidayVillageIcon/>
+        </ListItemIcon>
+        <ListItemText primary="Labs" />
+      </ListItemButton>
+      <ListItemButton selected={isUsersPath} component={Link} to={usersPath}>
+        <ListItemIcon>
+          <PeopleAltIcon/>
+        </ListItemIcon>
+        <ListItemText primary="Teams" />
+      </ListItemButton>
     </Stack>
   );
 

@@ -12,6 +12,7 @@
     "@mui/x-data-grid": "^5.17.12",
     "@nivo/core": "^0.80.0",
     "@nivo/line": "^0.80.0",
+    "@tanstack/react-query": "^4.36.1",
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^14.0.0",
     "@testing-library/user-event": "^14.4.3",
@@ -32,6 +33,7 @@
     "web-vitals": "^3.1.0"
   },
   "devDependencies": {
+    "@tanstack/eslint-plugin-query": "^4.36.1",
     "react-styleguidist": "^13.0.0"
   },
   "scripts": {
