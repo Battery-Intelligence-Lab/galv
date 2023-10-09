@@ -29,6 +29,9 @@ class ObservedFileTests(GalvTestCase):
         self.specific_files = ObservedFileFactory.create_batch(size=2, harvester=self.harvester, path_root=self.specific_path.path)
         self.other_files = ObservedFileFactory.create_batch(size=3, harvester=self.harvester, path_root=self.other_path.path)
         self.regex_files = ObservedFileFactory.create_batch(size=6, harvester=self.harvester, path_root=f"{self.regex_path.path}/abc")
+        self.other_harvester = HarvesterFactory.create(name='Test Files Other', lab=self.strange_lab)
+        self.other_harvester_path = MonitoredPathFactory.create(harvester=self.other_harvester, path="/", team=self.strange_lab_team)
+        self.other_harvester_files = ObservedFileFactory.create_batch(size=4, harvester=self.other_harvester, path_root=self.other_harvester_path.path)
 
     def get_edit_kwargs(self):
         return {'name': fake.file_name()}
@@ -50,8 +53,8 @@ class ObservedFileTests(GalvTestCase):
         for user, details in {
             'user': {'login': lambda: self.client.force_authenticate(self.user), 'expected_set': [*self.specific_files, *self.regex_files]},
             'admin': {'login': lambda: self.client.force_authenticate(self.admin), 'expected_set': [*self.specific_files, *self.regex_files]},
-            'other': {'login': lambda: self.client.force_authenticate(self.lab_admin), 'expected_set': []},
-            'stranger': {'login': lambda: self.client.force_authenticate(self.strange_lab_admin), 'expected_set': []},
+            'lab_admin': {'login': lambda: self.client.force_authenticate(self.lab_admin), 'expected_set': []},
+            'stranger': {'login': lambda: self.client.force_authenticate(self.strange_lab_admin), 'expected_set': [*self.other_harvester_files]},
             'anonymous': {'login': lambda: self.client.logout(), 'expected_set': []},
         }.items():
             with self.subTest(user=user):

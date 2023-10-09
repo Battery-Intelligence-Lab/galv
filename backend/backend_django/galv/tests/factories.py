@@ -180,8 +180,12 @@ class ObservedFileFactory(factory.django.DjangoModelFactory):
         django_get_or_create = ('harvester', 'path')
         exclude = ('path_root',)
 
-    path_root = factory.Faker('file_path')
-    path = factory.LazyAttribute(lambda x: os.path.join(os.path.abspath(x.path_root), fake.file_path(depth=2)))
+    @staticmethod
+    def path_with_root(instance):
+        return os.path.join(instance.path_root, fake.file_path(depth=fake.random_digit_not_null(), absolute=False))
+
+    path_root = factory.Faker('file_path', depth=1, absolute=True)
+    path = factory.LazyAttribute(path_with_root)
     harvester = factory.SubFactory(HarvesterFactory)
 
 

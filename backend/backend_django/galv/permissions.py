@@ -76,9 +76,7 @@ class ObservedFileFilterBackend(DRYPermissionFiltersBase):
     action_routing = True
     def filter_list_queryset(self, request, queryset, view):
         files = ObservedFile.objects.all()
-        paths = MonitoredPath.objects.filter(
-            Q(team__in=user_teams(request.user)) | Q(harvester__lab__in=user_labs(request.user, True))
-        )
+        paths = MonitoredPath.objects.filter(team__in=user_teams(request.user))
         file_ids = []
         # Not sure there's a good way around checking every file against every path
         for file in files:
@@ -86,6 +84,7 @@ class ObservedFileFilterBackend(DRYPermissionFiltersBase):
                 if path.harvester == file.harvester and path.matches(file.path):
                     file_ids.append(file.pk)
                     break
+
         return queryset.filter(pk__in=file_ids)
 
 class ResourceFilterBackend(DRYPermissionFiltersBase):
