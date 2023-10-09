@@ -12,6 +12,7 @@ from galv.models import ValidationSchema, GroupProxy, UserProxy
 
 url_help_text = "Canonical URL for this object"
 
+OUTPUT_STYLE_FLAT = 'flat'
 
 def serializer_class_from_string(class_name: str):
     """
@@ -305,6 +306,11 @@ class TruncatedHyperlinkedRelatedIdField(HyperlinkedRelatedIdField):
                 self.queryset = None
 
     def to_representation(self, instance):
+        try:
+            if self.context['request'].query_params.get('style') == OUTPUT_STYLE_FLAT:
+                return super().to_representation(instance)
+        except (AttributeError, KeyError):
+            pass
         if isinstance(self.child, str):
             child = serializer_class_from_string(self.child)
             self.child = child  # cache result
