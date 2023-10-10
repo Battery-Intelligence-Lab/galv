@@ -24,3 +24,13 @@ class KnoxTokenScheme(OpenApiAuthenticationExtension):
                 'name': 'Authorization',
                 'description': 'Token-based authentication with required prefix "%s"' % knox_settings.AUTH_HEADER_PREFIX
             }
+
+def custom_preprocessing_hook(endpoints):
+    # your modifications to the list of operations that are exposed in the schema
+    for (path, path_regex, method, callback) in endpoints:
+        pass
+    return endpoints
+
+def custom_postprocessing_hook(result, generator, request, public):
+    # your modifications to the schema in parameter result
+    return result

@@ -4,11 +4,13 @@ from collections import OrderedDict
 import django.db.models
 import jsonschema
 from django.urls import reverse
+from drf_spectacular.utils import extend_schema_field, extend_schema
 from dry_rest_permissions.generics import DRYPermissionsField
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from galv.models import ValidationSchema, GroupProxy, UserProxy
+from rest_framework.fields import DictField
 
 url_help_text = "Canonical URL for this object"
 
@@ -95,6 +97,19 @@ class GetOrCreateTextStringSerializer(serializers.ModelSerializer):
     def to_internal_value(self, data):
         raise RuntimeError("GetOrCreateTextStringSerializer is read-only")
 
+    class Meta:
+        fields = '__all__'
+
+def get_GetOrCreateTextStringSerializer(django_model):
+    """
+    Return a concrete child class for GetOrCreateTextStringSerializer linking it to a model.
+    """
+    return type(
+        f"{django_model.__name__}TextSerializer",
+        (GetOrCreateTextStringSerializer,),
+        {
+            'Meta': type('Meta', (GetOrCreateTextStringSerializer.Meta,), {'model': django_model})
+        })
 
 class GetOrCreateTextField(serializers.CharField):
     """
@@ -215,9 +230,19 @@ def validate_against_schemas(serializer: serializers.ModelSerializer, schemas = 
         'validation_results': validation_results
     }
 
+@extend_schema_field({
+        'type': 'object',
+        'properties': {
+            'read': {'type': 'boolean'},
+            'write': {'type': 'boolean'},
+            'create': {'type': 'boolean'},
+        }
+    })
+class DRYPermissionsFieldWrapper(DRYPermissionsField):
+    pass
 
 class PermissionsMixin(serializers.Serializer):
-    permissions = DRYPermissionsField()
+    permissions: DictField = DRYPermissionsFieldWrapper()
 
 
 class GroupProxyField(serializers.Field):
@@ -302,8 +327,8 @@ class TruncatedHyperlinkedRelatedIdField(HyperlinkedRelatedIdField):
     def bind(self, field_name, parent):
         super().bind(field_name, parent)
         if self.create_only and 'view' in self.context and self.context['view'].action != 'create':
-                self.read_only = True
-                self.queryset = None
+            self.read_only = True
+            self.queryset = None
 
     def to_representation(self, instance):
         try:

@@ -377,7 +377,7 @@ class CellFamily(AdditionalPropertiesModel, ValidatableBySchemaMixin, ResourceMo
     energy_density = models.FloatField(help_text="Energy density of the cells (in watt hours per kilogram)", null=True, blank=True)
     power_density = models.FloatField(help_text="Power density of the cells (in watts per kilogram)", null=True, blank=True)
 
-    def in_use(self):
+    def in_use(self) -> bool:
         return self.cells.count() > 0
 
     def __str__(self):
@@ -395,7 +395,7 @@ class Cell(JSONModel, ValidatableBySchemaMixin, ResourceModelPermissionsMixin):
     identifier = models.TextField(unique=False, help_text="Unique identifier (e.g. serial number) for the cell", null=False)
     family = models.ForeignKey(to=CellFamily, on_delete=models.CASCADE, null=False, help_text="Cell type", related_name="cells")
 
-    def in_use(self):
+    def in_use(self) -> bool:
         return self.cycler_tests.count() > 0
 
     def __str__(self):
@@ -424,7 +424,7 @@ class EquipmentFamily(AdditionalPropertiesModel, ValidatableBySchemaMixin, Resou
     manufacturer = models.ForeignKey(to=EquipmentManufacturers, on_delete=models.CASCADE, null=False, help_text="Manufacturer of equipment")
     model = models.ForeignKey(to=EquipmentModels, on_delete=models.CASCADE, null=False, help_text="Model of equipment")
 
-    def in_use(self):
+    def in_use(self) -> bool:
         return self.equipment.count() > 0
 
     def __str__(self):
@@ -435,7 +435,7 @@ class Equipment(JSONModel, ValidatableBySchemaMixin, ResourceModelPermissionsMix
     family = models.ForeignKey(to=EquipmentFamily, on_delete=models.CASCADE, null=False, help_text="Equipment type", related_name="equipment")
     calibration_date = models.DateField(help_text="Date of last calibration", null=True, blank=True)
 
-    def in_use(self):
+    def in_use(self) -> bool:
         return self.cycler_tests.count() > 0
 
     def __str__(self):
@@ -461,7 +461,7 @@ class ScheduleFamily(AdditionalPropertiesModel, ValidatableBySchemaMixin, Resour
         template = "\n".join(self.pybamm_template)
         return re.findall(r"\{([\w_]+)}", template)
 
-    def in_use(self):
+    def in_use(self) -> bool:
         return self.schedules.count() > 0
 
     def __str__(self):
@@ -473,7 +473,7 @@ class Schedule(JSONModel, ValidatableBySchemaMixin, ResourceModelPermissionsMixi
     schedule_file = models.FileField(help_text="File containing the schedule", null=True, blank=True)
     pybamm_schedule_variables = models.JSONField(help_text="Variables used in the PyBaMM.Experiment representation of the schedule", null=True, blank=True)
 
-    def in_use(self):
+    def in_use(self) -> bool:
         return self.cycler_tests.count() > 0
 
     def __str__(self):

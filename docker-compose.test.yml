@@ -9,7 +9,7 @@ services:
     image: "postgres:14"
     stop_signal: SIGINT                 # Fast Shutdown mode
     volumes:
-      - "${GALV_DATA_PATH}:/var/lib/postgresql/data"
+      - "${GALV_DATA_TEST_PATH}:/var/lib/postgresql/data"
     env_file:
       - .env.secret
     restart: unless-stopped

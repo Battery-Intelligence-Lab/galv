@@ -35,9 +35,8 @@ from rest_framework import serializers
 from knox.models import AuthToken
 
 from .utils import AdditionalPropertiesModelSerializer, GetOrCreateTextField, augment_extra_kwargs, url_help_text, \
-    get_model_field, PermissionsMixin, HyperlinkedRelatedIdField, GroupHyperlinkedRelatedIdListField, \
-    UserHyperlinkedRelatedIdListField, TruncatedUserHyperlinkedRelatedIdField, \
-    TruncatedGroupHyperlinkedRelatedIdField, serializer_class_from_string, TruncatedHyperlinkedRelatedIdField, \
+    get_model_field, PermissionsMixin, TruncatedUserHyperlinkedRelatedIdField, \
+    TruncatedGroupHyperlinkedRelatedIdField, TruncatedHyperlinkedRelatedIdField, \
     CreateOnlyMixin
 
 
@@ -57,10 +56,6 @@ class UserSerializer(serializers.HyperlinkedModelSerializer, PermissionsMixin):
         many=True,
         help_text="Groups this user belongs to"
     )
-
-    is_active = serializers.SerializerMethodField(help_text="Whether this user is active")
-    def get_is_active(self, instance):
-        return instance.is_active
 
     @staticmethod
     def validate_password(value):
@@ -87,7 +82,7 @@ class UserSerializer(serializers.HyperlinkedModelSerializer, PermissionsMixin):
         model = UserProxy
         write_fields = ['username', 'email', 'first_name', 'last_name']
         write_only_fields = ['password', 'current_password']
-        read_only_fields = ['url', 'id', 'is_active', 'is_staff', 'is_superuser', 'groups', 'permissions']
+        read_only_fields = ['url', 'id', 'is_staff', 'is_superuser', 'groups', 'permissions']
         fields = [*write_fields, *read_only_fields, *write_only_fields]
         extra_kwargs = augment_extra_kwargs({
             'password': {'write_only': True, 'help_text': "Password (8 characters minimum)"},
@@ -499,7 +494,7 @@ class CyclerTestSerializer(AdditionalPropertiesModelSerializer, PermissionsMixin
         help_text="Equipment this Cycler Test uses"
     )
 
-    def get_rendered_schedule(self, instance):
+    def get_rendered_schedule(self, instance) -> str | None:
         if instance.schedule is None:
             return None
         return instance.rendered_pybamm_schedule(False)
@@ -702,8 +697,20 @@ class ObservedFileSerializer(serializers.HyperlinkedModelSerializer, Permissions
 
 
 class HarvestErrorSerializer(serializers.HyperlinkedModelSerializer, PermissionsMixin):
-    harvester = serializers.SerializerMethodField(help_text="Harvester this HarvestError belongs to")
-    file = serializers.SerializerMethodField(help_text="File this HarvestError belongs to")
+    harvester = TruncatedHyperlinkedRelatedIdField(
+        'HarvesterSerializer',
+        ['name', 'lab'],
+        'harvester-detail',
+        read_only=True,
+        help_text="Harvester this HarvestError belongs to"
+    )
+    file = TruncatedHyperlinkedRelatedIdField(
+        'ObservedFileSerializer',
+        ['path'],
+        'observedfile-detail',
+        read_only=True,
+        help_text="File this HarvestError belongs to"
+    )
 
     class Meta:
         model = HarvestError
@@ -768,7 +775,7 @@ class DataColumnSerializer(serializers.HyperlinkedModelSerializer, PermissionsMi
     def get_description(self, instance) -> str:
         return instance.type.description
 
-    def get_unit(self, instance):
+    def get_unit(self, instance) -> dict[str, str] | None:
         return {
             k: v for k, v in
             DataUnitSerializer(instance.type.unit, context=self.context).data.items() \

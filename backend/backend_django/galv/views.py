@@ -4,13 +4,16 @@
 from __future__ import annotations
 
 import datetime
+from typing import List
 
 import knox.auth
 import os
 from django.db.models import Q
 from django.http import StreamingHttpResponse
 from django.urls import NoReverseMatch
+from drf_spectacular.types import OpenApiTypes
 from dry_rest_permissions.generics import DRYPermissions
+from rest_framework.mixins import ListModelMixin
 from rest_framework.reverse import reverse
 
 from .models.utils import ValidatableBySchemaMixin
@@ -51,7 +54,8 @@ from .models import Harvester, \
     ValidationSchema, Experiment, Lab, Team, UserProxy, GroupProxy
 from .permissions import HarvesterFilterBackend, TeamFilterBackend, LabFilterBackend, GroupFilterBackend, \
     ResourceFilterBackend, ObservedFileFilterBackend, UserFilterBackend
-from .serializers.utils import GetOrCreateTextStringSerializer, validate_against_schemas
+from .serializers.utils import GetOrCreateTextStringSerializer, validate_against_schemas, \
+    get_GetOrCreateTextStringSerializer
 from .utils import get_files_from_path
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -97,22 +101,28 @@ def deserialize_datetime(serialized_value: str | float) -> timezone.datetime:
         return timezone.make_aware(timezone.datetime.fromtimestamp(serialized_value))
     raise TypeError
 
-
-class _GetOrCreateTextStringViewSet(viewsets.ReadOnlyModelViewSet):
+@extend_schema_view(
+    list=extend_schema(responses={
+        '200': {'type': 'string'}
+    }),
+)
+class _GetOrCreateTextStringViewSet(ListModelMixin, viewsets.GenericViewSet):
     """
     Abstract base class for ViewSets that allow the creation of TextString objects.
 
     TextString objects are used to describe the properties of Cells, Equipment, and
     other objects used in experiments, making values available for autocompletion hints.
     """
-    serializer_class = GetOrCreateTextStringSerializer
-    filterset_fields = ['value']
+    http_method_names = ['get', 'options']
     search_fields = ['@value']
 
-    @action(detail=True, methods=['GET'])
-    def details(self, request, pk: int = None):
-        text_string = get_object_or_404(self.queryset, pk=pk)
-        return Response(GetOrCreateTextStringSerializer(text_string).data)
+    def list(self, *args, **kwargs):
+        return super().list(*args, **kwargs)
+
+    # @action(detail=True, methods=['GET'])
+    # def details(self, request, pk: int = None):
+    #     text_string = get_object_or_404(self.queryset, pk=pk)
+    #     return Response(GetOrCreateTextStringSerializer(text_string).data)
 
 
 class _WithValidationResultMixin(viewsets.GenericViewSet):
@@ -422,16 +432,16 @@ Those details are updated using this endpoint.
 Only Harvester Administrators are authorised to make these changes.
         """
     ),
-#     destroy=extend_schema(
-#         summary="Deactivate a Harvester",
-#         description="""
-# **Use with caution.**
-#
-# Only Harvester Administrators are authorised to delete harvesters.
-# Deleting a Harvester will not stop the harvester program running,
-# it will instead deactivate its API access.
-#         """
-#     ),
+    #     destroy=extend_schema(
+    #         summary="Deactivate a Harvester",
+    #         description="""
+    # **Use with caution.**
+    #
+    # Only Harvester Administrators are authorised to delete harvesters.
+    # Deleting a Harvester will not stop the harvester program running,
+    # it will instead deactivate its API access.
+    #         """
+    #     ),
     config=extend_schema(
         exclude=not GENERATE_HARVESTER_API_SCHEMA,
         summary="Full configuration information for a Harvester",
@@ -815,10 +825,6 @@ and will no longer become ObservedFiles once they are reported to Galv by the Ha
 Alter the path to the monitored directory,
 or the time for which files need to be stable before being imported.
         """
-    ),
-    files=extend_schema(
-        summary="List of files matched by this Path",
-        description="Fetch files matched by this Path's path and RegEx."
     )
 )
 class MonitoredPathViewSet(viewsets.ModelViewSet, _WithValidationResultMixin):
@@ -954,6 +960,8 @@ class EquipmentTypesViewSet(_GetOrCreateTextStringViewSet):
     Equipment Types are used to describe the type of equipment used in an experiment.
     Examples are "Thermal Chamber", "Cycler".
     """
+    def get_serializer_class(self):
+        return get_GetOrCreateTextStringSerializer(EquipmentTypes)
     queryset = EquipmentTypes.objects.filter(include_in_autocomplete=True).order_by('value')
 
 
@@ -962,42 +970,56 @@ class EquipmentModelsViewSet(_GetOrCreateTextStringViewSet):
     Equipment Models are used to describe the model of equipment used in an experiment.
     Examples are "BT-2000", "BT-2043".
     """
+    def get_serializer_class(self):
+        return get_GetOrCreateTextStringSerializer(EquipmentModels)
     queryset = EquipmentModels.objects.filter(include_in_autocomplete=True).order_by('value')
 class EquipmentManufacturersViewSet(_GetOrCreateTextStringViewSet):
     """
     Equipment Manufacturers are used to describe the manufacturer of equipment used in an experiment.
     Examples are "Arbin", "Maccor".
     """
+    def get_serializer_class(self):
+        return get_GetOrCreateTextStringSerializer(EquipmentManufacturers)
     queryset = EquipmentManufacturers.objects.filter(include_in_autocomplete=True).order_by('value')
 class CellModelsViewSet(_GetOrCreateTextStringViewSet):
     """
     Cell Models are used to describe the model of cell used in an experiment.
     Examples are "VTC6", "HG2".
     """
+    def get_serializer_class(self):
+        return get_GetOrCreateTextStringSerializer(CellModels)
     queryset = CellModels.objects.filter(include_in_autocomplete=True).order_by('value')
 class CellManufacturersViewSet(_GetOrCreateTextStringViewSet):
     """
     Cell Manufacturers are used to describe the manufacturer of cell used in an experiment.
     Examples are "Sony", "LG".
     """
+    def get_serializer_class(self):
+        return get_GetOrCreateTextStringSerializer(CellManufacturers)
     queryset = CellManufacturers.objects.filter(include_in_autocomplete=True).order_by('value')
 class CellChemistriesViewSet(_GetOrCreateTextStringViewSet):
     """
     Cell Chemistries are used to describe the chemistry of cell used in an experiment.
     Examples are "NMC", "LFP".
     """
+    def get_serializer_class(self):
+        return get_GetOrCreateTextStringSerializer(CellChemistries)
     queryset = CellChemistries.objects.filter(include_in_autocomplete=True).order_by('value')
 class CellFormFactorsViewSet(_GetOrCreateTextStringViewSet):
     """
     Cell Form Factors are used to describe the form factor of cell used in an experiment.
     Examples are "Pouch", "Cylindrical".
     """
+    def get_serializer_class(self):
+        return get_GetOrCreateTextStringSerializer(CellFormFactors)
     queryset = CellFormFactors.objects.filter(include_in_autocomplete=True).order_by('value')
 class ScheduleIdentifiersViewSet(_GetOrCreateTextStringViewSet):
     """
     Schedule Identifiers are used to describe the type of schedule used in an experiment.
     Examples are "Cell Conditioning", "Pseudo-OCV".
     """
+    def get_serializer_class(self):
+        return get_GetOrCreateTextStringSerializer(ScheduleIdentifiers)
     queryset = ScheduleIdentifiers.objects.filter(include_in_autocomplete=True).order_by('value')
 
 
