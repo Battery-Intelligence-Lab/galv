@@ -6,8 +6,13 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import './index.css';
 import App from './App';
-import reportWebVitals from './reportWebVitals';
+import {
+  QueryClient,
+  QueryClientProvider,
+} from '@tanstack/react-query'
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { BrowserRouter as Router } from 'react-router-dom'
+import reportWebVitals from "./reportWebVitals";
 
 const root = createRoot(document.getElementById('root'))
 
@@ -15,12 +20,17 @@ if (module.hot) {
     module.hot.accept();
 }
 
+const queryClient = new QueryClient()
+
 root.render(
-  <React.StrictMode>
-    <Router>
-      <App />
-    </Router>
-  </React.StrictMode>
+    <React.StrictMode>
+        <QueryClientProvider client={queryClient}>
+            <ReactQueryDevtools initialIsOpen={false} />
+            <Router>
+                <App />
+            </Router>
+        </QueryClientProvider>
+    </React.StrictMode>
 );
 
 // If you want to start measuring performance in your app, pass a function

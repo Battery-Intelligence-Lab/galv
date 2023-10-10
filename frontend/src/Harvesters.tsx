@@ -24,7 +24,7 @@ export type HarvesterWriteableFields = {
 
 export type HarvesterFields = HarvesterWriteableFields & {
   url: string;
-  id: number;
+  uuid: number;
   last_check_in: string | null;
   user_sets: UserSet[];
 }

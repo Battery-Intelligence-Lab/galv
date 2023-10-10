@@ -19,6 +19,7 @@ import Harvesters from "./Harvesters"
 import Cells from "./Cells"
 import Equipment from "./Equipment"
 import Datasets from "./Datasets"
+import Dashboard from "./Dashboard"
 import HomeIcon from '@mui/icons-material/Home';
 import PollIcon from '@mui/icons-material/Poll';
 import DatasetLinkedIcon from '@mui/icons-material/DatasetLinked';
@@ -157,7 +158,8 @@ export default function Core() {
 
   const userDisplayName = Connection.is_logged_in?  Connection.user?.username : ''
 
-  const datasetsPath = "/"
+  const dashboardPath = "/"
+  const datasetsPath = "/datasets"
   const isDatasetPath = matchPath({path: datasetsPath, end: true}, pathname) !== null
   const harvestersPath = "/harvesters"
   const isHarvestersPath = matchPath({path: harvestersPath, end: true}, pathname) !== null
@@ -324,14 +326,15 @@ export default function Core() {
   return (
     <Routes>
       <Route path="/login" element={<Login />}/>
-      <Route path={datasetsPath} element={PrivateRoute(Layout)}>
-        <Route path={cellsPath} element={Cells()} />
-        <Route path={equipmentPath} element={Equipment()} />
-        <Route path={harvestersPath} element={Harvesters()} />
-        <Route path={usersPath} element={ApproveUsers()} />
-        <Route path={profilePath} element={UserProfile()} />
-        <Route path={tokenPath} element={Tokens()} />
-        <Route index element={Datasets()} />
+      <Route path={dashboardPath} element={PrivateRoute(Layout)}>
+        {/*<Route path={cellsPath} element={Cells()} />*/}
+        {/*<Route path={equipmentPath} element={Equipment()} />*/}
+        {/*<Route path={harvestersPath} element={Harvesters()} />*/}
+        {/*<Route path={usersPath} element={ApproveUsers()} />*/}
+        {/*<Route path={profilePath} element={UserProfile()} />*/}
+        {/*<Route path={tokenPath} element={Tokens()} />*/}
+        {/*<Route path={datasetsPath} element={Datasets()} />*/}
+        <Route index element={Dashboard()} />
       </Route>
     </Routes>
   );
