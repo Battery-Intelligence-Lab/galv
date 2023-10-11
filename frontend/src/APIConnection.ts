@@ -17,7 +17,8 @@ export type User = {
 }
 
 export interface APIObject {
-  id: number;
+  id?: number;
+  uuid?: string;
   url: string;
 }
 export type SingleAPIResponse = APIObject & {[prop: string]: any}

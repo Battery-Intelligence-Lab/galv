@@ -15,6 +15,7 @@ from rest_framework.fields import DictField
 url_help_text = "Canonical URL for this object"
 
 OUTPUT_STYLE_FLAT = 'flat'
+OUTPUT_STYLE_CONTEXT = 'context'
 
 def serializer_class_from_string(class_name: str):
     """
@@ -332,7 +333,7 @@ class TruncatedHyperlinkedRelatedIdField(HyperlinkedRelatedIdField):
 
     def to_representation(self, instance):
         try:
-            if self.context['request'].query_params.get('style') == OUTPUT_STYLE_FLAT:
+            if self.context['request'].query_params.get('style') != OUTPUT_STYLE_CONTEXT:
                 return super().to_representation(instance)
         except (AttributeError, KeyError):
             pass

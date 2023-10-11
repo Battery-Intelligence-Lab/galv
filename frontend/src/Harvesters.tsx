@@ -24,7 +24,7 @@ export type HarvesterWriteableFields = {
 
 export type HarvesterFields = HarvesterWriteableFields & {
   url: string;
-  uuid: number;
+  uuid: string;
   last_check_in: string | null;
   user_sets: UserSet[];
 }
@@ -74,7 +74,7 @@ export default function Harvesters() {
           classes={classes}
           columns={columns}
           row_generator={(row, context) => [
-            <Fragment key="id"><Typography>{row.id}</Typography></Fragment>,
+            <Fragment key="id"><Typography>{row.uuid}</Typography></Fragment>,
             <Fragment key="name">
               {
                 userIsAdmin(row) ? <TextField
@@ -115,7 +115,7 @@ export default function Harvesters() {
             </Fragment>,
             context.is_new_row? <Fragment key="users" /> : <Fragment>
               <UserRoleSet
-                key={`userroleset-${row.id}`}
+                key={`userroleset-${row.uuid}`}
                 user_sets={row.user_sets}
                 last_updated={new Date()}
                 set_last_updated={() => context.refresh_all_rows(false)}
@@ -124,8 +124,8 @@ export default function Harvesters() {
             <Fragment key="actions">
               <ActionButtons
                 classes={classes}
-                onInspect={() => selected?.id === row.id? setSelected(null) : setSelected(row)}
-                inspectIconProps={selected?.id === row.id ? {color: 'info'} : {}}
+                onInspect={() => selected?.uuid === row.uuid? setSelected(null) : setSelected(row)}
+                inspectIconProps={selected?.uuid === row.uuid ? {color: 'info'} : {}}
                 onSave={() => updateHarvester(row).then(context.refresh)}
                 saveButtonProps={{disabled: !userIsAdmin(row) || !context.value_changed}}
                 onDelete={() => window.confirm(`Delete ${row.name}?`) && deleteHarvester(row).then(context.refresh)}
@@ -139,7 +139,7 @@ export default function Harvesters() {
               <HarvesterEnv harvester={selected} refreshCallback={refreshTable} />
             </Stack>
           }
-          subrow_inclusion_rule={row => selected !== null && row.id === selected.id}
+          subrow_inclusion_rule={row => selected !== null && row.uuid === selected.uuid}
           url="harvesters/mine"
         />}
       </Paper>

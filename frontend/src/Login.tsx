@@ -17,6 +17,9 @@ import Grid from "@mui/material/Grid";
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
+import {useMutation} from "@tanstack/react-query";
+import {CellModelsApi, LoginApi} from "./api_codegen";
+import {save_login_response} from "./AxiosConfig";
 
 const useStyles = makeStyles()((theme) => {
   return {
@@ -77,9 +80,22 @@ export default function Login() {
     }
   }
 
+  const api_handler = new LoginApi()
+  const login = useMutation({
+    mutationFn: () => {
+      console.log('login', username, password)
+      return api_handler.loginCreate({
+        headers: {Authorization: `Basic ${btoa(username + ":" + password)}`}
+      })
+    },
+    onSuccess: (data) => {
+        save_login_response(data.data)
+        navigate('/')
+    }
+  })
+
   const onSubmitClick = (e: FormEvent)=>{
     e.preventDefault()
-    console.log("You pressed login")
     if (username === "") username_input.current?.focus();
     else if (password === "") password_input.current?.focus();
     else if (registerMode && email === "") email_input.current?.focus();
@@ -90,14 +106,7 @@ export default function Login() {
           .then(user => setCreatedUser(user))
           .catch(e => setError(e.message))
       } else
-        Connection.login(username, password).then(ok => {
-          if (!ok) {
-            setError('Unable to log in');
-          } else {
-            setError('')
-            navigate('/');
-          }
-        });
+        login.mutate()
     }
   }
 

@@ -14,11 +14,6 @@ import {
   matchPath,
 } from "react-router-dom";
 import Login from "./Login"
-import ApproveUsers from "./ApproveUsers"
-import Harvesters from "./Harvesters"
-import Cells from "./Cells"
-import Equipment from "./Equipment"
-import Datasets from "./Datasets"
 import Dashboard from "./Dashboard"
 import HomeIcon from '@mui/icons-material/Home';
 import PollIcon from '@mui/icons-material/Poll';
@@ -54,6 +49,10 @@ import Tokens from "./Tokens";
 import UserProfile from "./UserProfile";
 import Snackbar from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert";
+import axios from "axios";
+import Experiments from "./Experiments";
+import CyclerTests from "./CyclerTests";
+import { ICONS } from "./icons";
 
 const PrivateRoute = (component: JSX.Element) => {
   const logged = Connection.is_logged_in;
@@ -154,11 +153,11 @@ const useStyles = makeStyles()((theme) => {
 export default function Core() {
   const { pathname } = useLocation();
   const { classes } = useStyles();
-  console.log({classes})
 
   const userDisplayName = Connection.is_logged_in?  Connection.user?.username : ''
 
   const dashboardPath = "/"
+    const isDashboardPath = matchPath({path: dashboardPath, end: true}, pathname) !== null
   const datasetsPath = "/datasets"
   const isDatasetPath = matchPath({path: datasetsPath, end: true}, pathname) !== null
   const harvestersPath = "/harvesters"
@@ -188,67 +187,73 @@ export default function Core() {
       setAPIMessage(null)
     }
   }
-  Connection.message_handlers.push((h) => {
-    setAPIMessage(h)
+  axios.interceptors.response.use(null, function (error) {
+    // Suppress 401 errors if we are not logged in
+    if (error.response?.status === 401) {
+      if (axios.defaults.headers.common['Authorization'] === undefined) {
+        return
+      }
+    }
+    setAPIMessage({message: error.message, severity: 'error'})
     setSnackbarOpen(true)
-  })
+  });
 
   const mainListItems = (
     <Stack>
-      <ListItemButton selected={isDatasetPath} component={Link} to={datasetsPath}>
+      <ListItemButton selected={isDashboardPath} component={Link} to={dashboardPath}>
         <ListItemIcon>
-          <HomeIcon />
+          <ICONS.DASHBOARD />
         </ListItemIcon>
         <ListItemText primary="Dashboard" />
       </ListItemButton>
       <Divider component="li" />
       <ListItemButton selected={isHarvestersPath} component={Link} to={harvestersPath}>
         <ListItemIcon>
-          <DatasetLinkedIcon />
+          <ICONS.EXPERIMENTS />
         </ListItemIcon>
         <ListItemText primary="Experiments" />
       </ListItemButton>
       <ListItemButton selected={isHarvestersPath} component={Link} to={harvestersPath}>
         <ListItemIcon>
-          <MultilineChartIcon />
+          <ICONS.CYCLER_TESTS />
         </ListItemIcon>
         <ListItemText primary="Cycler Tests" />
       </ListItemButton>
       <Divider component="li" />
       <ListItemButton selected={isDatasetPath} component={Link} to={datasetsPath}>
         <ListItemIcon>
-          <PollIcon />
+          <ICONS.DATASETS />
         </ListItemIcon>
         <ListItemText primary="Datasets" />
       </ListItemButton>
       <ListItemButton selected={isCellsPath} component={Link} to={cellsPath}>
         <ListItemIcon>
-          <BatteryFullIcon />
+          <ICONS.CELLS />
         </ListItemIcon>
         <ListItemText primary="Cells" />
       </ListItemButton>
       <ListItemButton selected={isEquipmentPath} component={Link} to={equipmentPath}>
         <ListItemIcon>
-          <PrecisionManufacturingIcon/>
+          <ICONS.EQUIPMENT/>
         </ListItemIcon>
         <ListItemText primary="Equipment" />
       </ListItemButton>
       <ListItemButton selected={isUsersPath} component={Link} to={usersPath}>
         <ListItemIcon>
-          <AssignmentIcon/>
+          <ICONS.SCHEDULES/>
         </ListItemIcon>
         <ListItemText primary="Schedules" />
       </ListItemButton>
       <Divider component="li" />
       <ListItemButton selected={isUsersPath} component={Link} to={usersPath}>
         <ListItemIcon>
-          <HolidayVillageIcon/>
+          <ICONS.LABS/>
         </ListItemIcon>
         <ListItemText primary="Labs" />
       </ListItemButton>
       <ListItemButton selected={isUsersPath} component={Link} to={usersPath}>
         <ListItemIcon>
-          <PeopleAltIcon/>
+          <ICONS.TEAMS/>
         </ListItemIcon>
         <ListItemText primary="Teams" />
       </ListItemButton>
@@ -326,15 +331,18 @@ export default function Core() {
   return (
     <Routes>
       <Route path="/login" element={<Login />}/>
-      <Route path={dashboardPath} element={PrivateRoute(Layout)}>
+      <Route path={dashboardPath} element={Layout}>
+        <Route path={datasetsPath} element={Experiments()} />
+        <Route path={datasetsPath} element={CyclerTests()} />
+        {/*<Route path={datasetsPath} element={Datasets()} />*/}
         {/*<Route path={cellsPath} element={Cells()} />*/}
         {/*<Route path={equipmentPath} element={Equipment()} />*/}
         {/*<Route path={harvestersPath} element={Harvesters()} />*/}
         {/*<Route path={usersPath} element={ApproveUsers()} />*/}
         {/*<Route path={profilePath} element={UserProfile()} />*/}
         {/*<Route path={tokenPath} element={Tokens()} />*/}
-        {/*<Route path={datasetsPath} element={Datasets()} />*/}
-        <Route index element={Dashboard()} />
+        {/*<Route index element={Dashboard()} />*/}
+        <Route index element={CyclerTests()} />
       </Route>
     </Routes>
   );

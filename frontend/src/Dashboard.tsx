@@ -8,14 +8,15 @@ import {useQuery} from "@tanstack/react-query";
 import {CellModelsApi} from "./api_codegen";
 import Paper from "@mui/material/Paper";
 import Container from "@mui/material/Container";
-import {get_api_handler} from "./ApiWrapper";
 export default function Dashboard() {
   const { classes } = useStyles();
 
+  // API handler
+  const api_handler = new CellModelsApi()
   // Queries
   const query = useQuery({
     queryKey: ['cell_models'],
-    queryFn: () => get_api_handler(CellModelsApi).cellModelsList()
+    queryFn: () => api_handler.cellModelsList()
   })
 
   return (

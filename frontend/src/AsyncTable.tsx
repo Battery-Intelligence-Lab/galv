@@ -64,8 +64,8 @@ type AsyncTableState = {
   row_data: any[];
   new_row: any;
   loading: boolean;
-  loading_rows: number[];
-  changed_rows: number[];
+  loading_rows: (number|undefined)[];
+  changed_rows: (number|undefined)[];
 }
 
 export const NEW_ROW_ID = -1
@@ -139,14 +139,14 @@ class AsyncTable<T extends APIObject> extends Component<AsyncTableProps<T>, Asyn
 
   reset_new_row = () => this.setState({new_row: this.props.new_row_values? this.new_row_template : null})
 
-  mark_row_loading = (row_id: number, status: boolean = true) => {
+  mark_row_loading = (row_id: number | undefined, status: boolean = true) => {
     const rows = this.state.loading_rows.filter(i => i !== row_id)
     if (status)
       rows.push(row_id)
     this.setState({loading_rows: rows})
   }
 
-  mark_row_changed = (row_id: number, status: boolean = true) => {
+  mark_row_changed = (row_id: number|undefined, status: boolean = true) => {
     const rows = this.state.changed_rows.filter(i => i !== row_id)
     if (status)
       rows.push(row_id)
@@ -235,7 +235,7 @@ class AsyncTable<T extends APIObject> extends Component<AsyncTableProps<T>, Asyn
       </TableHead>)
   }
 
-  loading_row(id: number) {
+  loading_row(id: number|undefined) {
     return <TableRow key={`loading-${id}`}>
       <TableCell colSpan={this.props.columns.length} align="center" aria-busy="true">
         <CircularProgress size="3rem"/>
@@ -342,8 +342,15 @@ class AsyncTable<T extends APIObject> extends Component<AsyncTableProps<T>, Asyn
 
 export type AsyncTableType<T extends APIObject> = typeof AsyncTable<T>
 
+class Foo<T extends APIObject> extends Component<AsyncTableProps<T>, AsyncTableState> {
+  render() {
+    return <h1>Not shown.</h1>
+  }
+}
+
 const StyledAsyncTable = withStyles(
   AsyncTable,
+  //   Foo,
   (theme, props) => ({
     newTableRow: {},
     newTableCell: {},

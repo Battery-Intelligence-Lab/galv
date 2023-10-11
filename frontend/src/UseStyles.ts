@@ -19,6 +19,7 @@ export default makeStyles()((theme) => {
     container: {
       paddingTop: theme.spacing(4),
       paddingBottom: theme.spacing(4),
+      fontFamily: 'Helvetica Neue,Helvetica,Arial,sans-serif',
     },
     deleteIcon: {
       "&:hover": {color: theme.palette.error.light},
@@ -61,5 +62,10 @@ export default makeStyles()((theme) => {
     table: {
       minWidth: 650,
     },
+
+    text: {},
+    page_title: {},
+    item_one_line: {},
+    item_three_line: {},
   }
 });
