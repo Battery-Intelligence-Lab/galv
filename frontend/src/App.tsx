@@ -157,7 +157,7 @@ export default function Core() {
   const userDisplayName = Connection.is_logged_in?  Connection.user?.username : ''
 
   const dashboardPath = "/"
-    const isDashboardPath = matchPath({path: dashboardPath, end: true}, pathname) !== null
+  const isDashboardPath = matchPath({path: dashboardPath, end: true}, pathname) !== null
   const datasetsPath = "/datasets"
   const isDatasetPath = matchPath({path: datasetsPath, end: true}, pathname) !== null
   const harvestersPath = "/harvesters"
@@ -188,162 +188,162 @@ export default function Core() {
     }
   }
   axios.interceptors.response.use(null, function (error) {
-    // Suppress 401 errors if we are not logged in
+    // Suppress 401 errors and void login
     if (error.response?.status === 401) {
-      if (axios.defaults.headers.common['Authorization'] === undefined) {
-        return
-      }
+      window.localStorage.removeItem('user')
+      axios.defaults.headers.common['Authorization'] = ''
+      return Promise.reject(error)
     }
     setAPIMessage({message: error.message, severity: 'error'})
     setSnackbarOpen(true)
   });
 
   const mainListItems = (
-    <Stack>
-      <ListItemButton selected={isDashboardPath} component={Link} to={dashboardPath}>
-        <ListItemIcon>
-          <ICONS.DASHBOARD />
-        </ListItemIcon>
-        <ListItemText primary="Dashboard" />
-      </ListItemButton>
-      <Divider component="li" />
-      <ListItemButton selected={isHarvestersPath} component={Link} to={harvestersPath}>
-        <ListItemIcon>
-          <ICONS.EXPERIMENTS />
-        </ListItemIcon>
-        <ListItemText primary="Experiments" />
-      </ListItemButton>
-      <ListItemButton selected={isHarvestersPath} component={Link} to={harvestersPath}>
-        <ListItemIcon>
-          <ICONS.CYCLER_TESTS />
-        </ListItemIcon>
-        <ListItemText primary="Cycler Tests" />
-      </ListItemButton>
-      <Divider component="li" />
-      <ListItemButton selected={isDatasetPath} component={Link} to={datasetsPath}>
-        <ListItemIcon>
-          <ICONS.DATASETS />
-        </ListItemIcon>
-        <ListItemText primary="Datasets" />
-      </ListItemButton>
-      <ListItemButton selected={isCellsPath} component={Link} to={cellsPath}>
-        <ListItemIcon>
-          <ICONS.CELLS />
-        </ListItemIcon>
-        <ListItemText primary="Cells" />
-      </ListItemButton>
-      <ListItemButton selected={isEquipmentPath} component={Link} to={equipmentPath}>
-        <ListItemIcon>
-          <ICONS.EQUIPMENT/>
-        </ListItemIcon>
-        <ListItemText primary="Equipment" />
-      </ListItemButton>
-      <ListItemButton selected={isUsersPath} component={Link} to={usersPath}>
-        <ListItemIcon>
-          <ICONS.SCHEDULES/>
-        </ListItemIcon>
-        <ListItemText primary="Schedules" />
-      </ListItemButton>
-      <Divider component="li" />
-      <ListItemButton selected={isUsersPath} component={Link} to={usersPath}>
-        <ListItemIcon>
-          <ICONS.LABS/>
-        </ListItemIcon>
-        <ListItemText primary="Labs" />
-      </ListItemButton>
-      <ListItemButton selected={isUsersPath} component={Link} to={usersPath}>
-        <ListItemIcon>
-          <ICONS.TEAMS/>
-        </ListItemIcon>
-        <ListItemText primary="Teams" />
-      </ListItemButton>
-    </Stack>
+      <Stack>
+        <ListItemButton selected={isDashboardPath} component={Link} to={dashboardPath}>
+          <ListItemIcon>
+            <ICONS.DASHBOARD />
+          </ListItemIcon>
+          <ListItemText primary="Dashboard" />
+        </ListItemButton>
+        <Divider component="li" />
+        <ListItemButton selected={isHarvestersPath} component={Link} to={harvestersPath}>
+          <ListItemIcon>
+            <ICONS.EXPERIMENTS />
+          </ListItemIcon>
+          <ListItemText primary="Experiments" />
+        </ListItemButton>
+        <ListItemButton selected={isHarvestersPath} component={Link} to={harvestersPath}>
+          <ListItemIcon>
+            <ICONS.CYCLER_TESTS />
+          </ListItemIcon>
+          <ListItemText primary="Cycler Tests" />
+        </ListItemButton>
+        <Divider component="li" />
+        <ListItemButton selected={isDatasetPath} component={Link} to={datasetsPath}>
+          <ListItemIcon>
+            <ICONS.DATASETS />
+          </ListItemIcon>
+          <ListItemText primary="Datasets" />
+        </ListItemButton>
+        <ListItemButton selected={isCellsPath} component={Link} to={cellsPath}>
+          <ListItemIcon>
+            <ICONS.CELLS />
+          </ListItemIcon>
+          <ListItemText primary="Cells" />
+        </ListItemButton>
+        <ListItemButton selected={isEquipmentPath} component={Link} to={equipmentPath}>
+          <ListItemIcon>
+            <ICONS.EQUIPMENT/>
+          </ListItemIcon>
+          <ListItemText primary="Equipment" />
+        </ListItemButton>
+        <ListItemButton selected={isUsersPath} component={Link} to={usersPath}>
+          <ListItemIcon>
+            <ICONS.SCHEDULES/>
+          </ListItemIcon>
+          <ListItemText primary="Schedules" />
+        </ListItemButton>
+        <Divider component="li" />
+        <ListItemButton selected={isUsersPath} component={Link} to={usersPath}>
+          <ListItemIcon>
+            <ICONS.LABS/>
+          </ListItemIcon>
+          <ListItemText primary="Labs" />
+        </ListItemButton>
+        <ListItemButton selected={isUsersPath} component={Link} to={usersPath}>
+          <ListItemIcon>
+            <ICONS.TEAMS/>
+          </ListItemIcon>
+          <ListItemText primary="Teams" />
+        </ListItemButton>
+      </Stack>
   );
 
   let navigate = useNavigate();
 
   const Layout = (
-    <div className={classes.root}>
-      <CssBaseline />
-      <AppBar position="absolute" className={clsx(classes.appBar, open && classes.appBarShift)}>
-        <Toolbar className={classes.toolbar}>
-          <IconButton
-            edge="start"
-            color="inherit"
-            aria-label="open drawer"
-            onClick={handleDrawerOpen}
-            className={clsx(classes.menuButton, open && classes.menuButtonHidden)}
-          >
-            <MenuIcon />
-          </IconButton>
-          <GalvLogo className={classes.galvLogo}/>
-          <Typography component="h1" variant="h6" color="inherit" noWrap className={classes.title}>
-          </Typography>
+      <div className={classes.root}>
+        <CssBaseline />
+        <AppBar position="absolute" className={clsx(classes.appBar, open && classes.appBarShift)}>
+          <Toolbar className={classes.toolbar}>
+            <IconButton
+                edge="start"
+                color="inherit"
+                aria-label="open drawer"
+                onClick={handleDrawerOpen}
+                className={clsx(classes.menuButton, open && classes.menuButtonHidden)}
+            >
+              <MenuIcon />
+            </IconButton>
+            <GalvLogo className={classes.galvLogo}/>
+            <Typography component="h1" variant="h6" color="inherit" noWrap className={classes.title}>
+            </Typography>
 
-          <Button color="inherit" >
-            User: {userDisplayName}
-          </Button>
-          <Button color="inherit" onClick={() => {
-            navigate(profilePath)
-          }}>
-            Manage Profile
-          </Button>
-          <Button color="inherit" onClick={() => {
-            navigate(tokenPath)
-          }}>
-            Manage API Tokens
-          </Button>
-          <Button color="inherit" onClick={() => {
-            Connection.logout().then(()=> {navigate('/login');});
-          }}>
-            Logout
-          </Button>
-        </Toolbar>
-      </AppBar>
-      <Drawer
-        variant="permanent"
-        classes={{
-          paper: clsx(classes.drawerPaper, !open && classes.drawerPaperClose),
-        }}
-        open={open}
-      >
-        <div className={classes.toolbarIcon}>
-          <IconButton onClick={handleDrawerClose}>
-            <ChevronLeftIcon />
-          </IconButton>
-        </div>
-        <Divider />
-        <List>{mainListItems}</List>
-      </Drawer>
-      <main className={classes.content}>
-        <div className={classes.appBarSpacer} />
-        <Outlet />
-      </main>
-      <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={handleSnackbarClose}>
-        <Alert onClose={handleSnackbarClose} severity={apiMessage?.severity} sx={{ width: '100%' }}>
-          {apiMessage?.message}
-        </Alert>
-      </Snackbar>
-    </div>
+            <Button color="inherit" >
+              User: {userDisplayName}
+            </Button>
+            <Button color="inherit" onClick={() => {
+              navigate(profilePath)
+            }}>
+              Manage Profile
+            </Button>
+            <Button color="inherit" onClick={() => {
+              navigate(tokenPath)
+            }}>
+              Manage API Tokens
+            </Button>
+            <Button color="inherit" onClick={() => {
+              Connection.logout().then(()=> {navigate('/login');});
+            }}>
+              Logout
+            </Button>
+          </Toolbar>
+        </AppBar>
+        <Drawer
+            variant="permanent"
+            classes={{
+              paper: clsx(classes.drawerPaper, !open && classes.drawerPaperClose),
+            }}
+            open={open}
+        >
+          <div className={classes.toolbarIcon}>
+            <IconButton onClick={handleDrawerClose}>
+              <ChevronLeftIcon />
+            </IconButton>
+          </div>
+          <Divider />
+          <List>{mainListItems}</List>
+        </Drawer>
+        <main className={classes.content}>
+          <div className={classes.appBarSpacer} />
+          <Outlet />
+        </main>
+        <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={handleSnackbarClose}>
+          <Alert onClose={handleSnackbarClose} severity={apiMessage?.severity} sx={{ width: '100%' }}>
+            {apiMessage?.message}
+          </Alert>
+        </Snackbar>
+      </div>
   );
 
   /* A <Routes> looks through its children <Route>s and renders the first one that matches the current URL. */
   return (
-    <Routes>
-      <Route path="/login" element={<Login />}/>
-      <Route path={dashboardPath} element={Layout}>
-        <Route path={datasetsPath} element={Experiments()} />
-        <Route path={datasetsPath} element={CyclerTests()} />
-        {/*<Route path={datasetsPath} element={Datasets()} />*/}
-        {/*<Route path={cellsPath} element={Cells()} />*/}
-        {/*<Route path={equipmentPath} element={Equipment()} />*/}
-        {/*<Route path={harvestersPath} element={Harvesters()} />*/}
-        {/*<Route path={usersPath} element={ApproveUsers()} />*/}
-        {/*<Route path={profilePath} element={UserProfile()} />*/}
-        {/*<Route path={tokenPath} element={Tokens()} />*/}
-        {/*<Route index element={Dashboard()} />*/}
-        <Route index element={CyclerTests()} />
-      </Route>
-    </Routes>
+      <Routes>
+        <Route path="/login" element={<Login />}/>
+        <Route path={dashboardPath} element={Layout}>
+          <Route path={datasetsPath} element={Experiments()} />
+          <Route path={datasetsPath} element={CyclerTests()} />
+          {/*<Route path={datasetsPath} element={Datasets()} />*/}
+          {/*<Route path={cellsPath} element={Cells()} />*/}
+          {/*<Route path={equipmentPath} element={Equipment()} />*/}
+          {/*<Route path={harvestersPath} element={Harvesters()} />*/}
+          {/*<Route path={usersPath} element={ApproveUsers()} />*/}
+          {/*<Route path={profilePath} element={UserProfile()} />*/}
+          {/*<Route path={tokenPath} element={Tokens()} />*/}
+          {/*<Route index element={Dashboard()} />*/}
+          <Route index element={CyclerTests()} />
+        </Route>
+      </Routes>
   );
 }

@@ -17,7 +17,7 @@ import Grid from "@mui/material/Grid";
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
-import {useMutation} from "@tanstack/react-query";
+import {useMutation, useQueryClient} from "@tanstack/react-query";
 import {CellModelsApi, LoginApi} from "./api_codegen";
 import {save_login_response} from "./AxiosConfig";
 
@@ -80,6 +80,7 @@ export default function Login() {
     }
   }
 
+  const queryClient = useQueryClient()
   const api_handler = new LoginApi()
   const login = useMutation({
     mutationFn: () => {
@@ -89,8 +90,9 @@ export default function Login() {
       })
     },
     onSuccess: (data) => {
-        save_login_response(data.data)
-        navigate('/')
+      save_login_response(data.data)
+      queryClient.invalidateQueries({predicate: q => true})
+      navigate('/')
     }
   })
 
@@ -102,9 +104,9 @@ export default function Login() {
     else {
       if (registerMode) {
         Connection.create_user(username, email, password)
-          .then(user => {console.log('new user', user); return user})
-          .then(user => setCreatedUser(user))
-          .catch(e => setError(e.message))
+            .then(user => {console.log('new user', user); return user})
+            .then(user => setCreatedUser(user))
+            .catch(e => setError(e.message))
       } else
         login.mutate()
     }
@@ -138,11 +140,11 @@ export default function Login() {
       select the appropriate unapproved user from the 'users' tab on the left.
     </Typography>
     <Button
-      fullWidth
-      variant="contained"
-      color="primary"
-      className={classes.submit}
-      onClick={()=>window.location.reload()}
+        fullWidth
+        variant="contained"
+        color="primary"
+        className={classes.submit}
+        onClick={()=>window.location.reload()}
     >
       Log in with another account
     </Button>
@@ -151,20 +153,20 @@ export default function Login() {
   const formContent = <Fragment>
     <Grid container sx={{width: '100%'}}>
       <Grid
-        item
-        sx={{width: '50%'}}
-        className={!registerMode? classes.textActive : classes.textInactive}
-        onClick={() => setRegisterMode(!registerMode)}
+          item
+          sx={{width: '50%'}}
+          className={!registerMode? classes.textActive : classes.textInactive}
+          onClick={() => setRegisterMode(!registerMode)}
       >
         <Typography component="h1" variant="h5">
           Sign in
         </Typography>
       </Grid>
       <Grid
-        item
-        sx={{width: '50%'}}
-        className={registerMode? classes.textActive : classes.textInactive}
-        onClick={() => setRegisterMode(!registerMode)}
+          item
+          sx={{width: '50%'}}
+          className={registerMode? classes.textActive : classes.textInactive}
+          onClick={() => setRegisterMode(!registerMode)}
       >
         <Typography component="h1" variant="h5">
           Register
@@ -173,48 +175,48 @@ export default function Login() {
     </Grid>
     <form onSubmit={onSubmitClick}>
       <TextField
-        variant="outlined"
-        margin="normal"
-        required
-        fullWidth
-        id="username"
-        label="Username"
-        name="username"
-        autoComplete="username"
-        onChange={handleUsernameChange}
-        onKeyDown={handleEnterKey}
-        ref={username_input}
-        autoFocus
+          variant="outlined"
+          margin="normal"
+          required
+          fullWidth
+          id="username"
+          label="Username"
+          name="username"
+          autoComplete="username"
+          onChange={handleUsernameChange}
+          onKeyDown={handleEnterKey}
+          ref={username_input}
+          autoFocus
       />
       <TextField
-        variant="outlined"
-        margin="normal"
-        required
-        fullWidth
-        name="password"
-        label="Password"
-        type="password"
-        onChange={handlePasswordChange}
-        onKeyDown={handleEnterKey}
-        ref={password_input}
-        id="password"
-        autoComplete="current-password"
+          variant="outlined"
+          margin="normal"
+          required
+          fullWidth
+          name="password"
+          label="Password"
+          type="password"
+          onChange={handlePasswordChange}
+          onKeyDown={handleEnterKey}
+          ref={password_input}
+          id="password"
+          autoComplete="current-password"
       />
       {registerMode && <Tooltip title="An email address is required in case you forget your password.">
-          <TextField
-              variant="outlined"
-              margin="normal"
-              required
-              fullWidth
-              name="email"
-              label="Email address"
-              type="email"
-              onChange={handleEmailChange}
-              onKeyDown={handleEnterKey}
-              ref={email_input}
-              id="email"
-              autoComplete="email"
-          />
+        <TextField
+            variant="outlined"
+            margin="normal"
+            required
+            fullWidth
+            name="email"
+            label="Email address"
+            type="email"
+            onChange={handleEmailChange}
+            onKeyDown={handleEnterKey}
+            ref={email_input}
+            id="email"
+            autoComplete="email"
+        />
       </Tooltip>}
       {error &&
           <Alert severity="error">
@@ -222,35 +224,35 @@ export default function Login() {
           </Alert>
       }
       <Button
-        type="submit"
-        ref={submit}
-        fullWidth
-        variant="contained"
-        color="primary"
-        className={classes.submit}
+          type="submit"
+          ref={submit}
+          fullWidth
+          variant="contained"
+          color="primary"
+          className={classes.submit}
       >
         {registerMode? 'Create new user' : 'Sign in'}
       </Button>
     </form>
     {registerMode && <Box>
-        <Typography>
-            New users will need to be approved by an existing user before they are
-            able to use the system.
-        </Typography>
-        <Typography>
-            To approve a user, log in to Galv and
-            select the appropriate user from the 'users' tab on the left.
-        </Typography>
+      <Typography>
+        New users will need to be approved by an existing user before they are
+        able to use the system.
+      </Typography>
+      <Typography>
+        To approve a user, log in to Galv and
+        select the appropriate user from the 'users' tab on the left.
+      </Typography>
     </Box>}
   </Fragment>
 
   return (
-    <Container component="main" maxWidth="xs">
-      <CssBaseline />
-      <div className={classes.paper}>
-        <GalvIcon className={classes.icon} />
-        {createdUser !== null? createdUserContent : formContent}
-      </div>
-    </Container>
+      <Container component="main" maxWidth="xs">
+        <CssBaseline />
+        <div className={classes.paper}>
+          <GalvIcon className={classes.icon} />
+          {createdUser !== null? createdUserContent : formContent}
+        </div>
+      </Container>
   )
 }

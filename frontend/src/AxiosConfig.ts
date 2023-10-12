@@ -15,13 +15,3 @@ export const save_login_response = (user: KnoxUser) => {
     axios.defaults.headers.common['Authorization'] = `Bearer ${user.token}`
     window.localStorage.setItem('user', JSON.stringify(user))
 }
-
-export const id_from_url: (url: string) => string = (url: string) => {
-    try {
-        const id = url.split('/').filter(x => x).pop()
-        if (id !== undefined) return id
-    } catch (e) {
-        throw new Error(`Could not parse id from url: ${url}: ${e}`)
-    }
-    throw new Error(`Could not parse id from url: ${url}`)
-}

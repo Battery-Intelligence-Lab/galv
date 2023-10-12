@@ -64,8 +64,47 @@ export default makeStyles()((theme) => {
     },
 
     text: {},
-    page_title: {},
-    item_one_line: {},
-    item_three_line: {},
+    page_title: {
+      marginBottom: theme.spacing(2),
+      color: theme.palette.text.secondary,
+    },
+    item_chip: {
+      margin: theme.spacing(0.5),
+      borderRadius: theme.spacing(0.5),
+      borderColor: "transparent",
+      "&:hover": {
+        borderColor: theme.palette.primary.light,
+        " .MuiSvgIcon-root": {
+          color: theme.palette.primary.light
+        }
+      },
+      " .MuiSvgIcon-root": {
+        width: "1em",
+        height: "1em",
+      }
+    },
+    item_card: {
+      " .MuiCardHeader-root": {
+        paddingBottom: 0,
+        " .MuiAvatar-root": {
+          borderRadius: theme.spacing(0.5)
+        },
+        " .MuiLink-root": {
+          color: "inherit",
+          textDecoration: "none",
+          "&:hover": {
+            textDecoration: "underline"
+          }
+        },
+        " .MuiCardHeader-title": {
+          fontSize: "large",
+        }
+      },
+      " .MuiCardContent-root": {
+        paddingTop: theme.spacing(0.5)
+      }
+    },
+    item_page: {},
+    team_chip: {}
   }
 });
