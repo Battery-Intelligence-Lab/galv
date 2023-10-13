@@ -3,7 +3,29 @@
 // of Oxford, and the 'Galv' Developers. All rights reserved.
 
 import { makeStyles } from 'tss-react/mui';
+import {Theme} from "@mui/material/styles";
 
+const item = (theme: Theme) => ({
+  " .MuiCardHeader-root": {
+    paddingBottom: 0,
+    " .MuiAvatar-root": {
+      borderRadius: theme.spacing(0.5)
+    },
+    " .MuiLink-root": {
+      color: "inherit",
+      textDecoration: "none",
+      "&:hover": {
+        textDecoration: "underline"
+      }
+    },
+    " .MuiCardHeader-title": {
+      fontSize: "large",
+    }
+  },
+  " .MuiCardContent-root": {
+    paddingTop: theme.spacing(0.5)
+  }
+})
 export default makeStyles()((theme) => {
   return {
     button: {
@@ -84,27 +106,12 @@ export default makeStyles()((theme) => {
       }
     },
     item_card: {
-      " .MuiCardHeader-root": {
-        paddingBottom: 0,
-        " .MuiAvatar-root": {
-          borderRadius: theme.spacing(0.5)
-        },
-        " .MuiLink-root": {
-          color: "inherit",
-          textDecoration: "none",
-          "&:hover": {
-            textDecoration: "underline"
-          }
-        },
-        " .MuiCardHeader-title": {
-          fontSize: "large",
-        }
-      },
-      " .MuiCardContent-root": {
-        paddingTop: theme.spacing(0.5)
-      }
+      ...item(theme)
     },
-    item_page: {},
+    item_page: {
+      ...item(theme),
+      marginTop: theme.spacing(2)
+    },
     team_chip: {}
   }
 });

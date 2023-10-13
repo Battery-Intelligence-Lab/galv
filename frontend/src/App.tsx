@@ -14,16 +14,6 @@ import {
   matchPath,
 } from "react-router-dom";
 import Login from "./Login"
-import Dashboard from "./Dashboard"
-import HomeIcon from '@mui/icons-material/Home';
-import PollIcon from '@mui/icons-material/Poll';
-import DatasetLinkedIcon from '@mui/icons-material/DatasetLinked';
-import MultilineChartIcon from '@mui/icons-material/MultilineChart';
-import AssignmentIcon from '@mui/icons-material/Assignment';
-import PrecisionManufacturingIcon from '@mui/icons-material/PrecisionManufacturing';
-import BatteryFullIcon from '@mui/icons-material/BatteryFull';
-import HolidayVillageIcon from '@mui/icons-material/HolidayVillage';
-import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
 import { makeStyles} from "tss-react/mui";
 import CssBaseline from '@mui/material/CssBaseline';
 
@@ -45,20 +35,13 @@ import ListItemText from '@mui/material/ListItemText';
 import { ReactComponent as GalvLogo } from './Galv-logo.svg';
 import Connection, {APIMessage} from "./APIConnection";
 import Stack from "@mui/material/Stack";
-import Tokens from "./Tokens";
-import UserProfile from "./UserProfile";
 import Snackbar from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert";
 import axios from "axios";
 import Experiments from "./Experiments";
-import CyclerTests from "./CyclerTests";
+import CyclerTestList from "./Components/cycler-test/CyclerTestList";
 import { ICONS } from "./icons";
-
-const PrivateRoute = (component: JSX.Element) => {
-  const logged = Connection.is_logged_in;
-
-  return logged? component : <Navigate to='/login' />;
-}
+import CyclerTestPage from "./Components/cycler-test/CyclerTestPage";
 
 const drawerWidth = 240;
 const useStyles = makeStyles()((theme) => {
@@ -150,26 +133,29 @@ const useStyles = makeStyles()((theme) => {
   }
 });
 
+export const PATHS = {
+  DASHBOARD: "/",
+  EXPERIMENTS: "/experiments",
+  CYCLER_TESTS: "/cycler_tests",
+  DATASETS: "/datasets",
+  CELLS: "/cells",
+  EQUIPMENT: "/equipment",
+  SCHEDULES: "/schedules",
+  LABS: "/labs",
+  TEAMS: "/teams",
+  USERS: "/users",
+  PROFILE: "/profile",
+  TOKENS: "/tokens",
+}
+export const pathMatches = (path: string, pathname: string) => matchPath({path: path, end: true}, pathname) !== null
+
 export default function Core() {
   const { pathname } = useLocation();
+  const pathIs = (path: string) => pathMatches(path, pathname)
+
   const { classes } = useStyles();
 
   const userDisplayName = Connection.is_logged_in?  Connection.user?.username : ''
-
-  const dashboardPath = "/"
-  const isDashboardPath = matchPath({path: dashboardPath, end: true}, pathname) !== null
-  const datasetsPath = "/datasets"
-  const isDatasetPath = matchPath({path: datasetsPath, end: true}, pathname) !== null
-  const harvestersPath = "/harvesters"
-  const isHarvestersPath = matchPath({path: harvestersPath, end: true}, pathname) !== null
-  const cellsPath = "/cells"
-  const isCellsPath = matchPath({path: cellsPath, end: true}, pathname) !== null
-  const equipmentPath = "/equipment"
-  const isEquipmentPath = matchPath({path: equipmentPath, end: true}, pathname) !== null
-  const usersPath = "/users"
-  const isUsersPath = matchPath({path: usersPath, end: true}, pathname) !== null
-  const profilePath = "/profile"
-  const tokenPath = "/tokens"
 
   const [open, setOpen] = React.useState(false);
   const handleDrawerOpen = () => {
@@ -200,58 +186,58 @@ export default function Core() {
 
   const mainListItems = (
       <Stack>
-        <ListItemButton selected={isDashboardPath} component={Link} to={dashboardPath}>
+        <ListItemButton selected={pathIs(PATHS.DASHBOARD)} component={Link} to={PATHS.DASHBOARD}>
           <ListItemIcon>
             <ICONS.DASHBOARD />
           </ListItemIcon>
           <ListItemText primary="Dashboard" />
         </ListItemButton>
         <Divider component="li" />
-        <ListItemButton selected={isHarvestersPath} component={Link} to={harvestersPath}>
+        <ListItemButton selected={pathIs(PATHS.EXPERIMENTS)} component={Link} to={PATHS.EXPERIMENTS}>
           <ListItemIcon>
             <ICONS.EXPERIMENTS />
           </ListItemIcon>
           <ListItemText primary="Experiments" />
         </ListItemButton>
-        <ListItemButton selected={isHarvestersPath} component={Link} to={harvestersPath}>
+        <ListItemButton selected={pathIs(PATHS.CYCLER_TESTS)} component={Link} to={PATHS.CYCLER_TESTS}>
           <ListItemIcon>
             <ICONS.CYCLER_TESTS />
           </ListItemIcon>
           <ListItemText primary="Cycler Tests" />
         </ListItemButton>
         <Divider component="li" />
-        <ListItemButton selected={isDatasetPath} component={Link} to={datasetsPath}>
+        <ListItemButton selected={pathIs(PATHS.DATASETS)} component={Link} to={PATHS.DATASETS}>
           <ListItemIcon>
             <ICONS.DATASETS />
           </ListItemIcon>
           <ListItemText primary="Datasets" />
         </ListItemButton>
-        <ListItemButton selected={isCellsPath} component={Link} to={cellsPath}>
+        <ListItemButton selected={pathIs(PATHS.CELLS)} component={Link} to={PATHS.CELLS}>
           <ListItemIcon>
             <ICONS.CELLS />
           </ListItemIcon>
           <ListItemText primary="Cells" />
         </ListItemButton>
-        <ListItemButton selected={isEquipmentPath} component={Link} to={equipmentPath}>
+        <ListItemButton selected={pathIs(PATHS.EQUIPMENT)} component={Link} to={PATHS.EQUIPMENT}>
           <ListItemIcon>
             <ICONS.EQUIPMENT/>
           </ListItemIcon>
           <ListItemText primary="Equipment" />
         </ListItemButton>
-        <ListItemButton selected={isUsersPath} component={Link} to={usersPath}>
+        <ListItemButton selected={pathIs(PATHS.SCHEDULES)} component={Link} to={PATHS.SCHEDULES}>
           <ListItemIcon>
             <ICONS.SCHEDULES/>
           </ListItemIcon>
           <ListItemText primary="Schedules" />
         </ListItemButton>
         <Divider component="li" />
-        <ListItemButton selected={isUsersPath} component={Link} to={usersPath}>
+        <ListItemButton selected={pathIs(PATHS.LABS)} component={Link} to={PATHS.LABS}>
           <ListItemIcon>
             <ICONS.LABS/>
           </ListItemIcon>
           <ListItemText primary="Labs" />
         </ListItemButton>
-        <ListItemButton selected={isUsersPath} component={Link} to={usersPath}>
+        <ListItemButton selected={pathIs(PATHS.TEAMS)} component={Link} to={PATHS.TEAMS}>
           <ListItemIcon>
             <ICONS.TEAMS/>
           </ListItemIcon>
@@ -284,12 +270,12 @@ export default function Core() {
               User: {userDisplayName}
             </Button>
             <Button color="inherit" onClick={() => {
-              navigate(profilePath)
+              navigate(PATHS.PROFILE)
             }}>
               Manage Profile
             </Button>
             <Button color="inherit" onClick={() => {
-              navigate(tokenPath)
+              navigate(PATHS.TOKENS)
             }}>
               Manage API Tokens
             </Button>
@@ -331,9 +317,10 @@ export default function Core() {
   return (
       <Routes>
         <Route path="/login" element={<Login />}/>
-        <Route path={dashboardPath} element={Layout}>
-          <Route path={datasetsPath} element={Experiments()} />
-          <Route path={datasetsPath} element={CyclerTests()} />
+        <Route path={PATHS.DASHBOARD} element={Layout}>
+          <Route path={PATHS.EXPERIMENTS} element={<Experiments/>} />
+          <Route path={PATHS.CYCLER_TESTS} element={<CyclerTestList/>} />
+          <Route path={`${PATHS.CYCLER_TESTS}/:uuid`} element={<CyclerTestPage/>} />
           {/*<Route path={datasetsPath} element={Datasets()} />*/}
           {/*<Route path={cellsPath} element={Cells()} />*/}
           {/*<Route path={equipmentPath} element={Equipment()} />*/}
@@ -342,7 +329,7 @@ export default function Core() {
           {/*<Route path={profilePath} element={UserProfile()} />*/}
           {/*<Route path={tokenPath} element={Tokens()} />*/}
           {/*<Route index element={Dashboard()} />*/}
-          <Route index element={CyclerTests()} />
+          <Route index element={<CyclerTestList/>} />
         </Route>
       </Routes>
   );
