@@ -17,6 +17,13 @@ url_help_text = "Canonical URL for this object"
 OUTPUT_STYLE_FLAT = 'flat'
 OUTPUT_STYLE_CONTEXT = 'context'
 
+def get_output_style(request):
+    if request.query_params.get('style') in [OUTPUT_STYLE_FLAT, OUTPUT_STYLE_CONTEXT]:
+        return request.query_params['style']
+    if 'html' in request.accepted_media_type or request.query_params.get('format') == 'html':
+        return OUTPUT_STYLE_CONTEXT
+    return OUTPUT_STYLE_FLAT
+
 def serializer_class_from_string(class_name: str):
     """
     Get a class from a string.
@@ -333,7 +340,7 @@ class TruncatedHyperlinkedRelatedIdField(HyperlinkedRelatedIdField):
 
     def to_representation(self, instance):
         try:
-            if self.context['request'].query_params.get('style') != OUTPUT_STYLE_CONTEXT:
+            if get_output_style(self.context['request']) != OUTPUT_STYLE_CONTEXT:
                 return super().to_representation(instance)
         except (AttributeError, KeyError):
             pass
