@@ -1,9 +1,9 @@
 import useStyles from "../../UseStyles";
 import {useQuery} from "@tanstack/react-query";
-import {CyclerTestsApi} from "../../api_codegen";
+import {CyclerTest, CyclerTestsApi} from "../../api_codegen";
 import React from "react";
 import CircularProgress from "@mui/material/CircularProgress";
-import Card from "@mui/material/Card";
+import Card, {CardProps} from "@mui/material/Card";
 import clsx from "clsx";
 import CardHeader from "@mui/material/CardHeader";
 import A from "@mui/material/Link";
@@ -22,12 +22,17 @@ import CellChip from "../cell/CellChip";
 import { PATHS } from "../../App";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import CellCard from "../cell/CellCard";
+import QueryWrapper, {QueryDependentElement} from "../QueryWrapper";
+import ErrorPage from "../error/ErrorPage";
+import {AxiosError, AxiosResponse} from "axios";
+import ScheduleCard from "../schedule/ScheduleCard";
+import EquipmentCard from "../equipment/EquipmentCard";
 
-export default function CyclerTestPage() {
+export default function CyclerTestPage(props: CardProps) {
     const {uuid} = useParams()
     const {classes} = useStyles();
 
-    const query = useQuery({
+    const query = useQuery<AxiosResponse<CyclerTest>, AxiosError>({
         queryKey: ['cycler_tests_retrieve', uuid],
         queryFn: () => new CyclerTestsApi().cyclerTestsRetrieve(uuid!),
         enabled: !!uuid
@@ -48,7 +53,7 @@ export default function CyclerTestPage() {
             >Edit</Button>
         }</Stack>
 
-    const loadingBody = <Card key={uuid} className={clsx(classes.item_page)} elevation={0}>
+    const loadingBody = <Card key={uuid} className={clsx(classes.item_page)} elevation={0} {...props}>
         <CardHeader
             avatar={<CircularProgress sx={{color: (t) => t.palette.text.disabled}}/>}
             title={<A component={Link} to={`/cycler_tests/${uuid}`}>{uuid}</A>}
@@ -64,7 +69,7 @@ export default function CyclerTestPage() {
     </Card>
 
     const cardBody =
-        <Card key={uuid} className={clsx(classes.item_page)} elevation={0}>
+        <Card key={uuid} className={clsx(classes.item_page)} elevation={0} {...props}>
             <CardHeader
                 avatar={<Avatar variant="square"><ICONS.CYCLER_TESTS/></Avatar>}
                 title={<A component={Link} to={`/cycler_tests/${uuid}`}>{uuid}</A>}
@@ -75,16 +80,21 @@ export default function CyclerTestPage() {
                 action={action}
             />
             <CardContent>
-                <Stack>
-                    <CellCard url={query.data?.data.cell_subject!}/>
-                    <Grid container>
-                        <CellChip url={query.data?.data.cell_subject!}/>
-                        <ScheduleChip url={query.data?.data.schedule!}/>
+                <Grid container spacing={2}>
+                    <Grid xs={12} key="cell">
+                        <CellCard url={query.data?.data.cell!}/>
                     </Grid>
-                    <Grid container>
-                        {query.data?.data.equipment.map((equipment) => <EquipmentChip url={equipment}/>)}
+                    <Grid container spacing={1} key="equipment">
+                        {query.data?.data.equipment.map((equipment) =>
+                            <Grid key={equipment}>
+                                <EquipmentCard key={equipment} url={equipment}/>
+                            </Grid>
+                        )}
                     </Grid>
-                </Stack>
+                    <Grid xs={12} key="schedule">
+                        <ScheduleCard url={query.data?.data.schedule!}/>
+                    </Grid>
+                </Grid>
                 {/*<details>*/}
                 {/*    <summary>Raw data</summary>*/}
                 <dl>
@@ -105,5 +115,17 @@ export default function CyclerTestPage() {
             </CardContent>
         </Card>
 
-    return query.isLoading ? loadingBody : cardBody
+    const getErrorBody: QueryDependentElement = (queries) => <ErrorPage
+        status={queries[0].failureReason?.response?.status}
+        header={
+            <CardHeader
+                avatar={<Avatar variant="square"><ICONS.CYCLER_TESTS/></Avatar>}
+                title={uuid}
+                subheader={<Stack direction="row" spacing={1} alignItems="center">
+                    <A component={Link} to={"/cycler_tests/"}>Cycler Test</A>
+                </Stack>}
+            />}
+    />
+
+    return <QueryWrapper queries={[query]} error={getErrorBody} loading={loadingBody} success={cardBody} />
 }

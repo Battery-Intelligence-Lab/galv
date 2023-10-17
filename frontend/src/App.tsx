@@ -37,11 +37,13 @@ import Connection, {APIMessage} from "./APIConnection";
 import Stack from "@mui/material/Stack";
 import Snackbar from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert";
-import axios from "axios";
+import axios, {AxiosError} from "axios";
 import Experiments from "./Experiments";
 import CyclerTestList from "./Components/cycler-test/CyclerTestList";
 import { ICONS } from "./icons";
 import CyclerTestPage from "./Components/cycler-test/CyclerTestPage";
+import CellList from "./Components/cell/CellList";
+import CellPage from "./Components/cell/CellPage";
 
 const drawerWidth = 240;
 const useStyles = makeStyles()((theme) => {
@@ -139,8 +141,11 @@ export const PATHS = {
   CYCLER_TESTS: "/cycler_tests",
   DATASETS: "/datasets",
   CELLS: "/cells",
+  CELL_FAMILIES: "/cell_families",
   EQUIPMENT: "/equipment",
+  EQUIPMENT_FAMILIES: "/equipment_families",
   SCHEDULES: "/schedules",
+  SCHEDULE_FAMILIES: "/schedule_families",
   LABS: "/labs",
   TEAMS: "/teams",
   USERS: "/users",
@@ -173,14 +178,15 @@ export default function Core() {
       setAPIMessage(null)
     }
   }
-  axios.interceptors.response.use(null, function (error) {
+  axios.interceptors.response.use(null, function (error: AxiosError) {
     // Suppress 401 errors and void login
     if (error.response?.status === 401) {
       window.localStorage.removeItem('user')
       axios.defaults.headers.common['Authorization'] = ''
       return Promise.reject(error)
     }
-    setAPIMessage({message: error.message, severity: 'error'})
+
+    setAPIMessage({message: error.response?.statusText || 'Error', severity: 'error'})
     setSnackbarOpen(true)
   });
 
@@ -319,13 +325,26 @@ export default function Core() {
         <Route path="/login" element={<Login />}/>
         <Route path={PATHS.DASHBOARD} element={Layout}>
           <Route path={PATHS.EXPERIMENTS} element={<Experiments/>} />
+          <Route path={`${PATHS.EXPERIMENTS}/:uuid`} element={<Experiments/>} />
           <Route path={PATHS.CYCLER_TESTS} element={<CyclerTestList/>} />
           <Route path={`${PATHS.CYCLER_TESTS}/:uuid`} element={<CyclerTestPage/>} />
-          {/*<Route path={datasetsPath} element={Datasets()} />*/}
-          {/*<Route path={cellsPath} element={Cells()} />*/}
-          {/*<Route path={equipmentPath} element={Equipment()} />*/}
-          {/*<Route path={harvestersPath} element={Harvesters()} />*/}
-          {/*<Route path={usersPath} element={ApproveUsers()} />*/}
+          <Route path={PATHS.DATASETS} element={<>TODO</>} />
+          <Route path={PATHS.CELLS} element={<CellList/>} />
+          <Route path={`${PATHS.CELLS}/:uuid`} element={<CellPage />} />
+          <Route path={PATHS.CELL_FAMILIES} element={<>TODO</>} />
+          <Route path={`${PATHS.CELL_FAMILIES}/:uuid`} element={<>TODO</>} />
+          <Route path={PATHS.EQUIPMENT} element={<>TODO</>} />
+          <Route path={`${PATHS.EQUIPMENT}/:uuid`} element={<>TODO</>} />
+          <Route path={PATHS.EQUIPMENT_FAMILIES} element={<>TODO</>} />
+          <Route path={`${PATHS.EQUIPMENT_FAMILIES}/:uuid`} element={<>TODO</>} />
+          <Route path={PATHS.SCHEDULES} element={<>TODO</>} />
+          <Route path={`${PATHS.SCHEDULES}/:uuid`} element={<>TODO</>} />
+          <Route path={PATHS.SCHEDULE_FAMILIES} element={<>TODO</>} />
+          <Route path={`${PATHS.SCHEDULE_FAMILIES}/:uuid`} element={<>TODO</>} />
+          <Route path={PATHS.LABS} element={<>TODO</>} />
+          <Route path={`${PATHS.LABS}/:uuid`} element={<>TODO</>} />
+          <Route path={PATHS.TEAMS} element={<>TODO</>} />
+          <Route path={`${PATHS.TEAMS}/:uuid`} element={<>TODO</>} />
           {/*<Route path={profilePath} element={UserProfile()} />*/}
           {/*<Route path={tokenPath} element={Tokens()} />*/}
           {/*<Route index element={Dashboard()} />*/}

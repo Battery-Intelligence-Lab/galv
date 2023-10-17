@@ -2,7 +2,7 @@ import React, {Component} from "react";
 import Stack from "@mui/material/Stack";
 
 export interface FilterWidgetProps<T> {
-    key: string
+    filter_key: string
     filter: Filter<any>
     setFilterFn: (filterFn: (value: T) => boolean) => void
 }
@@ -44,7 +44,7 @@ export default class FilterBar<T> extends Component<FilterBarProps<T>, FilterBar
     render() {
         return <Stack direction="row" spacing={2}>
             {Object.entries(this.props.filters).map(([filter_key, filter]) =>
-                <filter.widget key={filter_key} filter={filter} setFilterFn={(filterFn) => {
+                <filter.widget key={filter_key} filter_key={filter_key} filter={filter} setFilterFn={(filterFn) => {
                     this.setState({filters: {...this.state.filters, [filter_key]: filterFn}} as FilterBarState<T> )
                     this.filter_data()
                 }}/>

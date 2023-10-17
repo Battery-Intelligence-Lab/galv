@@ -283,7 +283,7 @@ export interface CyclerTest {
      * @type {string}
      * @memberof CyclerTest
      */
-    'cell_subject': string;
+    'cell': string;
     /**
      * Equipment this Cycler Test uses
      * @type {Array<string>}
@@ -2083,7 +2083,7 @@ export interface PatchedCyclerTest {
      * @type {string}
      * @memberof PatchedCyclerTest
      */
-    'cell_subject'?: string;
+    'cell'?: string;
     /**
      * Equipment this Cycler Test uses
      * @type {Array<string>}

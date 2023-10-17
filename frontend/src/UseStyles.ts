@@ -112,6 +112,34 @@ export default makeStyles()((theme) => {
       ...item(theme),
       marginTop: theme.spacing(2)
     },
-    team_chip: {}
+    team_chip: {},
+    error: {color: theme.palette.error.main},
+    count_badge: {
+      " .MuiBadge-badge": {
+        backgroundColor: theme.palette.grey.A100,
+        color: theme.palette.grey.A700,
+      },
+    },
+    pretty_table: {
+      "& td, & th": {
+        border: "none",
+      },
+      "& tr:not(:first-of-type)": {
+        "& > td, & > th": {
+          paddingTop: 0,
+        }
+      },
+      "& th": {
+        paddingRight: 0,
+        paddingLeft: theme.spacing(1),
+        color: theme.palette.text.disabled,
+        "& .MuiTypography-root": {
+          fontWeight: "bold"
+        }
+      }
+    },
+    pretty_table_nested: {
+      backgroundColor: theme.palette.grey.A100,
+    }
   }
 });

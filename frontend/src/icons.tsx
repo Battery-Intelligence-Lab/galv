@@ -7,8 +7,12 @@ import HomeIcon from "@mui/icons-material/Home";
 import AssignmentIcon from "@mui/icons-material/Assignment";
 import HolidayVillageIcon from "@mui/icons-material/HolidayVillage";
 import PeopleAltIcon from "@mui/icons-material/PeopleAlt";
+import BatchPredictionIcon from '@mui/icons-material/BatchPrediction';
+import AttachFileIcon from '@mui/icons-material/AttachFile';
 
 export const ICONS = {
+    FILES: AttachFileIcon,
+    FAMILY: BatchPredictionIcon,
     DASHBOARD: HomeIcon,
     EXPERIMENTS: DatasetLinkedIcon,
     CYCLER_TESTS: MultilineChartIcon,

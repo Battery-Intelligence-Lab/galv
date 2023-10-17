@@ -5647,7 +5647,7 @@
                         "format": "uuid",
                         "readOnly": true
                     },
-                    "cell_subject": {
+                    "cell": {
                         "type": "string",
                         "format": "uri",
                         "description": "Cell this Cycler Test uses"
@@ -5693,7 +5693,7 @@
                     }
                 },
                 "required": [
-                    "cell_subject",
+                    "cell",
                     "equipment",
                     "permissions",
                     "rendered_schedule",
@@ -7494,7 +7494,7 @@
                         "format": "uuid",
                         "readOnly": true
                     },
-                    "cell_subject": {
+                    "cell": {
                         "type": "string",
                         "format": "uri",
                         "description": "Cell this Cycler Test uses"

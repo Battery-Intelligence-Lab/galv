@@ -5,11 +5,11 @@
 import React, {useState} from "react";
 import useStyles from "../../UseStyles";
 import {useQuery} from "@tanstack/react-query";
-import {CyclerTest, CyclerTestsApi} from "../../api_codegen";
+import {CyclerTest, CyclerTestsApi, PaginatedCyclerTestList} from "../../api_codegen";
 import Container from "@mui/material/Container";
 import Typography from "@mui/material/Typography";
 import {Link} from "react-router-dom";
-import axios from "axios";
+import axios, {AxiosError, AxiosResponse} from "axios";
 import Stack from "@mui/material/Stack";
 import clsx from "clsx";
 import Grid from "@mui/material/Unstable_Grid2";
@@ -28,14 +28,14 @@ export default function CyclerTestList() {
     // API handler
     const api_handler = new CyclerTestsApi()
     // Queries
-    const query = useQuery({
+    const query = useQuery<AxiosResponse<PaginatedCyclerTestList>, AxiosError>({
         queryKey: ['cycler_tests_list'],
         queryFn: () => api_handler.cyclerTestsList()
     })
 
     return (
         <Container maxWidth="lg" className={classes.container}>
-            <Grid container justifyContent="space-between">
+            <Grid container justifyContent="space-between" key="header">
                 <Typography
                     component="h1"
                     variant="h3"
@@ -50,7 +50,7 @@ export default function CyclerTestList() {
                     setFilteredData={setFilteredData}
                 />
             </Grid>
-            <Stack spacing={2}>
+            <Stack spacing={2} key="body">
                 {
                     query.isInitialLoading && [1, 2, 3, 4, 5].map((i) =>
                         <Skeleton key={i} variant="rounded" height="6em"/>
@@ -61,7 +61,7 @@ export default function CyclerTestList() {
                         <p><Link to="/login">Log in</Link> to see Cycler Tests</p> :
                         <p>No Cycler Tests found</p> :
                     filteredData.map(
-                        (cycler_test: CyclerTest) => <CyclerTestCard uuid={cycler_test.uuid} />
+                        (cycler_test: CyclerTest, i) => <CyclerTestCard key={`cycler_test_${i}`} uuid={cycler_test.uuid} />
                     )
                 }
             </Stack>

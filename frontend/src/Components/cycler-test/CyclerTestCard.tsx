@@ -53,12 +53,12 @@ export default function CyclerTestCard(props: ObjectReferenceProps & CardProps) 
         />
         <CardContent>
             <Grid container>
-                <LoadingChip icon={<ICONS.CELLS/>} />
-                <LoadingChip icon={<ICONS.SCHEDULES/>} />
+                <LoadingChip key="cells" icon={<ICONS.CELLS/>} />
+                <LoadingChip key="schedule" icon={<ICONS.SCHEDULES/>} />
             </Grid>
             <Grid container>
-                <LoadingChip icon={<ICONS.EQUIPMENT/>} />
-                <LoadingChip icon={<ICONS.EQUIPMENT/>} />
+                <LoadingChip key="equipment_1" icon={<ICONS.EQUIPMENT/>} />
+                <LoadingChip key="equipment_2" icon={<ICONS.EQUIPMENT/>} />
             </Grid>
         </CardContent>
     </Card>
@@ -77,11 +77,12 @@ export default function CyclerTestCard(props: ObjectReferenceProps & CardProps) 
             <CardContent>
                 <Stack>
                     <Grid container>
-                        <CellChip url={query.data?.data.cell_subject!}/>
+                        <CellChip url={query.data?.data.cell!}/>
                         <ScheduleChip url={query.data?.data.schedule!}/>
                     </Grid>
                     <Grid container>
-                        {query.data?.data.equipment.map((equipment) => <EquipmentChip url={equipment}/>)}
+                        {query.data?.data.equipment.map((equipment, i) =>
+                            <EquipmentChip key={`equipment_${i}`} url={equipment}/>)}
                     </Grid>
                 </Stack>
                 {/*<details>*/}
