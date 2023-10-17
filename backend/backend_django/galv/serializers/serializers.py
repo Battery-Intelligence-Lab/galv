@@ -192,7 +192,7 @@ class TeamSerializer(serializers.HyperlinkedModelSerializer, PermissionsMixin):
     )
     cyclertest_resources = TruncatedHyperlinkedRelatedIdField(
         'CyclerTestSerializer',
-        ['cell_subject', 'equipment', 'schedule'],
+        ['cell', 'equipment', 'schedule'],
         'cyclertest-detail',
         read_only=True,
         many=True,
@@ -380,7 +380,7 @@ class EquipmentSerializer(AdditionalPropertiesModelSerializer, PermissionsMixin,
     )
     cycler_tests = TruncatedHyperlinkedRelatedIdField(
         'CyclerTestSerializer',
-        ['cell_subject', 'schedule'],
+        ['cell', 'schedule'],
         'cyclertest-detail',
         read_only=True,
         many=True,
@@ -427,7 +427,7 @@ class ScheduleSerializer(AdditionalPropertiesModelSerializer, PermissionsMixin, 
     )
     cycler_tests = TruncatedHyperlinkedRelatedIdField(
         'CyclerTestSerializer',
-        ['cell_subject', 'equipment'],
+        ['cell', 'equipment'],
         'cyclertest-detail',
         read_only=True,
         many=True,
@@ -478,7 +478,7 @@ class CyclerTestSerializer(AdditionalPropertiesModelSerializer, PermissionsMixin
         queryset=Schedule.objects.all(),
         help_text="Schedule this Cycler Test uses"
     )
-    cell_subject = TruncatedHyperlinkedRelatedIdField(
+    cell = TruncatedHyperlinkedRelatedIdField(
         'CellSerializer',
         ['identifier', 'family'],
         'cell-detail',
@@ -502,7 +502,7 @@ class CyclerTestSerializer(AdditionalPropertiesModelSerializer, PermissionsMixin
     def validate(self, data):
         if data.get('schedule') is not None:
             try:
-                render_pybamm_schedule(data['schedule'], data['cell_subject'])
+                render_pybamm_schedule(data['schedule'], data['cell'])
             except ScheduleRenderError as e:
                 raise ValidationError(e)
         return data
@@ -510,7 +510,7 @@ class CyclerTestSerializer(AdditionalPropertiesModelSerializer, PermissionsMixin
     class Meta:
         model = CyclerTest
         fields = [
-            'url', 'uuid', 'cell_subject', 'equipment', 'schedule', 'rendered_schedule', 'team', 'permissions'
+            'url', 'uuid', 'cell', 'equipment', 'schedule', 'rendered_schedule', 'team', 'permissions'
         ]
         read_only_fields = ['url', 'uuid', 'rendered_schedule', 'permissions']
 
@@ -809,7 +809,7 @@ class DataColumnSerializer(serializers.HyperlinkedModelSerializer, PermissionsMi
 class ExperimentSerializer(serializers.HyperlinkedModelSerializer, PermissionsMixin, WithTeamMixin):
     cycler_tests = TruncatedHyperlinkedRelatedIdField(
         'CyclerTestSerializer',
-        ['cell_subject', 'equipment', 'schedule'],
+        ['cell', 'equipment', 'schedule'],
         'cyclertest-detail',
         queryset=CyclerTest.objects.all(),
         many=True,

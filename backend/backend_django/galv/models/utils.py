@@ -120,7 +120,7 @@ class ScheduleRenderError(ValueError):
     pass
 
 
-def render_pybamm_schedule(schedule, cell_subject, validate = True):
+def render_pybamm_schedule(schedule, cell, validate = True):
     """
     Return the PyBaMM representation of the schedule, with variables filled in.
     Variables are taken from the cell properties, cell family properties, and schedule variables (most preferred first).
@@ -129,10 +129,10 @@ def render_pybamm_schedule(schedule, cell_subject, validate = True):
         return None
     variables = {
         **(schedule.pybamm_schedule_variables or {}),
-        **(cell_subject.family.__dict__ or {}),
-        **(cell_subject.family.additional_properties or {}),
-        **(cell_subject.__dict__ or {}),
-        **(cell_subject.additional_properties or {})
+        **(cell.family.__dict__ or {}),
+        **(cell.family.additional_properties or {}),
+        **(cell.__dict__ or {}),
+        **(cell.additional_properties or {})
     }
     rendered_schedule = [t.format(**variables) for t in schedule.family.pybamm_template]
     if validate:
@@ -141,14 +141,14 @@ def render_pybamm_schedule(schedule, cell_subject, validate = True):
         # Check all filled values are numeric
         for v in schedule.family.pybamm_template_variable_names():
             if not isinstance(variables[v], (int, float)):
-                if v in cell_subject.additional_properties:
-                    source = f"{str(cell_subject)} (additional properties)"
-                elif v in cell_subject.__dict__:
-                    source = cell_subject
-                elif v in cell_subject.family.additional_properties:
-                    source = f"{str(cell_subject.family)} (additional properties)"
-                elif v in cell_subject.family.__dict__:
-                    source = cell_subject.family
+                if v in cell.additional_properties:
+                    source = f"{str(cell)} (additional properties)"
+                elif v in cell.__dict__:
+                    source = cell
+                elif v in cell.family.additional_properties:
+                    source = f"{str(cell.family)} (additional properties)"
+                elif v in cell.family.__dict__:
+                    source = cell.family
                 else:
                     source = "schedule variables"
                 raise ScheduleRenderError(f"Schedule variable {v} is not numeric (got {variables[v]} from {source})")

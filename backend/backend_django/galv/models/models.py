@@ -656,20 +656,20 @@ class ObservedFile(UUIDModel, ValidatableBySchemaMixin):
 
 
 class CyclerTest(JSONModel, ValidatableBySchemaMixin, ResourceModelPermissionsMixin):
-    cell_subject = models.ForeignKey(to=Cell, on_delete=models.CASCADE, null=False, help_text="Cell that was tested", related_name="cycler_tests")
+    cell = models.ForeignKey(to=Cell, on_delete=models.CASCADE, null=False, help_text="Cell that was tested", related_name="cycler_tests")
     schedule = models.ForeignKey(to=Schedule, null=True, blank=True, on_delete=models.CASCADE, help_text="Schedule used to test the cell", related_name="cycler_tests")
     equipment = models.ManyToManyField(to=Equipment, help_text="Equipment used to test the cell", related_name="cycler_tests")
     file = models.ManyToManyField(to=ObservedFile,  help_text="Columns of data in the test", related_name="cycler_tests")
 
     def __str__(self):
-        return f"{self.cell_subject} [CyclerTest {self.uuid}]"
+        return f"{self.cell} [CyclerTest {self.uuid}]"
 
     def rendered_pybamm_schedule(self, validate = True):
         """
         Return the PyBaMM representation of the schedule, with variables filled in.
         Variables are taken from the cell properties, cell family properties, and schedule variables (most preferred first).
         """
-        return render_pybamm_schedule(self.schedule, self.cell_subject, validate = validate)
+        return render_pybamm_schedule(self.schedule, self.cell, validate = validate)
 
 
 class Experiment(JSONModel, ValidatableBySchemaMixin, ResourceModelPermissionsMixin):

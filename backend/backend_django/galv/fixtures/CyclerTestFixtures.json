@@ -4,7 +4,7 @@
         "model": "galv.CyclerTest",
         "fields": {
             "team": 1,
-            "cell_subject": "6a3a910b-d42e-46f6-9604-6fb3c2f3d059",
+            "cell": "6a3a910b-d42e-46f6-9604-6fb3c2f3d059",
             "schedule": "5a2d7da9-393c-44ee-827a-5d15133c48d6",
             "equipment": [
                 "a7bd4c43-29c7-40f1-bcf7-a2924ed474c2",
@@ -17,7 +17,7 @@
         "model": "galv.CyclerTest",
         "fields": {
             "team": 1,
-            "cell_subject": "4281a89b-48ff-4f4a-bcd8-5fe427f87a81",
+            "cell": "4281a89b-48ff-4f4a-bcd8-5fe427f87a81",
             "schedule": "7771fc54-7209-4564-9ec7-e87855f7ee67",
             "equipment": [
                 "31fd16ef-0667-4a31-9232-b5a649913227",

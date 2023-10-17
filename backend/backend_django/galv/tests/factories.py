@@ -279,7 +279,7 @@ class CyclerTestFactory(factory.django.DjangoModelFactory):
     ap = factory.Faker('pydict', value_types=['str', 'int', 'float', 'dict', 'list'])
     additional_properties = factory.LazyAttribute(fix_additional_properties)
     team = factory.SubFactory(TeamFactory)
-    cell_subject = factory.SubFactory(CellFactory, team=team)
+    cell = factory.SubFactory(CellFactory, team=team)
     schedule = factory.SubFactory(ScheduleFactory, team=team)
 
     @factory.post_generation
