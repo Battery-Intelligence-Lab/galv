@@ -1,10 +1,8 @@
 import useStyles from "../../UseStyles";
 import {useQuery} from "@tanstack/react-query";
 import {CyclerTestsApi} from "../../api_codegen";
-import React, {ReactElement} from "react";
-import Chip from "@mui/material/Chip";
+import React from "react";
 import CircularProgress from "@mui/material/CircularProgress";
-import Container from "@mui/material/Container";
 import Card from "@mui/material/Card";
 import clsx from "clsx";
 import CardHeader from "@mui/material/CardHeader";
@@ -20,9 +18,9 @@ import Button from "@mui/material/Button";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import ScheduleChip from "../schedule/ScheduleChip";
 import EquipmentChip from "../equipment/EquipmentChip";
-import {id_from_ref_props, ObjectReferenceProps} from "../component_utils";
+import {id_from_ref_props, ObjectReferenceProps} from "../utils/misc";
 import CellChip from "../cell/CellChip";
-import LoadingChip from "../LoadingChip";
+import LoadingChip from "../utils/LoadingChip";
 import {CardProps} from "@mui/material";
 
 export default function CyclerTestCard(props: ObjectReferenceProps & CardProps) {

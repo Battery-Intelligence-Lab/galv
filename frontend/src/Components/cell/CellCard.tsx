@@ -1,13 +1,10 @@
 import {CardProps} from "@mui/material";
-import {
-    CardActionBar,
-    ExpandableCardProps,
-    id_from_ref_props,
-    PrettyObject
-} from "../component_utils";
+import CardActionBar from "../utils/CardActionBar";
+import {ExpandableCardProps, id_from_ref_props} from "../utils/misc";
+import PrettyObject from "../utils/PrettyObject";
 import useStyles from "../../UseStyles";
 import {Cell, CellFamiliesApi, CellFamily, CellsApi, PatchedCell} from "../../api_codegen";
-import {useQuery} from "@tanstack/react-query";
+import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
 import Card from "@mui/material/Card";
 import {Link} from "react-router-dom";
 import clsx from "clsx";
@@ -15,7 +12,7 @@ import CardHeader from "@mui/material/CardHeader";
 import CircularProgress from "@mui/material/CircularProgress";
 import A from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
-import LoadingChip from "../LoadingChip";
+import LoadingChip from "../utils/LoadingChip";
 import {ICONS} from "../../icons";
 import CardContent from "@mui/material/CardContent";
 import Grid from "@mui/material/Unstable_Grid2";
@@ -23,7 +20,7 @@ import Avatar from "@mui/material/Avatar";
 import TeamChip from "../team/TeamChip";
 import React, {useState} from "react";
 import ErrorCard from "../error/ErrorCard";
-import QueryWrapper, {QueryDependentElement} from "../QueryWrapper";
+import QueryWrapper, {QueryDependentElement} from "../utils/QueryWrapper";
 import {AxiosError, AxiosResponse} from "axios";
 import CellFamilyChip from "./CellFamilyChip";
 import {PATHS} from "../../App";
@@ -49,20 +46,20 @@ export default function CellCard(props: ExpandableCardProps & CardProps) {
         if (e) setExpanded(e)
     }
 
-    const splitData = (props: AddProps<Cell>) => {
+    const splitData = (data: AddProps<Cell>) => {
         const read_only_data: Partial<Cell> = {}
         const write_data: Partial<AddProps<PatchedCell>> = {}
-        for (const k of Object.keys(props)) {
+        for (const k of Object.keys(data)) {
             if (read_only_fields.includes(k as keyof Cell)) {
-                read_only_data[k as keyof Cell] = props[k]
+                read_only_data[k as keyof Cell] = data[k]
             } else {
-                write_data[k] = props[k]
+                write_data[k] = data[k]
             }
         }
         _setEditableData(write_data)
         setEditableDataHistory([write_data])
         _setReadOnlyData(read_only_data)
-        _setCellData(props)
+        _setCellData(data)
     }
 
     const setEditableData = (d: Partial<AddProps<PatchedCell>>) => {
@@ -112,6 +109,20 @@ export default function CellCard(props: ExpandableCardProps & CardProps) {
             }),
         enabled: !!cell_data?.family
     })
+
+    // Mutations for saving edits
+    const queryClient = useQueryClient()
+    const cell_update_mutation = useMutation(
+        (data: AddProps<PatchedCell>) => api_handler.cellsPartialUpdate(cell_uuid, data),
+        {
+            onSuccess: (data, variables, context) => {
+                if (data === undefined) return
+                queryClient.setQueryData(['cell_retrieve', cell_uuid], data)
+            },
+            onError: (error, variables, context) => {
+                console.error(error)
+            },
+        })
 
     const action = <CardActionBar
         type="cell"
@@ -177,12 +188,12 @@ export default function CellCard(props: ExpandableCardProps & CardProps) {
                 <Divider key="read-props-header">Read-only properties</Divider>
                 {cell_data && <PrettyObject
                     key="read-props"
-                    object={readOnlyData}
+                    target={readOnlyData}
                 />}
                 <Divider key="write-props-header">Editable properties</Divider>
                 {cell_data && <PrettyObject
                     key="write-props"
-                    object={editableData}
+                    target={editableData}
                     edit_mode={editing}
                     type_locked_keys={['identifier']}
                     onEdit={setEditableData}
@@ -191,7 +202,7 @@ export default function CellCard(props: ExpandableCardProps & CardProps) {
                     Inherited from <CellFamilyChip uuid={family_data?.uuid}/>
                 </Divider>}
                 {family_data && <PrettyObject
-                    object={family_data}
+                    target={family_data}
                     exclude_keys={[...Object.keys(cell_data!), 'cells']}
                 />}
             </Stack>

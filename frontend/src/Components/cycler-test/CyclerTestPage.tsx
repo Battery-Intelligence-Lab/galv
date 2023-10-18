@@ -22,7 +22,7 @@ import CellChip from "../cell/CellChip";
 import { PATHS } from "../../App";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import CellCard from "../cell/CellCard";
-import QueryWrapper, {QueryDependentElement} from "../QueryWrapper";
+import QueryWrapper, {QueryDependentElement} from "../utils/QueryWrapper";
 import ErrorPage from "../error/ErrorPage";
 import {AxiosError, AxiosResponse} from "axios";
 import ScheduleCard from "../schedule/ScheduleCard";

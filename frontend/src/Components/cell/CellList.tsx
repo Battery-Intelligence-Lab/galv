@@ -19,7 +19,7 @@ import Skeleton from "@mui/material/Skeleton";
 import FilterBar from "../filtering/FilterBar";
 import TextFilter from "../filtering/TextFilter";
 import CellCard from "./CellCard";
-import QueryWrapper, {QueryDependentElement} from "../QueryWrapper";
+import QueryWrapper, {QueryDependentElement} from "../utils/QueryWrapper";
 import ErrorCard from "../error/ErrorCard";
 import CardHeader from "@mui/material/CardHeader";
 import Avatar from "@mui/material/Avatar";

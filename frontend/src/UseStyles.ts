@@ -121,6 +121,7 @@ export default makeStyles()((theme) => {
       },
     },
     pretty_table: {
+      backgroundColor: theme.palette.background.paper,
       "& td, & th": {
         border: "none",
       },
@@ -130,6 +131,7 @@ export default makeStyles()((theme) => {
         }
       },
       "& th": {
+        verticalAlign: "top",
         paddingRight: 0,
         paddingLeft: theme.spacing(1),
         color: theme.palette.text.disabled,
@@ -138,7 +140,18 @@ export default makeStyles()((theme) => {
         }
       }
     },
-    pretty_table_nested: {
+    pretty_array: {
+      backgroundColor: theme.palette.background.paper,
+      "& .MuiListItem-root": {
+        paddingLeft: theme.spacing(0.5),
+        "& .MuiListItemIcon-root": {
+          minWidth: theme.spacing(1),
+          marginRight: theme.spacing(0.5),
+          marginTop: 0,
+        }
+      }
+    },
+    pretty_nested: {
       backgroundColor: theme.palette.grey.A100,
     }
   }

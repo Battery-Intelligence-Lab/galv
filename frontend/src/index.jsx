@@ -20,7 +20,16 @@ if (module.hot) {
     module.hot.accept();
 }
 
-const queryClient = new QueryClient()
+const queryClient = new QueryClient({
+    defaultOptions: {
+        queries: {
+            refetchOnWindowFocus: false,
+            retry: 1,
+            staleTime: 1000 * 60 * 60, // 1 hour
+            refetchOnMount: false,
+        },
+    },
+})
 
 root.render(
     <React.StrictMode>

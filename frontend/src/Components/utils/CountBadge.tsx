@@ -2,7 +2,7 @@ import {Link} from "react-router-dom";
 import Badge, {BadgeProps} from "@mui/material/Badge";
 import IconButton from "@mui/material/IconButton";
 import clsx from "clsx";
-import UseStyles from "../UseStyles";
+import UseStyles from "../../UseStyles";
 import Tooltip from "@mui/material/Tooltip";
 import {ReactNode} from "react";
 

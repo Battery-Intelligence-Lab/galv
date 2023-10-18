@@ -9,7 +9,7 @@ import Icon from "@mui/material/Icon";
 import SearchIcon from "@mui/icons-material/Search";
 import SaveIcon from "@mui/icons-material/Save";
 import DeleteIcon from "@mui/icons-material/Delete";
-import {SvgIconProps} from "@mui/material/SvgIcon"
+import {SvgIconProps} from "@mui/material/SvgIcon";
 import { withStyles } from "tss-react/mui";
 
 export type ActionButtonsProps = {

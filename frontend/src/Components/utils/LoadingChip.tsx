@@ -1,5 +1,5 @@
 import Chip, {ChipProps} from "@mui/material/Chip";
-import useStyles from "../UseStyles";
+import useStyles from "../../UseStyles";
 import clsx from "clsx";
 import CircularProgress from "@mui/material/CircularProgress";
 import {Link} from "react-router-dom";

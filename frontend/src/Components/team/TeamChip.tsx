@@ -6,8 +6,8 @@ import {ICONS} from "../../icons";
 import clsx from "clsx";
 import {Link} from "react-router-dom";
 import React from "react";
-import {id_from_ref_props, ObjectReferenceProps} from "../component_utils";
-import LoadingChip from "../LoadingChip";
+import {id_from_ref_props, ObjectReferenceProps} from "../utils/misc";
+import LoadingChip from "../utils/LoadingChip";
 import LabChip from "../lab/LabChip";
 
 export default function TeamChip(props: ObjectReferenceProps & ChipProps) {

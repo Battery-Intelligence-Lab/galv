@@ -1,5 +1,5 @@
 import {CardProps} from "@mui/material";
-import {id_from_ref_props, ObjectReferenceProps} from "../component_utils";
+import {id_from_ref_props, ObjectReferenceProps} from "../utils/misc";
 import useStyles from "../../UseStyles";
 import {Schedule, ScheduleFamiliesApi, ScheduleFamily, SchedulesApi} from "../../api_codegen";
 import {useQuery} from "@tanstack/react-query";
@@ -12,7 +12,7 @@ import CardHeader from "@mui/material/CardHeader";
 import CircularProgress from "@mui/material/CircularProgress";
 import A from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
-import LoadingChip from "../LoadingChip";
+import LoadingChip from "../utils/LoadingChip";
 import {ICONS} from "../../icons";
 import CardContent from "@mui/material/CardContent";
 import Grid from "@mui/material/Unstable_Grid2";
@@ -21,9 +21,9 @@ import TeamChip from "../team/TeamChip";
 import ScheduleFamilyChip from "./ScheduleFamilyChip";
 import React from "react";
 import ErrorCard from "../error/ErrorCard";
-import QueryWrapper, {QueryDependentElement} from "../QueryWrapper";
+import QueryWrapper, {QueryDependentElement} from "../utils/QueryWrapper";
 import {AxiosError, AxiosResponse} from "axios";
-import CountBadge from "../CountBadge";
+import CountBadge from "../utils/CountBadge";
 import {PATHS} from "../../App";
 import CheckIcon from "@mui/icons-material/Check";
 
