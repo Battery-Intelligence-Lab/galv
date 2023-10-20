@@ -8,7 +8,7 @@ import ClearIcon from "@mui/icons-material/Clear";
 import PrettyObject from "./PrettyObject";
 import Checkbox, {CheckboxProps} from "@mui/material/Checkbox";
 import PrettyArray from "./PrettyArray";
-import TypeChanger, {TypeChangerProps, TypeChangerSupportedType} from "./TypeChanger";
+import TypeChanger, {TypeChangerProps, Serializable} from "./TypeChanger";
 import Stack from "@mui/material/Stack";
 
 type PrettifyProps = {
@@ -17,7 +17,7 @@ type PrettifyProps = {
     edit_mode: boolean
     // onEdit is called when the user leaves the field
     // If it returns a value, the value is set as the new value for the field
-    onEdit?: (value: TypeChangerSupportedType) => TypeChangerSupportedType|void
+    onEdit?: (value: Serializable) => Serializable|void
     allow_type_change?: boolean
     hide_type_changer?: boolean
 }

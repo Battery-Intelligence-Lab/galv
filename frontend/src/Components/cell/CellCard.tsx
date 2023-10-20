@@ -26,7 +26,7 @@ import CellFamilyChip from "./CellFamilyChip";
 import {PATHS} from "../../App";
 import Divider from "@mui/material/Divider";
 
-const deepcopy = (obj: any) => JSON.parse(JSON.stringify(obj))
+const deep_copy = (obj: any) => JSON.parse(JSON.stringify(obj))
 
 export type AddProps<T> = T & {[key: string]: any}
 
@@ -35,7 +35,7 @@ export default function CellCard(props: ExpandableCardProps & CardProps) {
     const read_only_fields: (keyof Cell)[] = ['url', 'uuid', 'family', 'cycler_tests', 'permissions', 'in_use', 'team']
 
     const { classes } = useStyles();
-    const [editing, _setEditing] = useState<boolean>(props.editing || true)
+    const [editing, _setEditing] = useState<boolean>(props.editing || false)
     const [expanded, setExpanded] = useState<boolean>(props.expanded || editing)
     const [editableData, _setEditableData] =
         useState<Partial<AddProps<PatchedCell>>>({})
@@ -69,7 +69,7 @@ export default function CellCard(props: ExpandableCardProps & CardProps) {
 
     const setEditableData = (d: Partial<AddProps<PatchedCell>>) => {
         console.log("setEditableData", d)
-        const _d = deepcopy(d)  // can be used for both history and value because value is always updated deeply
+        const _d = deep_copy(d)  // can be used for both history and value because value is always updated deeply
         _setEditableData(_d)
         setEditableDataHistoryIndex(editableDataHistoryIndex + 1)
         setEditableDataHistory([

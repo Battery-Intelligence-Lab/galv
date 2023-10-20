@@ -85,23 +85,27 @@ const type_map: {[key: string]: {icon: typeof SvgIcon, tooltip: ReactNode}} = {
     }
 }
 
-export type TypeChangerSupportedType =
+export type Serializable =
     string |
     number |
     boolean |
-    {[key: string]: TypeChangerSupportedType} |
-    TypeChangerSupportedType[]
+    SerializableObject |
+    Serializable[] |
+    undefined |
+    null
+
+export type SerializableObject = {[key: string]: Serializable}
 
 type TypeChangerSupportedTypeName = keyof typeof type_map & string
 
 export type TypeChangerProps = {
-    currentValue: TypeChangerSupportedType
-    onTypeChange: (newValue: TypeChangerSupportedType) => void
+    currentValue?: Serializable
+    onTypeChange: (newValue: Serializable) => void
     disabled: boolean
 }
 
 export type TypeChangerPopoverProps = {
-    value: TypeChangerSupportedTypeName
+    value?: TypeChangerSupportedTypeName
     onTypeChange: (newValue: TypeChangerSupportedTypeName) => void
 } & PopoverProps
 
@@ -125,7 +129,7 @@ function TypeChangePopover({value, onTypeChange, ...props}: TypeChangerPopoverPr
 }
 
 export default function TypeChanger(
-    {currentValue, onTypeChange, disabled, ...props}: TypeChangerProps & TypeChangerPopoverProps
+    {currentValue, onTypeChange, disabled, ...props}: TypeChangerProps & Partial<TypeChangerPopoverProps>
 ) {
     const {classes} = useStyles()
 
@@ -140,7 +144,7 @@ export default function TypeChanger(
         console.warn(`Could not find conversion function for type: ${type}, defaulting to empty string`)
         return () => ""
     }
-    const get_type_name = (value: TypeChangerSupportedType) => {
+    const get_type_name = (value: Serializable) => {
         return (value instanceof Array? 'array' : typeof value) as TypeChangerSupportedTypeName
     }
 
