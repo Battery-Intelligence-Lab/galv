@@ -1,5 +1,9 @@
 import Tooltip from "@mui/material/Tooltip";
-import React, {useEffect, useState} from "react";
+import React, {
+    ReactNode,
+    useEffect,
+    useState
+} from "react";
 import {useDebouncedCallback} from "use-debounce";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import ToggleButton from "@mui/material/ToggleButton";
@@ -8,52 +12,122 @@ import NumbersIcon from "@mui/icons-material/Numbers";
 import DataObjectIcon from "@mui/icons-material/DataObject";
 import DataArrayIcon from "@mui/icons-material/DataArray";
 import PowerSettingsNewIcon from "@mui/icons-material/PowerSettingsNew";
+import {PopoverProps} from "@mui/material";
+import SvgIcon from "@mui/material/SvgIcon";
+import IconButton from "@mui/material/IconButton";
+import Popover from "@mui/material/Popover";
+import clsx from "clsx";
+import useStyles from "../../UseStyles";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
 
-type TypeChangerProps = {
-    currentValue: any
-    onTypeChange: (newValue: any) => void
+const str = (v: any) => {
+    try {return JSON.stringify(v)} catch(e) {
+        console.warn(`Could not stringify value: ${v}`, e)
+        return ""
+    }
+}
+const num = (v: any) => {
+    const n = Number(v)
+    if (isNaN(n)) {
+        console.warn(`Could not numberify value: ${v}`)
+        return 0
+    }
+    return n
+}
+const obj = (v: any) => {
+    try {
+        if (v instanceof Array) {
+            const o: {[key: number]: any} = {}
+            v.forEach((vv, i) => o[i] = vv)
+            return o
+        }
+        if (v instanceof Object) return v
+        if (typeof v === 'string' && (v.startsWith('{') && v.endsWith('}')))
+            return JSON.parse(v)
+    } catch (e) {
+        console.warn(`Could not objectify value: ${v}`, e)
+    }
+    return {0: v}
+}
+const arr = (v: any) => {
+    try {
+        if (v instanceof Array) return v
+        if (typeof v === 'object') return Object.values(v)
+        if (typeof v === 'string' && (v.startsWith('[') && v.endsWith(']')))
+            return JSON.parse(v)
+    } catch (e) {
+        console.warn(`Could not arrayify value: ${v}`, e)
+    }
+    return [v]
+}
+
+const type_map: {[key: string]: {icon: typeof SvgIcon, tooltip: ReactNode}} = {
+    string: {
+        icon: AbcIcon,
+        tooltip: "String"
+    },
+    number: {
+        icon: NumbersIcon,
+        tooltip: "Number"
+    },
+    boolean: {
+        icon: PowerSettingsNewIcon,
+        tooltip: "Boolean"
+    },
+    object: {
+        icon: DataObjectIcon,
+        tooltip: "Object (JSON strings will be parsed)"
+    },
+    array: {
+        icon: DataArrayIcon,
+        tooltip: "Array (JSON strings will be parsed)"
+    }
+}
+
+export type TypeChangerSupportedType =
+    string |
+    number |
+    boolean |
+    {[key: string]: TypeChangerSupportedType} |
+    TypeChangerSupportedType[]
+
+type TypeChangerSupportedTypeName = keyof typeof type_map & string
+
+export type TypeChangerProps = {
+    currentValue: TypeChangerSupportedType
+    onTypeChange: (newValue: TypeChangerSupportedType) => void
     disabled: boolean
 }
 
-export default function TypeChanger(props: TypeChangerProps) {
-    const str = (v: any) => {
-        try {return JSON.stringify(v)} catch(e) {
-            console.warn(`Could not stringify value: ${v}`, e)
-            return ""
-        }
-    }
-    const num = (v: any) => {
-        const n = Number(v)
-        if (isNaN(n)) {
-            console.warn(`Could not numberify value: ${v}`)
-            return 0
-        }
-        return n
-    }
-    const obj = (v: any) => {
-        try {
-            if (v instanceof Object) return v
-            if (typeof v === 'string' && (v.startsWith('{') && v.endsWith('}')))
-                return JSON.parse(v)
-            if (v instanceof Array) {
-                const o: {[key: number]: any} = {}
-                v.forEach((vv, i) => o[i] = vv)
-            }
-        } catch (e) {
-            console.warn(`Could not objectify value: ${v}`, e)
-        }
-        return {0: v}
-    }
-    const arr = (v: any) => {
-        try {
-            if (v instanceof Array) return v
-            if (typeof v === 'string' && (v.startsWith('[') && v.endsWith(']')))
-                return JSON.parse(v)
-        } catch (e) {
-            console.warn(`Could not arrayify value: ${v}`, e)
-        }
-        return [v]
-    }
+export type TypeChangerPopoverProps = {
+    value: TypeChangerSupportedTypeName
+    onTypeChange: (newValue: TypeChangerSupportedTypeName) => void
+} & PopoverProps
+
+function TypeChangePopover({value, onTypeChange, ...props}: TypeChangerPopoverProps) {
+    const {classes} = useStyles()
+    return <Popover className={clsx(classes.type_changer_popover)} {...props}>
+        <ToggleButtonGroup
+            size="small"
+            exclusive
+            value={value}
+            onChange={(_, v: TypeChangerSupportedTypeName) => onTypeChange(v)}
+        >
+            {Object.entries(type_map).map(([type, ICON]) =>
+                <ToggleButton value={type} key={type} selected={value === type} disabled={value === type}>
+                    <Tooltip title={ICON.tooltip} arrow placement="bottom" describeChild={true}>
+                        <ICON.icon />
+                    </Tooltip>
+                </ToggleButton>)}
+        </ToggleButtonGroup>
+    </Popover>
+}
+
+export default function TypeChanger(
+    {currentValue, onTypeChange, disabled, ...props}: TypeChangerProps & TypeChangerPopoverProps
+) {
+    const {classes} = useStyles()
 
     const get_conversion_fun = (type: string) => {
         switch (type) {
@@ -63,71 +137,48 @@ export default function TypeChanger(props: TypeChangerProps) {
             case 'object': return obj
             case 'array': return arr
         }
-        return () => undefined
+        console.warn(`Could not find conversion function for type: ${type}, defaulting to empty string`)
+        return () => ""
     }
-    const [value, _setValue] = useState(props.currentValue instanceof Array? 'array' : typeof props.currentValue)
-    useEffect(() => {
-        _setValue(props.currentValue instanceof Array? 'array' : typeof props.currentValue)
-    }, [props.currentValue])
-    const debounced = useDebouncedCallback((v: any) => {
-        const converter = get_conversion_fun(v)
-        const newValue = converter(props.currentValue)
-        props.onTypeChange(newValue)
-    }, 500)
-    const change = (v: string) => {
-        _setValue(v)
-        debounced(v)
+    const get_type_name = (value: TypeChangerSupportedType) => {
+        return (value instanceof Array? 'array' : typeof value) as TypeChangerSupportedTypeName
     }
+
+    const [value, _setValue] =
+        useState<TypeChangerSupportedTypeName>(get_type_name(currentValue))
+    const [popoverAnchor, setPopoverAnchor] = useState<HTMLElement|null>(null)
+
+    useEffect(() => _setValue(get_type_name(currentValue)), [currentValue])
 
     return <Tooltip
         key="string"
-        title={props.disabled?
-            `This variable must always be ${value}` :
-            "Change the type of this variable [string, number, boolean, object, array]"}
+        title={disabled? value : <Stack justifyItems="center" alignContent="center">
+                <Typography textAlign="center" variant="caption">{value}</Typography>
+                <Typography textAlign="center" variant="caption">click to change type</Typography>
+            </Stack>}
         arrow
         describeChild
+        placement="top"
     >
-        <ToggleButtonGroup
-            size="small"
-            exclusive
-            value={value}
-            onChange={(_, v: string) => change(v)}
-        >
-            <ToggleButton
-                value="string"
-                disabled={value === 'string' || props.disabled}
-                selected={value === 'string'}
+        <span>
+            <TypeChangePopover
+                {...props}
+                onTypeChange={(t) => {
+                    setPopoverAnchor(null)
+                    return onTypeChange(get_conversion_fun(t)(currentValue))
+                }}
+                value={value as TypeChangerSupportedTypeName}
+                open={!!popoverAnchor}
+                anchorEl={popoverAnchor}
+                onClose={() => setPopoverAnchor(null)}
+            />
+            <IconButton
+                onClick={(e) => setPopoverAnchor(e.currentTarget || null)}
+                disabled={disabled}
+                className={clsx(classes.type_changer_button)}
             >
-                <AbcIcon />
-            </ToggleButton>
-            <ToggleButton
-                value="number"
-                disabled={value === 'number' || props.disabled}
-                selected={value === 'number'}
-            >
-                <NumbersIcon />
-            </ToggleButton>
-            <ToggleButton
-                value="boolean"
-                disabled={value === 'boolean' || props.disabled}
-                selected={value === 'boolean'}
-            >
-                <PowerSettingsNewIcon />
-            </ToggleButton>
-            <ToggleButton
-                value="object"
-                disabled={value === 'object' || props.disabled}
-                selected={value === 'object'}
-            >
-                <DataObjectIcon />
-            </ToggleButton>
-            <ToggleButton
-                value="array"
-                disabled={value === 'array' || props.disabled}
-                selected={value === 'array'}
-            >
-                <DataArrayIcon />
-            </ToggleButton>
-        </ToggleButtonGroup>
+                {React.createElement(type_map[value as TypeChangerSupportedTypeName].icon)}
+            </IconButton>
+        </span>
     </Tooltip>
 }

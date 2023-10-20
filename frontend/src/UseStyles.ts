@@ -124,6 +124,7 @@ export default makeStyles()((theme) => {
       backgroundColor: theme.palette.background.paper,
       "& td, & th": {
         border: "none",
+        verticalAlign: "top",
       },
       "& tr:not(:first-of-type)": {
         "& > td, & > th": {
@@ -131,12 +132,15 @@ export default makeStyles()((theme) => {
         }
       },
       "& th": {
-        verticalAlign: "top",
+        textAlign: "right",
         paddingRight: 0,
         paddingLeft: theme.spacing(1),
         color: theme.palette.text.disabled,
         "& .MuiTypography-root": {
           fontWeight: "bold"
+        },
+        "& *": {
+          textAlign: "right",
         }
       }
     },
@@ -153,6 +157,10 @@ export default makeStyles()((theme) => {
     },
     pretty_nested: {
       backgroundColor: theme.palette.grey.A100,
-    }
+    },
+    type_changer_button: {},
+    type_changer_popover: {
+      zIndex: 5,
+    },
   }
 });

@@ -26,6 +26,8 @@ import CellFamilyChip from "./CellFamilyChip";
 import {PATHS} from "../../App";
 import Divider from "@mui/material/Divider";
 
+const deepcopy = (obj: any) => JSON.parse(JSON.stringify(obj))
+
 export type AddProps<T> = T & {[key: string]: any}
 
 export default function CellCard(props: ExpandableCardProps & CardProps) {
@@ -47,6 +49,7 @@ export default function CellCard(props: ExpandableCardProps & CardProps) {
     }
 
     const splitData = (data: AddProps<Cell>) => {
+        console.log("Splitting data", data)
         const read_only_data: Partial<Cell> = {}
         const write_data: Partial<AddProps<PatchedCell>> = {}
         for (const k of Object.keys(data)) {
@@ -58,16 +61,20 @@ export default function CellCard(props: ExpandableCardProps & CardProps) {
         }
         _setEditableData(write_data)
         setEditableDataHistory([write_data])
+        setEditableDataHistoryIndex(0)
         _setReadOnlyData(read_only_data)
         _setCellData(data)
+        _setFamily(id_from_ref_props<string>(data.family))
     }
 
     const setEditableData = (d: Partial<AddProps<PatchedCell>>) => {
-        _setEditableData(d)
+        console.log("setEditableData", d)
+        const _d = deepcopy(d)  // can be used for both history and value because value is always updated deeply
+        _setEditableData(_d)
         setEditableDataHistoryIndex(editableDataHistoryIndex + 1)
         setEditableDataHistory([
             ...editableDataHistory.slice(0, editableDataHistoryIndex + 1),
-            d
+            _d
         ])
     }
     const undoEditableData = () => {
@@ -85,6 +92,7 @@ export default function CellCard(props: ExpandableCardProps & CardProps) {
         }
     }
     const [cell_data, _setCellData] = useState<AddProps<Cell>>()
+    const [family, _setFamily] = useState<string>()
     const [family_data, setFamilyData] = useState<AddProps<CellFamily>>()
 
     const cell_uuid = id_from_ref_props<string>(props)
@@ -93,13 +101,14 @@ export default function CellCard(props: ExpandableCardProps & CardProps) {
     const cell_query = useQuery<AxiosResponse<AddProps<Cell>>, AxiosError>({
         queryKey: ['cell_retrieve', cell_uuid],
         queryFn: () => api_handler.cellsRetrieve(cell_uuid).then((r) => {
+            console.log("Cell retrieve response", cell_uuid, r)
             if (r === undefined) return Promise.reject("No data in response")
             splitData(r.data)
             return r
         })
     })
     const family_query = useQuery<AxiosResponse<AddProps<CellFamily>>, AxiosError>({
-        queryKey: ['cell_family_retrieve', cell_data?.family],
+        queryKey: ['cell_family_retrieve', family || "should_not_be_called"],
         queryFn: () => family_api_handler
             .cellFamiliesRetrieve(id_from_ref_props<string>(cell_query.data!.data.family))
             .then((r) => {
@@ -107,7 +116,7 @@ export default function CellCard(props: ExpandableCardProps & CardProps) {
                 setFamilyData(r.data)
                 return r
             }),
-        enabled: !!cell_data?.family
+        enabled: !!family
     })
 
     // Mutations for saving edits
@@ -116,7 +125,10 @@ export default function CellCard(props: ExpandableCardProps & CardProps) {
         (data: AddProps<PatchedCell>) => api_handler.cellsPartialUpdate(cell_uuid, data),
         {
             onSuccess: (data, variables, context) => {
-                if (data === undefined) return
+                if (data === undefined) {
+                    console.warn("No data in mutation response", {data, variables, context})
+                    return
+                }
                 queryClient.setQueryData(['cell_retrieve', cell_uuid], data)
             },
             onError: (error, variables, context) => {
@@ -138,10 +150,13 @@ export default function CellCard(props: ExpandableCardProps & CardProps) {
         undoable={editableDataHistoryIndex > 0}
         redoable={editableDataHistoryIndex < editableDataHistory.length - 1}
         onEditSave={() => {
-            _setCellData({...cell_data!, ...editableData})
+            // _setCellData({...cell_data!, ...editableData})
+            cell_update_mutation.mutate(editableData)
             return true
         }}
         onEditDiscard={() => {
+            if (editableDataHistoryIndex && !window.confirm("Discard all changes?"))
+                return false
             _setEditableData({...editableData, ...editableDataHistory[0]})
             setEditableDataHistory([editableDataHistory[0]])
             setEditableDataHistoryIndex(0)
@@ -183,7 +198,7 @@ export default function CellCard(props: ExpandableCardProps & CardProps) {
             </Stack>}
             action={action}
         />
-        {expanded? <CardContent>
+        {expanded? <CardContent sx={{maxHeight: editing? "80vh" : "unset", overflowY: "auto"}}>
             <Stack spacing={1}>
                 <Divider key="read-props-header">Read-only properties</Divider>
                 {cell_data && <PrettyObject

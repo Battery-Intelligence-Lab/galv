@@ -27,13 +27,14 @@ export default function PrettyArray(
     const {classes} = useStyles()
 
     const [items, setItems] = React.useState([...target]);
-    const debounce = useDebouncedCallback((value: any[]) => _onEdit(value), 500)
+    // const debounce = useDebouncedCallback((value: any[]) => _onEdit(value), 500)
 
     const onDrop: OnDropCallback = ({ removedIndex, addedIndex }: DropResult) => {
         if (removedIndex === null || addedIndex === null) return
         const newItems = arrayMoveImmutable(items, removedIndex, addedIndex)
         setItems(newItems);
-        debounce(newItems)
+        // debounce(newItems)
+        _onEdit(newItems)
     };
 
     // Required to update the items in response to Undo/Redo
@@ -45,6 +46,7 @@ export default function PrettyArray(
             {[classes.pretty_nested]: _nest_level % 2}
         )}
         dense={true}
+        // onBlur={() => _onEdit(items)}
         {...childProps}
     >
         {
@@ -62,18 +64,37 @@ export default function PrettyArray(
                                     key={`item_${i}`}
                                     target={item}
                                     nest_level={_nest_level}
-                                    edit_mode={_edit_mode}
+                                    edit_mode={true}
                                     onEdit={(v) => {
                                         const newItems = [...items]
                                         newItems[i] = v
                                         setItems(newItems)
-                                        debounce(newItems)
+                                        // debounce(newItems)
+                                        _onEdit(newItems)
                                     }}
-                                    clearParentFocus={_clearParentFocus}
+                                    allow_type_change={true}
                                 />
                             </ListItem>
                         </Draggable>
                     ))}
+                    <ListItem key="new_item" alignItems="flex-start">
+                        <Prettify
+                            target=""
+                            label="+ ITEM"
+                            placeholder="enter new value"
+                            nest_level={_nest_level}
+                            edit_mode={true}
+                            onEdit={(v) => {
+                                const newItems = [...items]
+                                newItems.push(v)
+                                setItems(newItems)
+                                // debounce(newItems)
+                                _onEdit(newItems)
+                                return ""
+                            }}
+                            allow_type_change={false}
+                        />
+                    </ListItem>
                 </Container> :
                 items.map((item, i) => <ListItem key={i} alignItems="flex-start">
                     <ListItemIcon key={`action_${i}`}>
@@ -83,8 +104,7 @@ export default function PrettyArray(
                         key={i}
                         target={item}
                         nest_level={_nest_level}
-                        edit_mode={_edit_mode}
-                        clearParentFocus={_clearParentFocus}
+                        edit_mode={false}
                     />
                 </ListItem>)
         }
