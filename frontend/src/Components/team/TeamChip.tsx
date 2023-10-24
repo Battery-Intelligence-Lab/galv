@@ -6,13 +6,13 @@ import {ICONS} from "../../icons";
 import clsx from "clsx";
 import {Link} from "react-router-dom";
 import React from "react";
-import {id_from_ref_props, ObjectReferenceProps} from "../utils/misc";
+import {id_from_ref_props, ObjectReferenceProps, usePropParamId} from "../utils/misc";
 import LoadingChip from "../utils/LoadingChip";
 import LabChip from "../lab/LabChip";
 
 export default function TeamChip(props: ObjectReferenceProps & ChipProps) {
     const {classes} = useStyles();
-    const team_id = id_from_ref_props<number>(props)
+    const team_id = usePropParamId<number>(props)
     const api_handler = new TeamsApi()
     const team_query = useQuery({
         queryKey: ['teams_retrieve', team_id],

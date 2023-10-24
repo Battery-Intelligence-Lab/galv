@@ -44,6 +44,9 @@ import { ICONS } from "./icons";
 import CyclerTestPage from "./Components/cycler-test/CyclerTestPage";
 import CellList from "./Components/cell/CellList";
 import CellPage from "./Components/cell/CellPage";
+import CellFamilyCard from "./Components/cell/CellFamilyCard";
+import ScheduleFamilyCard from "./Components/schedule/ScheduleFamilyCard";
+import EquipmentFamilyCard from "./Components/equipment/EquipmentFamilyCard";
 
 const drawerWidth = 240;
 const useStyles = makeStyles()((theme) => {
@@ -136,6 +139,7 @@ const useStyles = makeStyles()((theme) => {
 });
 
 export const PATHS = {
+  FILES: "/files",
   DASHBOARD: "/",
   EXPERIMENTS: "/experiments",
   CYCLER_TESTS: "/cycler_tests",
@@ -332,15 +336,15 @@ export default function Core() {
           <Route path={PATHS.CELLS} element={<CellList/>} />
           <Route path={`${PATHS.CELLS}/:uuid`} element={<CellPage />} />
           <Route path={PATHS.CELL_FAMILIES} element={<>TODO</>} />
-          <Route path={`${PATHS.CELL_FAMILIES}/:uuid`} element={<>TODO</>} />
+          <Route path={`${PATHS.CELL_FAMILIES}/:uuid`} element={<CellFamilyCard />} />
           <Route path={PATHS.EQUIPMENT} element={<>TODO</>} />
           <Route path={`${PATHS.EQUIPMENT}/:uuid`} element={<>TODO</>} />
           <Route path={PATHS.EQUIPMENT_FAMILIES} element={<>TODO</>} />
-          <Route path={`${PATHS.EQUIPMENT_FAMILIES}/:uuid`} element={<>TODO</>} />
+          <Route path={`${PATHS.EQUIPMENT_FAMILIES}/:uuid`} element={<EquipmentFamilyCard />} />
           <Route path={PATHS.SCHEDULES} element={<>TODO</>} />
           <Route path={`${PATHS.SCHEDULES}/:uuid`} element={<>TODO</>} />
           <Route path={PATHS.SCHEDULE_FAMILIES} element={<>TODO</>} />
-          <Route path={`${PATHS.SCHEDULE_FAMILIES}/:uuid`} element={<>TODO</>} />
+          <Route path={`${PATHS.SCHEDULE_FAMILIES}/:uuid`} element={<ScheduleFamilyCard />} />
           <Route path={PATHS.LABS} element={<>TODO</>} />
           <Route path={`${PATHS.LABS}/:uuid`} element={<>TODO</>} />
           <Route path={PATHS.TEAMS} element={<>TODO</>} />

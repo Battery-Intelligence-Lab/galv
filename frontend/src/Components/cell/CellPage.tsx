@@ -1,5 +1,5 @@
 import {CardProps} from "@mui/material";
-import {id_from_ref_props, ObjectReferenceProps} from "../utils/misc";
+import {id_from_ref_props, ObjectReferenceProps, usePropParamId} from "../utils/misc";
 import useStyles from "../../UseStyles";
 import {Cell, CellFamiliesApi, CellFamily, CellsApi} from "../../api_codegen";
 import {useQuery} from "@tanstack/react-query";
@@ -29,7 +29,7 @@ import {PATHS} from "../../App";
 export default function CellPage(props: CardProps) {
     const { classes } = useStyles();
 
-    const cell_uuid = useParams().uuid!
+    const cell_uuid = usePropParamId<string>(props)
     const api_handler = new CellsApi()
     const family_api_handler = new CellFamiliesApi()
     const cell_query = useQuery<AxiosResponse<Cell>, AxiosError>({

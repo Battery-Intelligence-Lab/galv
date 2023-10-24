@@ -14,13 +14,17 @@ import {Link} from "react-router-dom";
 import ManageSearchIcon from "@mui/icons-material/ManageSearch";
 import RemoveIcon from "@mui/icons-material/Remove";
 import AddIcon from "@mui/icons-material/Add";
+import {type_to_family_type} from "./ResourceCard";
 
 type CardActionBarProps = {
     type: string
     uuid?: string
     path?: string
     family_uuid?: string
-    cycler_test_count?: number | undefined
+    highlight_count?: number
+    highlight_icon_key?: keyof typeof ICONS
+    highlight_path?: string
+    highlight_tooltip?: ReactNode
     editable?: boolean
     editing?: boolean
     setEditing?: (editing: boolean) => void
@@ -43,7 +47,7 @@ type CardActionBarProps = {
  * @constructor
  */
 export default function CardActionBar(props: CardActionBarProps) {
-    const typeName = props.type.charAt(0).toUpperCase() + props.type.slice(1)
+    const typeName = (props.type.charAt(0).toUpperCase() + props.type.slice(1)).replace(/_/g, ' ')
 
     let edit_section: ReactNode
     if (props.editable) {
@@ -103,13 +107,15 @@ export default function CardActionBar(props: CardActionBarProps) {
         }
     }
 
+    const ICON = props.highlight_icon_key? ICONS[props.highlight_icon_key] : ICONS.DASHBOARD
+
     return <Stack direction="row" spacing={1} alignItems="center">
-        {props.cycler_test_count && <CountBadge
-            key={`cycler_tests`}
-            icon={<ICONS.CYCLER_TESTS fontSize="large"/>}
-            badgeContent={props.cycler_test_count}
-            url={`${PATHS.CYCLER_TESTS}?${props.type}=${props.uuid}`}
-            tooltip={`Cycler Tests involving this ${typeName}`}
+        {props.highlight_count && <CountBadge
+            key={`highlight`}
+            icon={<ICON fontSize="large"/>}
+            badgeContent={props.highlight_count}
+            url={props.highlight_path}
+            tooltip={props.highlight_tooltip}
         />}
         {props.editable && edit_section}
         {props.destroyable && <Tooltip title={`Delete this ${typeName}`} arrow describeChild key="delete">
@@ -122,8 +128,8 @@ export default function CardActionBar(props: CardActionBarProps) {
                 <ManageSearchIcon fontSize="large"/>
             </IconButton>
         </Tooltip>
-        {props.family_uuid ? <Tooltip title={`Go to ${typeName} Family Page`} arrow describeChild key="family">
-                <IconButton component={Link} to={`${props.path}_families/${props.family_uuid}`}>
+        {props.family_uuid && props.path ? <Tooltip title={`Go to ${typeName} Family Page`} arrow describeChild key="family">
+                <IconButton component={Link} to={`${type_to_family_type(props.path)}_families/${props.family_uuid}`}>
                     <ICONS.FAMILY fontSize="large"/>
                 </IconButton>
             </Tooltip> :

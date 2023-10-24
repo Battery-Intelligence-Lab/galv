@@ -35,7 +35,6 @@
     "react-token-auth": "^2.3.8",
     "tss-react": "^4.8.2",
     "typescript": "^4.9.4",
-    "use-debounce": "^9.0.4",
     "web-vitals": "^3.1.0"
   },
   "devDependencies": {

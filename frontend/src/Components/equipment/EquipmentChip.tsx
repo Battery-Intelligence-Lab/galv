@@ -6,12 +6,12 @@ import {ICONS} from "../../icons";
 import clsx from "clsx";
 import {Link} from "react-router-dom";
 import React from "react";
-import {id_from_ref_props, ObjectReferenceProps} from "../utils/misc";
+import {id_from_ref_props, ObjectReferenceProps, usePropParamId} from "../utils/misc";
 import LoadingChip from "../utils/LoadingChip";
 
 export default function EquipmentChip(props: ObjectReferenceProps & ChipProps) {
     const {classes} = useStyles();
-    const equipment_uuid = id_from_ref_props<string>(props)
+    const equipment_uuid = usePropParamId<string>(props)
     const api_handler = new EquipmentApi()
     const family_api_handler = new EquipmentFamiliesApi()
     const equipment_query = useQuery({

@@ -6,7 +6,7 @@ import {ICONS} from "../../icons";
 import clsx from "clsx";
 import {Link} from "react-router-dom";
 import React from "react";
-import {id_from_ref_props, ObjectReferenceProps} from "../utils/misc";
+import {id_from_ref_props, ObjectReferenceProps, usePropParamId} from "../utils/misc";
 import LoadingChip from "../utils/LoadingChip";
 import QueryWrapper from "../utils/QueryWrapper";
 import {AxiosError, AxiosResponse} from "axios";
@@ -17,7 +17,7 @@ import {PATHS} from "../../App";
 export default function ScheduleFamilyChip(props: ObjectReferenceProps & ChipProps) {
     const { classes } = useStyles();
 
-    const uuid = id_from_ref_props<string>(props)
+    const uuid = usePropParamId<string>(props)
     const api_handler = new ScheduleFamiliesApi()
     const query = useQuery<AxiosResponse<ScheduleFamily>, AxiosError>({
         queryKey: ['schedule_family_retrieve', uuid],

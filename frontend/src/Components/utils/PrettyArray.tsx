@@ -8,13 +8,15 @@ import DragHandleIcon from "@mui/icons-material/DragHandle";
 import ArrowRightIcon from "@mui/icons-material/ArrowRight";
 import {PrettyObjectProps} from "./PrettyObject";
 import {ListProps} from "@mui/material";
-import {useDebouncedCallback} from "use-debounce";
 import Prettify from "./Prettify";
 import useStyles from "../../UseStyles";
 import clsx from "clsx";
+import {Serializable} from "./TypeChanger";
 
-type PrettyArrayProps = Pick<PrettyObjectProps, "nest_level" | "edit_mode" | "onEdit" | "clearParentFocus"> &
-    {target: any[]}
+type PrettyArrayProps = Pick<PrettyObjectProps, "nest_level" | "edit_mode" | "clearParentFocus"> & {
+    target: Serializable[]
+    onEdit?: (v: Serializable[]) => void
+}
 
 export default function PrettyArray(
     {target, nest_level, edit_mode, onEdit, clearParentFocus, ...childProps}: PrettyArrayProps & ListProps
@@ -22,18 +24,15 @@ export default function PrettyArray(
     const _nest_level = nest_level || 0
     const _edit_mode = edit_mode || false
     const _onEdit = onEdit || (() => {})
-    const _clearParentFocus = clearParentFocus || (() => {})
 
     const {classes} = useStyles()
 
     const [items, setItems] = React.useState([...target]);
-    // const debounce = useDebouncedCallback((value: any[]) => _onEdit(value), 500)
 
     const onDrop: OnDropCallback = ({ removedIndex, addedIndex }: DropResult) => {
         if (removedIndex === null || addedIndex === null) return
         const newItems = arrayMoveImmutable(items, removedIndex, addedIndex)
         setItems(newItems);
-        // debounce(newItems)
         _onEdit(newItems)
     };
 
@@ -46,7 +45,6 @@ export default function PrettyArray(
             {[classes.pretty_nested]: _nest_level % 2}
         )}
         dense={true}
-        // onBlur={() => _onEdit(items)}
         {...childProps}
     >
         {
@@ -69,7 +67,6 @@ export default function PrettyArray(
                                         const newItems = [...items]
                                         newItems[i] = v
                                         setItems(newItems)
-                                        // debounce(newItems)
                                         _onEdit(newItems)
                                     }}
                                     allow_type_change={true}
@@ -88,7 +85,6 @@ export default function PrettyArray(
                                 const newItems = [...items]
                                 newItems.push(v)
                                 setItems(newItems)
-                                // debounce(newItems)
                                 _onEdit(newItems)
                                 return ""
                             }}

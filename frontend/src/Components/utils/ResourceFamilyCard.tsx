@@ -1,6 +1,5 @@
 import {CardProps} from "@mui/material";
 import CardActionBar from "../utils/CardActionBar";
-import {id_from_ref_props} from "./misc";
 import PrettyObject from "./PrettyObject";
 import useStyles from "../../UseStyles";
 import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
@@ -17,65 +16,66 @@ import CardContent from "@mui/material/CardContent";
 import Grid from "@mui/material/Unstable_Grid2";
 import Avatar from "@mui/material/Avatar";
 import TeamChip from "../team/TeamChip";
-import React, {CElement, useState} from "react";
+import React, {useState} from "react";
 import ErrorCard from "../error/ErrorCard";
 import QueryWrapper, {QueryDependentElement} from "../utils/QueryWrapper";
 import {AxiosError, AxiosResponse} from "axios";
 import {PATHS} from "../../App";
 import Divider from "@mui/material/Divider";
-import {SerializableObject} from "./TypeChanger";
-import {getFamilyRepresentation} from "./ResourceFamilyCard";
+import {Serializable, SerializableObject} from "./TypeChanger";
+import {Family} from "./ResourceCard";
 
 const deep_copy = (obj: any) => JSON.parse(JSON.stringify(obj))
 
-export type Permissions = { read?: boolean, write?: boolean, create?: boolean, destroy?: boolean }
-export type Family = { uuid: string, permissions: Permissions } & SerializableObject
-export type Resource = { family: string, cycler_tests: string[], team: string } & Family
-
-type ResourceCardProps<T extends Resource> = {
-    target_uuid: string
-    target_type: string
+type ResourceFamilyCardProps<T extends Family> = {
+    uuid: string
+    type: string
+    child_type: keyof typeof PATHS & keyof typeof ICONS
     // Can't get a good type mask for generic API interface without a lot of work
-    target_api: any
-    family_api: any
-    FamilyChip: (props: any) => CElement<any, any>
-    path_key: keyof typeof PATHS & keyof typeof ICONS
+    api: any
+    path_key: keyof typeof PATHS
     editing?: boolean
     expanded?: boolean
     read_only_fields?: (keyof T)[]
 }
 
-export type AddProps<T> = T & {[key: string]: any}
-
-export function getRepresentation(data: Partial<Resource>, family_data: Partial<Family>) {
-    if (!data || !family_data) return ""
-    const identifier = data.identifier || data.uuid
-    return `${getFamilyRepresentation(family_data)} ${identifier}`
+/**
+ * Return a string representation of a family object
+ * @param data
+ */
+export function getFamilyRepresentation(data: Partial<Family>) {
+    console.log("getFamilyRepresentation", data)
+    if (Object.keys(data).includes("cells"))
+        return `${data.manufacturer} ${data.model} (${data.form_factor} ${data.chemistry})`
+    if (Object.keys(data).includes("equipment"))
+        return `${data.manufacturer} ${data.model} (${data.type})`
+    return `${data.identifier}`
 }
 
-export function type_to_family_type(type: string) {
-    return type.charAt(type.length - 1) === 's'? type.slice(0, -1) : type
+export function type_to_api_type(type: string) {
+    return type.replace(/s?_family/g, "Families")
 }
 
-export default function ResourceCard<T extends Resource, F extends Family>(
+export default function ResourceFamilyCard<T extends Family>(
     {
-        target_uuid,
-        target_type,
-        target_api,
-        family_api,
-        FamilyChip,
+        uuid,
+        type,
+        child_type,
+        api,
         read_only_fields,
         editing,
         path_key,
         expanded,
         ...cardProps
-    }: ResourceCardProps<T> & CardProps
+    }: ResourceFamilyCardProps<T> & CardProps
 ) {
-    console.log("ResourceCard", {target_uuid, target_type, target_api, family_api, FamilyChip, read_only_fields, editing, path_key, expanded, cardProps})
+    console.log("ResourceFamilyCard", {uuid, type, child_type, api, read_only_fields, editing, path_key, expanded, cardProps})
 
     const { classes } = useStyles();
     const [isEditMode, _setIsEditMode] = useState<boolean>(editing || false)
     const [isExpanded, setIsExpanded] = useState<boolean>(expanded || isEditMode)
+
+    // TODO: refactor edit history stuff into a hook/context/reducer
     const [editableData, _setEditableData] =
         useState<SerializableObject>({})
     const [editableDataHistory, setEditableDataHistory] =
@@ -84,12 +84,8 @@ export default function ResourceCard<T extends Resource, F extends Family>(
         useState<number>(0)
     const [readOnlyData, _setReadOnlyData] =
         useState<Partial<T>>({})
-    const [target_data, _setTargetData] =
+    const [data, _setData] =
         useState<T>()
-    const [family, _setFamily] =
-        useState<string>()
-    const [family_data, setFamilyData] =
-        useState<F>()
 
     const setEditableData = (d: SerializableObject) => {
         console.log("setEditableData", d)
@@ -135,63 +131,55 @@ export default function ResourceCard<T extends Resource, F extends Family>(
         setEditableDataHistory([write_data])
         setEditableDataHistoryIndex(0)
         _setReadOnlyData(read_only_data)
-        _setTargetData(data)
-        _setFamily(id_from_ref_props<string>(data.family))
+        _setData(data)
     }
 
-    const target_api_handler = new target_api()
-    const family_api_handler = new family_api()
+    const api_handler = new api()
 
-    const target_query = useQuery<AxiosResponse<T>, AxiosError>({
-        queryKey: [`${target_type}_retrieve`, target_uuid],
-        queryFn: () => target_api_handler[`${target_type}Retrieve`](target_uuid).then((r: AxiosResponse<T>) => {
-            console.log(`${target_type}_retrieve ${target_uuid} response`, r)
+    const api_type = type_to_api_type(type)
+
+    console.log(api_type, api_handler[`${api_type}Retrieve`], api_handler[`${api_type}PartialUpdate`])
+
+    const query = useQuery<AxiosResponse<T>, AxiosError>({
+        queryKey: [`${api_type}_retrieve`, uuid],
+        queryFn: () => api_handler[`${api_type}Retrieve`](uuid).then((r: AxiosResponse<T>) => {
+            console.log(`${api_type}_retrieve ${uuid} response`, r)
             if (r === undefined) return Promise.reject("No data in response")
             splitData(r.data)
             return r
         })
-    })
-    const family_type = type_to_family_type(target_type)
-    const family_query = useQuery<AxiosResponse<F>, AxiosError>({
-        queryKey: [`${family_type}_family_retrieve`, family || "should_not_be_called"],
-        queryFn: () => family_api_handler[`${family_type}FamiliesRetrieve`](id_from_ref_props<string>(target_query.data!.data.family))
-            .then((r: AxiosResponse<F>) => {
-                console.log(`${family_type}_family_retrieve ${id_from_ref_props<string>(target_query.data!.data.family)} response`, r)
-                if (r === undefined) return Promise.reject("No data in response")
-                setFamilyData(r.data)
-                return r
-            }),
-        enabled: !!family
     })
 
     // Mutations for saving edits
     const queryClient = useQueryClient()
     const update_mutation =
         useMutation<AxiosResponse<T>, AxiosError, SerializableObject>(
-            (data: SerializableObject) => target_api_handler[`${target_type}PartialUpdate`](target_uuid, data),
+            (data: SerializableObject) => api_handler[`${api_type}PartialUpdate`](uuid, data),
             {
                 onSuccess: (data, variables, context) => {
                     if (data === undefined) {
                         console.warn("No data in mutation response", {data, variables, context})
                         return
                     }
-                    queryClient.setQueryData(['cell_retrieve', target_uuid], data)
+                    queryClient.setQueryData(['cell_retrieve', uuid], data)
                 },
                 onError: (error, variables, context) => {
                     console.error(error)
                 },
             })
 
+    const representation = getFamilyRepresentation(data || {})
+
     const action = <CardActionBar
-        type={target_type}
-        uuid={target_uuid}
+        type={type}
+        uuid={uuid}
         path={PATHS[path_key]}
-        family_uuid={target_data?.family? id_from_ref_props<string>(target_data?.family) : undefined}
-        highlight_count={target_data?.cycler_tests.length}
-        highlight_tooltip={`Cycler Tests involving this ${target_type}`}
-        highlight_icon_key="CYCLER_TESTS"
-        highlight_path={`${PATHS.CYCLER_TESTS}?${target_type}=${target_uuid}`}
-        editable={!!target_data?.permissions.write}
+        highlight_count={data && data[child_type.toLowerCase()] instanceof Array?
+            (data[child_type.toLowerCase()] as Serializable[]).length : 0}
+        highlight_icon_key={child_type}
+        highlight_path={`${PATHS[child_type]}?family=${uuid}`}
+        highlight_tooltip={`View ${child_type} in this family`}
+        editable={!!data?.permissions.write}
         editing={isEditMode}
         setEditing={setEditing}
         onUndo={undoEditableData}
@@ -214,16 +202,12 @@ export default function ResourceCard<T extends Resource, F extends Family>(
         setExpanded={setIsExpanded}
     />
 
-    const ICON = ICONS[path_key]
-
-    const loadingBody = <Card key={target_uuid} className={clsx(classes.item_card)} {...cardProps}>
+    const loadingBody = <Card key={uuid} className={clsx(classes.item_card)} {...cardProps}>
         <CardHeader
             avatar={<CircularProgress sx={{color: (t) => t.palette.text.disabled}}/>}
-            title={<A component={Link} to={`${PATHS[path_key]}/${target_uuid}`}>{target_uuid}</A>}
+            title={<A component={Link} to={`${PATHS[path_key]}/${uuid}`}>{uuid}</A>}
             subheader={<Stack direction="row" spacing={1}>
-                <A component={Link} to={PATHS[path_key]}>
-                    {`${target_type.charAt(0).toUpperCase()}${target_type.slice(1)}`}
-                </A>
+                <A component={Link} to={PATHS[path_key]}>Cell</A>
                 <LoadingChip icon={<ICONS.TEAMS/>} />
             </Stack>}
             action={action}
@@ -238,41 +222,30 @@ export default function ResourceCard<T extends Resource, F extends Family>(
         </CardContent> : <CardContent />}
     </Card>
 
-    const cardBody = <Card key={target_uuid} className={clsx(classes.item_card)} {...cardProps}>
+    const cardBody = <Card key={uuid} className={clsx(classes.item_card)} {...cardProps}>
         <CardHeader
-            avatar={<Avatar variant="square"><ICON /></Avatar>}
-            title={<A component={Link} to={`${PATHS[path_key]}/${target_uuid}`}>
-                {getRepresentation(target_data!, family_data!)}
-            </A>}
+            avatar={<Avatar variant="square"><ICONS.FAMILY/></Avatar>}
+            title={<A component={Link} to={`${PATHS[path_key]}/${uuid}`}>{representation}</A>}
             subheader={<Stack direction="row" spacing={1} alignItems="center">
-                <A component={Link} to={PATHS[path_key]}>
-                    {`${target_type.charAt(0).toUpperCase()}${target_type.slice(1)}`}
-                </A>
-                <TeamChip url={target_data?.team!} sx={{fontSize: "smaller"}}/>
+                <A component={Link} to={PATHS[path_key]}>Cell</A>
+                <TeamChip url={data?.team!.toString() || ""} sx={{fontSize: "smaller"}}/>
             </Stack>}
             action={action}
         />
         {isExpanded? <CardContent sx={{maxHeight: isEditMode? "80vh" : "unset", overflowY: "auto"}}>
             <Stack spacing={1}>
                 <Divider key="read-props-header">Read-only properties</Divider>
-                {target_data && <PrettyObject
+                {data && <PrettyObject
                     key="read-props"
                     target={readOnlyData}
                 />}
                 <Divider key="write-props-header">Editable properties</Divider>
-                {target_data && <PrettyObject
+                {data && <PrettyObject
                     key="write-props"
                     target={editableData}
                     edit_mode={isEditMode}
                     type_locked_keys={['identifier']}
                     onEdit={setEditableData}
-                />}
-                {family_data?.uuid && <Divider key="family-props-header">
-                    Inherited from <FamilyChip uuid={family_data?.uuid}/>
-                </Divider>}
-                {family_data && <PrettyObject
-                    target={family_data}
-                    exclude_keys={[...Object.keys(target_data!), 'cells']}
                 />}
             </Stack>
         </CardContent> : <CardContent />}
@@ -282,11 +255,11 @@ export default function ResourceCard<T extends Resource, F extends Family>(
         status={queries.find(q => q.isError)?.error?.response?.status}
         header={
             <CardHeader
-                avatar={<Avatar variant="square"><ICON /></Avatar>}
-                title={target_uuid}
+                avatar={<Avatar variant="square"><ICONS.FAMILY/></Avatar>}
+                title={uuid}
                 subheader={<Stack direction="row" spacing={1} alignItems="center">
                     <A component={Link} to={PATHS[path_key]}>
-                        {`${target_type.charAt(0).toUpperCase()}${target_type.slice(1)}`}
+                        {(type.charAt(0).toUpperCase() + type.slice(1)).replace(/_/g, " ")}
                     </A>
                 </Stack>}
             />
@@ -294,7 +267,7 @@ export default function ResourceCard<T extends Resource, F extends Family>(
     />
 
     return <QueryWrapper
-        queries={[target_query, family_query]}
+        queries={[query]}
         loading={loadingBody}
         error={getErrorBody}
         success={cardBody}

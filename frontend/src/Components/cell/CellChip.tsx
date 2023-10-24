@@ -6,14 +6,14 @@ import {ICONS} from "../../icons";
 import clsx from "clsx";
 import {Link} from "react-router-dom";
 import React from "react";
-import {id_from_ref_props, ObjectReferenceProps} from "../utils/misc";
+import {id_from_ref_props, ObjectReferenceProps, usePropParamId} from "../utils/misc";
 import LoadingChip from "../utils/LoadingChip";
 
 
 export default function CellChip(props: ObjectReferenceProps & ChipProps) {
     const { classes } = useStyles();
 
-    const cell_uuid = id_from_ref_props<string>(props)
+    const cell_uuid = usePropParamId<string>(props)
     const api_handler = new CellsApi()
     const family_api_handler = new CellFamiliesApi()
     const cell_query = useQuery({

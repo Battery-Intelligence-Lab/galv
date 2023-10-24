@@ -6,12 +6,12 @@ import {ICONS} from "../../icons";
 import clsx from "clsx";
 import {Link} from "react-router-dom";
 import React from "react";
-import {id_from_ref_props, ObjectReferenceProps} from "../utils/misc";
+import {id_from_ref_props, ObjectReferenceProps, usePropParamId} from "../utils/misc";
 import LoadingChip from "../utils/LoadingChip";
 
 export default function LabChip(props: ObjectReferenceProps & ChipProps) {
     const {classes} = useStyles();
-    const lab_id = id_from_ref_props<number>(props)
+    const lab_id = usePropParamId<number>(props)
     const api_handler = new LabsApi()
     const lab_query = useQuery({
         queryKey: ['labs_retrieve', lab_id],

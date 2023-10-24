@@ -18,7 +18,7 @@ import Button from "@mui/material/Button";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import ScheduleChip from "../schedule/ScheduleChip";
 import EquipmentChip from "../equipment/EquipmentChip";
-import {id_from_ref_props, ObjectReferenceProps} from "../utils/misc";
+import {ObjectReferenceProps, usePropParamId} from "../utils/misc";
 import CellChip from "../cell/CellChip";
 import LoadingChip from "../utils/LoadingChip";
 import {CardProps} from "@mui/material";
@@ -26,7 +26,7 @@ import {CardProps} from "@mui/material";
 export default function CyclerTestCard(props: ObjectReferenceProps & CardProps) {
     const {classes} = useStyles();
 
-    const uuid = id_from_ref_props<string>(props)
+    const uuid = usePropParamId<string>(props)
     const query = useQuery({
         queryKey: ['cycler_tests_retrieve', uuid],
         queryFn: () => new CyclerTestsApi().cyclerTestsRetrieve(uuid)
