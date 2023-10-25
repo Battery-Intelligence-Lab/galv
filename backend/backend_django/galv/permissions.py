@@ -11,7 +11,6 @@ from rest_framework import permissions
 from .models import Harvester, MonitoredPath, user_labs, user_teams, ObservedFile, UserProxy, user_is_lab_admin
 from .utils import get_monitored_paths
 
-
 class HarvesterFilterBackend(DRYPermissionFiltersBase):
     action_routing = True
 

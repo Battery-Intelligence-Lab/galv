@@ -586,8 +586,39 @@ class MonitoredPathSerializer(serializers.HyperlinkedModelSerializer, Permission
         ['name'],
         'harvester-detail',
         queryset=Harvester.objects.all(),
-        help_text="Harvester this MonitoredPath belongs to"
+        help_text="Harvester this MonitoredPath is on",
+        create_only=True
     )
+
+    team = TruncatedHyperlinkedRelatedIdField(
+        'TeamSerializer',
+        ['name'],
+        'team-detail',
+        queryset=Team.objects.all(),
+        help_text="Team this MonitoredPath belongs to",
+        create_only=True
+    )
+
+    def validate_harvester(self, value):
+        if self.instance is not None:
+            return self.instance.harvester  # harvester cannot be changed
+        request = self.context['request']
+        if value.lab not in user_labs(request.user):
+            raise ValidationError("You may only create MonitoredPaths on Harvesters in your own lab(s)")
+        return value
+
+    def validate_team(self, value):
+        """
+        Only team admins can create monitored paths.
+        Monitored paths can read arbitrary files on the harvester system,
+        so some level of trust is required to allow users to create them.
+        """
+        if self.instance is not None:
+            return self.instance.team
+        user = self.context['request'].user
+        if value not in user_teams(user, True):
+            raise ValidationError("You may only create MonitoredPaths in your own team(s)")
+        return value
 
     def validate_path(self, value):
         try:
@@ -612,15 +643,13 @@ class MonitoredPathSerializer(serializers.HyperlinkedModelSerializer, Permission
         except BaseException as e:
             raise ValidationError(f"Invalid regex: {e.__context__}")
 
-    def validate(self, attrs):
-        return attrs
-
     class Meta:
         model = MonitoredPath
         fields = ['url', 'uuid', 'path', 'regex', 'stable_time', 'active', 'harvester', 'team', 'permissions']
-        read_only_fields = ['url', 'uuid', 'team', 'permissions']
+        read_only_fields = ['url', 'uuid', 'permissions']
         extra_kwargs = augment_extra_kwargs({
-            'harvester': {'create_only': True}
+            'harvester': {'create_only': True},
+            'team': {'create_only': True}
         })
 
 

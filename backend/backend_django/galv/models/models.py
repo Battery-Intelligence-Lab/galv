@@ -7,15 +7,14 @@ from typing import Type
 
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import User, Group, AnonymousUser
 import random
 
-from dry_rest_permissions.generics import allow_staff_or_superuser
+#from dry_rest_permissions.generics import allow_staff_or_superuser
 
 from .utils import AdditionalPropertiesModel, JSONModel, LDSources, render_pybamm_schedule, UUIDModel, \
     combine_rdf_props, ValidatableBySchemaMixin
 from .autocomplete_entries import *
-
 
 class FileState(models.TextChoices):
     RETRY_IMPORT = "RETRY IMPORT"
@@ -37,19 +36,19 @@ class UserProxy(User):
         return True
 
     @staticmethod
-    @allow_staff_or_superuser
+    #@allow_staff_or_superuser
     def has_read_permission(request):
         return request.user.is_authenticated
 
     @staticmethod
-    @allow_staff_or_superuser
+    #@allow_staff_or_superuser
     def has_write_permission(request):
         return request.user.is_authenticated
 
     def has_object_write_permission(self, request):
         return self == request.user
 
-    @allow_staff_or_superuser
+    #@allow_staff_or_superuser
     def has_object_read_permission(self, request):
         """
         Users can read their own details, or the details of any user in a lab they are a member of.
@@ -100,14 +99,14 @@ class GroupProxy(Group):
             return self.readable_team
         return None
 
-    @allow_staff_or_superuser
+    #@allow_staff_or_superuser
     def has_object_write_permission(self, request):
         owner = self.get_owner()
         if owner is not None:
             return owner.has_object_write_permission(request)# or self in request.user.groups.all()
         return False
 
-    @allow_staff_or_superuser
+    #@allow_staff_or_superuser
     def has_object_read_permission(self, request):
         owner = self.get_owner()
         if owner is not None:
@@ -502,6 +501,7 @@ class Harvester(UUIDModel, ValidatableBySchemaMixin):
     lab = models.ForeignKey(
         to=Lab,
         on_delete=models.CASCADE,
+        related_name="harvesters",
         null=False,
         help_text="Lab to which this Harvester belongs"
     )
@@ -528,7 +528,7 @@ class Harvester(UUIDModel, ValidatableBySchemaMixin):
         return self.lab.has_object_write_permission(request)
 
     def is_valid_harvester(self, request):
-        return self.api_key == request.META.get('HTTP_AUTHORIZATION', '').replace("Harvester ", "")
+        return isinstance(request.user, HarvesterUser) and request.user.harvester == self
 
     def has_object_config_permission(self, request):
         return self.is_valid_harvester(request)
@@ -1034,3 +1034,31 @@ class KnoxAuthToken(models.Model):
 
     def __str__(self):
         return f"{self.knox_token_key}:{self.name}"
+
+
+class HarvesterUser(AnonymousUser):
+    """
+    Abstraction of a Harvester as a User.
+    Used to link up Harvester API access through the Django authentification system.
+    """
+    harvester: Harvester = None
+
+    def __init__(self, harvester: Harvester):
+        super().__init__()
+        self.harvester = harvester
+        self.username = harvester.name
+
+    def __str__(self):
+        return "HarvesterUser"
+
+    @property
+    def is_anonymous(self):
+        return False
+
+    @property
+    def is_authenticated(self):
+        return True
+
+    @property
+    def is_active(self):
+        return self.harvester.active
