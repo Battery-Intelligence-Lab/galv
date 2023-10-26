@@ -40,13 +40,13 @@ import Alert from "@mui/material/Alert";
 import axios, {AxiosError} from "axios";
 import Experiments from "./Experiments";
 import CyclerTestList from "./Components/cycler-test/CyclerTestList";
-import { ICONS } from "./icons";
 import CyclerTestPage from "./Components/cycler-test/CyclerTestPage";
 import CellList from "./Components/cell/CellList";
 import CellPage from "./Components/cell/CellPage";
 import CellFamilyCard from "./Components/cell/CellFamilyCard";
 import ScheduleFamilyCard from "./Components/schedule/ScheduleFamilyCard";
 import EquipmentFamilyCard from "./Components/equipment/EquipmentFamilyCard";
+import {PATHS, ICONS} from "./constants";
 
 const drawerWidth = 240;
 const useStyles = makeStyles()((theme) => {
@@ -138,24 +138,6 @@ const useStyles = makeStyles()((theme) => {
   }
 });
 
-export const PATHS = {
-  FILES: "/files",
-  DASHBOARD: "/",
-  EXPERIMENTS: "/experiments",
-  CYCLER_TESTS: "/cycler_tests",
-  DATASETS: "/datasets",
-  CELLS: "/cells",
-  CELL_FAMILIES: "/cell_families",
-  EQUIPMENT: "/equipment",
-  EQUIPMENT_FAMILIES: "/equipment_families",
-  SCHEDULES: "/schedules",
-  SCHEDULE_FAMILIES: "/schedule_families",
-  LABS: "/labs",
-  TEAMS: "/teams",
-  USERS: "/users",
-  PROFILE: "/profile",
-  TOKENS: "/tokens",
-}
 export const pathMatches = (path: string, pathname: string) => matchPath({path: path, end: true}, pathname) !== null
 
 export default function Core() {
@@ -203,28 +185,28 @@ export default function Core() {
           <ListItemText primary="Dashboard" />
         </ListItemButton>
         <Divider component="li" />
-        <ListItemButton selected={pathIs(PATHS.EXPERIMENTS)} component={Link} to={PATHS.EXPERIMENTS}>
+        <ListItemButton selected={pathIs(PATHS.EXPERIMENT)} component={Link} to={PATHS.EXPERIMENT}>
           <ListItemIcon>
-            <ICONS.EXPERIMENTS />
+            <ICONS.EXPERIMENT />
           </ListItemIcon>
           <ListItemText primary="Experiments" />
         </ListItemButton>
-        <ListItemButton selected={pathIs(PATHS.CYCLER_TESTS)} component={Link} to={PATHS.CYCLER_TESTS}>
+        <ListItemButton selected={pathIs(PATHS.CYCLER_TEST)} component={Link} to={PATHS.CYCLER_TEST}>
           <ListItemIcon>
-            <ICONS.CYCLER_TESTS />
+            <ICONS.CYCLER_TEST />
           </ListItemIcon>
           <ListItemText primary="Cycler Tests" />
         </ListItemButton>
         <Divider component="li" />
-        <ListItemButton selected={pathIs(PATHS.DATASETS)} component={Link} to={PATHS.DATASETS}>
+        <ListItemButton selected={pathIs(PATHS.FILE)} component={Link} to={PATHS.FILE}>
           <ListItemIcon>
-            <ICONS.DATASETS />
+            <ICONS.FILE />
           </ListItemIcon>
           <ListItemText primary="Datasets" />
         </ListItemButton>
-        <ListItemButton selected={pathIs(PATHS.CELLS)} component={Link} to={PATHS.CELLS}>
+        <ListItemButton selected={pathIs(PATHS.CELL)} component={Link} to={PATHS.CELL}>
           <ListItemIcon>
-            <ICONS.CELLS />
+            <ICONS.CELL />
           </ListItemIcon>
           <ListItemText primary="Cells" />
         </ListItemButton>
@@ -234,22 +216,22 @@ export default function Core() {
           </ListItemIcon>
           <ListItemText primary="Equipment" />
         </ListItemButton>
-        <ListItemButton selected={pathIs(PATHS.SCHEDULES)} component={Link} to={PATHS.SCHEDULES}>
+        <ListItemButton selected={pathIs(PATHS.SCHEDULE)} component={Link} to={PATHS.SCHEDULE}>
           <ListItemIcon>
-            <ICONS.SCHEDULES/>
+            <ICONS.SCHEDULE/>
           </ListItemIcon>
           <ListItemText primary="Schedules" />
         </ListItemButton>
         <Divider component="li" />
-        <ListItemButton selected={pathIs(PATHS.LABS)} component={Link} to={PATHS.LABS}>
+        <ListItemButton selected={pathIs(PATHS.LAB)} component={Link} to={PATHS.LAB}>
           <ListItemIcon>
-            <ICONS.LABS/>
+            <ICONS.LAB/>
           </ListItemIcon>
           <ListItemText primary="Labs" />
         </ListItemButton>
-        <ListItemButton selected={pathIs(PATHS.TEAMS)} component={Link} to={PATHS.TEAMS}>
+        <ListItemButton selected={pathIs(PATHS.TEAM)} component={Link} to={PATHS.TEAM}>
           <ListItemIcon>
-            <ICONS.TEAMS/>
+            <ICONS.TEAM/>
           </ListItemIcon>
           <ListItemText primary="Teams" />
         </ListItemButton>
@@ -285,7 +267,7 @@ export default function Core() {
               Manage Profile
             </Button>
             <Button color="inherit" onClick={() => {
-              navigate(PATHS.TOKENS)
+              navigate(PATHS.TOKEN)
             }}>
               Manage API Tokens
             </Button>
@@ -328,27 +310,27 @@ export default function Core() {
       <Routes>
         <Route path="/login" element={<Login />}/>
         <Route path={PATHS.DASHBOARD} element={Layout}>
-          <Route path={PATHS.EXPERIMENTS} element={<Experiments/>} />
-          <Route path={`${PATHS.EXPERIMENTS}/:uuid`} element={<Experiments/>} />
-          <Route path={PATHS.CYCLER_TESTS} element={<CyclerTestList/>} />
-          <Route path={`${PATHS.CYCLER_TESTS}/:uuid`} element={<CyclerTestPage/>} />
-          <Route path={PATHS.DATASETS} element={<>TODO</>} />
-          <Route path={PATHS.CELLS} element={<CellList/>} />
-          <Route path={`${PATHS.CELLS}/:uuid`} element={<CellPage />} />
-          <Route path={PATHS.CELL_FAMILIES} element={<>TODO</>} />
-          <Route path={`${PATHS.CELL_FAMILIES}/:uuid`} element={<CellFamilyCard />} />
+          <Route path={PATHS.EXPERIMENT} element={<Experiments/>} />
+          <Route path={`${PATHS.EXPERIMENT}/:uuid`} element={<Experiments/>} />
+          <Route path={PATHS.CYCLER_TEST} element={<CyclerTestList/>} />
+          <Route path={`${PATHS.CYCLER_TEST}/:uuid`} element={<CyclerTestPage/>} />
+          <Route path={PATHS.DATASET} element={<>TODO</>} />
+          <Route path={PATHS.CELL} element={<CellList/>} />
+          <Route path={`${PATHS.CELL}/:uuid`} element={<CellPage />} />
+          <Route path={PATHS.CELL_FAMILY} element={<>TODO</>} />
+          <Route path={`${PATHS.CELL_FAMILY}/:uuid`} element={<CellFamilyCard />} />
           <Route path={PATHS.EQUIPMENT} element={<>TODO</>} />
           <Route path={`${PATHS.EQUIPMENT}/:uuid`} element={<>TODO</>} />
-          <Route path={PATHS.EQUIPMENT_FAMILIES} element={<>TODO</>} />
-          <Route path={`${PATHS.EQUIPMENT_FAMILIES}/:uuid`} element={<EquipmentFamilyCard />} />
-          <Route path={PATHS.SCHEDULES} element={<>TODO</>} />
-          <Route path={`${PATHS.SCHEDULES}/:uuid`} element={<>TODO</>} />
-          <Route path={PATHS.SCHEDULE_FAMILIES} element={<>TODO</>} />
-          <Route path={`${PATHS.SCHEDULE_FAMILIES}/:uuid`} element={<ScheduleFamilyCard />} />
-          <Route path={PATHS.LABS} element={<>TODO</>} />
-          <Route path={`${PATHS.LABS}/:uuid`} element={<>TODO</>} />
-          <Route path={PATHS.TEAMS} element={<>TODO</>} />
-          <Route path={`${PATHS.TEAMS}/:uuid`} element={<>TODO</>} />
+          <Route path={PATHS.EQUIPMENT_FAMILY} element={<>TODO</>} />
+          <Route path={`${PATHS.EQUIPMENT_FAMILY}/:uuid`} element={<EquipmentFamilyCard />} />
+          <Route path={PATHS.SCHEDULE} element={<>TODO</>} />
+          <Route path={`${PATHS.SCHEDULE}/:uuid`} element={<>TODO</>} />
+          <Route path={PATHS.SCHEDULE_FAMILY} element={<>TODO</>} />
+          <Route path={`${PATHS.SCHEDULE_FAMILY}/:uuid`} element={<ScheduleFamilyCard />} />
+          <Route path={PATHS.LAB} element={<>TODO</>} />
+          <Route path={`${PATHS.LAB}/:uuid`} element={<>TODO</>} />
+          <Route path={PATHS.TEAM} element={<>TODO</>} />
+          <Route path={`${PATHS.TEAM}/:uuid`} element={<>TODO</>} />
           {/*<Route path={profilePath} element={UserProfile()} />*/}
           {/*<Route path={tokenPath} element={Tokens()} />*/}
           {/*<Route index element={Dashboard()} />*/}

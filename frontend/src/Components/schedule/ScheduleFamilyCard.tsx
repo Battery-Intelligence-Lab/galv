@@ -13,10 +13,7 @@ export default function ScheduleFamilyCard(props: Partial<ObjectReferenceProps> 
 
     return <ResourceFamilyCard<AddProps<ScheduleFamily>>
         uuid={uuid}
-        type="schedule_family"
-        child_type="SCHEDULES"
-        api={ScheduleFamiliesApi}
-        path_key="SCHEDULE_FAMILIES"
+        lookup_key="SCHEDULE_FAMILY"
         editing={false}
         expanded={false}
         read_only_fields={["uuid", "url", "schedules", "in_use", "team", "permissions"]}

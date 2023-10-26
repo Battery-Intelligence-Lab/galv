@@ -16,10 +16,6 @@ import Avatar from "@mui/material/Avatar";
 import TeamChip from "../team/TeamChip";
 import Button from "@mui/material/Button";
 import EditIcon from "@mui/icons-material/Edit";
-import ScheduleChip from "../schedule/ScheduleChip";
-import EquipmentChip from "../equipment/EquipmentChip";
-import CellChip from "../cell/CellChip";
-import { PATHS } from "../../App";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import CellCard from "../cell/CellCard";
 import QueryWrapper, {QueryDependentElement} from "../utils/QueryWrapper";
@@ -27,6 +23,7 @@ import ErrorPage from "../error/ErrorPage";
 import {AxiosError, AxiosResponse} from "axios";
 import ScheduleCard from "../schedule/ScheduleCard";
 import EquipmentCard from "../equipment/EquipmentCard";
+import {PATHS} from "../../constants";
 
 export default function CyclerTestPage(props: CardProps) {
     const {uuid} = useParams()
@@ -41,14 +38,14 @@ export default function CyclerTestPage(props: CardProps) {
     const action = <Stack direction="row" spacing={1}>
         <Button variant="outlined"
                 component={Link}
-                to={PATHS.CYCLER_TESTS}
+                to={PATHS.CYCLER_TEST}
                 startIcon={<ArrowUpwardIcon/>}
         >All Cycler Tests</Button>
         {
             query.data?.data.permissions.write && <Button
                 variant="outlined"
                 component={Link}
-                to={`/cycler_tests/${uuid}/edit`}
+                to={`${PATHS.CYCLER_TEST}/${uuid}/edit`}
                 startIcon={<EditIcon/>}
             >Edit</Button>
         }</Stack>
@@ -56,9 +53,9 @@ export default function CyclerTestPage(props: CardProps) {
     const loadingBody = <Card key={uuid} className={clsx(classes.item_page)} elevation={0} {...props}>
         <CardHeader
             avatar={<CircularProgress sx={{color: (t) => t.palette.text.disabled}}/>}
-            title={<A component={Link} to={`/cycler_tests/${uuid}`}>{uuid}</A>}
+            title={<A component={Link} to={`${PATHS.CYCLER_TEST}/${uuid}`}>{uuid}</A>}
             subheader={<Stack direction="row" spacing={1}>
-                <A component={Link} to={"/cycler_tests/"}>Cycler Test</A>
+                <A component={Link} to={`${PATHS.CYCLER_TEST}}/`}>Cycler Test</A>
                 Loading team info
             </Stack>}
             action={action}
@@ -72,9 +69,9 @@ export default function CyclerTestPage(props: CardProps) {
         <Card key={uuid} className={clsx(classes.item_page)} elevation={0} {...props}>
             <CardHeader
                 avatar={<Avatar variant="square"><ICONS.CYCLER_TESTS/></Avatar>}
-                title={<A component={Link} to={`/cycler_tests/${uuid}`}>{uuid}</A>}
+                title={<A component={Link} to={`${PATHS.CYCLER_TEST}/${uuid}`}>{uuid}</A>}
                 subheader={<Stack direction="row" spacing={1} alignItems="center">
-                    <A component={Link} to={"/cycler_tests/"}>Cycler Test</A>
+                    <A component={Link} to={`${PATHS.CYCLER_TEST}/`}>Cycler Test</A>
                     <TeamChip url={query.data?.data.team!} sx={{fontSize: "smaller"}}/>
                 </Stack>}
                 action={action}
@@ -122,7 +119,7 @@ export default function CyclerTestPage(props: CardProps) {
                 avatar={<Avatar variant="square"><ICONS.CYCLER_TESTS/></Avatar>}
                 title={uuid}
                 subheader={<Stack direction="row" spacing={1} alignItems="center">
-                    <A component={Link} to={"/cycler_tests/"}>Cycler Test</A>
+                    <A component={Link} to={`${PATHS.CYCLER_TEST}/`}>Cycler Test</A>
                 </Stack>}
             />}
     />

@@ -12,34 +12,39 @@ import CircularProgress from "@mui/material/CircularProgress";
 import A from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
 import LoadingChip from "./LoadingChip";
-import {ICONS} from "../../icons";
 import CardContent from "@mui/material/CardContent";
 import Grid from "@mui/material/Unstable_Grid2";
 import Avatar from "@mui/material/Avatar";
 import TeamChip from "../team/TeamChip";
-import React, {CElement, useState} from "react";
+import React, {useState} from "react";
 import ErrorCard from "../error/ErrorCard";
 import QueryWrapper, {QueryDependentElement} from "../utils/QueryWrapper";
 import {AxiosError, AxiosResponse} from "axios";
-import {PATHS} from "../../App";
 import Divider from "@mui/material/Divider";
 import {SerializableObject} from "./TypeChanger";
-import {getFamilyRepresentation} from "./ResourceFamilyCard";
-
-const deep_copy = (obj: any) => JSON.parse(JSON.stringify(obj))
+import {deep_copy} from "./misc";
+import {
+    API_HANDLERS, DISPLAY_NAMES,
+    DISPLAY_NAMES_PLURAL,
+    FAMILY_LOOKUP_KEYS,
+    FILTER_NAMES,
+    PATHS, ICONS, API_SLUGS, GET_REPRESENTATIONS
+} from "../../constants";
+import ResourceFamilyChip from "./ResourceFamilyChip";
 
 export type Permissions = { read?: boolean, write?: boolean, create?: boolean, destroy?: boolean }
 export type Family = { uuid: string, permissions: Permissions } & SerializableObject
 export type Resource = { family: string, cycler_tests: string[], team: string } & Family
 
 type ResourceCardProps<T extends Resource> = {
-    target_uuid: string
-    target_type: string
-    // Can't get a good type mask for generic API interface without a lot of work
-    target_api: any
-    family_api: any
-    FamilyChip: (props: any) => CElement<any, any>
-    path_key: keyof typeof PATHS & keyof typeof ICONS
+    uuid: string
+    lookup_key: keyof typeof ICONS &
+        keyof typeof PATHS &
+        keyof typeof DISPLAY_NAMES &
+        keyof typeof DISPLAY_NAMES_PLURAL &
+        keyof typeof FILTER_NAMES &
+        keyof typeof FAMILY_LOOKUP_KEYS &
+        keyof typeof API_HANDLERS
     editing?: boolean
     expanded?: boolean
     read_only_fields?: (keyof T)[]
@@ -47,31 +52,18 @@ type ResourceCardProps<T extends Resource> = {
 
 export type AddProps<T> = T & {[key: string]: any}
 
-export function getRepresentation(data: Partial<Resource>, family_data: Partial<Family>) {
-    if (!data || !family_data) return ""
-    const identifier = data.identifier || data.uuid
-    return `${getFamilyRepresentation(family_data)} ${identifier}`
-}
-
-export function type_to_family_type(type: string) {
-    return type.charAt(type.length - 1) === 's'? type.slice(0, -1) : type
-}
-
 export default function ResourceCard<T extends Resource, F extends Family>(
     {
-        target_uuid,
-        target_type,
-        target_api,
-        family_api,
-        FamilyChip,
+        uuid,
+        lookup_key,
         read_only_fields,
         editing,
-        path_key,
         expanded,
         ...cardProps
     }: ResourceCardProps<T> & CardProps
 ) {
-    console.log("ResourceCard", {target_uuid, target_type, target_api, family_api, FamilyChip, read_only_fields, editing, path_key, expanded, cardProps})
+    console.log("ResourceCard", {uuid: uuid, lookup_key: lookup_key, read_only_fields, editing, expanded, cardProps})
+    const family_key = FAMILY_LOOKUP_KEYS[lookup_key]
 
     const { classes } = useStyles();
     const [isEditMode, _setIsEditMode] = useState<boolean>(editing || false)
@@ -139,24 +131,32 @@ export default function ResourceCard<T extends Resource, F extends Family>(
         _setFamily(id_from_ref_props<string>(data.family))
     }
 
-    const target_api_handler = new target_api()
-    const family_api_handler = new family_api()
+    const target_api_handler = new API_HANDLERS[lookup_key]()
+    const target_get = target_api_handler[
+        `${API_SLUGS[lookup_key]}Retrieve` as keyof typeof target_api_handler
+        ] as (uuid: string) => Promise<AxiosResponse<T>>
+    const target_patch = target_api_handler[
+        `${API_SLUGS[lookup_key]}PartialUpdate` as keyof typeof target_api_handler
+        ] as (uuid: string, data: SerializableObject) => Promise<AxiosResponse<T>>
+    const family_api_handler = new API_HANDLERS[family_key]()
+    const family_get = family_api_handler[
+        `${API_SLUGS[family_key]}Retrieve` as keyof typeof family_api_handler
+        ] as (uuid: string) => Promise<AxiosResponse<F>>
 
     const target_query = useQuery<AxiosResponse<T>, AxiosError>({
-        queryKey: [`${target_type}_retrieve`, target_uuid],
-        queryFn: () => target_api_handler[`${target_type}Retrieve`](target_uuid).then((r: AxiosResponse<T>) => {
-            console.log(`${target_type}_retrieve ${target_uuid} response`, r)
+        queryKey: [lookup_key, uuid],
+        queryFn: () => target_get(uuid).then((r: AxiosResponse<T>) => {
+            console.log(lookup_key, 'retrieve', uuid, r)
             if (r === undefined) return Promise.reject("No data in response")
             splitData(r.data)
             return r
         })
     })
-    const family_type = type_to_family_type(target_type)
     const family_query = useQuery<AxiosResponse<F>, AxiosError>({
-        queryKey: [`${family_type}_family_retrieve`, family || "should_not_be_called"],
-        queryFn: () => family_api_handler[`${family_type}FamiliesRetrieve`](id_from_ref_props<string>(target_query.data!.data.family))
+        queryKey: [family_key, family || "should_not_be_called"],
+        queryFn: () => family_get(id_from_ref_props<string>(target_query.data!.data.family))
             .then((r: AxiosResponse<F>) => {
-                console.log(`${family_type}_family_retrieve ${id_from_ref_props<string>(target_query.data!.data.family)} response`, r)
+                console.log(family_key, 'get', id_from_ref_props<string>(target_query.data!.data.family), r)
                 if (r === undefined) return Promise.reject("No data in response")
                 setFamilyData(r.data)
                 return r
@@ -168,14 +168,14 @@ export default function ResourceCard<T extends Resource, F extends Family>(
     const queryClient = useQueryClient()
     const update_mutation =
         useMutation<AxiosResponse<T>, AxiosError, SerializableObject>(
-            (data: SerializableObject) => target_api_handler[`${target_type}PartialUpdate`](target_uuid, data),
+            (data: SerializableObject) => target_patch(uuid, data),
             {
                 onSuccess: (data, variables, context) => {
                     if (data === undefined) {
                         console.warn("No data in mutation response", {data, variables, context})
                         return
                     }
-                    queryClient.setQueryData(['cell_retrieve', target_uuid], data)
+                    queryClient.setQueryData(['cell_retrieve', uuid], data)
                 },
                 onError: (error, variables, context) => {
                     console.error(error)
@@ -183,14 +183,11 @@ export default function ResourceCard<T extends Resource, F extends Family>(
             })
 
     const action = <CardActionBar
-        type={target_type}
-        uuid={target_uuid}
-        path={PATHS[path_key]}
+        lookup_key={lookup_key}
+        uuid={uuid}
         family_uuid={target_data?.family? id_from_ref_props<string>(target_data?.family) : undefined}
         highlight_count={target_data?.cycler_tests.length}
-        highlight_tooltip={`Cycler Tests involving this ${target_type}`}
-        highlight_icon_key="CYCLER_TESTS"
-        highlight_path={`${PATHS.CYCLER_TESTS}?${target_type}=${target_uuid}`}
+        highlight_lookup_key="CYCLER_TEST"
         editable={!!target_data?.permissions.write}
         editing={isEditMode}
         setEditing={setEditing}
@@ -214,40 +211,39 @@ export default function ResourceCard<T extends Resource, F extends Family>(
         setExpanded={setIsExpanded}
     />
 
-    const ICON = ICONS[path_key]
+    const ICON = ICONS[lookup_key]
+    const FAMILY_ICON = ICONS[family_key]
 
-    const loadingBody = <Card key={target_uuid} className={clsx(classes.item_card)} {...cardProps}>
+    const loadingBody = <Card key={uuid} className={clsx(classes.item_card)} {...cardProps}>
         <CardHeader
             avatar={<CircularProgress sx={{color: (t) => t.palette.text.disabled}}/>}
-            title={<A component={Link} to={`${PATHS[path_key]}/${target_uuid}`}>{target_uuid}</A>}
+            title={<A component={Link} to={`${PATHS[lookup_key]}/${uuid}`}>{uuid}</A>}
             subheader={<Stack direction="row" spacing={1}>
-                <A component={Link} to={PATHS[path_key]}>
-                    {`${target_type.charAt(0).toUpperCase()}${target_type.slice(1)}`}
-                </A>
-                <LoadingChip icon={<ICONS.TEAMS/>} />
+                <A component={Link} to={PATHS[lookup_key]}>{DISPLAY_NAMES[lookup_key]}</A>
+                <LoadingChip icon={<ICONS.TEAM/>} />
             </Stack>}
             action={action}
         />
         {isExpanded? <CardContent>
             <Grid container>
-                <LoadingChip icon={<ICONS.FAMILY/>}/>
+                <LoadingChip icon={<FAMILY_ICON/>}/>
             </Grid>
             <Grid container>
-                <LoadingChip icon={<ICONS.CYCLER_TESTS/>}/>
+                <LoadingChip icon={<ICONS.CYCLER_TEST/>}/>
             </Grid>
         </CardContent> : <CardContent />}
     </Card>
 
-    const cardBody = <Card key={target_uuid} className={clsx(classes.item_card)} {...cardProps}>
+    const cardBody = <Card key={uuid} className={clsx(classes.item_card)} {...cardProps}>
         <CardHeader
             avatar={<Avatar variant="square"><ICON /></Avatar>}
-            title={<A component={Link} to={`${PATHS[path_key]}/${target_uuid}`}>
-                {getRepresentation(target_data!, family_data!)}
+            title={<A component={Link} to={`${PATHS[lookup_key]}/${uuid}`}>
+                <>
+                    {GET_REPRESENTATIONS[family_key](family_data)} {target_data?.identifier ?? uuid}
+                </>
             </A>}
             subheader={<Stack direction="row" spacing={1} alignItems="center">
-                <A component={Link} to={PATHS[path_key]}>
-                    {`${target_type.charAt(0).toUpperCase()}${target_type.slice(1)}`}
-                </A>
+                <A component={Link} to={PATHS[lookup_key]}>{DISPLAY_NAMES[lookup_key]}</A>
                 <TeamChip url={target_data?.team!} sx={{fontSize: "smaller"}}/>
             </Stack>}
             action={action}
@@ -268,7 +264,11 @@ export default function ResourceCard<T extends Resource, F extends Family>(
                     onEdit={setEditableData}
                 />}
                 {family_data?.uuid && <Divider key="family-props-header">
-                    Inherited from <FamilyChip uuid={family_data?.uuid}/>
+                    Inherited from
+                    <ResourceFamilyChip
+                        uuid={family_data?.uuid}
+                        lookup_key={family_key}
+                    />
                 </Divider>}
                 {family_data && <PrettyObject
                     target={family_data}
@@ -283,11 +283,9 @@ export default function ResourceCard<T extends Resource, F extends Family>(
         header={
             <CardHeader
                 avatar={<Avatar variant="square"><ICON /></Avatar>}
-                title={target_uuid}
+                title={uuid}
                 subheader={<Stack direction="row" spacing={1} alignItems="center">
-                    <A component={Link} to={PATHS[path_key]}>
-                        {`${target_type.charAt(0).toUpperCase()}${target_type.slice(1)}`}
-                    </A>
+                    <A component={Link} to={PATHS[lookup_key]}>{DISPLAY_NAMES[lookup_key]}</A>
                 </Stack>}
             />
         }

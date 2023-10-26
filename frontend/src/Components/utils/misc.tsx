@@ -1,4 +1,5 @@
 import {useParams} from "react-router-dom";
+import {Serializable} from "./TypeChanger";
 
 export type ObjectReferenceProps =
     { uuid: string } |
@@ -46,4 +47,9 @@ export function usePropParamId<T extends number|string>(props: any): T {
         throw new Error(`Could not find id from props or params`)
     }
     return param_id
+}
+
+
+export function deep_copy<T extends Serializable>(obj: T): T {
+    return JSON.parse(JSON.stringify(obj))
 }

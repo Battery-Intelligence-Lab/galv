@@ -13,10 +13,7 @@ export default function EquipmentFamilyCard(props: Partial<ObjectReferenceProps>
 
     return <ResourceFamilyCard<AddProps<EquipmentFamily>>
         uuid={uuid}
-        type="equipment_family"
-        child_type="EQUIPMENT"
-        api={EquipmentFamiliesApi}
-        path_key="EQUIPMENT_FAMILIES"
+        lookup_key="EQUIPMENT_FAMILY"
         editing={false}
         expanded={false}
         read_only_fields={["uuid", "url", "cells", "in_use", "team", "permissions"]}

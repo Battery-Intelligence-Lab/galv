@@ -13,10 +13,7 @@ export default function CellFamilyCard(props: Partial<ObjectReferenceProps> & Ca
 
     return <ResourceFamilyCard<AddProps<CellFamily>>
         uuid={uuid}
-        type="cell_family"
-        child_type="CELLS"
-        api={CellFamiliesApi}
-        path_key="CELL_FAMILIES"
+        lookup_key="CELL_FAMILY"
         editing={false}
         expanded={false}
         read_only_fields={["uuid", "url", "cells", "in_use", "team", "permissions"]}

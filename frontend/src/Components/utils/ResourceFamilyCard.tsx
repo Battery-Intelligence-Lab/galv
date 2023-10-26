@@ -11,7 +11,6 @@ import CircularProgress from "@mui/material/CircularProgress";
 import A from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
 import LoadingChip from "./LoadingChip";
-import {ICONS} from "../../icons";
 import CardContent from "@mui/material/CardContent";
 import Grid from "@mui/material/Unstable_Grid2";
 import Avatar from "@mui/material/Avatar";
@@ -20,57 +19,42 @@ import React, {useState} from "react";
 import ErrorCard from "../error/ErrorCard";
 import QueryWrapper, {QueryDependentElement} from "../utils/QueryWrapper";
 import {AxiosError, AxiosResponse} from "axios";
-import {PATHS} from "../../App";
 import Divider from "@mui/material/Divider";
 import {Serializable, SerializableObject} from "./TypeChanger";
 import {Family} from "./ResourceCard";
-
-const deep_copy = (obj: any) => JSON.parse(JSON.stringify(obj))
+import {deep_copy} from "./misc";
+import {
+    API_HANDLERS, API_SLUGS,
+    CHILD_LOOKUP_KEYS,
+    CHILD_PROPERTY_NAMES,
+    FAMILY_LOOKUP_KEYS, GET_REPRESENTATIONS,
+    ICONS,
+    PATHS
+} from "../../constants";
 
 type ResourceFamilyCardProps<T extends Family> = {
     uuid: string
-    type: string
-    child_type: keyof typeof PATHS & keyof typeof ICONS
-    // Can't get a good type mask for generic API interface without a lot of work
-    api: any
-    path_key: keyof typeof PATHS
+    lookup_key: keyof typeof ICONS &
+        keyof typeof PATHS &
+        keyof typeof CHILD_LOOKUP_KEYS
     editing?: boolean
     expanded?: boolean
     read_only_fields?: (keyof T)[]
 }
 
-/**
- * Return a string representation of a family object
- * @param data
- */
-export function getFamilyRepresentation(data: Partial<Family>) {
-    console.log("getFamilyRepresentation", data)
-    if (Object.keys(data).includes("cells"))
-        return `${data.manufacturer} ${data.model} (${data.form_factor} ${data.chemistry})`
-    if (Object.keys(data).includes("equipment"))
-        return `${data.manufacturer} ${data.model} (${data.type})`
-    return `${data.identifier}`
-}
-
-export function type_to_api_type(type: string) {
-    return type.replace(/s?_family/g, "Families")
-}
-
 export default function ResourceFamilyCard<T extends Family>(
     {
         uuid,
-        type,
-        child_type,
-        api,
+        lookup_key,
         read_only_fields,
         editing,
-        path_key,
         expanded,
         ...cardProps
     }: ResourceFamilyCardProps<T> & CardProps
 ) {
-    console.log("ResourceFamilyCard", {uuid, type, child_type, api, read_only_fields, editing, path_key, expanded, cardProps})
+    console.log("ResourceFamilyCard", {uuid, lookup_key, read_only_fields, editing, expanded, cardProps})
 
+    const child_key = CHILD_LOOKUP_KEYS[lookup_key]
     const { classes } = useStyles();
     const [isEditMode, _setIsEditMode] = useState<boolean>(editing || false)
     const [isExpanded, setIsExpanded] = useState<boolean>(expanded || isEditMode)
@@ -134,16 +118,18 @@ export default function ResourceFamilyCard<T extends Family>(
         _setData(data)
     }
 
-    const api_handler = new api()
-
-    const api_type = type_to_api_type(type)
-
-    console.log(api_type, api_handler[`${api_type}Retrieve`], api_handler[`${api_type}PartialUpdate`])
+    const api_handler = new API_HANDLERS[lookup_key]()
+    const api_get = api_handler[
+        `${API_SLUGS[lookup_key]}Retrieve` as keyof typeof api_handler
+        ] as (uuid: string) => Promise<AxiosResponse<T>>
+    const api_patch = api_handler[
+        `${API_SLUGS[lookup_key]}PartialUpdate` as keyof typeof api_handler
+        ] as (uuid: string, data: SerializableObject) => Promise<AxiosResponse<T>>
 
     const query = useQuery<AxiosResponse<T>, AxiosError>({
-        queryKey: [`${api_type}_retrieve`, uuid],
-        queryFn: () => api_handler[`${api_type}Retrieve`](uuid).then((r: AxiosResponse<T>) => {
-            console.log(`${api_type}_retrieve ${uuid} response`, r)
+        queryKey: [lookup_key, uuid],
+        queryFn: () => api_get(uuid).then((r: AxiosResponse<T>) => {
+            console.log(lookup_key, 'get', uuid, r)
             if (r === undefined) return Promise.reject("No data in response")
             splitData(r.data)
             return r
@@ -154,7 +140,7 @@ export default function ResourceFamilyCard<T extends Family>(
     const queryClient = useQueryClient()
     const update_mutation =
         useMutation<AxiosResponse<T>, AxiosError, SerializableObject>(
-            (data: SerializableObject) => api_handler[`${api_type}PartialUpdate`](uuid, data),
+            (data: SerializableObject) => api_patch(uuid, data),
             {
                 onSuccess: (data, variables, context) => {
                     if (data === undefined) {
@@ -168,17 +154,12 @@ export default function ResourceFamilyCard<T extends Family>(
                 },
             })
 
-    const representation = getFamilyRepresentation(data || {})
-
     const action = <CardActionBar
-        type={type}
+        lookup_key={lookup_key}
         uuid={uuid}
-        path={PATHS[path_key]}
-        highlight_count={data && data[child_type.toLowerCase()] instanceof Array?
-            (data[child_type.toLowerCase()] as Serializable[]).length : 0}
-        highlight_icon_key={child_type}
-        highlight_path={`${PATHS[child_type]}?family=${uuid}`}
-        highlight_tooltip={`View ${child_type} in this family`}
+        highlight_count={data && data[CHILD_PROPERTY_NAMES[lookup_key]] instanceof Array?
+            (data[CHILD_PROPERTY_NAMES[lookup_key]] as Serializable[]).length : 0}
+        highlight_lookup_key={child_key}
         editable={!!data?.permissions.write}
         editing={isEditMode}
         setEditing={setEditing}
@@ -202,32 +183,34 @@ export default function ResourceFamilyCard<T extends Family>(
         setExpanded={setIsExpanded}
     />
 
+    const ICON = ICONS[lookup_key]
+
     const loadingBody = <Card key={uuid} className={clsx(classes.item_card)} {...cardProps}>
         <CardHeader
             avatar={<CircularProgress sx={{color: (t) => t.palette.text.disabled}}/>}
-            title={<A component={Link} to={`${PATHS[path_key]}/${uuid}`}>{uuid}</A>}
+            title={<A component={Link} to={`${PATHS[lookup_key]}/${uuid}`}>{uuid}</A>}
             subheader={<Stack direction="row" spacing={1}>
-                <A component={Link} to={PATHS[path_key]}>Cell</A>
-                <LoadingChip icon={<ICONS.TEAMS/>} />
+                <A component={Link} to={PATHS[lookup_key]}>Cell</A>
+                <LoadingChip icon={<ICONS.TEAM/>} />
             </Stack>}
             action={action}
         />
         {isExpanded? <CardContent>
             <Grid container>
-                <LoadingChip icon={<ICONS.FAMILY/>}/>
+                <LoadingChip icon={<ICON/>}/>
             </Grid>
             <Grid container>
-                <LoadingChip icon={<ICONS.CYCLER_TESTS/>}/>
+                <LoadingChip icon={<ICONS.CYCLER_TEST/>}/>
             </Grid>
         </CardContent> : <CardContent />}
     </Card>
 
     const cardBody = <Card key={uuid} className={clsx(classes.item_card)} {...cardProps}>
         <CardHeader
-            avatar={<Avatar variant="square"><ICONS.FAMILY/></Avatar>}
-            title={<A component={Link} to={`${PATHS[path_key]}/${uuid}`}>{representation}</A>}
+            avatar={<Avatar variant="square"><ICON/></Avatar>}
+            title={<A component={Link} to={`${PATHS[lookup_key]}/${uuid}`}>{GET_REPRESENTATIONS[lookup_key](data)}</A>}
             subheader={<Stack direction="row" spacing={1} alignItems="center">
-                <A component={Link} to={PATHS[path_key]}>Cell</A>
+                <A component={Link} to={PATHS[lookup_key]}>Cell</A>
                 <TeamChip url={data?.team!.toString() || ""} sx={{fontSize: "smaller"}}/>
             </Stack>}
             action={action}
@@ -255,11 +238,11 @@ export default function ResourceFamilyCard<T extends Family>(
         status={queries.find(q => q.isError)?.error?.response?.status}
         header={
             <CardHeader
-                avatar={<Avatar variant="square"><ICONS.FAMILY/></Avatar>}
+                avatar={<Avatar variant="square"><ICON/></Avatar>}
                 title={uuid}
                 subheader={<Stack direction="row" spacing={1} alignItems="center">
-                    <A component={Link} to={PATHS[path_key]}>
-                        {(type.charAt(0).toUpperCase() + type.slice(1)).replace(/_/g, " ")}
+                    <A component={Link} to={PATHS[lookup_key]}>
+                        {(lookup_key.charAt(0).toUpperCase() + lookup_key.slice(1)).replace(/_/g, " ")}
                     </A>
                 </Stack>}
             />

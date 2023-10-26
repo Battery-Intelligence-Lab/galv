@@ -1,11 +1,11 @@
 import {CardProps} from "@mui/material";
-import {id_from_ref_props, ObjectReferenceProps, usePropParamId} from "../utils/misc";
+import {id_from_ref_props, usePropParamId} from "../utils/misc";
 import useStyles from "../../UseStyles";
 import {Cell, CellFamiliesApi, CellFamily, CellsApi} from "../../api_codegen";
 import {useQuery} from "@tanstack/react-query";
 import Card from "@mui/material/Card";
 import Button from "@mui/material/Button";
-import {Link, useParams} from "react-router-dom";
+import {Link} from "react-router-dom";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import clsx from "clsx";
 import CardHeader from "@mui/material/CardHeader";
@@ -22,9 +22,9 @@ import React from "react";
 import ErrorPage from "../error/ErrorPage";
 import QueryWrapper, {QueryDependentElement} from "../utils/QueryWrapper";
 import {AxiosError, AxiosResponse} from "axios";
-import CellFamilyChip from "./CellFamilyChip";
 import CountBadge from "../utils/CountBadge";
-import {PATHS} from "../../App";
+import ResourceFamilyChip from "../utils/ResourceFamilyChip";
+import {PATHS} from "../../constants";
 
 export default function CellPage(props: CardProps) {
     const { classes } = useStyles();
@@ -88,7 +88,14 @@ export default function CellPage(props: CardProps) {
             <CardContent>
                 <Stack>
                     <Grid container>
-                        <CellFamilyChip url={cell_query.data?.data.family!} />
+                        {
+                            cell_query.data?.data.family &&
+                            <ResourceFamilyChip
+                                uuid={id_from_ref_props(cell_query.data?.data.family!)}
+
+                                lookup_key="CELL_FAMILY"
+                            />
+                        }
                     </Grid>
                     <Grid container>
                         <Stack direction="row" spacing={1}>
@@ -96,7 +103,7 @@ export default function CellPage(props: CardProps) {
                                 key={`cycler_tests`}
                                 icon={<ICONS.CYCLER_TESTS/>}
                                 badgeContent={cell_query.data?.data.cycler_tests?.length || 0}
-                                url={`${PATHS.CYCLER_TESTS}?cell=${cell_uuid}`}
+                                url={`${PATHS.CYCLER_TEST}?cell=${cell_uuid}`}
                                 tooltip={`Cycler Tests`}
                             />
                         </Stack>
