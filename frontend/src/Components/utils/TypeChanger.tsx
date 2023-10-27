@@ -19,6 +19,9 @@ import clsx from "clsx";
 import useStyles from "../../UseStyles";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
+import {get_url_components} from "./misc";
+import {API_HANDLERS, DISPLAY_NAMES, ICONS, PATHS} from "../../constants";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 
 const str = (v: any) => {
     try {return JSON.stringify(v)} catch(e) {
@@ -95,7 +98,7 @@ export type Serializable =
 
 export type SerializableObject = {[key: string]: Serializable}
 
-type TypeChangerSupportedTypeName = keyof typeof type_map & string
+type TypeChangerSupportedTypeName = (keyof typeof type_map | keyof typeof API_HANDLERS) & string
 
 export type TypeChangerProps = {
     currentValue?: Serializable
@@ -108,23 +111,83 @@ export type TypeChangerPopoverProps = {
     onTypeChange: (newValue: TypeChangerSupportedTypeName) => void
 } & PopoverProps
 
-function TypeChangePopover({value, onTypeChange, ...props}: TypeChangerPopoverProps) {
+function TypeChangeResourcePopover({onTypeChange, ...props}: TypeChangerPopoverProps) {
     const {classes} = useStyles()
-    return <Popover className={clsx(classes.type_changer_popover)} {...props}>
+    const selected_resource = get_url_components(props.value as string)?.lookup_key
+    return <Popover
+        className={clsx(classes.type_changer_popover, classes.type_changer_resource_popover)}
+        anchorOrigin={{
+            vertical: 'bottom',
+            horizontal: 'center',
+        }}
+        transformOrigin={{
+            vertical: 'top',
+            horizontal: 'center',
+        }}
+        {...props}
+    >
         <ToggleButtonGroup
             size="small"
             exclusive
-            value={value}
-            onChange={(_, v: TypeChangerSupportedTypeName) => onTypeChange(v)}
+            value={props.value}
+            onChange={(_, v: keyof typeof API_HANDLERS) => onTypeChange(v)}
         >
-            {Object.entries(type_map).map(([type, ICON]) =>
-                <ToggleButton value={type} key={type} selected={value === type} disabled={value === type}>
-                    <Tooltip title={ICON.tooltip} arrow placement="bottom" describeChild={true}>
-                        <ICON.icon />
+            {Object.keys(API_HANDLERS).map((lookup_key) => {
+                const ICON = ICONS[lookup_key as keyof typeof ICONS]
+                const display = DISPLAY_NAMES[lookup_key as keyof typeof DISPLAY_NAMES]
+                return <ToggleButton
+                    value={lookup_key}
+                    key={lookup_key}
+                    selected={selected_resource === lookup_key}>
+                    <Tooltip title={display} arrow placement="bottom" describeChild={true}>
+                        <ICON />
                     </Tooltip>
-                </ToggleButton>)}
+                </ToggleButton>
+            })}
         </ToggleButtonGroup>
     </Popover>
+}
+function TypeChangePopover({value, onTypeChange, ...props}: TypeChangerPopoverProps) {
+    const {classes} = useStyles()
+    const [resourcePopoverOpen, setResourcePopoverOpen] = useState(false)
+    const resourcePopoverAnchorEl = React.useRef<HTMLButtonElement>(null);
+    return <Popover className={clsx(classes.type_changer_popover)} {...props}>
+        <Stack direction="row" alignItems="center" spacing={1} ref={resourcePopoverAnchorEl}>
+            <ToggleButtonGroup
+                size="small"
+                exclusive
+                value={value}
+                onChange={(_, v: TypeChangerSupportedTypeName) => onTypeChange(v)}
+            >
+                {Object.entries(type_map).map(([type, ICON]) =>
+                    <ToggleButton value={type} key={type} selected={value === type} disabled={value === type}>
+                        <Tooltip title={ICON.tooltip} arrow placement="bottom" describeChild={true}>
+                            <ICON.icon />
+                        </Tooltip>
+                    </ToggleButton>)}
+            </ToggleButtonGroup>
+            <TypeChangeResourcePopover
+                {...props}
+                value={value}
+                onTypeChange={onTypeChange}
+                anchorEl={resourcePopoverAnchorEl.current}
+                open={resourcePopoverOpen}
+                onClose={() => setResourcePopoverOpen(false)}
+            />
+            <IconButton onClick={() => setResourcePopoverOpen(!resourcePopoverOpen)}>
+                <Tooltip title="Resource types" arrow placement="bottom" describeChild={true}>
+                    <MoreVertIcon />
+                </Tooltip>
+            </IconButton>
+        </Stack>
+    </Popover>
+}
+
+export const detect_type = (v: Serializable): TypeChangerSupportedTypeName => {
+    if (v instanceof Array) return 'array'
+    if (typeof v === 'string')
+        return get_url_components(v)?.lookup_key ?? 'string'
+    return typeof v
 }
 
 export default function TypeChanger(
@@ -140,30 +203,46 @@ export default function TypeChanger(
             case 'object': return obj
             case 'array': return arr
         }
-        console.warn(`Could not find conversion function for type: ${type}, defaulting to empty string`)
-        return () => ""
-    }
-    const get_type_name = (value: Serializable) => {
-        return (value instanceof Array? 'array' : typeof value) as TypeChangerSupportedTypeName
+        if (Object.keys(API_HANDLERS).includes(type))
+            return (v: any) => {
+                const clean = (s: string): string => s.replace(/[^a-zA-Z0-9-_]/g, '')
+                let page, entry
+                if (Object.keys(API_HANDLERS).includes(type)) {
+                    page = PATHS[type as keyof typeof PATHS]
+                    entry = clean(v) || 'new'
+                } else {
+                    const components = get_url_components(v)
+                    if (components) {
+                        page = PATHS[components.lookup_key as keyof typeof PATHS]
+                        entry = components.uuid
+                    } else {
+                        console.error(`Could not get url components for ${v}`, type, v)
+                        throw new Error(`Could not get url components for ${v}`)
+                    }
+                }
+                return `https://galv${page}/${entry}`
+            }
+        console.error(`Could not get conversion function for ${type}`, type, currentValue)
+        throw new Error(`Could not get conversion function for ${type}`)
     }
 
     const [value, _setValue] =
-        useState<TypeChangerSupportedTypeName>(get_type_name(currentValue))
+        useState<TypeChangerSupportedTypeName>(detect_type(currentValue))
     const [popoverAnchor, setPopoverAnchor] = useState<HTMLElement|null>(null)
 
-    useEffect(() => _setValue(get_type_name(currentValue)), [currentValue])
+    useEffect(() => _setValue(detect_type(currentValue)), [currentValue])
 
     return <Tooltip
         key="string"
         title={disabled? value : <Stack justifyItems="center" alignContent="center">
-                <Typography textAlign="center" variant="caption">{value}</Typography>
-                <Typography textAlign="center" variant="caption">click to change type</Typography>
-            </Stack>}
+            <Typography textAlign="center" variant="caption">{value}</Typography>
+            <Typography textAlign="center" variant="caption">click to change type</Typography>
+        </Stack>}
         arrow
         describeChild
         placement="top"
     >
-        <span>
+    <span>
             <TypeChangePopover
                 {...props}
                 onTypeChange={(t) => {
@@ -180,7 +259,11 @@ export default function TypeChanger(
                 disabled={disabled}
                 className={clsx(classes.type_changer_button)}
             >
-                {React.createElement(type_map[value as TypeChangerSupportedTypeName].icon)}
+                {
+                    Object.keys(API_HANDLERS).includes(value)?
+                        React.createElement(ICONS[value as keyof typeof ICONS]) :
+                        React.createElement(type_map[value as TypeChangerSupportedTypeName].icon)
+                }
             </IconButton>
         </span>
     </Tooltip>

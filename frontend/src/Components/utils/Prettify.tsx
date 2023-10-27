@@ -7,8 +7,16 @@ import ClearIcon from "@mui/icons-material/Clear";
 import PrettyObject from "./PrettyObject";
 import Checkbox, {CheckboxProps} from "@mui/material/Checkbox";
 import PrettyArray from "./PrettyArray";
-import TypeChanger, {TypeChangerProps, Serializable} from "./TypeChanger";
+import TypeChanger, {TypeChangerProps, Serializable, detect_type} from "./TypeChanger";
 import Stack from "@mui/material/Stack";
+import {ChipProps} from "@mui/material/Chip";
+import ResourceChip from "./ResourceChip";
+import {get_url_components, PaginatedAPIResponse} from "./misc";
+import ButtonBase from "@mui/material/ButtonBase";
+import {API_HANDLERS, API_SLUGS, DISPLAY_NAMES} from "../../constants";
+import MenuItem from "@mui/material/MenuItem";
+import {useQuery} from "@tanstack/react-query";
+import {AxiosError, AxiosResponse} from "axios";
 
 type PrettifyProps = {
     target: any
@@ -27,9 +35,74 @@ type PrettyComponentProps = {
     edit_mode: boolean
 }
 
+export const PrettySelect = (
+    {value, onChange, edit_mode, lookup_key, uuid, ...childProps}:
+        {lookup_key: keyof typeof API_HANDLERS, uuid: string} & PrettyComponentProps & Partial<ChipProps>
+) => {
+    console.log(`PrettySelect`, {value, onChange, edit_mode, lookup_key, uuid, childProps})
+    const [values, setValues] = useState<any[]>([])
+    const api_handler = new API_HANDLERS[lookup_key]()
+    const api_list = api_handler[
+        `${API_SLUGS[lookup_key]}List` as keyof typeof api_handler
+        ] as () => Promise<AxiosResponse<PaginatedAPIResponse>>
+    useQuery<AxiosResponse<PaginatedAPIResponse>, AxiosError>({
+        queryKey: [lookup_key, 'list'],
+        queryFn: () => api_list.bind(api_handler)().then((r: any) => {
+            setValues(r.data.results)
+            return r
+        })
+    })
+    return <TextField
+        select
+        label={DISPLAY_NAMES[lookup_key] || "Select"}
+        defaultValue={uuid}
+        // helperText={`Select a ${DISPLAY_NAMES[lookup_key] || "resource"}`}
+        variant="filled"
+    >
+        {[
+            // Override query result that matches the current selection
+            ...values.filter((v: any) => v.uuid !== uuid),
+            {url: value, uuid: uuid, id: uuid}
+        ].map((r: any, i, a) => (
+            <MenuItem key={r.url} value={r.uuid || r.id}>
+                {<PrettyResource
+                    value={r.url}
+                    onChange={() => {}} {...childProps}
+                    edit_mode={false}
+                    component={ButtonBase}
+                />}
+            </MenuItem>
+        ))}
+    </TextField>
+}
+
+export const PrettyResource = (
+    {value, onChange, edit_mode, ...childProps}: PrettyComponentProps & Partial<ChipProps>
+) => {
+    const url_components = get_url_components(value)
+    console.log(`PrettyResource`, {value, onChange, edit_mode, url_components, childProps})
+    const str_representation = <PrettyString value={value} onChange={onChange} {...childProps} edit_mode={false} />
+    if (url_components)
+        return edit_mode?
+            <PrettySelect
+                {...childProps as ChipProps}
+                {...url_components}
+                onChange={onChange}
+                value={value}
+                edit_mode={edit_mode}
+            /> :
+            <ResourceChip
+                {...childProps as ChipProps}
+                {...url_components}
+                error={str_representation}
+            />
+    return str_representation
+}
+
 export const PrettyString = (
-    {value, onChange, edit_mode, ...childProps}: PrettyComponentProps & Partial<TextFieldProps | TypographyProps>
-) => edit_mode?
+    {value, onChange, edit_mode, ...childProps}:
+        PrettyComponentProps & Partial<ChipProps | TextFieldProps | TypographyProps>
+) => edit_mode ?
     <TextField
         label="value"
         variant="filled"
@@ -90,7 +163,7 @@ const TypeChangeWrapper = ({children, ...props}: PropsWithChildren<TypeChangerPr
 
 export function Pretty(
     {target, nest_level, edit_mode, onEdit, ...childProps}: PrettifyProps &
-        Partial<TextFieldProps | TypographyProps | Omit<CheckboxProps, "onChange"> | SvgIconProps>
+        Partial<TextFieldProps | TypographyProps | Omit<CheckboxProps, "onChange"> | SvgIconProps | ChipProps>
 ) {
     const denull = (t: any) => [null, undefined].includes(t)? '' : t
     const [value, setValue] = useState<any>(denull(target))
@@ -115,17 +188,19 @@ export function Pretty(
     if (edit_mode && typeof onEdit !== 'function')
         throw new Error(`onEdit must be a function if edit_mode=true`)
 
-    if (typeof value === 'string')
+    const type = detect_type(value)
+
+    if (type === 'string')
         return <PrettyString {...props} {...childProps as Partial<TextFieldProps | TypographyProps>} />
-    if (typeof value === 'number')
+    if (type === 'number')
         return <PrettyNumber {...props} {...childProps as Partial<TextFieldProps | TypographyProps>} />
-    if (typeof value === 'boolean')
+    if (type === 'boolean')
         return <PrettyBoolean
             {...props}
             onChange={(v) => onEdit && onEdit(v)}
             {...childProps as Partial<Omit<CheckboxProps, "onChange"> | SvgIconProps>}
         />
-    if (value instanceof Array) {
+    if (type === 'array') {
         return <PrettyArray
             nest_level={nest_level + 1}
             edit_mode={edit_mode}
@@ -133,12 +208,20 @@ export function Pretty(
             onEdit={onEdit}
         />
     }
-    if (typeof value === 'object') {
+    if (type === 'object') {
         return <PrettyObject
             nest_level={nest_level + 1}
             edit_mode={edit_mode}
             onEdit={onEdit}
             target={value}
+        />
+    }
+    if (Object.keys(API_HANDLERS).includes(type)) {
+        return <PrettyResource
+            value={value}
+            onChange={(v) => onEdit && onEdit(v)}
+            edit_mode={edit_mode}
+            {...childProps as Partial<ChipProps>}
         />
     }
 

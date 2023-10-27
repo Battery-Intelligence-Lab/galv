@@ -30,7 +30,7 @@ import {
     FILTER_NAMES,
     PATHS, ICONS, API_SLUGS, GET_REPRESENTATIONS
 } from "../../constants";
-import ResourceFamilyChip from "./ResourceFamilyChip";
+import ResourceChip from "./ResourceChip";
 
 export type Permissions = { read?: boolean, write?: boolean, create?: boolean, destroy?: boolean }
 export type Family = { uuid: string, permissions: Permissions } & SerializableObject
@@ -63,7 +63,10 @@ export default function ResourceCard<T extends Resource, F extends Family>(
     }: ResourceCardProps<T> & CardProps
 ) {
     console.log("ResourceCard", {uuid: uuid, lookup_key: lookup_key, read_only_fields, editing, expanded, cardProps})
+
     const family_key = FAMILY_LOOKUP_KEYS[lookup_key]
+    const ICON = ICONS[lookup_key]
+    const FAMILY_ICON = ICONS[family_key]
 
     const { classes } = useStyles();
     const [isEditMode, _setIsEditMode] = useState<boolean>(editing || false)
@@ -145,7 +148,7 @@ export default function ResourceCard<T extends Resource, F extends Family>(
 
     const target_query = useQuery<AxiosResponse<T>, AxiosError>({
         queryKey: [lookup_key, uuid],
-        queryFn: () => target_get(uuid).then((r: AxiosResponse<T>) => {
+        queryFn: () => target_get.bind(target_api_handler)(uuid).then((r: AxiosResponse<T>) => {
             console.log(lookup_key, 'retrieve', uuid, r)
             if (r === undefined) return Promise.reject("No data in response")
             splitData(r.data)
@@ -154,7 +157,7 @@ export default function ResourceCard<T extends Resource, F extends Family>(
     })
     const family_query = useQuery<AxiosResponse<F>, AxiosError>({
         queryKey: [family_key, family || "should_not_be_called"],
-        queryFn: () => family_get(id_from_ref_props<string>(target_query.data!.data.family))
+        queryFn: () => family_get.bind(family_api_handler)(id_from_ref_props<string>(target_query.data!.data.family))
             .then((r: AxiosResponse<F>) => {
                 console.log(family_key, 'get', id_from_ref_props<string>(target_query.data!.data.family), r)
                 if (r === undefined) return Promise.reject("No data in response")
@@ -168,7 +171,7 @@ export default function ResourceCard<T extends Resource, F extends Family>(
     const queryClient = useQueryClient()
     const update_mutation =
         useMutation<AxiosResponse<T>, AxiosError, SerializableObject>(
-            (data: SerializableObject) => target_patch(uuid, data),
+            (data: SerializableObject) => target_patch.bind(target_api_handler)(uuid, data),
             {
                 onSuccess: (data, variables, context) => {
                     if (data === undefined) {
@@ -210,9 +213,6 @@ export default function ResourceCard<T extends Resource, F extends Family>(
         expanded={isExpanded}
         setExpanded={setIsExpanded}
     />
-
-    const ICON = ICONS[lookup_key]
-    const FAMILY_ICON = ICONS[family_key]
 
     const loadingBody = <Card key={uuid} className={clsx(classes.item_card)} {...cardProps}>
         <CardHeader
@@ -265,7 +265,7 @@ export default function ResourceCard<T extends Resource, F extends Family>(
                 />}
                 {family_data?.uuid && <Divider key="family-props-header">
                     Inherited from
-                    <ResourceFamilyChip
+                    <ResourceChip
                         uuid={family_data?.uuid}
                         lookup_key={family_key}
                     />

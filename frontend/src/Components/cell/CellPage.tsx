@@ -23,7 +23,7 @@ import ErrorPage from "../error/ErrorPage";
 import QueryWrapper, {QueryDependentElement} from "../utils/QueryWrapper";
 import {AxiosError, AxiosResponse} from "axios";
 import CountBadge from "../utils/CountBadge";
-import ResourceFamilyChip from "../utils/ResourceFamilyChip";
+import ResourceChip from "../utils/ResourceChip";
 import {PATHS} from "../../constants";
 
 export default function CellPage(props: CardProps) {
@@ -90,7 +90,7 @@ export default function CellPage(props: CardProps) {
                     <Grid container>
                         {
                             cell_query.data?.data.family &&
-                            <ResourceFamilyChip
+                            <ResourceChip
                                 uuid={id_from_ref_props(cell_query.data?.data.family!)}
 
                                 lookup_key="CELL_FAMILY"

@@ -27,7 +27,7 @@ import {
     API_HANDLERS, API_SLUGS,
     CHILD_LOOKUP_KEYS,
     CHILD_PROPERTY_NAMES,
-    FAMILY_LOOKUP_KEYS, GET_REPRESENTATIONS,
+    GET_REPRESENTATIONS,
     ICONS,
     PATHS
 } from "../../constants";
@@ -55,7 +55,9 @@ export default function ResourceFamilyCard<T extends Family>(
     console.log("ResourceFamilyCard", {uuid, lookup_key, read_only_fields, editing, expanded, cardProps})
 
     const child_key = CHILD_LOOKUP_KEYS[lookup_key]
+    const ICON = ICONS[lookup_key]
     const { classes } = useStyles();
+
     const [isEditMode, _setIsEditMode] = useState<boolean>(editing || false)
     const [isExpanded, setIsExpanded] = useState<boolean>(expanded || isEditMode)
 
@@ -128,7 +130,7 @@ export default function ResourceFamilyCard<T extends Family>(
 
     const query = useQuery<AxiosResponse<T>, AxiosError>({
         queryKey: [lookup_key, uuid],
-        queryFn: () => api_get(uuid).then((r: AxiosResponse<T>) => {
+        queryFn: () => api_get.bind(api_handler)(uuid).then((r: AxiosResponse<T>) => {
             console.log(lookup_key, 'get', uuid, r)
             if (r === undefined) return Promise.reject("No data in response")
             splitData(r.data)
@@ -140,7 +142,7 @@ export default function ResourceFamilyCard<T extends Family>(
     const queryClient = useQueryClient()
     const update_mutation =
         useMutation<AxiosResponse<T>, AxiosError, SerializableObject>(
-            (data: SerializableObject) => api_patch(uuid, data),
+            (data: SerializableObject) => api_patch.bind(api_handler)(uuid, data),
             {
                 onSuccess: (data, variables, context) => {
                     if (data === undefined) {
@@ -182,8 +184,6 @@ export default function ResourceFamilyCard<T extends Family>(
         expanded={isExpanded}
         setExpanded={setIsExpanded}
     />
-
-    const ICON = ICONS[lookup_key]
 
     const loadingBody = <Card key={uuid} className={clsx(classes.item_card)} {...cardProps}>
         <CardHeader

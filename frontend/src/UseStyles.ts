@@ -162,5 +162,6 @@ export default makeStyles()((theme) => {
     type_changer_popover: {
       zIndex: 5,
     },
+    type_changer_resource_popover: {}
   }
 });

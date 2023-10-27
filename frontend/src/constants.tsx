@@ -12,11 +12,10 @@ import AttachFileIcon from '@mui/icons-material/AttachFile';
 import {OverridableComponent} from "@mui/material/OverridableComponent";
 import {SvgIconTypeMap} from "@mui/material";
 import {
-    CellFamiliesApi, CellFamily, CellsApi, CyclerTestsApi, EquipmentApi,
-    EquipmentFamiliesApi, EquipmentFamily,
-    ExperimentsApi,
+    CellFamiliesApi, CellsApi, CyclerTestsApi, EquipmentApi,
+    EquipmentFamiliesApi, ExperimentsApi,
     FilesApi, LabsApi,
-    ScheduleFamiliesApi, ScheduleFamily, SchedulesApi,
+    ScheduleFamiliesApi, SchedulesApi,
     TeamsApi
 } from "./api_codegen";
 
@@ -48,7 +47,10 @@ export const ICONS = {
 } as const
 
 /**
- * Paths used by React Router to route to each resource type
+ * Paths used by React Router to route to each resource type.
+ * This deliberately mimics paths on the API because they are
+ * used to determine resource types when parsing URLs that look
+ * like they might be resource URLs.
  */
 export const PATHS = {
   FILE: "/files",
@@ -143,12 +145,17 @@ export const API_HANDLERS = {
  * ```
  */
 export const API_SLUGS = {
-    CELL: "cell",
+    CELL: "cells",
     EQUIPMENT: "equipment",
-    SCHEDULE: "schedule",
+    SCHEDULE: "schedules",
     CELL_FAMILY: "cellFamilies",
     EQUIPMENT_FAMILY: "equipmentFamilies",
     SCHEDULE_FAMILY: "scheduleFamilies",
+    EXPERIMENT: "experiments",
+    CYCLER_TEST: "cyclerTests",
+    LAB: "labs",
+    TEAM: "teams",
+    FILE: "files",
 } as const
 
 /**
@@ -197,12 +204,30 @@ export const CHILD_PROPERTY_NAMES  = {
     SCHEDULE_FAMILY: "schedules",
 } as const
 
+const _get_representation_factory = (fun: (i: any) => string) => {
+    return (instance: any) => {
+        try {
+            return fun(instance)
+        } catch (e) {
+            if (instance === undefined) return "[undefined]"
+            console.error(`Could not get representation for ${instance}`, e)
+            return instance.toString()
+        }
+    }
+}
+
 /**
  * Representation functions to present each resource family in a human-readable
  * format.
  */
 export const GET_REPRESENTATIONS = {
-    CELL_FAMILY: (instance: any) => `${instance.manufacturer} ${instance.model} [${instance.chemistry} ${instance.form_factor}]`,
-    EQUIPMENT_FAMILY: (instance: any) => `${instance.type} ${instance.manufacturer} ${instance.model} [${instance.type}]`,
-    SCHEDULE_FAMILY: (instance: any) => `${instance.identifier}`,
+    CELL_FAMILY: _get_representation_factory(
+        (instance: any) => `${instance.manufacturer} ${instance.model} [${instance.form_factor} ${instance.chemistry}]`
+    ),
+    EQUIPMENT_FAMILY: _get_representation_factory(
+        (instance: any) => `${instance.type} ${instance.manufacturer} ${instance.model} [${instance.type}]`
+    ),
+    SCHEDULE_FAMILY: _get_representation_factory(
+        (instance: any) => `${instance.identifier}`
+    ),
 }
