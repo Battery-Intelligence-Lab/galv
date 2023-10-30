@@ -11,7 +11,7 @@ import {ListProps} from "@mui/material";
 import Prettify from "./Prettify";
 import useStyles from "../../UseStyles";
 import clsx from "clsx";
-import {Serializable} from "./TypeChanger";
+import {detect_type, get_conversion_fun, Serializable} from "./TypeChanger";
 
 type PrettyArrayProps = Pick<PrettyObjectProps, "nest_level" | "edit_mode" | "clearParentFocus"> & {
     target: Serializable[]
@@ -88,7 +88,7 @@ export default function PrettyArray(
                                 _onEdit(newItems)
                                 return ""
                             }}
-                            allow_type_change={false}
+                            allow_type_change={true}
                         />
                     </ListItem>
                 </Container> :

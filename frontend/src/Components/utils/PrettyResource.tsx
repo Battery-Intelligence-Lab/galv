@@ -84,6 +84,7 @@ export const PrettyResourceSelect = (
             }
             setOpen(false)
         }}
+        onClose={() => setOpen(false)}
         value={url_to_value(url)}
         options={query.data?.data.results.map(r => url_to_value(r.url)) || []}
         loading={loading}

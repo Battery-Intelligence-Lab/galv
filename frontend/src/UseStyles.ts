@@ -91,6 +91,8 @@ export default makeStyles()((theme) => {
       color: theme.palette.text.secondary,
     },
     item_chip: {
+      width: "min-content",
+      minWidth: theme.spacing(5),
       margin: theme.spacing(0.5),
       borderRadius: theme.spacing(0.5),
       borderColor: "transparent",

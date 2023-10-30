@@ -47,6 +47,7 @@ import CellFamilyCard from "./Components/cell/CellFamilyCard";
 import ScheduleFamilyCard from "./Components/schedule/ScheduleFamilyCard";
 import EquipmentFamilyCard from "./Components/equipment/EquipmentFamilyCard";
 import {PATHS, ICONS} from "./constants";
+import {ErrorBoundary} from "react-error-boundary";
 
 const drawerWidth = 240;
 const useStyles = makeStyles()((theme) => {
@@ -305,37 +306,55 @@ export default function Core() {
       </div>
   );
 
+  function MyFallbackComponent({ error, resetErrorBoundary }: { error: Error, resetErrorBoundary: () => void}) {
+    return (
+        <div role="alert">
+          <p>Something went wrong:</p>
+          <pre>{error.message}</pre>
+          <button onClick={resetErrorBoundary}>Try again</button>
+        </div>
+    )
+  }
+
   /* A <Routes> looks through its children <Route>s and renders the first one that matches the current URL. */
   return (
-      <Routes>
-        <Route path="/login" element={<Login />}/>
-        <Route path={PATHS.DASHBOARD} element={Layout}>
-          <Route path={PATHS.EXPERIMENT} element={<Experiments/>} />
-          <Route path={`${PATHS.EXPERIMENT}/:uuid`} element={<Experiments/>} />
-          <Route path={PATHS.CYCLER_TEST} element={<CyclerTestList/>} />
-          <Route path={`${PATHS.CYCLER_TEST}/:uuid`} element={<CyclerTestPage/>} />
-          <Route path={PATHS.DATASET} element={<>TODO</>} />
-          <Route path={PATHS.CELL} element={<CellList/>} />
-          <Route path={`${PATHS.CELL}/:uuid`} element={<CellPage />} />
-          <Route path={PATHS.CELL_FAMILY} element={<>TODO</>} />
-          <Route path={`${PATHS.CELL_FAMILY}/:uuid`} element={<CellFamilyCard />} />
-          <Route path={PATHS.EQUIPMENT} element={<>TODO</>} />
-          <Route path={`${PATHS.EQUIPMENT}/:uuid`} element={<>TODO</>} />
-          <Route path={PATHS.EQUIPMENT_FAMILY} element={<>TODO</>} />
-          <Route path={`${PATHS.EQUIPMENT_FAMILY}/:uuid`} element={<EquipmentFamilyCard />} />
-          <Route path={PATHS.SCHEDULE} element={<>TODO</>} />
-          <Route path={`${PATHS.SCHEDULE}/:uuid`} element={<>TODO</>} />
-          <Route path={PATHS.SCHEDULE_FAMILY} element={<>TODO</>} />
-          <Route path={`${PATHS.SCHEDULE_FAMILY}/:uuid`} element={<ScheduleFamilyCard />} />
-          <Route path={PATHS.LAB} element={<>TODO</>} />
-          <Route path={`${PATHS.LAB}/:uuid`} element={<>TODO</>} />
-          <Route path={PATHS.TEAM} element={<>TODO</>} />
-          <Route path={`${PATHS.TEAM}/:uuid`} element={<>TODO</>} />
-          {/*<Route path={profilePath} element={UserProfile()} />*/}
-          {/*<Route path={tokenPath} element={Tokens()} />*/}
-          {/*<Route index element={Dashboard()} />*/}
-          <Route index element={<CyclerTestList/>} />
-        </Route>
-      </Routes>
+      <ErrorBoundary
+          FallbackComponent={MyFallbackComponent}
+          onError={(error, stack) => {
+            console.error(error)
+            console.info(stack)
+          }}
+      >
+        <Routes>
+          <Route path="/login" element={<Login />}/>
+          <Route path={PATHS.DASHBOARD} element={Layout}>
+            <Route path={PATHS.EXPERIMENT} element={<Experiments/>} />
+            <Route path={`${PATHS.EXPERIMENT}/:uuid`} element={<Experiments/>} />
+            <Route path={PATHS.CYCLER_TEST} element={<CyclerTestList/>} />
+            <Route path={`${PATHS.CYCLER_TEST}/:uuid`} element={<CyclerTestPage/>} />
+            <Route path={PATHS.DATASET} element={<>TODO</>} />
+            <Route path={PATHS.CELL} element={<CellList/>} />
+            <Route path={`${PATHS.CELL}/:uuid`} element={<CellPage />} />
+            <Route path={PATHS.CELL_FAMILY} element={<>TODO</>} />
+            <Route path={`${PATHS.CELL_FAMILY}/:uuid`} element={<CellFamilyCard />} />
+            <Route path={PATHS.EQUIPMENT} element={<>TODO</>} />
+            <Route path={`${PATHS.EQUIPMENT}/:uuid`} element={<>TODO</>} />
+            <Route path={PATHS.EQUIPMENT_FAMILY} element={<>TODO</>} />
+            <Route path={`${PATHS.EQUIPMENT_FAMILY}/:uuid`} element={<EquipmentFamilyCard />} />
+            <Route path={PATHS.SCHEDULE} element={<>TODO</>} />
+            <Route path={`${PATHS.SCHEDULE}/:uuid`} element={<>TODO</>} />
+            <Route path={PATHS.SCHEDULE_FAMILY} element={<>TODO</>} />
+            <Route path={`${PATHS.SCHEDULE_FAMILY}/:uuid`} element={<ScheduleFamilyCard />} />
+            <Route path={PATHS.LAB} element={<>TODO</>} />
+            <Route path={`${PATHS.LAB}/:uuid`} element={<>TODO</>} />
+            <Route path={PATHS.TEAM} element={<>TODO</>} />
+            <Route path={`${PATHS.TEAM}/:uuid`} element={<>TODO</>} />
+            {/*<Route path={profilePath} element={UserProfile()} />*/}
+            {/*<Route path={tokenPath} element={Tokens()} />*/}
+            {/*<Route index element={Dashboard()} />*/}
+            <Route index element={<CyclerTestList/>} />
+          </Route>
+        </Routes>
+      </ErrorBoundary>
   );
 }

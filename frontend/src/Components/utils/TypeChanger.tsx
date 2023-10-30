@@ -203,41 +203,41 @@ export const detect_type = (v: Serializable): TypeChangerSupportedTypeName => {
     return typeof v
 }
 
+export const get_conversion_fun = (type: string) => {
+    switch (type) {
+        case 'string': return str
+        case 'number': return num
+        case 'boolean': return (v: any) => !!v
+        case 'object': return obj
+        case 'array': return arr
+    }
+    if (Object.keys(API_HANDLERS).includes(type))
+        return (v: any) => {
+            const clean = (s: string): string => s.replace(/[^a-zA-Z0-9-_]/g, '')
+            let page, entry
+            if (Object.keys(API_HANDLERS).includes(type)) {
+                page = type
+                entry = clean(v) || 'new'
+            } else {
+                const components = get_url_components(v)
+                if (components) {
+                    page = components.lookup_key
+                    entry = components.uuid
+                } else {
+                    console.error(`Could not get url components for ${v}`, type, v)
+                    throw new Error(`Could not get url components for ${v}`)
+                }
+            }
+            return build_placeholder_url(page as keyof typeof PATHS, entry)
+        }
+    console.error(`Could not get conversion function for ${type}`, type)
+    throw new Error(`Could not get conversion function for ${type}`)
+}
+
 export default function TypeChanger(
     {currentValue, onTypeChange, disabled, ...props}: TypeChangerProps & Partial<TypeChangerPopoverProps>
 ) {
     const {classes} = useStyles()
-
-    const get_conversion_fun = (type: string) => {
-        switch (type) {
-            case 'string': return str
-            case 'number': return num
-            case 'boolean': return (v: any) => !!v
-            case 'object': return obj
-            case 'array': return arr
-        }
-        if (Object.keys(API_HANDLERS).includes(type))
-            return (v: any) => {
-                const clean = (s: string): string => s.replace(/[^a-zA-Z0-9-_]/g, '')
-                let page, entry
-                if (Object.keys(API_HANDLERS).includes(type)) {
-                    page = type
-                    entry = clean(v) || 'new'
-                } else {
-                    const components = get_url_components(v)
-                    if (components) {
-                        page = components.lookup_key
-                        entry = components.uuid
-                    } else {
-                        console.error(`Could not get url components for ${v}`, type, v)
-                        throw new Error(`Could not get url components for ${v}`)
-                    }
-                }
-                return build_placeholder_url(page as keyof typeof PATHS, entry)
-            }
-        console.error(`Could not get conversion function for ${type}`, type, currentValue)
-        throw new Error(`Could not get conversion function for ${type}`)
-    }
 
     const [value, _setValue] =
         useState<TypeChangerSupportedTypeName>(detect_type(currentValue))

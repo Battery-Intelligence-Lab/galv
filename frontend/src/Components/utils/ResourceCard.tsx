@@ -168,7 +168,7 @@ export default function ResourceCard<T extends Resource, F extends Family>(
                         console.warn("No data in mutation response", {data, variables, context})
                         return
                     }
-                    queryClient.setQueryData(['cell_retrieve', uuid], data)
+                    queryClient.setQueryData([lookup_key, uuid], data)
                 },
                 onError: (error, variables, context) => {
                     console.error(error)
