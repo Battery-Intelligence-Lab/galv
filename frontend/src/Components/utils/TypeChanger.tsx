@@ -19,7 +19,7 @@ import clsx from "clsx";
 import useStyles from "../../UseStyles";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import {get_url_components} from "./misc";
+import {build_placeholder_url, get_url_components} from "./misc";
 import {API_HANDLERS, DISPLAY_NAMES, ICONS, PATHS} from "../../constants";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 
@@ -113,7 +113,6 @@ export type TypeChangerPopoverProps = {
 
 function TypeChangeResourcePopover({onTypeChange, ...props}: TypeChangerPopoverProps) {
     const {classes} = useStyles()
-    const selected_resource = get_url_components(props.value as string)?.lookup_key
     return <Popover
         className={clsx(classes.type_changer_popover, classes.type_changer_resource_popover)}
         anchorOrigin={{
@@ -138,7 +137,9 @@ function TypeChangeResourcePopover({onTypeChange, ...props}: TypeChangerPopoverP
                 return <ToggleButton
                     value={lookup_key}
                     key={lookup_key}
-                    selected={selected_resource === lookup_key}>
+                    selected={props.value === lookup_key}
+                    disabled={props.value === lookup_key}
+                >
                     <Tooltip title={display} arrow placement="bottom" describeChild={true}>
                         <ICON />
                     </Tooltip>
@@ -150,9 +151,21 @@ function TypeChangeResourcePopover({onTypeChange, ...props}: TypeChangerPopoverP
 function TypeChangePopover({value, onTypeChange, ...props}: TypeChangerPopoverProps) {
     const {classes} = useStyles()
     const [resourcePopoverOpen, setResourcePopoverOpen] = useState(false)
-    const resourcePopoverAnchorEl = React.useRef<HTMLButtonElement>(null);
+    // useState + useCallback to avoid child popover rendering with a null anchorEl
+    const [resourcePopoverAnchorEl, setResourcePopoverAnchorEl] = useState<HTMLElement|null>(null)
+    const resourcePopoverAnchorRef = React.useCallback(
+        (node: HTMLElement|null) => setResourcePopoverAnchorEl(node),
+        []
+    )
+    // Reopen child popover if value is a resource type
+    useEffect(() => {
+        if (props.open && value && Object.keys(API_HANDLERS).includes(value)) {
+            setResourcePopoverOpen(true)
+        }
+    }, [props.open]);
+
     return <Popover className={clsx(classes.type_changer_popover)} {...props}>
-        <Stack direction="row" alignItems="center" spacing={1} ref={resourcePopoverAnchorEl}>
+        <Stack direction="row" alignItems="center" spacing={1} ref={resourcePopoverAnchorRef}>
             <ToggleButtonGroup
                 size="small"
                 exclusive
@@ -170,8 +183,8 @@ function TypeChangePopover({value, onTypeChange, ...props}: TypeChangerPopoverPr
                 {...props}
                 value={value}
                 onTypeChange={onTypeChange}
-                anchorEl={resourcePopoverAnchorEl.current}
-                open={resourcePopoverOpen}
+                anchorEl={resourcePopoverAnchorEl}
+                open={resourcePopoverOpen && !!resourcePopoverAnchorEl}
                 onClose={() => setResourcePopoverOpen(false)}
             />
             <IconButton onClick={() => setResourcePopoverOpen(!resourcePopoverOpen)}>
@@ -208,19 +221,19 @@ export default function TypeChanger(
                 const clean = (s: string): string => s.replace(/[^a-zA-Z0-9-_]/g, '')
                 let page, entry
                 if (Object.keys(API_HANDLERS).includes(type)) {
-                    page = PATHS[type as keyof typeof PATHS]
+                    page = type
                     entry = clean(v) || 'new'
                 } else {
                     const components = get_url_components(v)
                     if (components) {
-                        page = PATHS[components.lookup_key as keyof typeof PATHS]
+                        page = components.lookup_key
                         entry = components.uuid
                     } else {
                         console.error(`Could not get url components for ${v}`, type, v)
                         throw new Error(`Could not get url components for ${v}`)
                     }
                 }
-                return `https://galv${page}/${entry}`
+                return build_placeholder_url(page as keyof typeof PATHS, entry)
             }
         console.error(`Could not get conversion function for ${type}`, type, currentValue)
         throw new Error(`Could not get conversion function for ${type}`)

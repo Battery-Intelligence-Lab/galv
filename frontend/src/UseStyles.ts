@@ -158,6 +158,9 @@ export default makeStyles()((theme) => {
     pretty_nested: {
       backgroundColor: theme.palette.grey.A100,
     },
+    pretty_select: {
+        width: 300,
+    },
     type_changer_button: {},
     type_changer_popover: {
       zIndex: 5,

@@ -16,7 +16,7 @@ import CardContent from "@mui/material/CardContent";
 import Grid from "@mui/material/Unstable_Grid2";
 import Avatar from "@mui/material/Avatar";
 import TeamChip from "../team/TeamChip";
-import React, {useState} from "react";
+import React, {useEffect, useState} from "react";
 import ErrorCard from "../error/ErrorCard";
 import QueryWrapper, {QueryDependentElement} from "../utils/QueryWrapper";
 import {AxiosError, AxiosResponse} from "axios";
@@ -28,7 +28,7 @@ import {
     DISPLAY_NAMES_PLURAL,
     FAMILY_LOOKUP_KEYS,
     FILTER_NAMES,
-    PATHS, ICONS, API_SLUGS, GET_REPRESENTATIONS
+    PATHS, ICONS, API_SLUGS, GET_REPRESENTATIONS, CHILD_PROPERTY_NAMES
 } from "../../constants";
 import ResourceChip from "./ResourceChip";
 
@@ -62,14 +62,14 @@ export default function ResourceCard<T extends Resource, F extends Family>(
         ...cardProps
     }: ResourceCardProps<T> & CardProps
 ) {
-    console.log("ResourceCard", {uuid: uuid, lookup_key: lookup_key, read_only_fields, editing, expanded, cardProps})
+    // console.log("ResourceCard", {uuid: uuid, lookup_key: lookup_key, read_only_fields, editing, expanded, cardProps})
 
     const family_key = FAMILY_LOOKUP_KEYS[lookup_key]
     const ICON = ICONS[lookup_key]
     const FAMILY_ICON = ICONS[family_key]
 
     const { classes } = useStyles();
-    const [isEditMode, _setIsEditMode] = useState<boolean>(editing || false)
+    const [isEditMode, _setIsEditMode] = useState<boolean>(editing || true)
     const [isExpanded, setIsExpanded] = useState<boolean>(expanded || isEditMode)
     const [editableData, _setEditableData] =
         useState<SerializableObject>({})
@@ -81,10 +81,6 @@ export default function ResourceCard<T extends Resource, F extends Family>(
         useState<Partial<T>>({})
     const [target_data, _setTargetData] =
         useState<T>()
-    const [family, _setFamily] =
-        useState<string>()
-    const [family_data, setFamilyData] =
-        useState<F>()
 
     const setEditableData = (d: SerializableObject) => {
         console.log("setEditableData", d)
@@ -131,7 +127,6 @@ export default function ResourceCard<T extends Resource, F extends Family>(
         setEditableDataHistoryIndex(0)
         _setReadOnlyData(read_only_data)
         _setTargetData(data)
-        _setFamily(id_from_ref_props<string>(data.family))
     }
 
     const target_api_handler = new API_HANDLERS[lookup_key]()
@@ -148,24 +143,19 @@ export default function ResourceCard<T extends Resource, F extends Family>(
 
     const target_query = useQuery<AxiosResponse<T>, AxiosError>({
         queryKey: [lookup_key, uuid],
-        queryFn: () => target_get.bind(target_api_handler)(uuid).then((r: AxiosResponse<T>) => {
-            console.log(lookup_key, 'retrieve', uuid, r)
-            if (r === undefined) return Promise.reject("No data in response")
-            splitData(r.data)
-            return r
-        })
+        queryFn: () => target_get.bind(target_api_handler)(uuid)
     })
     const family_query = useQuery<AxiosResponse<F>, AxiosError>({
-        queryKey: [family_key, family || "should_not_be_called"],
-        queryFn: () => family_get.bind(family_api_handler)(id_from_ref_props<string>(target_query.data!.data.family))
-            .then((r: AxiosResponse<F>) => {
-                console.log(family_key, 'get', id_from_ref_props<string>(target_query.data!.data.family), r)
-                if (r === undefined) return Promise.reject("No data in response")
-                setFamilyData(r.data)
-                return r
-            }),
-        enabled: !!family
+        queryKey: [family_key, target_query.data?.data.family || "should_not_be_called"],
+        queryFn: () => family_get.bind(family_api_handler)(id_from_ref_props<string>(target_query.data!.data.family)),
+        enabled: !!target_query.data?.data.family
     })
+
+    useEffect(() => {
+        if (target_query.data?.data) {
+            splitData(target_query.data.data)
+        }
+    }, [target_query.data?.data]);
 
     // Mutations for saving edits
     const queryClient = useQueryClient()
@@ -239,7 +229,7 @@ export default function ResourceCard<T extends Resource, F extends Family>(
             avatar={<Avatar variant="square"><ICON /></Avatar>}
             title={<A component={Link} to={`${PATHS[lookup_key]}/${uuid}`}>
                 <>
-                    {GET_REPRESENTATIONS[family_key](family_data)} {target_data?.identifier ?? uuid}
+                    {GET_REPRESENTATIONS[family_key](family_query.data?.data)} {target_data?.identifier ?? uuid}
                 </>
             </A>}
             subheader={<Stack direction="row" spacing={1} alignItems="center">
@@ -263,16 +253,16 @@ export default function ResourceCard<T extends Resource, F extends Family>(
                     type_locked_keys={['identifier']}
                     onEdit={setEditableData}
                 />}
-                {family_data?.uuid && <Divider key="family-props-header">
+                {family_query.data?.data.uuid && <Divider key="family-props-header">
                     Inherited from
                     <ResourceChip
-                        uuid={family_data?.uuid}
+                        uuid={family_query.data?.data.uuid}
                         lookup_key={family_key}
                     />
                 </Divider>}
-                {family_data && <PrettyObject
-                    target={family_data}
-                    exclude_keys={[...Object.keys(target_data!), 'cells']}
+                {family_query.data?.data && <PrettyObject
+                    target={family_query.data?.data}
+                    exclude_keys={target_data? [...Object.keys(target_data), CHILD_PROPERTY_NAMES[family_key]] : []}
                 />}
             </Stack>
         </CardContent> : <CardContent />}

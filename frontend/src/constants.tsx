@@ -53,22 +53,22 @@ export const ICONS = {
  * like they might be resource URLs.
  */
 export const PATHS = {
-  FILE: "/files",
-  DASHBOARD: "/",
-  EXPERIMENT: "/experiments",
-  CYCLER_TEST: "/cycler_tests",
-  DATASET: "/datasets",
-  CELL: "/cells",
-  CELL_FAMILY: "/cell_families",
-  EQUIPMENT: "/equipment",
-  EQUIPMENT_FAMILY: "/equipment_families",
-  SCHEDULE: "/schedules",
-  SCHEDULE_FAMILY: "/schedule_families",
-  LAB: "/labs",
-  TEAM: "/teams",
-  USER: "/users",
-  PROFILE: "/profile",
-  TOKEN: "/tokens",
+    FILE: "/files",
+    DASHBOARD: "/",
+    EXPERIMENT: "/experiments",
+    CYCLER_TEST: "/cycler_tests",
+    DATASET: "/datasets",
+    CELL: "/cells",
+    CELL_FAMILY: "/cell_families",
+    EQUIPMENT: "/equipment",
+    EQUIPMENT_FAMILY: "/equipment_families",
+    SCHEDULE: "/schedules",
+    SCHEDULE_FAMILY: "/schedule_families",
+    LAB: "/labs",
+    TEAM: "/teams",
+    USER: "/users",
+    PROFILE: "/profile",
+    TOKEN: "/tokens",
 } as const
 
 /**
@@ -210,7 +210,7 @@ const _get_representation_factory = (fun: (i: any) => string) => {
             return fun(instance)
         } catch (e) {
             if (instance === undefined) return "[undefined]"
-            console.error(`Could not get representation for ${instance}`, e)
+            console.error(`Could not get representation`, instance, e)
             return instance.toString()
         }
     }
@@ -225,9 +225,33 @@ export const GET_REPRESENTATIONS = {
         (instance: any) => `${instance.manufacturer} ${instance.model} [${instance.form_factor} ${instance.chemistry}]`
     ),
     EQUIPMENT_FAMILY: _get_representation_factory(
-        (instance: any) => `${instance.type} ${instance.manufacturer} ${instance.model} [${instance.type}]`
+        (instance: any) => `${instance.manufacturer} ${instance.model} [${instance.type}]`
     ),
     SCHEDULE_FAMILY: _get_representation_factory(
         (instance: any) => `${instance.identifier}`
+    ),
+    FILE: _get_representation_factory(
+        (instance: any) => "GET_REPRESENTATIONS not implemented"
+    ),
+    EXPERIMENT: _get_representation_factory(
+        (instance: any) => "GET_REPRESENTATIONS not implemented"
+    ),
+    CYCLER_TEST: _get_representation_factory(
+        (instance: any) => instance.uuid || String(instance)
+    ),
+    CELL: _get_representation_factory(
+        (instance: any) => instance.identifier || String(instance)
+    ),
+    EQUIPMENT: _get_representation_factory(
+        (instance: any) => instance.identifier || String(instance)
+    ),
+    SCHEDULE: _get_representation_factory(
+        (instance: any) => instance.uuid || String(instance)
+    ),
+    LAB: _get_representation_factory(
+        (instance: any) => instance.name || String(instance)
+    ),
+    TEAM: _get_representation_factory(
+        (instance: any) => instance.name || String(instance)
     ),
 }

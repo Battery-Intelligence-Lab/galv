@@ -7,16 +7,11 @@ import ClearIcon from "@mui/icons-material/Clear";
 import PrettyObject from "./PrettyObject";
 import Checkbox, {CheckboxProps} from "@mui/material/Checkbox";
 import PrettyArray from "./PrettyArray";
-import TypeChanger, {TypeChangerProps, Serializable, detect_type} from "./TypeChanger";
+import TypeChanger, {detect_type, Serializable, TypeChangerProps} from "./TypeChanger";
 import Stack from "@mui/material/Stack";
 import {ChipProps} from "@mui/material/Chip";
-import ResourceChip from "./ResourceChip";
-import {get_url_components, PaginatedAPIResponse} from "./misc";
-import ButtonBase from "@mui/material/ButtonBase";
-import {API_HANDLERS, API_SLUGS, DISPLAY_NAMES} from "../../constants";
-import MenuItem from "@mui/material/MenuItem";
-import {useQuery} from "@tanstack/react-query";
-import {AxiosError, AxiosResponse} from "axios";
+import {API_HANDLERS} from "../../constants";
+import PrettyResource from "./PrettyResource";
 
 type PrettifyProps = {
     target: any
@@ -29,74 +24,10 @@ type PrettifyProps = {
     hide_type_changer?: boolean
 }
 
-type PrettyComponentProps = {
+export type PrettyComponentProps = {
     value: any
     onChange: (value: any) => void
     edit_mode: boolean
-}
-
-export const PrettySelect = (
-    {value, onChange, edit_mode, lookup_key, uuid, ...childProps}:
-        {lookup_key: keyof typeof API_HANDLERS, uuid: string} & PrettyComponentProps & Partial<ChipProps>
-) => {
-    console.log(`PrettySelect`, {value, onChange, edit_mode, lookup_key, uuid, childProps})
-    const [values, setValues] = useState<any[]>([])
-    const api_handler = new API_HANDLERS[lookup_key]()
-    const api_list = api_handler[
-        `${API_SLUGS[lookup_key]}List` as keyof typeof api_handler
-        ] as () => Promise<AxiosResponse<PaginatedAPIResponse>>
-    useQuery<AxiosResponse<PaginatedAPIResponse>, AxiosError>({
-        queryKey: [lookup_key, 'list'],
-        queryFn: () => api_list.bind(api_handler)().then((r: any) => {
-            setValues(r.data.results)
-            return r
-        })
-    })
-    return <TextField
-        select
-        label={DISPLAY_NAMES[lookup_key] || "Select"}
-        defaultValue={uuid}
-        // helperText={`Select a ${DISPLAY_NAMES[lookup_key] || "resource"}`}
-        variant="filled"
-    >
-        {[
-            // Override query result that matches the current selection
-            ...values.filter((v: any) => v.uuid !== uuid),
-            {url: value, uuid: uuid, id: uuid}
-        ].map((r: any, i, a) => (
-            <MenuItem key={r.url} value={r.uuid || r.id}>
-                {<PrettyResource
-                    value={r.url}
-                    onChange={() => {}} {...childProps}
-                    edit_mode={false}
-                    component={ButtonBase}
-                />}
-            </MenuItem>
-        ))}
-    </TextField>
-}
-
-export const PrettyResource = (
-    {value, onChange, edit_mode, ...childProps}: PrettyComponentProps & Partial<ChipProps>
-) => {
-    const url_components = get_url_components(value)
-    console.log(`PrettyResource`, {value, onChange, edit_mode, url_components, childProps})
-    const str_representation = <PrettyString value={value} onChange={onChange} {...childProps} edit_mode={false} />
-    if (url_components)
-        return edit_mode?
-            <PrettySelect
-                {...childProps as ChipProps}
-                {...url_components}
-                onChange={onChange}
-                value={value}
-                edit_mode={edit_mode}
-            /> :
-            <ResourceChip
-                {...childProps as ChipProps}
-                {...url_components}
-                error={str_representation}
-            />
-    return str_representation
 }
 
 export const PrettyString = (

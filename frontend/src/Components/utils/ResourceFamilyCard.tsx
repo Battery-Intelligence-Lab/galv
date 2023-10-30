@@ -15,7 +15,7 @@ import CardContent from "@mui/material/CardContent";
 import Grid from "@mui/material/Unstable_Grid2";
 import Avatar from "@mui/material/Avatar";
 import TeamChip from "../team/TeamChip";
-import React, {useState} from "react";
+import React, {useEffect, useState} from "react";
 import ErrorCard from "../error/ErrorCard";
 import QueryWrapper, {QueryDependentElement} from "../utils/QueryWrapper";
 import {AxiosError, AxiosResponse} from "axios";
@@ -130,13 +130,12 @@ export default function ResourceFamilyCard<T extends Family>(
 
     const query = useQuery<AxiosResponse<T>, AxiosError>({
         queryKey: [lookup_key, uuid],
-        queryFn: () => api_get.bind(api_handler)(uuid).then((r: AxiosResponse<T>) => {
-            console.log(lookup_key, 'get', uuid, r)
-            if (r === undefined) return Promise.reject("No data in response")
-            splitData(r.data)
-            return r
-        })
+        queryFn: () => api_get.bind(api_handler)(uuid)
     })
+
+    useEffect(() => {
+        if (query.data?.data) splitData(query.data.data)
+    }, [query.data?.data]);
 
     // Mutations for saving edits
     const queryClient = useQueryClient()

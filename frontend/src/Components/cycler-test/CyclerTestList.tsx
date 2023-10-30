@@ -45,7 +45,7 @@ export default function CyclerTestList() {
                     {query.isLoading && <CircularProgress sx={{color: (t) => t.palette.text.disabled, marginLeft: "1em"}} />}
                 </Typography>
                 <FilterBar
-                    data={query.data?.data?.results}
+                    data={query.data?.data.results}
                     filters={{uuid: {target_key: 'uuid', label: 'UUID matches', widget: TextFilter}}}
                     setFilteredData={setFilteredData}
                 />

@@ -28,9 +28,9 @@ type ResourceFamilyChipProps = {
 
 export default function ResourceChip<T extends Family>(
     {uuid, lookup_key, loading, error, success, ...chipProps}:
-        ResourceFamilyChipProps & Partial<QueryWrapperProps> & ChipProps
+        ResourceFamilyChipProps & Partial<QueryWrapperProps> & ChipProps & {component?: React.ElementType}
 ) {
-    console.log(`ResourceChip`, {uuid, lookup_key, loading, error, success, chipProps})
+    // console.log(`ResourceChip`, {uuid, lookup_key, loading, error, success, chipProps})
     const { classes } = useStyles();
 
     const _uuid = usePropParamId<string>(uuid)

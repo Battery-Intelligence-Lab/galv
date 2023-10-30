@@ -1,15 +1,6 @@
 import {useParams} from "react-router-dom";
 import {Serializable} from "./TypeChanger";
-import {
-    API_HANDLERS,
-    CHILD_PROPERTY_NAMES,
-    DISPLAY_NAMES,
-    FILTER_NAMES,
-    GET_REPRESENTATIONS,
-    ICONS,
-    PATHS
-} from "../../constants";
-import axios from "axios/index";
+import {API_HANDLERS, PATHS} from "../../constants";
 
 export type ObjectReferenceProps =
     { uuid: string } |
@@ -71,7 +62,7 @@ export function usePropParamId<T extends number|string>(props: any): T {
  */
 export function get_url_components(url: string):
     {lookup_key: keyof typeof API_HANDLERS & string,
-    uuid: string}|undefined {
+        uuid: string}|undefined {
     url = url.toLowerCase()
     const parts = url.split(/[/|?]/).filter(x => x)
     if (parts.length === 4) {
@@ -88,8 +79,11 @@ export function get_url_components(url: string):
         return {lookup_key: lookup_key as keyof typeof API_HANDLERS, uuid}
     }
     return undefined
-    }
+}
 
+export function build_placeholder_url(lookup_key: keyof typeof PATHS & string, uuid: string = 'new') {
+    return `https://galv${PATHS[lookup_key]}/${uuid}`
+}
 
 export function deep_copy<T extends Serializable>(obj: T): T {
     return JSON.parse(JSON.stringify(obj))
