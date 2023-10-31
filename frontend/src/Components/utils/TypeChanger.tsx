@@ -64,7 +64,7 @@ const arr = (v: any) => {
     return [v]
 }
 
-const type_map: {[key: string]: {icon: typeof SvgIcon, tooltip: ReactNode}} = {
+const type_map = {
     string: {
         icon: AbcIcon,
         tooltip: "String"
@@ -85,7 +85,7 @@ const type_map: {[key: string]: {icon: typeof SvgIcon, tooltip: ReactNode}} = {
         icon: DataArrayIcon,
         tooltip: "Array (JSON strings will be parsed)"
     }
-}
+} as const
 
 export type Serializable =
     string |
@@ -98,7 +98,7 @@ export type Serializable =
 
 export type SerializableObject = {[key: string]: Serializable}
 
-type TypeChangerSupportedTypeName = (keyof typeof type_map | keyof typeof API_HANDLERS) & string
+export type TypeChangerSupportedTypeName = (keyof typeof type_map | keyof typeof API_HANDLERS) & string
 
 export type TypeChangerProps = {
     currentValue?: Serializable
@@ -200,7 +200,10 @@ export const detect_type = (v: Serializable): TypeChangerSupportedTypeName => {
     if (v instanceof Array) return 'array'
     if (typeof v === 'string')
         return get_url_components(v)?.lookup_key ?? 'string'
-    return typeof v
+    if (Object.keys(type_map).includes(typeof v))
+        return typeof v as keyof typeof type_map
+    console.error(`Could not detect type`, v)
+    throw new Error(`Could not detect type for ${v}`)
 }
 
 export const get_conversion_fun = (type: string) => {
@@ -275,7 +278,7 @@ export default function TypeChanger(
                 {
                     Object.keys(API_HANDLERS).includes(value)?
                         React.createElement(ICONS[value as keyof typeof ICONS]) :
-                        React.createElement(type_map[value as TypeChangerSupportedTypeName].icon)
+                        React.createElement(type_map[value as keyof typeof type_map].icon)
                 }
             </IconButton>
         </span>

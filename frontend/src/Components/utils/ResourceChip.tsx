@@ -15,10 +15,14 @@ import {
     GET_REPRESENTATIONS,
     PATHS, ICONS, API_SLUGS
 } from "../../constants";
-import {Family} from "./ResourceCard";
+import {Family} from "./MetadataCard";
+import ErrorCard from "../error/ErrorCard";
+import CardHeader from "@mui/material/CardHeader";
+import Avatar from "@mui/material/Avatar";
+import ErrorBoundary from "./ErrorBoundary";
 
 type ResourceFamilyChipProps = {
-    uuid: string
+    resource_id: string|number
     lookup_key: keyof typeof ICONS &
         keyof typeof PATHS &
         keyof typeof DISPLAY_NAMES &
@@ -27,13 +31,12 @@ type ResourceFamilyChipProps = {
 }
 
 export default function ResourceChip<T extends Family>(
-    {uuid, lookup_key, loading, error, success, ...chipProps}:
+    {resource_id, lookup_key, loading, error, success, ...chipProps}:
         ResourceFamilyChipProps & Partial<QueryWrapperProps> & ChipProps & {component?: React.ElementType}
 ) {
     // console.log(`ResourceChip`, {uuid, lookup_key, loading, error, success, chipProps})
     const { classes } = useStyles();
 
-    const _uuid = usePropParamId<string>(uuid)
     const ICON = ICONS[lookup_key]
 
     const api_handler = new API_HANDLERS[lookup_key]()
@@ -41,41 +44,49 @@ export default function ResourceChip<T extends Family>(
         `${API_SLUGS[lookup_key]}Retrieve` as keyof typeof api_handler
         ] as (uuid: string) => Promise<AxiosResponse<T>>
     const query = useQuery<AxiosResponse<T>, AxiosError>({
-        queryKey: [lookup_key, _uuid],
-        queryFn: () => api_get.bind(api_handler)(_uuid)
+        queryKey: [lookup_key, resource_id],
+        queryFn: () => api_get.bind(api_handler)(String(resource_id))
     })
 
-
-    return <QueryWrapper
-        queries={[query]}
-        loading={loading || <LoadingChip url={`/${PATHS[lookup_key]}/${_uuid}`} icon={<ICON/>} {...chipProps}/>}
-        error={error? error : (queries) => <ErrorChip
-            status={queries[0].error?.response?.status}
-            target={`${PATHS[lookup_key]}/${_uuid}`}
-            detail={queries[0].error?.response?.data?.toString()}
-            key={_uuid}
+    return <ErrorBoundary
+        fallback={(error: Error) => <ErrorChip
+            target={`${lookup_key} ${resource_id}`}
+            detail={error.message}
+            key={resource_id}
             icon={<ICON />}
             variant="outlined"
-            {...chipProps as ChipProps as any}
-        />
-        }
-        success={success || <Chip
-            key={_uuid}
-            className={clsx(classes.item_chip)}
-            icon={<ICON />}
-            variant="outlined"
-            label={
-                query.data?.data?
-                    Object.keys(GET_REPRESENTATIONS).includes(lookup_key)?
-                        GET_REPRESENTATIONS[lookup_key as keyof typeof GET_REPRESENTATIONS](query.data?.data) :
-                        `${DISPLAY_NAMES[lookup_key]} ${_uuid}` :
-                    ""
-            }
-            clickable={true}
-            component={Link}
-            to={`${PATHS[lookup_key]}/${_uuid}`}
-            {...chipProps as ChipProps as any}
         />}
-    />
-
+    >
+        <QueryWrapper
+            queries={[query]}
+            loading={loading || <LoadingChip url={`/${PATHS[lookup_key]}/${resource_id}`} icon={<ICON/>} {...chipProps}/>}
+            error={error? error : (queries) => <ErrorChip
+                status={queries[0].error?.response?.status}
+                target={`${PATHS[lookup_key]}/${resource_id}`}
+                detail={queries[0].error?.response?.data?.toString()}
+                key={resource_id}
+                icon={<ICON />}
+                variant="outlined"
+                {...chipProps as ChipProps as any}
+            />
+            }
+            success={success || <Chip
+                key={resource_id}
+                className={clsx(classes.item_chip)}
+                icon={<ICON />}
+                variant="outlined"
+                label={
+                    query.data?.data?
+                        Object.keys(GET_REPRESENTATIONS).includes(lookup_key)?
+                            GET_REPRESENTATIONS[lookup_key as keyof typeof GET_REPRESENTATIONS](query.data?.data) :
+                            `${DISPLAY_NAMES[lookup_key]} ${resource_id}` :
+                        ""
+                }
+                clickable={true}
+                component={Link}
+                to={`${PATHS[lookup_key]}/${resource_id}`}
+                {...chipProps as ChipProps as any}
+            />}
+        />
+    </ErrorBoundary>
 }

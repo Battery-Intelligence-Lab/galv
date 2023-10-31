@@ -108,7 +108,7 @@ export const PrettyResourceSelect = (
             <div>{
                 family_query.data?.data?.results?
                     <ResourceChip
-                        uuid={family_query.data.data.results.find(f => f.url === params.group)}
+                        resource_id={family_query.data.data.results.find(f => f.url === params.group)}
                         lookup_key={FAMILY_LOOKUP_KEYS[lookup_key as keyof typeof FAMILY_LOOKUP_KEYS]}
                         component={ButtonBase}
                         clickable={false}

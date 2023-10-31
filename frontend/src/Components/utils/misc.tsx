@@ -31,11 +31,12 @@ export function id_from_ref_props<T extends number | string>(props: ObjectRefere
     try {
         const id = url.split('/').filter(x => x).pop()
         if (id !== undefined) return id as T
-    } catch (e) {
-        throw new Error(`Could not parse id from url: ${url}: ${e}`)
+    } catch (error) {
+        console.error(`Could not parse id from url`, {props, url, error})
+        throw new Error(`Could not parse id from url.`)
     }
     console.error(`Could not parse id from props`, props)
-    throw new Error(`Could not parse id from props`)
+    throw new Error(`Could not parse id from props ${props}`)
 }
 
 /**

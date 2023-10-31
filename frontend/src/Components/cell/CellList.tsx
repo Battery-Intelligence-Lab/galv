@@ -43,7 +43,7 @@ export default function CellList() {
 
     const body =
         <Stack spacing={2}>
-            {filteredData.map((cell_family: CellFamily) => <CellFamilyCard uuid={cell_family.uuid} />)}
+            {filteredData.map((cell_family: CellFamily) => <CellFamilyCard key={cell_family.uuid} uuid={cell_family.uuid} />)}
         </Stack>
 
     const getErrorBody: QueryDependentElement = (queries) => <ErrorPage

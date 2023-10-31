@@ -5,14 +5,14 @@ import {
     EquipmentFamily,
 } from "../../api_codegen";
 import React from "react";
-import {AddProps} from "../utils/ResourceCard";
-import ResourceFamilyCard from "../utils/ResourceFamilyCard";
+import {AddProps} from "../utils/MetadataCard";
+import MetadataFamilyCard from "../utils/MetadataFamilyCard";
 
 export default function EquipmentFamilyCard(props: Partial<ObjectReferenceProps> & CardProps) {
     const uuid = usePropParamId<string>(props)
 
-    return <ResourceFamilyCard<AddProps<EquipmentFamily>>
-        uuid={uuid}
+    return <MetadataFamilyCard<AddProps<EquipmentFamily>>
+        family_id={uuid}
         lookup_key="EQUIPMENT_FAMILY"
         editing={false}
         expanded={false}

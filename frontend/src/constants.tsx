@@ -18,6 +18,7 @@ import {
     ScheduleFamiliesApi, SchedulesApi,
     TeamsApi
 } from "./api_codegen";
+import {TypeChangerSupportedTypeName} from "./Components/utils/TypeChanger";
 
 /**
  * This is a list of various resources grouped under a common name for each
@@ -156,6 +157,70 @@ export const API_SLUGS = {
     LAB: "labs",
     TEAM: "teams",
     FILE: "files",
+} as const
+
+type Field = {readonly: boolean, type: TypeChangerSupportedTypeName, many?: boolean}
+const generic_fields: {[key: string]: Field} = {
+    uuid: {readonly: true, type: "string"},
+    url: {readonly: true, type: "string"},
+    permissions: {readonly: true, type: "object"},
+}
+/**
+ * Lookup map to get the properties of the fields in each resource type.
+ */
+export const FIELDS = {
+    CELL: {
+        ...generic_fields,
+        identifier: {readonly: false, type: "string"},
+        in_use: {readonly: true, type: "boolean"},
+        family: {readonly: true, type: "CELL_FAMILY"},
+        team: {readonly: true, type: "TEAM"},
+        cycler_tests: {readonly: true, type: "array"},
+    },
+    EQUIPMENT: {
+        ...generic_fields,
+        in_use: {readonly: true, type: "boolean"},
+        family: {readonly: true, type: "EQUIPIMENT_FAMILY"},
+        team: {readonly: true, type: "TEAM"},
+        identifier: {readonly: false, type: "string"},
+        calibration_date: {readonly: false, type: "string"},
+    },
+    SCHEDULE: {
+        ...generic_fields,
+        family: {readonly: true, type: "SCHEDULE_FAMILY"},
+        team: {readonly: true, type: "TEAM"},
+        schedule_file: {readonly: false, type: "string"},
+        pybamm_schedule_variables: {readonly: false, type: "object"},
+    },
+    CELL_FAMILY: {
+        ...generic_fields,
+        manufacturer: {readonly: false, type: "string"},
+        model: {readonly: false, type: "string"},
+        form_factor: {readonly: false, type: "string"},
+        chemistry: {readonly: false, type: "string"},
+        nominal_voltage: {readonly: false, type: "number"},
+        nominal_capacity: {readonly: false, type: "number"},
+        initial_ac_impedance: {readonly: false, type: "number"},
+        initial_dc_resistance: {readonly: false, type: "number"},
+        energy_density: {readonly: false, type: "number"},
+        power_density: {readonly: false, type: "number"},
+        cells: {readonly: true, type: "CELL", many: true},
+    },
+    EQUIPMENT_FAMILY: {
+        ...generic_fields,
+        manufacturer: {readonly: false, type: "string"},
+        model: {readonly: false, type: "string"},
+        type: {readonly: false, type: "string"},
+        equipment: {readonly: true, type: "EQUIPMENT", many: true},
+    },
+    SCHEDULE_FAMILY: {
+        ...generic_fields,
+        identifier: {readonly: false, type: "string"},
+        description: {readonly: false, type: "string"},
+        ambient_temperature: {readonly: false, type: "number"},
+        pybamm_template: {readonly: false, type: "object"},
+        schedules: {readonly: true, type: "SCHEDULE", many: true},
+    },
 } as const
 
 /**

@@ -5,13 +5,13 @@ import {
     ScheduleFamily,
 } from "../../api_codegen";
 import React from "react";
-import ResourceCard, {AddProps} from "../utils/ResourceCard";
+import MetadataCard, {AddProps} from "../utils/MetadataCard";
 
 export default function ScheduleCard(props: ExpandableCardProps & CardProps) {
     const uuid = usePropParamId<string>(props)
 
-    return <ResourceCard<AddProps<Schedule>, AddProps<ScheduleFamily>>
-        uuid={uuid}
+    return <MetadataCard<AddProps<Schedule>, AddProps<ScheduleFamily>>
+        resource_id={uuid}
         lookup_key="SCHEDULE"
         editing={false}
         expanded={false}

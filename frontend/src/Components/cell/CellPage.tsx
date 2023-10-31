@@ -17,7 +17,6 @@ import {ICONS} from "../../icons";
 import CardContent from "@mui/material/CardContent";
 import Grid from "@mui/material/Unstable_Grid2";
 import Avatar from "@mui/material/Avatar";
-import TeamChip from "../team/TeamChip";
 import React from "react";
 import ErrorPage from "../error/ErrorPage";
 import QueryWrapper, {QueryDependentElement} from "../utils/QueryWrapper";
@@ -81,7 +80,7 @@ export default function CellPage(props: CardProps) {
                 </A>}
                 subheader={<Stack direction="row" spacing={1} alignItems="center">
                     <A component={Link} to={"/cell/"}>Cell</A>
-                    <TeamChip url={cell_query.data?.data.team!} sx={{fontSize: "smaller"}}/>
+                    <ResourceChip lookup_key="TEAM" resource_id={cell_query.data?.data.team!} sx={{fontSize: "smaller"}}/>
                 </Stack>}
                 action={action}
             />
@@ -91,7 +90,7 @@ export default function CellPage(props: CardProps) {
                         {
                             cell_query.data?.data.family &&
                             <ResourceChip
-                                uuid={id_from_ref_props(cell_query.data?.data.family!)}
+                                resource_id={id_from_ref_props(cell_query.data?.data.family!)}
 
                                 lookup_key="CELL_FAMILY"
                             />

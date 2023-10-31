@@ -47,7 +47,7 @@ import CellFamilyCard from "./Components/cell/CellFamilyCard";
 import ScheduleFamilyCard from "./Components/schedule/ScheduleFamilyCard";
 import EquipmentFamilyCard from "./Components/equipment/EquipmentFamilyCard";
 import {PATHS, ICONS} from "./constants";
-import {ErrorBoundary} from "react-error-boundary";
+import ErrorBoundary from "./Components/utils/ErrorBoundary";
 
 const drawerWidth = 240;
 const useStyles = makeStyles()((theme) => {
@@ -306,25 +306,18 @@ export default function Core() {
       </div>
   );
 
-  function MyFallbackComponent({ error, resetErrorBoundary }: { error: Error, resetErrorBoundary: () => void}) {
+  function MyFallbackComponent(error: Error) {
     return (
         <div role="alert">
           <p>Something went wrong:</p>
           <pre>{error.message}</pre>
-          <button onClick={resetErrorBoundary}>Try again</button>
         </div>
     )
   }
 
   /* A <Routes> looks through its children <Route>s and renders the first one that matches the current URL. */
   return (
-      <ErrorBoundary
-          FallbackComponent={MyFallbackComponent}
-          onError={(error, stack) => {
-            console.error(error)
-            console.info(stack)
-          }}
-      >
+      <ErrorBoundary fallback={MyFallbackComponent}>
         <Routes>
           <Route path="/login" element={<Login />}/>
           <Route path={PATHS.DASHBOARD} element={Layout}>

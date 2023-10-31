@@ -16,12 +16,10 @@ import Avatar from "@mui/material/Avatar";
 import TeamChip from "../team/TeamChip";
 import Button from "@mui/material/Button";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
-import ScheduleChip from "../schedule/ScheduleChip";
-import EquipmentChip from "../equipment/EquipmentChip";
 import {ObjectReferenceProps, usePropParamId} from "../utils/misc";
-import CellChip from "../cell/CellChip";
 import LoadingChip from "../utils/LoadingChip";
 import {CardProps} from "@mui/material";
+import ResourceChip from "../utils/ResourceChip";
 
 export default function CyclerTestCard(props: ObjectReferenceProps & CardProps) {
     const {classes} = useStyles();
@@ -75,12 +73,12 @@ export default function CyclerTestCard(props: ObjectReferenceProps & CardProps) 
             <CardContent>
                 <Stack>
                     <Grid container>
-                        <CellChip url={query.data?.data.cell!}/>
-                        <ScheduleChip url={query.data?.data.schedule!}/>
+                        <ResourceChip lookup_key="CELL" resource_id={query.data?.data.cell!}/>
+                        <ResourceChip lookup_key="SCHEDULE" resource_id={query.data?.data.schedule!}/>
                     </Grid>
                     <Grid container>
                         {query.data?.data.equipment.map((equipment, i) =>
-                            <EquipmentChip key={`equipment_${i}`} url={equipment}/>)}
+                            <ResourceChip lookup_key="EQUIPMENT" key={`equipment_${i}`} resource_id={equipment}/>)}
                     </Grid>
                 </Stack>
                 {/*<details>*/}
