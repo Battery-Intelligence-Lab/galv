@@ -16,7 +16,7 @@ import Avatar from "@mui/material/Avatar";
 import TeamChip from "../team/TeamChip";
 import Button from "@mui/material/Button";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
-import {ObjectReferenceProps, usePropParamId} from "../utils/misc";
+import {id_from_ref_props, ObjectReferenceProps, usePropParamId} from "../utils/misc";
 import LoadingChip from "../utils/LoadingChip";
 import {CardProps} from "@mui/material";
 import ResourceChip from "../utils/ResourceChip";
@@ -73,12 +73,22 @@ export default function CyclerTestCard(props: ObjectReferenceProps & CardProps) 
             <CardContent>
                 <Stack>
                     <Grid container>
-                        <ResourceChip lookup_key="CELL" resource_id={query.data?.data.cell!}/>
-                        <ResourceChip lookup_key="SCHEDULE" resource_id={query.data?.data.schedule!}/>
+                        {query.data && <ResourceChip
+                            lookup_key="CELL"
+                            resource_id={id_from_ref_props<string>(query.data.data.cell!)}
+                        />}
+                        {query.data && <ResourceChip
+                            lookup_key="SCHEDULE"
+                            resource_id={id_from_ref_props<string>(query.data?.data.schedule!)}
+                        />}
                     </Grid>
                     <Grid container>
                         {query.data?.data.equipment.map((equipment, i) =>
-                            <ResourceChip lookup_key="EQUIPMENT" key={`equipment_${i}`} resource_id={equipment}/>)}
+                            <ResourceChip
+                                lookup_key="EQUIPMENT"
+                                key={`equipment_${i}`}
+                                resource_id={id_from_ref_props<string>(equipment)}
+                            />)}
                     </Grid>
                 </Stack>
                 {/*<details>*/}

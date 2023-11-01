@@ -63,7 +63,7 @@ export function usePropParamId<T extends number|string>(props: any): T {
  */
 export function get_url_components(url: string):
     {lookup_key: keyof typeof API_HANDLERS & string,
-        uuid: string}|undefined {
+        resource_id: string}|undefined {
     url = url.toLowerCase()
     const parts = url.split(/[/|?]/).filter(x => x)
     if (parts.length === 4) {
@@ -76,8 +76,8 @@ export function get_url_components(url: string):
             return undefined
         }
 
-        const uuid = parts[3]
-        return {lookup_key: lookup_key as keyof typeof API_HANDLERS, uuid}
+        const resource_id = parts[3]
+        return {lookup_key: lookup_key as keyof typeof API_HANDLERS, resource_id: resource_id}
     }
     return undefined
 }

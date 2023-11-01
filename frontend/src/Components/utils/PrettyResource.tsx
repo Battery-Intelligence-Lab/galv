@@ -15,10 +15,10 @@ import CircularProgress from "@mui/material/CircularProgress";
 import {CreateFilterOptionsConfig} from "@mui/material";
 
 export const PrettyResourceSelect = (
-    {value, onChange, edit_mode, lookup_key, uuid, ...childProps}:
-        { lookup_key: keyof typeof API_HANDLERS, uuid: string } & PrettyComponentProps & Partial<ChipProps>
+    {value, onChange, edit_mode, lookup_key, resource_id, ...childProps}:
+        { lookup_key: keyof typeof API_HANDLERS, resource_id: string } & PrettyComponentProps & Partial<ChipProps>
 ) => {
-    console.log(`PrettySelect`, {value, onChange, edit_mode, lookup_key, uuid, childProps})
+    console.log(`PrettySelect`, {value, onChange, edit_mode, lookup_key, resource_id: resource_id, childProps})
 
     const api_handler = new API_HANDLERS[lookup_key]()
     const api_list = api_handler[

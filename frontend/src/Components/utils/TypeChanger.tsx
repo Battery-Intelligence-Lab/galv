@@ -225,7 +225,7 @@ export const get_conversion_fun = (type: string) => {
                 const components = get_url_components(v)
                 if (components) {
                     page = components.lookup_key
-                    entry = components.uuid
+                    entry = components.resource_id
                 } else {
                     console.error(`Could not get url components for ${v}`, type, v)
                     throw new Error(`Could not get url components for ${v}`)

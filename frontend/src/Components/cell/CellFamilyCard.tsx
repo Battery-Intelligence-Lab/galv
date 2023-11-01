@@ -5,13 +5,13 @@ import {
     CellFamily,
 } from "../../api_codegen";
 import React from "react";
-import {AddProps} from "../utils/MetadataCard";
-import MetadataFamilyCard from "../utils/MetadataFamilyCard";
+import {AddProps} from "../utils/ChildCard";
+import FamilyCard from "../utils/FamilyCard";
 
 export default function CellFamilyCard(props: Partial<ObjectReferenceProps> & CardProps) {
     const uuid = usePropParamId<string>(props)
 
-    return <MetadataFamilyCard<AddProps<CellFamily>>
+    return <FamilyCard<AddProps<CellFamily>>
         family_id={uuid}
         lookup_key="CELL_FAMILY"
         editing={false}

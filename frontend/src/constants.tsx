@@ -160,10 +160,13 @@ export const API_SLUGS = {
 } as const
 
 type Field = {readonly: boolean, type: TypeChangerSupportedTypeName, many?: boolean}
-const generic_fields: {[key: string]: Field} = {
-    uuid: {readonly: true, type: "string"},
+const always_fields: {[key: string]: Field} = {
     url: {readonly: true, type: "string"},
     permissions: {readonly: true, type: "object"},
+}
+const generic_fields: {[key: string]: Field} = {
+    uuid: {readonly: true, type: "string"},
+    ...always_fields,
 }
 /**
  * Lookup map to get the properties of the fields in each resource type.

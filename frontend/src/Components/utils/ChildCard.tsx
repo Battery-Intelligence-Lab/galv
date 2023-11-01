@@ -1,5 +1,6 @@
 import {CardProps} from "@mui/material";
 import CardActionBar from "../utils/CardActionBar";
+import {id_from_ref_props} from "./misc";
 import PrettyObject from "./PrettyObject";
 import useStyles from "../../UseStyles";
 import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
@@ -19,48 +20,62 @@ import ErrorCard from "../error/ErrorCard";
 import QueryWrapper, {QueryDependentElement} from "../utils/QueryWrapper";
 import {AxiosError, AxiosResponse} from "axios";
 import Divider from "@mui/material/Divider";
-import {Serializable, SerializableObject} from "./TypeChanger";
-import MetadataCard, {Family} from "./MetadataCard";
-import {deep_copy, id_from_ref_props} from "./misc";
+import {SerializableObject} from "./TypeChanger";
+import {deep_copy} from "./misc";
 import {
-    API_HANDLERS, API_SLUGS,
-    CHILD_LOOKUP_KEYS,
-    CHILD_PROPERTY_NAMES, DISPLAY_NAMES, FIELDS,
-    GET_REPRESENTATIONS,
-    ICONS,
-    PATHS
+    API_HANDLERS, DISPLAY_NAMES,
+    DISPLAY_NAMES_PLURAL,
+    FAMILY_LOOKUP_KEYS,
+    FILTER_NAMES,
+    PATHS, ICONS, API_SLUGS, GET_REPRESENTATIONS, CHILD_PROPERTY_NAMES, FIELDS
 } from "../../constants";
 import ResourceChip from "./ResourceChip";
+import ErrorBoundary from "./ErrorBoundary";
 
-type ResourceFamilyCardProps<T extends Family> = {
-    family_id: string
+export type Permissions = { read?: boolean, write?: boolean, create?: boolean, destroy?: boolean }
+type child_keys = "cells"|"equipment"|"schedules"
+export type BaseResource = {
+    uuid: string,
+    team: string,
+    permissions: Permissions,
+} & SerializableObject
+export type Family = BaseResource & {[key in child_keys]?: string[]}
+export type Resource = { family: string, cycler_tests: string[] } & BaseResource
+
+type ResourceCardProps<T extends Resource> = {
+    resource_id: string
     lookup_key: keyof typeof ICONS &
         keyof typeof PATHS &
-        keyof typeof CHILD_LOOKUP_KEYS
+        keyof typeof DISPLAY_NAMES &
+        keyof typeof DISPLAY_NAMES_PLURAL &
+        keyof typeof FILTER_NAMES &
+        keyof typeof FAMILY_LOOKUP_KEYS &
+        keyof typeof API_HANDLERS
     editing?: boolean
     expanded?: boolean
     read_only_fields?: (keyof T)[]
 }
 
-export default function MetadataFamilyCard<T extends Family>(
+export type AddProps<T> = T & {[key: string]: any}
+
+export default function ChildCard<T extends Resource, F extends Family>(
     {
-        family_id,
+        resource_id,
         lookup_key,
         editing,
         expanded,
         ...cardProps
-    }: ResourceFamilyCardProps<T> & CardProps
+    }: ResourceCardProps<T> & CardProps
 ) {
-    console.log("ResourceFamilyCard", {family_id: family_id, lookup_key, editing, expanded, cardProps})
+    // console.log("ResourceCard", {uuid: uuid, lookup_key: lookup_key, read_only_fields, editing, expanded, cardProps})
 
-    const child_key = CHILD_LOOKUP_KEYS[lookup_key]
+    const family_key = FAMILY_LOOKUP_KEYS[lookup_key]
     const ICON = ICONS[lookup_key]
-    const { classes } = useStyles();
+    const FAMILY_ICON = ICONS[family_key]
 
+    const { classes } = useStyles();
     const [isEditMode, _setIsEditMode] = useState<boolean>(editing || false)
     const [isExpanded, setIsExpanded] = useState<boolean>(expanded || isEditMode)
-
-    // TODO: refactor edit history stuff into a hook/context/reducer
     const [editableData, _setEditableData] =
         useState<SerializableObject>({})
     const [editableDataHistory, setEditableDataHistory] =
@@ -69,6 +84,8 @@ export default function MetadataFamilyCard<T extends Family>(
         useState<number>(0)
     const [readOnlyData, _setReadOnlyData] =
         useState<Partial<T>>({})
+    const [target_data, _setTargetData] =
+        useState<T>()
 
     const setEditableData = (d: SerializableObject) => {
         console.log("setEditableData", d)
@@ -117,37 +134,49 @@ export default function MetadataFamilyCard<T extends Family>(
         setEditableDataHistory([write_data])
         setEditableDataHistoryIndex(0)
         _setReadOnlyData(read_only_data)
+        _setTargetData(data)
     }
 
-    const api_handler = new API_HANDLERS[lookup_key]()
-    const api_get = api_handler[
-        `${API_SLUGS[lookup_key]}Retrieve` as keyof typeof api_handler
+    const target_api_handler = new API_HANDLERS[lookup_key]()
+    const target_get = target_api_handler[
+        `${API_SLUGS[lookup_key]}Retrieve` as keyof typeof target_api_handler
         ] as (uuid: string) => Promise<AxiosResponse<T>>
-    const api_patch = api_handler[
-        `${API_SLUGS[lookup_key]}PartialUpdate` as keyof typeof api_handler
+    const target_patch = target_api_handler[
+        `${API_SLUGS[lookup_key]}PartialUpdate` as keyof typeof target_api_handler
         ] as (uuid: string, data: SerializableObject) => Promise<AxiosResponse<T>>
+    const family_api_handler = new API_HANDLERS[family_key]()
+    const family_get = family_api_handler[
+        `${API_SLUGS[family_key]}Retrieve` as keyof typeof family_api_handler
+        ] as (uuid: string) => Promise<AxiosResponse<F>>
 
-    const query = useQuery<AxiosResponse<T>, AxiosError>({
-        queryKey: [lookup_key, family_id],
-        queryFn: () => api_get.bind(api_handler)(family_id)
+    const target_query = useQuery<AxiosResponse<T>, AxiosError>({
+        queryKey: [lookup_key, resource_id],
+        queryFn: () => target_get.bind(target_api_handler)(resource_id)
+    })
+    const family_query = useQuery<AxiosResponse<F>, AxiosError>({
+        queryKey: [family_key, target_query.data?.data.family || "should_not_be_called"],
+        queryFn: () => family_get.bind(family_api_handler)(id_from_ref_props<string>(target_query.data!.data.family)),
+        enabled: !!target_query.data?.data.family
     })
 
     useEffect(() => {
-        if (query.data?.data) splitData(query.data.data)
-    }, [query.data?.data]);
+        if (target_query.data?.data) {
+            splitData(target_query.data.data)
+        }
+    }, [target_query.data?.data]);
 
     // Mutations for saving edits
     const queryClient = useQueryClient()
     const update_mutation =
         useMutation<AxiosResponse<T>, AxiosError, SerializableObject>(
-            (data: SerializableObject) => api_patch.bind(api_handler)(family_id, data),
+            (data: SerializableObject) => target_patch.bind(target_api_handler)(resource_id, data),
             {
                 onSuccess: (data, variables, context) => {
                     if (data === undefined) {
                         console.warn("No data in mutation response", {data, variables, context})
                         return
                     }
-                    queryClient.setQueryData(['cell_retrieve', family_id], data)
+                    queryClient.setQueryData([lookup_key, resource_id], data)
                 },
                 onError: (error, variables, context) => {
                     console.error(error)
@@ -156,11 +185,11 @@ export default function MetadataFamilyCard<T extends Family>(
 
     const action = <CardActionBar
         lookup_key={lookup_key}
-        uuid={family_id}
-        highlight_count={query.data && query.data.data[CHILD_PROPERTY_NAMES[lookup_key]] instanceof Array?
-            (query.data.data[CHILD_PROPERTY_NAMES[lookup_key]] as Serializable[]).length : 0}
-        highlight_lookup_key={child_key}
-        editable={!!query.data?.data.permissions.write}
+        uuid={resource_id}
+        family_uuid={target_data?.family? id_from_ref_props<string>(target_data?.family) : undefined}
+        highlight_count={target_data?.cycler_tests.length}
+        highlight_lookup_key="CYCLER_TEST"
+        editable={!!target_data?.permissions.write}
         editing={isEditMode}
         setEditing={setEditing}
         onUndo={undoEditableData}
@@ -183,10 +212,10 @@ export default function MetadataFamilyCard<T extends Family>(
         setExpanded={setIsExpanded}
     />
 
-    const loadingBody = <Card key={family_id} className={clsx(classes.item_card)} {...cardProps}>
+    const loadingBody = <Card key={resource_id} className={clsx(classes.item_card)} {...cardProps}>
         <CardHeader
             avatar={<CircularProgress sx={{color: (t) => t.palette.text.disabled}}/>}
-            title={<A component={Link} to={`${PATHS[lookup_key]}/${family_id}`}>{family_id}</A>}
+            title={<A component={Link} to={`${PATHS[lookup_key]}/${resource_id}`}>{resource_id}</A>}
             subheader={<Stack direction="row" spacing={1}>
                 <A component={Link} to={PATHS[lookup_key]}>{DISPLAY_NAMES[lookup_key]}</A>
                 <LoadingChip icon={<ICONS.TEAM/>} />
@@ -195,7 +224,7 @@ export default function MetadataFamilyCard<T extends Family>(
         />
         {isExpanded? <CardContent>
             <Grid container>
-                <LoadingChip icon={<ICON/>}/>
+                <LoadingChip icon={<FAMILY_ICON/>}/>
             </Grid>
             <Grid container>
                 <LoadingChip icon={<ICONS.CYCLER_TEST/>}/>
@@ -203,40 +232,55 @@ export default function MetadataFamilyCard<T extends Family>(
         </CardContent> : <CardContent />}
     </Card>
 
-    const cardBody = <Card key={family_id} className={clsx(classes.item_card)} {...cardProps}>
+    const cardBody = <Card key={resource_id} className={clsx(classes.item_card)} {...cardProps}>
         <CardHeader
-            avatar={<Avatar variant="square"><ICON/></Avatar>}
-            title={<A component={Link} to={`${PATHS[lookup_key]}/${family_id}`}>
-                {GET_REPRESENTATIONS[lookup_key](query.data?.data)}
+            avatar={<Avatar variant="square"><ICON /></Avatar>}
+            title={<A component={Link} to={`${PATHS[lookup_key]}/${resource_id}`}>
+                <>
+                    {GET_REPRESENTATIONS[family_key](family_query.data?.data)} {target_data?.identifier ?? resource_id}
+                </>
             </A>}
             subheader={<Stack direction="row" spacing={1} alignItems="center">
                 <A component={Link} to={PATHS[lookup_key]}>{DISPLAY_NAMES[lookup_key]}</A>
-                {query.data && <ResourceChip
+                {target_data && <ResourceChip
                     lookup_key="TEAM"
-                    resource_id={id_from_ref_props<number>(query.data.data.team)}
+                    resource_id={id_from_ref_props<number>(target_data.team)}
                     sx={{fontSize: "smaller"}}
                 />}
             </Stack>}
             action={action}
         />
-        {isExpanded? <CardContent sx={{maxHeight: isEditMode? "80vh" : "unset", overflowY: "auto"}}>
+        {isExpanded? <CardContent sx={{
+            maxHeight: isEditMode? "80vh" : "unset",
+            overflowY: "auto",
+            "& li": isEditMode? {marginTop: (t) => t.spacing(0.5)} : undefined,
+            "& table": isEditMode? {borderCollapse: "separate", borderSpacing: (t) => t.spacing(0.5)} : undefined,
+        }}>
             <Stack spacing={1}>
                 <Divider key="read-props-header">Read-only properties</Divider>
-                {query.data && <PrettyObject
+                {target_data && <PrettyObject
                     key="read-props"
                     target={readOnlyData}
                 />}
                 <Divider key="write-props-header">Editable properties</Divider>
-                {query.data && <PrettyObject
+                {target_data && <PrettyObject
                     key="write-props"
                     target={editableData}
                     edit_mode={isEditMode}
                     type_locked_keys={['identifier']}
                     onEdit={setEditableData}
                 />}
-                <Divider key="child-cards-header">Instances</Divider>
-                {query.data?.data[CHILD_PROPERTY_NAMES[lookup_key]]?.map((child: string) => <MetadataCard
-                    resource_id={id_from_ref_props(child)} lookup_key={CHILD_LOOKUP_KEYS[lookup_key]} />)}
+                {family_query.data?.data.uuid && <Divider key="family-props-header">
+                    Inherited from
+                    <ResourceChip
+                        resource_id={family_query.data?.data.uuid}
+                        lookup_key={family_key}
+                    />
+                </Divider>}
+                {family_query.data?.data && <PrettyObject
+                    target={family_query.data?.data}
+                    exclude_keys={target_data? [...Object.keys(target_data), CHILD_PROPERTY_NAMES[family_key]] : []}
+                />}
             </Stack>
         </CardContent> : <CardContent />}
     </Card>
@@ -245,21 +289,32 @@ export default function MetadataFamilyCard<T extends Family>(
         status={queries.find(q => q.isError)?.error?.response?.status}
         header={
             <CardHeader
-                avatar={<Avatar variant="square"><ICON/></Avatar>}
-                title={family_id}
+                avatar={<Avatar variant="square"><ICON /></Avatar>}
+                title={resource_id}
                 subheader={<Stack direction="row" spacing={1} alignItems="center">
-                    <A component={Link} to={PATHS[lookup_key]}>
-                        {(lookup_key.charAt(0).toUpperCase() + lookup_key.slice(1)).replace(/_/g, " ")}
-                    </A>
+                    <A component={Link} to={PATHS[lookup_key]}>{DISPLAY_NAMES[lookup_key]}</A>
                 </Stack>}
             />
         }
     />
 
-    return <QueryWrapper
-        queries={[query]}
-        loading={loadingBody}
-        error={getErrorBody}
-        success={cardBody}
-    />
+    return <ErrorBoundary
+        fallback={(error: Error) => <ErrorCard
+            message={error.message}
+            header={
+                <CardHeader
+                    avatar={<Avatar variant="square"><ICON /></Avatar>}
+                    title="Error"
+                    subheader={`Error with ResourceCard for ${lookup_key} ${resource_id} [editing=${editing}]`}
+                />
+            }
+        />}
+    >
+        <QueryWrapper
+            queries={[target_query, family_query]}
+            loading={loadingBody}
+            error={getErrorBody}
+            success={cardBody}
+        />
+    </ErrorBoundary>
 }

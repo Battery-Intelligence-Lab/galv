@@ -15,7 +15,7 @@ import {
     GET_REPRESENTATIONS,
     PATHS, ICONS, API_SLUGS
 } from "../../constants";
-import {Family} from "./MetadataCard";
+import {Family} from "./ChildCard";
 import ErrorCard from "../error/ErrorCard";
 import CardHeader from "@mui/material/CardHeader";
 import Avatar from "@mui/material/Avatar";
