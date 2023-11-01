@@ -10,6 +10,10 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import Prettify from "./Prettify";
 import {SerializableObject, Serializable} from "./TypeChanger";
+import {API_HANDLERS, API_SLUGS} from "../../constants";
+import {AxiosError, AxiosResponse} from "axios";
+import {useQuery} from "@tanstack/react-query";
+import {BaseResource, ResourceCardProps} from "./ResourceCard";
 
 export type PrettyObjectProps = {
     target?: SerializableObject
@@ -34,6 +38,30 @@ function rename_key_in_place(
         } else new_obj[k] = v
     })
     return new_obj
+}
+
+export function PrettyObjectFromQuery<T extends BaseResource>(
+    { resource_id, lookup_key, filter, ...prettyObjectProps}:
+        {
+            resource_id: string|number,
+            lookup_key: ResourceCardProps<T>["lookup_key"],
+            filter?: (d: any, lookup_key: ResourceCardProps<T>["lookup_key"]) => any
+        } & Omit<PrettyObjectProps, "target">
+) {
+    const target_api_handler = new API_HANDLERS[lookup_key]()
+    const target_get = target_api_handler[
+        `${API_SLUGS[lookup_key]}Retrieve` as keyof typeof target_api_handler
+        ] as (uuid: string) => Promise<AxiosResponse<T>>
+
+    const target_query = useQuery<AxiosResponse<T>, AxiosError>({
+        queryKey: [lookup_key, resource_id],
+        queryFn: () => target_get.bind(target_api_handler)(String(resource_id))
+    })
+
+    return <PrettyObject
+        {...prettyObjectProps}
+        target={filter? filter(target_query.data?.data, lookup_key) : target_query.data?.data}
+    />
 }
 
 export default function PrettyObject(

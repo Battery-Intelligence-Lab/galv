@@ -18,8 +18,7 @@ import FilterBar from "../filtering/FilterBar";
 import TextFilter from "../filtering/TextFilter";
 import QueryWrapper, {QueryDependentElement} from "../utils/QueryWrapper";
 import ErrorPage from "../error/ErrorPage";
-import CellFamilyCard from "./CellFamilyCard";
-
+import ResourceCard from "../utils/ResourceCard";
 
 export default function CellList() {
     const { classes } = useStyles();
@@ -43,7 +42,11 @@ export default function CellList() {
 
     const body =
         <Stack spacing={2}>
-            {filteredData.map((cell_family: CellFamily) => <CellFamilyCard key={cell_family.uuid} uuid={cell_family.uuid} />)}
+            {filteredData.map((cell_family: CellFamily) => <ResourceCard
+                key={cell_family.uuid}
+                resource_id={cell_family.uuid}
+                lookup_key="CELL_FAMILY"
+            />)}
         </Stack>
 
     const getErrorBody: QueryDependentElement = (queries) => <ErrorPage

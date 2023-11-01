@@ -18,7 +18,7 @@ type CardActionBarProps = {
     lookup_key: keyof typeof ICONS &
         keyof typeof PATHS &
         keyof typeof DISPLAY_NAMES
-    uuid?: string
+    resource_id?: string|number
     family_uuid?: string
     highlight_count?: number
     highlight_lookup_key?: keyof typeof ICONS &
@@ -132,12 +132,12 @@ export default function CardActionBar(props: CardActionBarProps) {
             describeChild
             key="delete"
         >
-            <IconButton component={Link} to={`${PATHS[props.lookup_key]}/${props.uuid}/delete`}>
+            <IconButton component={Link} to={`${PATHS[props.lookup_key]}/${props.resource_id}/delete`}>
                 <EditIcon fontSize="large"/>
             </IconButton>
         </Tooltip>}
         <Tooltip title={`Go to ${DISPLAY_NAMES[props.lookup_key]} Page`} arrow describeChild key="goto">
-            <IconButton component={Link} to={`${PATHS[props.lookup_key]}/${props.uuid}`}>
+            <IconButton component={Link} to={`${PATHS[props.lookup_key]}/${props.resource_id}`}>
                 <ManageSearchIcon fontSize="large"/>
             </IconButton>
         </Tooltip>

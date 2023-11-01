@@ -159,7 +159,7 @@ export const API_SLUGS = {
     FILE: "files",
 } as const
 
-type Field = {readonly: boolean, type: TypeChangerSupportedTypeName, many?: boolean}
+export type Field = {readonly: boolean, type: TypeChangerSupportedTypeName, many?: boolean}
 const always_fields: {[key: string]: Field} = {
     url: {readonly: true, type: "string"},
     permissions: {readonly: true, type: "object"},
@@ -224,6 +224,14 @@ export const FIELDS = {
         pybamm_template: {readonly: false, type: "object"},
         schedules: {readonly: true, type: "SCHEDULE", many: true},
     },
+    TEAM: {
+        ...always_fields,
+        id: {readonly: true, type: "number"},
+        name: {readonly: false, type: "string"},
+        lab: {readonly: true, type: "LAB"},
+        members: {readonly: true, type: "USER", many: true},
+        admins: {readonly: true, type: "USER", many: true},
+    }
 } as const
 
 /**

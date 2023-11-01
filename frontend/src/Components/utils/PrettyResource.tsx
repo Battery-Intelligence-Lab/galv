@@ -3,7 +3,7 @@ import {ChipProps} from "@mui/material/Chip";
 import React, {useEffect, useState} from "react";
 import useStyles from "../../UseStyles";
 import {AxiosError, AxiosResponse} from "axios";
-import {build_placeholder_url, get_url_components, PaginatedAPIResponse} from "./misc";
+import {build_placeholder_url, get_url_components, id_from_ref_props, PaginatedAPIResponse} from "./misc";
 import {useQuery} from "@tanstack/react-query";
 import TextField from "@mui/material/TextField";
 import clsx from "clsx";
@@ -18,7 +18,7 @@ export const PrettyResourceSelect = (
     {value, onChange, edit_mode, lookup_key, resource_id, ...childProps}:
         { lookup_key: keyof typeof API_HANDLERS, resource_id: string } & PrettyComponentProps & Partial<ChipProps>
 ) => {
-    console.log(`PrettySelect`, {value, onChange, edit_mode, lookup_key, resource_id: resource_id, childProps})
+    console.log(`PrettyResourceSelect`, {value, onChange, edit_mode, lookup_key, resource_id: resource_id, childProps})
 
     const api_handler = new API_HANDLERS[lookup_key]()
     const api_list = api_handler[
@@ -108,7 +108,7 @@ export const PrettyResourceSelect = (
             <div>{
                 family_query.data?.data?.results?
                     <ResourceChip
-                        resource_id={family_query.data.data.results.find(f => f.url === params.group)}
+                        resource_id={id_from_ref_props<string>(family_query.data.data.results.find(f => f.url === params.group))}
                         lookup_key={FAMILY_LOOKUP_KEYS[lookup_key as keyof typeof FAMILY_LOOKUP_KEYS]}
                         component={ButtonBase}
                         clickable={false}

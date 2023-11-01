@@ -15,11 +15,12 @@ import {
     GET_REPRESENTATIONS,
     PATHS, ICONS, API_SLUGS
 } from "../../constants";
-import {Family} from "./ChildCard";
+import {Family} from "./ResourceCard";
 import ErrorCard from "../error/ErrorCard";
 import CardHeader from "@mui/material/CardHeader";
 import Avatar from "@mui/material/Avatar";
 import ErrorBoundary from "./ErrorBoundary";
+import Representation from "./Representation";
 
 type ResourceFamilyChipProps = {
     resource_id: string|number
@@ -75,13 +76,7 @@ export default function ResourceChip<T extends Family>(
                 className={clsx(classes.item_chip)}
                 icon={<ICON />}
                 variant="outlined"
-                label={
-                    query.data?.data?
-                        Object.keys(GET_REPRESENTATIONS).includes(lookup_key)?
-                            GET_REPRESENTATIONS[lookup_key as keyof typeof GET_REPRESENTATIONS](query.data?.data) :
-                            `${DISPLAY_NAMES[lookup_key]} ${resource_id}` :
-                        ""
-                }
+                label={<Representation resource_id={resource_id} lookup_key={lookup_key}/>}
                 clickable={true}
                 component={Link}
                 to={`${PATHS[lookup_key]}/${resource_id}`}

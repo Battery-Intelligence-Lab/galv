@@ -11,7 +11,7 @@ import {
   Link,
   useNavigate,
   useLocation,
-  matchPath,
+  matchPath, useParams,
 } from "react-router-dom";
 import Login from "./Login"
 import { makeStyles} from "tss-react/mui";
@@ -43,11 +43,9 @@ import CyclerTestList from "./Components/cycler-test/CyclerTestList";
 import CyclerTestPage from "./Components/cycler-test/CyclerTestPage";
 import CellList from "./Components/cell/CellList";
 import CellPage from "./Components/cell/CellPage";
-import CellFamilyCard from "./Components/cell/CellFamilyCard";
-import ScheduleFamilyCard from "./Components/schedule/ScheduleFamilyCard";
-import EquipmentFamilyCard from "./Components/equipment/EquipmentFamilyCard";
 import {PATHS, ICONS} from "./constants";
 import ErrorBoundary from "./Components/utils/ErrorBoundary";
+import ResourceCard from "./Components/utils/ResourceCard";
 
 const drawerWidth = 240;
 const useStyles = makeStyles()((theme) => {
@@ -329,15 +327,24 @@ export default function Core() {
             <Route path={PATHS.CELL} element={<CellList/>} />
             <Route path={`${PATHS.CELL}/:uuid`} element={<CellPage />} />
             <Route path={PATHS.CELL_FAMILY} element={<>TODO</>} />
-            <Route path={`${PATHS.CELL_FAMILY}/:uuid`} element={<CellFamilyCard />} />
+            <Route path={`${PATHS.CELL_FAMILY}/:uuid`} element={<ResourceCard
+                resource_id={useParams().uuid ?? -1}
+                lookup_key="CELL_FAMILY"
+            />} />
             <Route path={PATHS.EQUIPMENT} element={<>TODO</>} />
             <Route path={`${PATHS.EQUIPMENT}/:uuid`} element={<>TODO</>} />
             <Route path={PATHS.EQUIPMENT_FAMILY} element={<>TODO</>} />
-            <Route path={`${PATHS.EQUIPMENT_FAMILY}/:uuid`} element={<EquipmentFamilyCard />} />
+            <Route path={`${PATHS.EQUIPMENT_FAMILY}/:uuid`} element={<ResourceCard
+                resource_id={useParams().uuid ?? -1}
+                lookup_key="EQUIPMENT_FAMILY"
+            />} />
             <Route path={PATHS.SCHEDULE} element={<>TODO</>} />
             <Route path={`${PATHS.SCHEDULE}/:uuid`} element={<>TODO</>} />
             <Route path={PATHS.SCHEDULE_FAMILY} element={<>TODO</>} />
-            <Route path={`${PATHS.SCHEDULE_FAMILY}/:uuid`} element={<ScheduleFamilyCard />} />
+            <Route path={`${PATHS.SCHEDULE_FAMILY}/:uuid`} element={<ResourceCard
+                resource_id={useParams().uuid ?? -1}
+                lookup_key="SCHEDULE_FAMILY"
+            />} />
             <Route path={PATHS.LAB} element={<>TODO</>} />
             <Route path={`${PATHS.LAB}/:uuid`} element={<>TODO</>} />
             <Route path={PATHS.TEAM} element={<>TODO</>} />
