@@ -8,6 +8,7 @@ from drf_spectacular.utils import extend_schema_field, extend_schema
 from dry_rest_permissions.generics import DRYPermissionsField
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
+from django.core.exceptions import ValidationError as DjangoValidationError
 
 from galv.models import ValidationSchema, GroupProxy, UserProxy
 from rest_framework.fields import DictField
@@ -301,7 +302,7 @@ class HyperlinkedRelatedIdField(serializers.HyperlinkedRelatedField):
                 pass
         try:
             return self.get_queryset().get(pk=data)
-        except (TypeError, ValueError, self.queryset.model.DoesNotExist):
+        except (TypeError, ValueError, DjangoValidationError, self.queryset.model.DoesNotExist):
             return super().to_internal_value(data)
 
     def to_representation(self, value):
@@ -322,12 +323,12 @@ class TruncatedHyperlinkedRelatedIdField(HyperlinkedRelatedIdField):
     Other fields are specified by the 'fields' argument to the constructor.
     """
     def __init__(self, child_serializer_class, fields, *args, **kwargs):
-        self.child = child_serializer_class
+        self.child_serializer_class = child_serializer_class
         if isinstance(fields, str):
             fields = [fields]
         if not isinstance(fields, list):
             raise ValueError("fields must be a list")
-        self.fields = fields
+        self.child_fields = fields
         # Support create_only=True by removing queryset and applying read_only=True
         self.create_only = kwargs.pop('create_only', False)
         super().__init__(*args, **kwargs)
@@ -344,14 +345,14 @@ class TruncatedHyperlinkedRelatedIdField(HyperlinkedRelatedIdField):
                 return super().to_representation(instance)
         except (AttributeError, KeyError):
             pass
-        if isinstance(self.child, str):
-            child = serializer_class_from_string(self.child)
-            self.child = child  # cache result
+        if isinstance(self.child_serializer_class, str):
+            child = serializer_class_from_string(self.child_serializer_class)
+            self.child_serializer_class = child  # cache result
         else:
-            child = self.child
+            child = self.child_serializer_class
         fields = list({
-            *[f for f in self.child.Meta.fields if f in ['url', 'id', 'uuid']],# 'permissions']],
-            *self.fields
+            *[f for f in self.child_serializer_class.Meta.fields if f in ['url', 'id', 'uuid']],# 'permissions']],
+            *self.child_fields
         })
 
         class TruncatedSerializer(child):
