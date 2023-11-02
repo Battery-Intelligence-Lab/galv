@@ -118,7 +118,7 @@ export default function CardActionBar(props: CardActionBarProps) {
     const FAMILY_ICON = family_key? ICONS[family_key] : () => <></>
 
     return <Stack direction="row" spacing={1} alignItems="center">
-        {props.highlight_count && highlight_lookup_key && <CountBadge
+        {highlight_lookup_key && <CountBadge
             key={`highlight`}
             icon={<ICON fontSize="large"/>}
             badgeContent={props.highlight_count}

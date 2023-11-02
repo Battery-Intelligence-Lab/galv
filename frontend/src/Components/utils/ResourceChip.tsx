@@ -4,35 +4,27 @@ import {useQuery} from "@tanstack/react-query";
 import clsx from "clsx";
 import {Link} from "react-router-dom";
 import React from "react";
-import {usePropParamId} from "./misc";
+import {id_from_ref_props} from "./misc";
 import LoadingChip from "../utils/LoadingChip";
 import QueryWrapper, {QueryWrapperProps} from "../utils/QueryWrapper";
 import {AxiosError, AxiosResponse} from "axios";
 import ErrorChip from "../error/ErrorChip";
 import {
     API_HANDLERS,
-    DISPLAY_NAMES,
-    GET_REPRESENTATIONS,
-    PATHS, ICONS, API_SLUGS
+    PATHS, ICONS, API_SLUGS, FAMILY_LOOKUP_KEYS, LookupKey
 } from "../../constants";
 import {Family} from "./ResourceCard";
-import ErrorCard from "../error/ErrorCard";
-import CardHeader from "@mui/material/CardHeader";
-import Avatar from "@mui/material/Avatar";
 import ErrorBoundary from "./ErrorBoundary";
 import Representation from "./Representation";
 
 type ResourceFamilyChipProps = {
     resource_id: string|number
-    lookup_key: keyof typeof ICONS &
-        keyof typeof PATHS &
-        keyof typeof DISPLAY_NAMES &
-        keyof typeof API_HANDLERS &
-        string
+    lookup_key: LookupKey
+    short_name?: boolean
 }
 
 export default function ResourceChip<T extends Family>(
-    {resource_id, lookup_key, loading, error, success, ...chipProps}:
+    {resource_id, lookup_key, loading, error, success, short_name, ...chipProps}:
         ResourceFamilyChipProps & Partial<QueryWrapperProps> & ChipProps & {component?: React.ElementType}
 ) {
     // console.log(`ResourceChip`, {uuid, lookup_key, loading, error, success, chipProps})
@@ -76,7 +68,17 @@ export default function ResourceChip<T extends Family>(
                 className={clsx(classes.item_chip)}
                 icon={<ICON />}
                 variant="outlined"
-                label={<Representation resource_id={resource_id} lookup_key={lookup_key}/>}
+                label={<Representation
+                    resource_id={resource_id}
+                    lookup_key={lookup_key}
+                    prefix={(!short_name && query.data?.data.family) ?
+                        <Representation
+                            resource_id={id_from_ref_props<string>(query.data?.data.family)}
+                            lookup_key={FAMILY_LOOKUP_KEYS[lookup_key as keyof typeof FAMILY_LOOKUP_KEYS]}
+                            suffix=" "
+                        /> : undefined
+                    }
+                />}
                 clickable={true}
                 component={Link}
                 to={`${PATHS[lookup_key]}/${resource_id}`}

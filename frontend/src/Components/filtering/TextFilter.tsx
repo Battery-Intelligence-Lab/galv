@@ -1,6 +1,6 @@
 import React, {Component} from "react";
 import TextField from "@mui/material/TextField";
-import {Filter, FilterWidgetProps} from "./FilterBar";
+import {FilterWidgetProps} from "./FilterBar";
 
 type TextFilterProps = FilterWidgetProps<string> & {}
 

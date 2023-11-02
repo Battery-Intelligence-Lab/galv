@@ -14,11 +14,10 @@ import Stack from "@mui/material/Stack";
 import clsx from "clsx";
 import Grid from "@mui/material/Unstable_Grid2";
 import CircularProgress from "@mui/material/CircularProgress";
-import LinearProgress from "@mui/material/LinearProgress";
 import Skeleton from "@mui/material/Skeleton";
 import FilterBar from "../filtering/FilterBar";
 import TextFilter from "../filtering/TextFilter";
-import CyclerTestCard from "./CyclerTestCard";
+import ResourceCard from "../utils/ResourceCard";
 
 
 export default function CyclerTestList() {
@@ -34,7 +33,7 @@ export default function CyclerTestList() {
     })
 
     return (
-        <Container maxWidth="lg" className={classes.container}>
+        <Container maxWidth="lg">
             <Grid container justifyContent="space-between" key="header">
                 <Typography
                     component="h1"
@@ -61,7 +60,11 @@ export default function CyclerTestList() {
                         <p><Link to="/login">Log in</Link> to see Cycler Tests</p> :
                         <p>No Cycler Tests found</p> :
                     filteredData.map(
-                        (cycler_test: CyclerTest, i) => <CyclerTestCard key={`cycler_test_${i}`} uuid={cycler_test.uuid} />
+                        (cycler_test: CyclerTest, i) => <ResourceCard
+                            key={`cycler_test_${i}`}
+                            resource_id={cycler_test.uuid}
+                            lookup_key="CYCLER_TEST"
+                        />
                     )
                 }
             </Stack>

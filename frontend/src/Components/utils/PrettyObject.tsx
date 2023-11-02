@@ -1,5 +1,5 @@
 import TableContainer, {TableContainerProps} from "@mui/material/TableContainer";
-import React, {forwardRef, ReactNode, useRef, useState} from "react";
+import React from "react";
 import useStyles from "../../UseStyles";
 import clsx from "clsx";
 import Table from "@mui/material/Table";
@@ -10,10 +10,10 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import Prettify from "./Prettify";
 import {SerializableObject, Serializable} from "./TypeChanger";
-import {API_HANDLERS, API_SLUGS} from "../../constants";
+import {API_HANDLERS, API_SLUGS, LookupKey} from "../../constants";
 import {AxiosError, AxiosResponse} from "axios";
 import {useQuery} from "@tanstack/react-query";
-import {BaseResource, ResourceCardProps} from "./ResourceCard";
+import {BaseResource} from "./ResourceCard";
 
 export type PrettyObjectProps = {
     target?: SerializableObject
@@ -44,8 +44,8 @@ export function PrettyObjectFromQuery<T extends BaseResource>(
     { resource_id, lookup_key, filter, ...prettyObjectProps}:
         {
             resource_id: string|number,
-            lookup_key: ResourceCardProps<T>["lookup_key"],
-            filter?: (d: any, lookup_key: ResourceCardProps<T>["lookup_key"]) => any
+            lookup_key: LookupKey,
+            filter?: (d: any, lookup_key: LookupKey) => any
         } & Omit<PrettyObjectProps, "target">
 ) {
     const target_api_handler = new API_HANDLERS[lookup_key]()

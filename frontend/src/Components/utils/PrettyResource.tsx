@@ -1,4 +1,4 @@
-import {API_HANDLERS, API_SLUGS, DISPLAY_NAMES, FAMILY_LOOKUP_KEYS, GET_REPRESENTATIONS} from "../../constants";
+import {API_HANDLERS, API_SLUGS, DISPLAY_NAMES, FAMILY_LOOKUP_KEYS, LookupKey} from "../../constants";
 import {ChipProps} from "@mui/material/Chip";
 import React, {useEffect, useState} from "react";
 import useStyles from "../../UseStyles";
@@ -13,10 +13,11 @@ import {PrettyComponentProps, PrettyString} from "./Prettify";
 import Autocomplete, {createFilterOptions} from "@mui/material/Autocomplete";
 import CircularProgress from "@mui/material/CircularProgress";
 import {CreateFilterOptionsConfig} from "@mui/material";
+import {representation} from "./Representation";
 
 export const PrettyResourceSelect = (
     {value, onChange, edit_mode, lookup_key, resource_id, ...childProps}:
-        { lookup_key: keyof typeof API_HANDLERS, resource_id: string } & PrettyComponentProps & Partial<ChipProps>
+        { lookup_key: LookupKey, resource_id: string } & PrettyComponentProps & Partial<ChipProps>
 ) => {
     console.log(`PrettyResourceSelect`, {value, onChange, edit_mode, lookup_key, resource_id: resource_id, childProps})
 
@@ -56,7 +57,7 @@ export const PrettyResourceSelect = (
     const represent = (url: string) => {
         const object = url_to_query_result(url)
         if (!object) return url
-        return GET_REPRESENTATIONS[lookup_key as keyof typeof GET_REPRESENTATIONS](object)
+        return representation({data: object, lookup_key})
     }
     const url_to_value = (url: string) => represent(url)
     const value_to_url = (value: string) => {

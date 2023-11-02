@@ -46,7 +46,7 @@ export default function UndoRedoProvider({children}: PropsWithChildren<any>) {
             current_index: 0
         }),
         update: (payload: any) => setState({
-            history: [state.history.slice(0, state.current_index), payload],
+            history: [...state.history.slice(0, state.current_index + 1), payload],
             current_index: state.current_index + 1
         })
     }}>

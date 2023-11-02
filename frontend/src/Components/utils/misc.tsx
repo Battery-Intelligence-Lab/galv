@@ -1,6 +1,6 @@
 import {useParams} from "react-router-dom";
 import {Serializable} from "./TypeChanger";
-import {API_HANDLERS, PATHS} from "../../constants";
+import {FIELDS, LookupKey, PATHS} from "../../constants";
 
 export type ObjectReferenceProps =
     { uuid: string } |
@@ -18,6 +18,7 @@ export type PaginatedAPIResponse<T = any> = {
 }
 
 export function id_from_ref_props<T extends number | string>(props: ObjectReferenceProps | string | number): T {
+    if (props === undefined) throw new Error(`Cannot get id from undefined`)
     if (typeof props === 'number')
         return props as T
     if (typeof props === 'object') {
@@ -62,7 +63,7 @@ export function usePropParamId<T extends number|string>(props: any): T {
  * @param url
  */
 export function get_url_components(url: string):
-    {lookup_key: keyof typeof API_HANDLERS & string,
+    {lookup_key: LookupKey,
         resource_id: string}|undefined {
     url = url.toLowerCase()
     const parts = url.split(/[/|?]/).filter(x => x)
@@ -71,13 +72,13 @@ export function get_url_components(url: string):
             .find(k => PATHS[k as keyof typeof PATHS] === `/${parts[2]}`)
         if (lookup_key === undefined) return undefined
 
-        if (!Object.keys(API_HANDLERS).includes(lookup_key)) {
-            console.warn(`${lookup_key} is a PATHS key but not an API_HANDLERS key`, url)
+        if (!Object.keys(FIELDS).includes(lookup_key)) {
+            console.warn(`${lookup_key} is a PATHS key but not an FIELDS key`, url)
             return undefined
         }
 
         const resource_id = parts[3]
-        return {lookup_key: lookup_key as keyof typeof API_HANDLERS, resource_id: resource_id}
+        return {lookup_key: lookup_key as LookupKey, resource_id: resource_id}
     }
     return undefined
 }

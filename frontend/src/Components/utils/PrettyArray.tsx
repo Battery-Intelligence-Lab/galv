@@ -11,7 +11,7 @@ import {ListProps} from "@mui/material";
 import Prettify from "./Prettify";
 import useStyles from "../../UseStyles";
 import clsx from "clsx";
-import {detect_type, get_conversion_fun, Serializable} from "./TypeChanger";
+import {Serializable} from "./TypeChanger";
 
 type PrettyArrayProps = Pick<PrettyObjectProps, "nest_level" | "edit_mode" | "clearParentFocus"> & {
     target: Serializable[]

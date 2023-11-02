@@ -7,7 +7,6 @@ import {
   Routes,
   Route,
   Outlet,
-  Navigate,
   Link,
   useNavigate,
   useLocation,
@@ -40,10 +39,8 @@ import Alert from "@mui/material/Alert";
 import axios, {AxiosError} from "axios";
 import Experiments from "./Experiments";
 import CyclerTestList from "./Components/cycler-test/CyclerTestList";
-import CyclerTestPage from "./Components/cycler-test/CyclerTestPage";
 import CellList from "./Components/cell/CellList";
-import CellPage from "./Components/cell/CellPage";
-import {PATHS, ICONS} from "./constants";
+import {PATHS, ICONS, LookupKey} from "./constants";
 import ErrorBoundary from "./Components/utils/ErrorBoundary";
 import ResourceCard from "./Components/utils/ResourceCard";
 
@@ -112,14 +109,15 @@ const useStyles = makeStyles()((theme) => {
         width: theme.spacing(9),
       },
     },
-    appBarSpacer: {
-      paddingTop: 44,
-      //theme.mixins.toolbar,
-    },
     content: {
       flexGrow: 1,
       height: '100vh',
       overflow: 'auto',
+      paddingTop: theme.spacing(9),
+      paddingLeft: theme.spacing(0),
+      paddingRight: theme.spacing(0),
+      paddingBottom: theme.spacing(0),
+      fontFamily: 'Helvetica Neue,Helvetica,Arial,sans-serif',
     },
     container: {
       paddingTop: theme.spacing(4),
@@ -293,7 +291,6 @@ export default function Core() {
           <List>{mainListItems}</List>
         </Drawer>
         <main className={classes.content}>
-          <div className={classes.appBarSpacer} />
           <Outlet />
         </main>
         <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={handleSnackbarClose}>
@@ -313,48 +310,45 @@ export default function Core() {
     )
   }
 
+  function get_lookup_key_from_pathname(pathname: string|undefined): LookupKey | undefined {
+    return (
+        (Object.entries(PATHS).find(([k, v]) => v === `/${pathname}`)?.[0] as keyof typeof PATHS)
+    ) as LookupKey
+  }
+
+  function ResourceCardWrapper() {
+    const {type, id} = useParams()
+    const lookup_key = get_lookup_key_from_pathname(type)
+    console.log(`ResourceCardWrapper`, {type, id, lookup_key})
+    return <ResourceCard
+        resource_id={id ?? -1}
+        lookup_key={lookup_key ?? "CYCLER_TEST"}
+        expanded={true}
+    />
+  }
+
   /* A <Routes> looks through its children <Route>s and renders the first one that matches the current URL. */
-  return (
-      <ErrorBoundary fallback={MyFallbackComponent}>
-        <Routes>
-          <Route path="/login" element={<Login />}/>
-          <Route path={PATHS.DASHBOARD} element={Layout}>
-            <Route path={PATHS.EXPERIMENT} element={<Experiments/>} />
-            <Route path={`${PATHS.EXPERIMENT}/:uuid`} element={<Experiments/>} />
-            <Route path={PATHS.CYCLER_TEST} element={<CyclerTestList/>} />
-            <Route path={`${PATHS.CYCLER_TEST}/:uuid`} element={<CyclerTestPage/>} />
-            <Route path={PATHS.DATASET} element={<>TODO</>} />
-            <Route path={PATHS.CELL} element={<CellList/>} />
-            <Route path={`${PATHS.CELL}/:uuid`} element={<CellPage />} />
-            <Route path={PATHS.CELL_FAMILY} element={<>TODO</>} />
-            <Route path={`${PATHS.CELL_FAMILY}/:uuid`} element={<ResourceCard
-                resource_id={useParams().uuid ?? -1}
-                lookup_key="CELL_FAMILY"
-            />} />
-            <Route path={PATHS.EQUIPMENT} element={<>TODO</>} />
-            <Route path={`${PATHS.EQUIPMENT}/:uuid`} element={<>TODO</>} />
-            <Route path={PATHS.EQUIPMENT_FAMILY} element={<>TODO</>} />
-            <Route path={`${PATHS.EQUIPMENT_FAMILY}/:uuid`} element={<ResourceCard
-                resource_id={useParams().uuid ?? -1}
-                lookup_key="EQUIPMENT_FAMILY"
-            />} />
-            <Route path={PATHS.SCHEDULE} element={<>TODO</>} />
-            <Route path={`${PATHS.SCHEDULE}/:uuid`} element={<>TODO</>} />
-            <Route path={PATHS.SCHEDULE_FAMILY} element={<>TODO</>} />
-            <Route path={`${PATHS.SCHEDULE_FAMILY}/:uuid`} element={<ResourceCard
-                resource_id={useParams().uuid ?? -1}
-                lookup_key="SCHEDULE_FAMILY"
-            />} />
-            <Route path={PATHS.LAB} element={<>TODO</>} />
-            <Route path={`${PATHS.LAB}/:uuid`} element={<>TODO</>} />
-            <Route path={PATHS.TEAM} element={<>TODO</>} />
-            <Route path={`${PATHS.TEAM}/:uuid`} element={<>TODO</>} />
-            {/*<Route path={profilePath} element={UserProfile()} />*/}
-            {/*<Route path={tokenPath} element={Tokens()} />*/}
-            {/*<Route index element={Dashboard()} />*/}
-            <Route index element={<CyclerTestList/>} />
-          </Route>
-        </Routes>
-      </ErrorBoundary>
-  );
+  return <ErrorBoundary fallback={MyFallbackComponent}>
+    <Routes>
+      <Route path="/login" element={<Login />}/>
+      <Route path={PATHS.DASHBOARD} element={Layout}>
+        <Route path="/:type/:id" element={<ResourceCardWrapper/>}/>  {/* Handles direct resource lookups */}
+        <Route path={PATHS.EXPERIMENT} element={<Experiments/>} />
+        <Route path={PATHS.CYCLER_TEST} element={<CyclerTestList/>} />
+        <Route path={PATHS.DATASET} element={<>TODO</>} />
+        <Route path={PATHS.CELL} element={<CellList/>} />
+        <Route path={PATHS.CELL_FAMILY} element={<>TODO</>} />
+        <Route path={PATHS.EQUIPMENT} element={<>TODO</>} />
+        <Route path={PATHS.EQUIPMENT_FAMILY} element={<>TODO</>} />
+        <Route path={PATHS.SCHEDULE} element={<>TODO</>} />
+        <Route path={PATHS.SCHEDULE_FAMILY} element={<>TODO</>} />
+        <Route path={PATHS.LAB} element={<>TODO</>} />
+        <Route path={PATHS.TEAM} element={<>TODO</>} />
+        {/*<Route path={profilePath} element={UserProfile()} />*/}
+        {/*<Route path={tokenPath} element={Tokens()} />*/}
+        {/*<Route index element={Dashboard()} />*/}
+        <Route index element={<CyclerTestList/>} />
+      </Route>
+    </Routes>
+  </ErrorBoundary>
 }

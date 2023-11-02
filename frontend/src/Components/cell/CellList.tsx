@@ -54,7 +54,7 @@ export default function CellList() {
         />
 
     return (
-        <Container maxWidth="lg" className={classes.container}>
+        <Container maxWidth="lg">
             <Grid container justifyContent="space-between">
                 <Typography
                     component="h1"

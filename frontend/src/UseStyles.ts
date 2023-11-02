@@ -28,6 +28,7 @@ const item = (theme: Theme) => ({
 })
 export default makeStyles()((theme) => {
   return {
+    container: {},
     button: {
       margin: theme.spacing(1),
     },
@@ -37,11 +38,6 @@ export default makeStyles()((theme) => {
     },
     chip: {
       margin: 2,
-    },
-    container: {
-      paddingTop: theme.spacing(4),
-      paddingBottom: theme.spacing(4),
-      fontFamily: 'Helvetica Neue,Helvetica,Arial,sans-serif',
     },
     deleteIcon: {
       "&:hover": {color: theme.palette.error.light},
@@ -111,8 +107,7 @@ export default makeStyles()((theme) => {
       ...item(theme)
     },
     item_page: {
-      ...item(theme),
-      marginTop: theme.spacing(2)
+      ...item(theme)
     },
     team_chip: {},
     error: {color: theme.palette.error.main},

@@ -18,7 +18,7 @@ import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
 import {useMutation, useQueryClient} from "@tanstack/react-query";
-import {CellModelsApi, LoginApi} from "./api_codegen";
+import {LoginApi} from "./api_codegen";
 import {save_login_response} from "./AxiosConfig";
 
 const useStyles = makeStyles()((theme) => {

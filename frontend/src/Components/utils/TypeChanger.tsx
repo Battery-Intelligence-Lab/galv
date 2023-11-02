@@ -1,6 +1,5 @@
 import Tooltip from "@mui/material/Tooltip";
 import React, {
-    ReactNode,
     useEffect,
     useState
 } from "react";
@@ -11,10 +10,9 @@ import NumbersIcon from "@mui/icons-material/Numbers";
 import DataObjectIcon from "@mui/icons-material/DataObject";
 import DataArrayIcon from "@mui/icons-material/DataArray";
 import PowerSettingsNewIcon from "@mui/icons-material/PowerSettingsNew";
-import {PopoverProps} from "@mui/material";
-import SvgIcon from "@mui/material/SvgIcon";
 import IconButton from "@mui/material/IconButton";
-import Popover from "@mui/material/Popover";
+import Popover, {PopoverProps} from "@mui/material/Popover";
+import {SvgIconTypeMap} from "@mui/material/SvgIcon";
 import clsx from "clsx";
 import useStyles from "../../UseStyles";
 import Stack from "@mui/material/Stack";
@@ -22,6 +20,7 @@ import Typography from "@mui/material/Typography";
 import {build_placeholder_url, get_url_components} from "./misc";
 import {API_HANDLERS, DISPLAY_NAMES, ICONS, PATHS} from "../../constants";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
+import {OverridableComponent} from "@mui/material/OverridableComponent";
 
 const str = (v: any) => {
     try {return JSON.stringify(v)} catch(e) {
@@ -162,7 +161,12 @@ function TypeChangePopover({value, onTypeChange, ...props}: TypeChangerPopoverPr
         if (props.open && value && Object.keys(API_HANDLERS).includes(value)) {
             setResourcePopoverOpen(true)
         }
-    }, [props.open]);
+    }, [props.open, value]);
+
+    const get_icon = ({icon}: {icon: OverridableComponent<SvgIconTypeMap<{}, "svg">> & {muiName: string}}) => {
+        const ICON = icon
+        return <ICON />
+    }
 
     return <Popover className={clsx(classes.type_changer_popover)} {...props}>
         <Stack direction="row" alignItems="center" spacing={1} ref={resourcePopoverAnchorRef}>
@@ -175,7 +179,7 @@ function TypeChangePopover({value, onTypeChange, ...props}: TypeChangerPopoverPr
                 {Object.entries(type_map).map(([type, ICON]) =>
                     <ToggleButton value={type} key={type} selected={value === type} disabled={value === type}>
                         <Tooltip title={ICON.tooltip} arrow placement="bottom" describeChild={true}>
-                            <ICON.icon />
+                            {get_icon(ICON)}
                         </Tooltip>
                     </ToggleButton>)}
             </ToggleButtonGroup>

@@ -8,9 +8,7 @@ import AssignmentIcon from "@mui/icons-material/Assignment";
 import HolidayVillageIcon from "@mui/icons-material/HolidayVillage";
 import PeopleAltIcon from "@mui/icons-material/PeopleAlt";
 import BatchPredictionIcon from '@mui/icons-material/BatchPrediction';
-import AttachFileIcon from '@mui/icons-material/AttachFile';
-import {OverridableComponent} from "@mui/material/OverridableComponent";
-import {SvgIconTypeMap} from "@mui/material";
+
 import {
     CellFamiliesApi, CellsApi, CyclerTestsApi, EquipmentApi,
     EquipmentFamiliesApi, ExperimentsApi,
@@ -159,7 +157,29 @@ export const API_SLUGS = {
     FILE: "files",
 } as const
 
-export type Field = {readonly: boolean, type: TypeChangerSupportedTypeName, many?: boolean}
+
+/**
+ * Priority levels govern how visible field information is.
+ * IDENTITY fields form part of the resource's display name.
+ * CONTEXT fields may be part of the name (e.g. Family name, or Equipment type).
+ * SUMMARY fields are shown in the summary view, e.g. cycler test related resources.
+ * DETAIL fields are shown in the detail view.
+ * Anything with an undefined priority level is assumed to be DETAIL.
+ *
+ * Special fields may not use the priority system, e.g. Team.
+ */
+export const PRIORITY_LEVELS = {
+    DETAIL: 0,
+    SUMMARY: 1,
+    CONTEXT: 2,
+    IDENTITY: 3
+} as const
+export type Field = {
+    readonly: boolean,
+    type: TypeChangerSupportedTypeName,
+    many?: boolean,
+    priority?: number
+}
 const always_fields: {[key: string]: Field} = {
     url: {readonly: true, type: "string"},
     permissions: {readonly: true, type: "object"},
@@ -168,71 +188,85 @@ const generic_fields: {[key: string]: Field} = {
     uuid: {readonly: true, type: "string"},
     ...always_fields,
 }
+
 /**
  * Lookup map to get the properties of the fields in each resource type.
  */
 export const FIELDS = {
+    CYCLER_TEST: {
+        ...generic_fields,
+        cell: {readonly: false, type: "CELL", priority: PRIORITY_LEVELS.SUMMARY},
+        schedule: {readonly: false, type: "SCHEDULE", priority: PRIORITY_LEVELS.SUMMARY},
+        equipment: {readonly: false, type: "EQUIPMENT", many: true, priority: PRIORITY_LEVELS.SUMMARY},
+        rendered_schedule: {readonly: true, type: "string", many: true},
+        team: {readonly: true, type: "TEAM"},
+    },
     CELL: {
         ...generic_fields,
-        identifier: {readonly: false, type: "string"},
-        in_use: {readonly: true, type: "boolean"},
-        family: {readonly: true, type: "CELL_FAMILY"},
+        identifier: {readonly: false, type: "string", priority: PRIORITY_LEVELS.IDENTITY},
+        family: {readonly: false, type: "CELL_FAMILY", priority: PRIORITY_LEVELS.CONTEXT},
         team: {readonly: true, type: "TEAM"},
         cycler_tests: {readonly: true, type: "array"},
+        in_use: {readonly: true, type: "boolean"},
     },
     EQUIPMENT: {
         ...generic_fields,
-        in_use: {readonly: true, type: "boolean"},
-        family: {readonly: true, type: "EQUIPIMENT_FAMILY"},
+        identifier: {readonly: false, type: "string", priority: PRIORITY_LEVELS.IDENTITY},
+        family: {readonly: false, type: "EQUIPIMENT_FAMILY", priority: PRIORITY_LEVELS.CONTEXT},
         team: {readonly: true, type: "TEAM"},
-        identifier: {readonly: false, type: "string"},
         calibration_date: {readonly: false, type: "string"},
+        in_use: {readonly: true, type: "boolean"},
     },
     SCHEDULE: {
         ...generic_fields,
-        family: {readonly: true, type: "SCHEDULE_FAMILY"},
+        family: {readonly: false, type: "SCHEDULE_FAMILY", priority: PRIORITY_LEVELS.CONTEXT},
         team: {readonly: true, type: "TEAM"},
         schedule_file: {readonly: false, type: "string"},
         pybamm_schedule_variables: {readonly: false, type: "object"},
     },
     CELL_FAMILY: {
         ...generic_fields,
-        manufacturer: {readonly: false, type: "string"},
-        model: {readonly: false, type: "string"},
-        form_factor: {readonly: false, type: "string"},
-        chemistry: {readonly: false, type: "string"},
+        manufacturer: {readonly: false, type: "string", priority: PRIORITY_LEVELS.IDENTITY},
+        model: {readonly: false, type: "string", priority: PRIORITY_LEVELS.IDENTITY},
+        form_factor: {readonly: false, type: "string", priority: PRIORITY_LEVELS.CONTEXT},
+        chemistry: {readonly: false, type: "string", priority: PRIORITY_LEVELS.CONTEXT},
+        cells: {readonly: true, type: "CELL", many: true, priority: PRIORITY_LEVELS.SUMMARY},
         nominal_voltage: {readonly: false, type: "number"},
         nominal_capacity: {readonly: false, type: "number"},
         initial_ac_impedance: {readonly: false, type: "number"},
         initial_dc_resistance: {readonly: false, type: "number"},
         energy_density: {readonly: false, type: "number"},
         power_density: {readonly: false, type: "number"},
-        cells: {readonly: true, type: "CELL", many: true},
     },
     EQUIPMENT_FAMILY: {
         ...generic_fields,
-        manufacturer: {readonly: false, type: "string"},
-        model: {readonly: false, type: "string"},
-        type: {readonly: false, type: "string"},
-        equipment: {readonly: true, type: "EQUIPMENT", many: true},
+        manufacturer: {readonly: false, type: "string", priority: PRIORITY_LEVELS.IDENTITY},
+        model: {readonly: false, type: "string", priority: PRIORITY_LEVELS.IDENTITY},
+        type: {readonly: false, type: "string", priority: PRIORITY_LEVELS.CONTEXT},
+        equipment: {readonly: true, type: "EQUIPMENT", many: true, priority: PRIORITY_LEVELS.SUMMARY},
     },
     SCHEDULE_FAMILY: {
         ...generic_fields,
-        identifier: {readonly: false, type: "string"},
+        identifier: {readonly: false, type: "string", priority: PRIORITY_LEVELS.IDENTITY},
         description: {readonly: false, type: "string"},
         ambient_temperature: {readonly: false, type: "number"},
         pybamm_template: {readonly: false, type: "object"},
-        schedules: {readonly: true, type: "SCHEDULE", many: true},
+        schedules: {readonly: true, type: "SCHEDULE", many: true, priority: PRIORITY_LEVELS.SUMMARY},
     },
     TEAM: {
         ...always_fields,
         id: {readonly: true, type: "number"},
-        name: {readonly: false, type: "string"},
-        lab: {readonly: true, type: "LAB"},
+        name: {readonly: false, type: "string", priority: PRIORITY_LEVELS.IDENTITY},
+        lab: {readonly: true, type: "LAB", priority: PRIORITY_LEVELS.CONTEXT},
         members: {readonly: true, type: "USER", many: true},
         admins: {readonly: true, type: "USER", many: true},
     }
 } as const
+
+export type LookupKey = keyof typeof FIELDS
+
+export const has_fields = (maybe_field: any): maybe_field is Field =>
+    Object.keys(FIELDS).includes(maybe_field)
 
 /**
  * Names used by the backend to filter by each resource type.
@@ -279,55 +313,3 @@ export const CHILD_PROPERTY_NAMES  = {
     EQUIPMENT_FAMILY: "equipment",
     SCHEDULE_FAMILY: "schedules",
 } as const
-
-const _get_representation_factory = (fun: (i: any) => string) => {
-    return (instance: any) => {
-        try {
-            return fun(instance)
-        } catch (e) {
-            if (instance === undefined) return "[undefined]"
-            console.error(`Could not get representation`, instance, e)
-            return instance.toString()
-        }
-    }
-}
-
-/**
- * Representation functions to present each resource family in a human-readable
- * format.
- */
-export const GET_REPRESENTATIONS = {
-    CELL_FAMILY: _get_representation_factory(
-        (instance: any) => `${instance.manufacturer} ${instance.model} [${instance.form_factor} ${instance.chemistry}]`
-    ),
-    EQUIPMENT_FAMILY: _get_representation_factory(
-        (instance: any) => `${instance.manufacturer} ${instance.model} [${instance.type}]`
-    ),
-    SCHEDULE_FAMILY: _get_representation_factory(
-        (instance: any) => `${instance.identifier}`
-    ),
-    FILE: _get_representation_factory(
-        (instance: any) => "GET_REPRESENTATIONS not implemented"
-    ),
-    EXPERIMENT: _get_representation_factory(
-        (instance: any) => "GET_REPRESENTATIONS not implemented"
-    ),
-    CYCLER_TEST: _get_representation_factory(
-        (instance: any) => instance.uuid || String(instance)
-    ),
-    CELL: _get_representation_factory(
-        (instance: any) => instance.identifier || String(instance)
-    ),
-    EQUIPMENT: _get_representation_factory(
-        (instance: any) => instance.identifier || String(instance)
-    ),
-    SCHEDULE: _get_representation_factory(
-        (instance: any) => instance.uuid || String(instance)
-    ),
-    LAB: _get_representation_factory(
-        (instance: any) => instance.name || String(instance)
-    ),
-    TEAM: _get_representation_factory(
-        (instance: any) => instance.name || String(instance)
-    ),
-}

@@ -2,15 +2,13 @@
 // Copyright  (c) 2020-2023, The Chancellor, Masters and Scholars of the University
 // of Oxford, and the 'Galv' Developers. All rights reserved.
 
-import React, {useState} from "react";
+import React from "react";
 import useStyles from "./UseStyles";
 import {useQuery} from "@tanstack/react-query";
-import {CellModelsApi, ExperimentsApi} from "./api_codegen";
-import Paper from "@mui/material/Paper";
+import {ExperimentsApi} from "./api_codegen";
 import Container from "@mui/material/Container";
 import Typography from "@mui/material/Typography";
 import {Link} from "react-router-dom";
-import Login from "./Login";
 import axios from "axios";
 export default function Experiments() {
     const { classes } = useStyles();
@@ -24,7 +22,7 @@ export default function Experiments() {
     })
 
     return (
-        <Container maxWidth="lg" className={classes.container}>
+        <Container maxWidth="lg">
             <Typography
                 component="h1"
                 variant="h3"
