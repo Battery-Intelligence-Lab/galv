@@ -10,19 +10,18 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import Prettify from "./Prettify";
 import {SerializableObject, Serializable} from "./TypeChanger";
-import {API_HANDLERS, API_SLUGS, LookupKey} from "../../constants";
+import {API_HANDLERS, API_SLUGS, Field, FIELDS, LookupKey, PRIORITY_LEVELS} from "../../constants";
 import {AxiosError, AxiosResponse} from "axios";
 import {useQuery} from "@tanstack/react-query";
 import {BaseResource} from "./ResourceCard";
 
 export type PrettyObjectProps = {
     target?: SerializableObject
-    exclude_keys?: string[]
-    type_locked_keys?: string[]
+    lookup_key?: LookupKey
     nest_level?: number
     edit_mode?: boolean
+    creating?: boolean
     onEdit?: (value: SerializableObject) => void
-    clearParentFocus?: () => void
 }
 
 function rename_key_in_place(
@@ -65,13 +64,13 @@ export function PrettyObjectFromQuery<T extends BaseResource>(
 }
 
 export default function PrettyObject(
-    {target, exclude_keys, type_locked_keys, nest_level, edit_mode, onEdit, clearParentFocus, ...table_props}:
+    {target, lookup_key, nest_level, edit_mode, creating, onEdit, ...table_props}:
         PrettyObjectProps & TableContainerProps) {
 
     const {classes} = useStyles()
 
     if (typeof target === 'undefined') {
-        console.error("PrettyObject: target is undefined", {target, exclude_keys, type_locked_keys, nest_level, edit_mode, onEdit, clearParentFocus, ...table_props})
+        console.error("PrettyObject: target is undefined", {target, lookup_key, nest_level, edit_mode, creating, onEdit, ...table_props})
         return <></>
     }
 
@@ -80,14 +79,22 @@ export default function PrettyObject(
     const _edit_mode = edit_mode || false
     const _onEdit = onEdit || (() => {})
     const _nest_level = nest_level || 0
-    const _exclude_keys = exclude_keys || ['url']
-    const _type_locked_keys = type_locked_keys || []
+
+    const get_metadata = (key: string) => {
+        if (lookup_key !== undefined) {
+            const fields = FIELDS[lookup_key]
+            if (Object.keys(fields).includes(key))
+                return FIELDS[lookup_key][key as keyof typeof fields] as Field
+        }
+        return undefined
+    }
+    const is_readonly = (key: string) => get_metadata(key)?.readonly && (!creating || !get_metadata(key)?.createonly)
 
     // Edit function factory produces a function that edits the object with a new value for key k
     const edit_fun_factory = (k: string) => (v: Serializable) => _onEdit({..._target, [k]: v})
 
     // Build a list of Prettify'd contents
-    const keys = Object.keys(_target).filter(key => !_exclude_keys.includes(key))
+    const keys = Object.keys(_target).filter(key => get_metadata(key)?.priority !== PRIORITY_LEVELS.HIDDEN)
     return <>
         <TableContainer
             className={clsx(
@@ -102,7 +109,7 @@ export default function PrettyObject(
                         <TableRow key={i}>
                             <TableCell component="th" scope="row" key={`key_${i}`} align="right">
                                 <Stack alignItems="stretch" justifyContent="flex-end">
-                                    {_edit_mode && onEdit && !_type_locked_keys.includes(key) ?
+                                    {_edit_mode && onEdit && !is_readonly(key) ?
                                         <Prettify
                                             nest_level={_nest_level}
                                             edit_mode={true}
@@ -128,7 +135,8 @@ export default function PrettyObject(
                                         edit_mode={_edit_mode}
                                         onEdit={edit_fun_factory(key)}
                                         target={_target[key]}
-                                        allow_type_change={_edit_mode && !_type_locked_keys.includes(key)}
+                                        lock_type_to={get_metadata(key)?.many? "array" : get_metadata(key)?.type}
+                                        lock_child_type_to={get_metadata(key)?.many? get_metadata(key)?.type : undefined}
                                     />
                                 </Stack>
                             </TableCell>

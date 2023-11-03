@@ -136,11 +136,11 @@ export default function CardActionBar(props: CardActionBarProps) {
                 <EditIcon fontSize="large"/>
             </IconButton>
         </Tooltip>}
-        <Tooltip title={`Go to ${DISPLAY_NAMES[props.lookup_key]} Page`} arrow describeChild key="goto">
-            <IconButton component={Link} to={`${PATHS[props.lookup_key]}/${props.resource_id}`}>
-                <ManageSearchIcon fontSize="large"/>
-            </IconButton>
-        </Tooltip>
+        {/*<Tooltip title={`Go to ${DISPLAY_NAMES[props.lookup_key]} Page`} arrow describeChild key="goto">*/}
+        {/*    <IconButton component={Link} to={`${PATHS[props.lookup_key]}/${props.resource_id}`}>*/}
+        {/*        <ManageSearchIcon fontSize="large"/>*/}
+        {/*    </IconButton>*/}
+        {/*</Tooltip>*/}
         {props.family_uuid && family_key &&
             <Tooltip title={`Go to ${DISPLAY_NAMES[family_key]} Page`} arrow describeChild key="family">
                 <IconButton component={Link} to={`${PATHS[family_key]}/${props.family_uuid}`}>

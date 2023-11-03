@@ -28,7 +28,7 @@ import {
     DISPLAY_NAMES,
     FAMILY_LOOKUP_KEYS,
     FIELDS,
-    ICONS, has_fields,
+    ICONS, is_lookup_key,
     PATHS, PRIORITY_LEVELS, LookupKey
 } from "../../constants";
 import ResourceChip from "./ResourceChip";
@@ -69,7 +69,9 @@ function ResourceCard<T extends BaseResource>(
     const [isEditMode, _setIsEditMode] = useState<boolean>(editing || false)
     const [isExpanded, setIsExpanded] = useState<boolean>(expanded || isEditMode)
 
-    const UndoRedo = useRef(useContext(UndoRedoContext))
+    // useContext is wrapped in useRef because we update the context in our useEffect API data hook
+    const UndoRedo = useContext(UndoRedoContext)
+    const UndoRedoRef = useRef(UndoRedo)
 
     const setEditing = (e: boolean) => {
         _setIsEditMode(e)
@@ -97,7 +99,7 @@ function ResourceCard<T extends BaseResource>(
                     delete data[k]
                 }
             })
-            UndoRedo.current.set(data)
+            UndoRedoRef.current.set(data)
         }
     }, [query.data, lookup_key]);
 
@@ -148,18 +150,18 @@ function ResourceCard<T extends BaseResource>(
         editable={!!query.data?.data.permissions.write}
         editing={isEditMode}
         setEditing={setEditing}
-        onUndo={UndoRedo.current.undo}
-        onRedo={UndoRedo.current.redo}
-        undoable={UndoRedo.current.can_undo}
-        redoable={UndoRedo.current.can_redo}
+        onUndo={UndoRedo.undo}
+        onRedo={UndoRedo.redo}
+        undoable={UndoRedo.can_undo}
+        redoable={UndoRedo.can_redo}
         onEditSave={() => {
-            update_mutation.mutate(UndoRedo.current.current)
+            update_mutation.mutate(UndoRedo.current)
             return true
         }}
         onEditDiscard={() => {
-            if (UndoRedo.current.can_undo && !window.confirm("Discard all changes?"))
+            if (UndoRedo.can_undo && !window.confirm("Discard all changes?"))
                 return false
-            UndoRedo.current.reset()
+            UndoRedo.reset()
             return true
         }}
         expanded={isExpanded}
@@ -214,12 +216,12 @@ function ResourceCard<T extends BaseResource>(
                 }}
             />}
             <Divider key="write-props-header">Editable properties</Divider>
-            {UndoRedo.current.current && <PrettyObject
+            {UndoRedo.current && <PrettyObject
                 key="write-props"
-                target={UndoRedo.current.current}
+                target={UndoRedo.current}
                 edit_mode={isEditMode}
-                type_locked_keys={['identifier']}
-                onEdit={UndoRedo.current.update}
+                lookup_key={lookup_key}
+                onEdit={UndoRedo.update}
             />}
             {has_family && <Divider key="family-props-header">
                 Inherited from
@@ -232,7 +234,12 @@ function ResourceCard<T extends BaseResource>(
             {query.data?.data.family && family_key && <PrettyObjectFromQuery
                 resource_id={id_from_ref_props<string>(query.data?.data.family)}
                 lookup_key={family_key}
-                exclude_keys={query.data? [...Object.keys(query.data), CHILD_PROPERTY_NAMES[family_key]] : []}
+                filter={(d, lookup_key) => {
+                    const data = deep_copy(d)
+                    if (get_is_family(lookup_key))
+                        delete data[CHILD_PROPERTY_NAMES[lookup_key]]
+                    return data
+                }}
             />}
         </Stack>
     </CardContent>
@@ -255,7 +262,7 @@ function ResourceCard<T extends BaseResource>(
                 <Grid>{summarise(data, false, key, lookup)}</Grid>
             }</Grid>
 
-        return lookup && has_fields(lookup)?
+        return lookup && is_lookup_key(lookup)?
             <ResourceChip
                 resource_id={id_from_ref_props<string>(data as string|number)}
                 lookup_key={lookup}

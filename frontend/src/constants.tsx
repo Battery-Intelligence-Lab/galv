@@ -8,6 +8,7 @@ import AssignmentIcon from "@mui/icons-material/Assignment";
 import HolidayVillageIcon from "@mui/icons-material/HolidayVillage";
 import PeopleAltIcon from "@mui/icons-material/PeopleAlt";
 import BatchPredictionIcon from '@mui/icons-material/BatchPrediction';
+import AddCircleIcon from '@mui/icons-material/AddCircle';
 
 import {
     CellFamiliesApi, CellsApi, CyclerTestsApi, EquipmentApi,
@@ -42,7 +43,8 @@ export const ICONS = {
     EQUIPMENT: PrecisionManufacturingIcon,
     SCHEDULE: AssignmentIcon,
     LAB: HolidayVillageIcon,
-    TEAM: PeopleAltIcon
+    TEAM: PeopleAltIcon,
+    CREATE: AddCircleIcon,
 } as const
 
 /**
@@ -169,20 +171,26 @@ export const API_SLUGS = {
  * Special fields may not use the priority system, e.g. Team.
  */
 export const PRIORITY_LEVELS = {
+    HIDDEN: -1,
     DETAIL: 0,
     SUMMARY: 1,
     CONTEXT: 2,
     IDENTITY: 3
 } as const
 export type Field = {
-    readonly: boolean,
-    type: TypeChangerSupportedTypeName,
-    many?: boolean,
+    readonly: boolean
+    type: TypeChangerSupportedTypeName
+    many?: boolean
     priority?: number
+    // createonly fields are required at create time, but otherwise readonly
+    createonly?: boolean
 }
 const always_fields: {[key: string]: Field} = {
     url: {readonly: true, type: "string"},
     permissions: {readonly: true, type: "object"},
+}
+const team_fields: {[key: string]: Field} = {
+    team: {readonly: true, type: "TEAM", createonly: true},
 }
 const generic_fields: {[key: string]: Field} = {
     uuid: {readonly: true, type: "string"},
@@ -199,13 +207,13 @@ export const FIELDS = {
         schedule: {readonly: false, type: "SCHEDULE", priority: PRIORITY_LEVELS.SUMMARY},
         equipment: {readonly: false, type: "EQUIPMENT", many: true, priority: PRIORITY_LEVELS.SUMMARY},
         rendered_schedule: {readonly: true, type: "string", many: true},
-        team: {readonly: true, type: "TEAM"},
+        ...team_fields,
     },
     CELL: {
         ...generic_fields,
         identifier: {readonly: false, type: "string", priority: PRIORITY_LEVELS.IDENTITY},
         family: {readonly: false, type: "CELL_FAMILY", priority: PRIORITY_LEVELS.CONTEXT},
-        team: {readonly: true, type: "TEAM"},
+        ...team_fields,
         cycler_tests: {readonly: true, type: "array"},
         in_use: {readonly: true, type: "boolean"},
     },
@@ -213,19 +221,20 @@ export const FIELDS = {
         ...generic_fields,
         identifier: {readonly: false, type: "string", priority: PRIORITY_LEVELS.IDENTITY},
         family: {readonly: false, type: "EQUIPIMENT_FAMILY", priority: PRIORITY_LEVELS.CONTEXT},
-        team: {readonly: true, type: "TEAM"},
+        ...team_fields,
         calibration_date: {readonly: false, type: "string"},
         in_use: {readonly: true, type: "boolean"},
     },
     SCHEDULE: {
         ...generic_fields,
         family: {readonly: false, type: "SCHEDULE_FAMILY", priority: PRIORITY_LEVELS.CONTEXT},
-        team: {readonly: true, type: "TEAM"},
+        ...team_fields,
         schedule_file: {readonly: false, type: "string"},
         pybamm_schedule_variables: {readonly: false, type: "object"},
     },
     CELL_FAMILY: {
         ...generic_fields,
+        ...team_fields,
         manufacturer: {readonly: false, type: "string", priority: PRIORITY_LEVELS.IDENTITY},
         model: {readonly: false, type: "string", priority: PRIORITY_LEVELS.IDENTITY},
         form_factor: {readonly: false, type: "string", priority: PRIORITY_LEVELS.CONTEXT},
@@ -240,6 +249,7 @@ export const FIELDS = {
     },
     EQUIPMENT_FAMILY: {
         ...generic_fields,
+        ...team_fields,
         manufacturer: {readonly: false, type: "string", priority: PRIORITY_LEVELS.IDENTITY},
         model: {readonly: false, type: "string", priority: PRIORITY_LEVELS.IDENTITY},
         type: {readonly: false, type: "string", priority: PRIORITY_LEVELS.CONTEXT},
@@ -247,6 +257,7 @@ export const FIELDS = {
     },
     SCHEDULE_FAMILY: {
         ...generic_fields,
+        ...team_fields,
         identifier: {readonly: false, type: "string", priority: PRIORITY_LEVELS.IDENTITY},
         description: {readonly: false, type: "string"},
         ambient_temperature: {readonly: false, type: "number"},
@@ -265,8 +276,7 @@ export const FIELDS = {
 
 export type LookupKey = keyof typeof FIELDS
 
-export const has_fields = (maybe_field: any): maybe_field is Field =>
-    Object.keys(FIELDS).includes(maybe_field)
+export const is_lookup_key = (key: any): key is LookupKey => Object.keys(FIELDS).includes(key)
 
 /**
  * Names used by the backend to filter by each resource type.

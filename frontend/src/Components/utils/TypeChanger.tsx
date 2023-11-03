@@ -18,7 +18,7 @@ import useStyles from "../../UseStyles";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import {build_placeholder_url, get_url_components} from "./misc";
-import {API_HANDLERS, DISPLAY_NAMES, ICONS, PATHS} from "../../constants";
+import {API_HANDLERS, DISPLAY_NAMES, ICONS, is_lookup_key, PATHS} from "../../constants";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import {OverridableComponent} from "@mui/material/OverridableComponent";
 
@@ -102,7 +102,10 @@ export type TypeChangerSupportedTypeName = (keyof typeof type_map | keyof typeof
 export type TypeChangerProps = {
     currentValue?: Serializable
     onTypeChange: (newValue: Serializable) => void
-    disabled: boolean
+    // If true, the type changer will be disabled
+    // If a TypeChangerSupportedTypeName, the type changer will be locked to that type
+    // rather than detecting the type from currentValue
+    lock_type: boolean|TypeChangerSupportedTypeName
 }
 
 export type TypeChangerPopoverProps = {
@@ -163,7 +166,7 @@ function TypeChangePopover({value, onTypeChange, ...props}: TypeChangerPopoverPr
         }
     }, [props.open, value]);
 
-    const get_icon = ({icon}: {icon: OverridableComponent<SvgIconTypeMap<{}, "svg">> & {muiName: string}}) => {
+    const get_icon = ({icon}: {icon: OverridableComponent<SvgIconTypeMap> & {muiName: string}}) => {
         const ICON = icon
         return <ICON />
     }
@@ -242,19 +245,22 @@ export const get_conversion_fun = (type: string) => {
 }
 
 export default function TypeChanger(
-    {currentValue, onTypeChange, disabled, ...props}: TypeChangerProps & Partial<TypeChangerPopoverProps>
+    {currentValue, onTypeChange, lock_type, ...props}: TypeChangerProps & Partial<TypeChangerPopoverProps>
 ) {
     const {classes} = useStyles()
 
     const [value, _setValue] =
-        useState<TypeChangerSupportedTypeName>(detect_type(currentValue))
+        useState<TypeChangerSupportedTypeName>(typeof lock_type === 'string'? lock_type : detect_type(currentValue))
     const [popoverAnchor, setPopoverAnchor] = useState<HTMLElement|null>(null)
 
-    useEffect(() => _setValue(detect_type(currentValue)), [currentValue])
+    useEffect(
+        () => _setValue(typeof lock_type === 'string'? lock_type : detect_type(currentValue)),
+        [currentValue]
+    )
 
     return <Tooltip
         key="string"
-        title={disabled? value : <Stack justifyItems="center" alignContent="center">
+        title={lock_type? value : <Stack justifyItems="center" alignContent="center">
             <Typography textAlign="center" variant="caption">{value}</Typography>
             <Typography textAlign="center" variant="caption">click to change type</Typography>
         </Stack>}
@@ -276,12 +282,12 @@ export default function TypeChanger(
             />
             <IconButton
                 onClick={(e) => setPopoverAnchor(e.currentTarget || null)}
-                disabled={disabled}
+                disabled={lock_type !== false}
                 className={clsx(classes.type_changer_button)}
             >
                 {
-                    Object.keys(API_HANDLERS).includes(value)?
-                        React.createElement(ICONS[value as keyof typeof ICONS]) :
+                    is_lookup_key(value)?
+                        React.createElement(ICONS[value]) :
                         React.createElement(type_map[value as keyof typeof type_map].icon)
                 }
             </IconButton>

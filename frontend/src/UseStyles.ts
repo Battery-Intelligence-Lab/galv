@@ -106,6 +106,9 @@ export default makeStyles()((theme) => {
     item_card: {
       ...item(theme)
     },
+    item_create_card: {
+      height: `calc(100vh - ${theme.spacing(8)})`,
+    },
     item_page: {
       ...item(theme)
     },
@@ -160,7 +163,7 @@ export default makeStyles()((theme) => {
     },
     type_changer_button: {},
     type_changer_popover: {
-      zIndex: 5,
+      zIndex: 5000,
     },
     type_changer_resource_popover: {}
   }

@@ -18,6 +18,7 @@ import Skeleton from "@mui/material/Skeleton";
 import FilterBar from "../filtering/FilterBar";
 import TextFilter from "../filtering/TextFilter";
 import ResourceCard from "../utils/ResourceCard";
+import ResourceCreator from "../utils/ResourceCreator";
 
 
 export default function CyclerTestList() {
@@ -67,6 +68,7 @@ export default function CyclerTestList() {
                         />
                     )
                 }
+                <ResourceCreator key={'creator'} lookup_key={"CYCLER_TEST"} />
             </Stack>
         </Container>
     );

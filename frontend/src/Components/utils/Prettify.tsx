@@ -7,10 +7,10 @@ import ClearIcon from "@mui/icons-material/Clear";
 import PrettyObject from "./PrettyObject";
 import Checkbox, {CheckboxProps} from "@mui/material/Checkbox";
 import PrettyArray from "./PrettyArray";
-import TypeChanger, {detect_type, Serializable, TypeChangerProps} from "./TypeChanger";
+import TypeChanger, {detect_type, Serializable, TypeChangerProps, TypeChangerSupportedTypeName} from "./TypeChanger";
 import Stack from "@mui/material/Stack";
 import {ChipProps} from "@mui/material/Chip";
-import {API_HANDLERS} from "../../constants";
+import {API_HANDLERS, is_lookup_key} from "../../constants";
 import PrettyResource from "./PrettyResource";
 
 type PrettifyProps = {
@@ -20,7 +20,11 @@ type PrettifyProps = {
     // onEdit is called when the user leaves the field
     // If it returns a value, the value is set as the new value for the field
     onEdit?: (value: Serializable) => Serializable|void
-    allow_type_change?: boolean
+    lock_type_to?: TypeChangerSupportedTypeName
+    // When type is an array, we can lock the type of the array's children.
+    // This only works for one level of nesting, but that's all we need for official fields
+    // which are the only fields where types are locked.
+    lock_child_type_to?: TypeChangerSupportedTypeName
     hide_type_changer?: boolean
 }
 
@@ -93,10 +97,10 @@ const TypeChangeWrapper = ({children, ...props}: PropsWithChildren<TypeChangerPr
     </Stack>
 
 export function Pretty(
-    {target, nest_level, edit_mode, onEdit, ...childProps}: PrettifyProps &
+    {target, nest_level, edit_mode, onEdit, lock_type_to, lock_child_type_to, ...childProps}: PrettifyProps &
         Partial<TextFieldProps | TypographyProps | Omit<CheckboxProps, "onChange"> | SvgIconProps | ChipProps>
 ) {
-    const denull = (t: any) => [null, undefined].includes(t)? '' : t
+    const denull = (t: any) => t ?? ''
     const [value, setValue] = useState<any>(denull(target))
     useEffect(() => setValue(denull(target)), [target])
     const triggerEdit = () => {
@@ -119,7 +123,7 @@ export function Pretty(
     if (edit_mode && typeof onEdit !== 'function')
         throw new Error(`onEdit must be a function if edit_mode=true`)
 
-    const type = detect_type(value)
+    const type = lock_type_to ?? detect_type(value)
 
     if (type === 'string')
         return <PrettyString {...props} {...childProps as Partial<TextFieldProps | TypographyProps>} />
@@ -137,6 +141,7 @@ export function Pretty(
             edit_mode={edit_mode}
             target={value}
             onEdit={onEdit}
+            child_type={lock_child_type_to}
         />
     }
     if (type === 'object') {
@@ -147,11 +152,12 @@ export function Pretty(
             target={value}
         />
     }
-    if (Object.keys(API_HANDLERS).includes(type)) {
+    if (is_lookup_key(type)) {
         return <PrettyResource
             value={value}
             onChange={(v) => onEdit && onEdit(v)}
             edit_mode={edit_mode}
+            lookup_key={type}
             {...childProps as Partial<ChipProps>}
         />
     }
@@ -161,7 +167,7 @@ export function Pretty(
 }
 
 export default function Prettify(
-    {hide_type_changer, allow_type_change, ...props}: PrettifyProps &
+    {hide_type_changer, ...props}: PrettifyProps &
         Partial<TextFieldProps | TypographyProps | Omit<CheckboxProps, "onChange"> | SvgIconProps>
 ) {
     const pretty = <Pretty {...props} />
@@ -169,7 +175,7 @@ export default function Prettify(
         <TypeChangeWrapper
             onTypeChange={props.onEdit}
             currentValue={props.target}
-            disabled={!allow_type_change}
+            lock_type={props.lock_type_to ?? false}
         >
             {pretty}
         </TypeChangeWrapper> :

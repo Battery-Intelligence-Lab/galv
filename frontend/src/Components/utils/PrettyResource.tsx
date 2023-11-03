@@ -16,10 +16,9 @@ import {CreateFilterOptionsConfig} from "@mui/material";
 import {representation} from "./Representation";
 
 export const PrettyResourceSelect = (
-    {value, onChange, edit_mode, lookup_key, resource_id, ...childProps}:
-        { lookup_key: LookupKey, resource_id: string } & PrettyComponentProps & Partial<ChipProps>
+    {value, onChange, edit_mode, lookup_key, ...childProps}:
+        { lookup_key: LookupKey } & PrettyComponentProps & Partial<ChipProps>
 ) => {
-    console.log(`PrettyResourceSelect`, {value, onChange, edit_mode, lookup_key, resource_id: resource_id, childProps})
 
     const api_handler = new API_HANDLERS[lookup_key]()
     const api_list = api_handler[
@@ -124,25 +123,34 @@ export const PrettyResourceSelect = (
 }
 
 export default function PrettyResource(
-    {value, onChange, edit_mode, ...childProps}:
-        PrettyComponentProps & Partial<ChipProps & { component: React.ElementType }>
+    {value, onChange, edit_mode, lookup_key, resource_id, ...childProps}:
+        {lookup_key?: LookupKey, resource_id?: string|number} &
+        PrettyComponentProps &
+        Partial<ChipProps & { component: React.ElementType }>
 ) {
     const url_components = get_url_components(value)
-    // console.log(`PrettyResource`, {value, onChange, edit_mode, url_components, childProps})
+    lookup_key = lookup_key ?? url_components?.lookup_key
+    resource_id = resource_id ?? url_components?.resource_id
+
     const str_representation = <PrettyString value={value} onChange={onChange} {...childProps} edit_mode={false}/>
-    if (url_components)
-        return edit_mode ?
-            <PrettyResourceSelect
-                {...childProps as ChipProps}
-                {...url_components}
-                onChange={onChange}
-                value={value}
-                edit_mode={edit_mode}
-            /> :
-            <ResourceChip
-                {...childProps as ChipProps}
-                {...url_components}
-                error={str_representation}
-            />
+
+    if (edit_mode) {
+        if (!lookup_key)
+            throw new Error(`PrettyResource: lookup_key is undefined and unobtainable from value ${value}`)
+        return <PrettyResourceSelect
+            {...childProps as ChipProps}
+            lookup_key={lookup_key}
+            onChange={onChange}
+            value={value}
+            edit_mode={edit_mode}
+        />
+    }
+    if (lookup_key && resource_id)
+        return <ResourceChip
+            {...childProps as ChipProps}
+            lookup_key={lookup_key}
+            resource_id={resource_id}
+            error={str_representation}
+        />
     return str_representation
 }

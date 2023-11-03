@@ -11,15 +11,16 @@ import {ListProps} from "@mui/material";
 import Prettify from "./Prettify";
 import useStyles from "../../UseStyles";
 import clsx from "clsx";
-import {Serializable} from "./TypeChanger";
+import {detect_type, Serializable, TypeChangerSupportedTypeName} from "./TypeChanger";
 
-type PrettyArrayProps = Pick<PrettyObjectProps, "nest_level" | "edit_mode" | "clearParentFocus"> & {
+type PrettyArrayProps = Pick<PrettyObjectProps, "nest_level" | "edit_mode"> & {
     target: Serializable[]
+    child_type?: TypeChangerSupportedTypeName
     onEdit?: (v: Serializable[]) => void
 }
 
 export default function PrettyArray(
-    {target, nest_level, edit_mode, onEdit, clearParentFocus, ...childProps}: PrettyArrayProps & ListProps
+    {target, nest_level, edit_mode, onEdit, child_type, ...childProps}: PrettyArrayProps & ListProps
 ) {
     const _nest_level = nest_level || 0
     const _edit_mode = edit_mode || false
@@ -69,7 +70,7 @@ export default function PrettyArray(
                                         setItems(newItems)
                                         _onEdit(newItems)
                                     }}
-                                    allow_type_change={true}
+                                    lock_type_to={child_type}
                                 />
                             </ListItem>
                         </Draggable>
@@ -88,7 +89,7 @@ export default function PrettyArray(
                                 _onEdit(newItems)
                                 return ""
                             }}
-                            allow_type_change={true}
+                            lock_type_to={child_type ?? detect_type(items[items.length - 1]) ?? "string"}
                         />
                     </ListItem>
                 </Container> :
