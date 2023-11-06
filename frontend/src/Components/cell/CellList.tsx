@@ -2,7 +2,7 @@
 // Copyright  (c) 2020-2023, The Chancellor, Masters and Scholars of the University
 // of Oxford, and the 'Galv' Developers. All rights reserved.
 
-import React, {useState} from "react";
+import React from "react";
 import useStyles from "../../UseStyles";
 import {useQuery} from "@tanstack/react-query";
 import {CellFamiliesApi, CellFamily, PaginatedCellFamilyList} from "../../api_codegen";
@@ -14,15 +14,12 @@ import clsx from "clsx";
 import Grid from "@mui/material/Unstable_Grid2";
 import CircularProgress from "@mui/material/CircularProgress";
 import Skeleton from "@mui/material/Skeleton";
-import FilterBar from "../filtering/FilterBar";
-import TextFilter from "../filtering/TextFilter";
 import QueryWrapper, {QueryDependentElement} from "../utils/QueryWrapper";
 import ErrorPage from "../error/ErrorPage";
 import ResourceCard from "../utils/ResourceCard";
 
 export default function CellList() {
     const { classes } = useStyles();
-    const [filteredData, setFilteredData] = useState<CellFamily[]>([])
 
     // API handler
     const api_handler = new CellFamiliesApi()
@@ -42,7 +39,7 @@ export default function CellList() {
 
     const body =
         <Stack spacing={2}>
-            {filteredData.map((cell_family: CellFamily) => <ResourceCard
+            {query.data?.data.results?.map((cell_family: CellFamily) => <ResourceCard
                 key={cell_family.uuid}
                 resource_id={cell_family.uuid}
                 lookup_key="CELL_FAMILY"
@@ -64,11 +61,6 @@ export default function CellList() {
                     Cells
                     {query.isLoading && <CircularProgress sx={{color: (t) => t.palette.text.disabled, marginLeft: "1em"}} />}
                 </Typography>
-                <FilterBar
-                    data={query.data?.data?.results}
-                    filters={{uuid: {target_key: 'uuid', label: 'Family UUID matches', widget: TextFilter}}}
-                    setFilteredData={setFilteredData}
-                />
             </Grid>
             <QueryWrapper
                 queries={[query]}

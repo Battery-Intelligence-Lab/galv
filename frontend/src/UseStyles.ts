@@ -86,6 +86,19 @@ export default makeStyles()((theme) => {
       marginBottom: theme.spacing(2),
       color: theme.palette.text.secondary,
     },
+
+    filter_bar: {
+      justifyContent: "space-between",
+      margin: theme.spacing(0.5),
+      "& .create_form": {
+        "& .summary": {
+          justifyContent: "space-between",
+        }
+      },
+      "& .horizontal": {
+        alignItems: "center",
+      }
+    },
     item_chip: {
       width: "min-content",
       minWidth: theme.spacing(5),

@@ -14,7 +14,7 @@ import LoadingChip from "./LoadingChip";
 import CardContent from "@mui/material/CardContent";
 import Grid from "@mui/material/Unstable_Grid2";
 import Avatar from "@mui/material/Avatar";
-import React, {ReactNode, useContext, useEffect, useRef, useState} from "react";
+import React, {Fragment, ReactNode, useContext, useEffect, useRef, useState} from "react";
 import ErrorCard from "../error/ErrorCard";
 import QueryWrapper, {QueryDependentElement} from "../utils/QueryWrapper";
 import {AxiosError, AxiosResponse} from "axios";
@@ -35,6 +35,7 @@ import ResourceChip from "./ResourceChip";
 import ErrorBoundary from "./ErrorBoundary";
 import UndoRedoProvider, {UndoRedoContext} from "./UndoRedoContext";
 import Representation from "./Representation";
+import {FILTER_MODES, FilterContext} from "../filtering/FilterContext";
 
 export type Permissions = { read?: boolean, write?: boolean, create?: boolean, destroy?: boolean }
 type child_keys = "cells"|"equipment"|"schedules"
@@ -68,6 +69,8 @@ function ResourceCard<T extends BaseResource>(
     const { classes } = useStyles();
     const [isEditMode, _setIsEditMode] = useState<boolean>(editing || false)
     const [isExpanded, setIsExpanded] = useState<boolean>(expanded || isEditMode)
+
+    const {activeFilters} = useContext(FilterContext)
 
     // useContext is wrapped in useRef because we update the context in our useEffect API data hook
     const UndoRedo = useContext(UndoRedoContext)
@@ -278,33 +281,38 @@ function ResourceCard<T extends BaseResource>(
         }</Grid>}
     </CardContent>
 
-    const cardContent = <Card key={resource_id} className={clsx(classes.item_card)} {...cardProps}>
-        <CardHeader
-            avatar={<Avatar variant="square"><ICON /></Avatar>}
-            title={<A component={Link} to={`${PATHS[lookup_key]}/${resource_id}`}>
-                <Representation
-                    resource_id={resource_id}
-                    lookup_key={lookup_key}
-                    prefix={family_key && query.data?.data.family ?
-                        <Representation
-                            resource_id={id_from_ref_props<string>(query.data?.data.family)}
-                            lookup_key={family_key}
-                            suffix=" "
-                        /> : undefined}
-                />
-            </A>}
-            subheader={<Stack direction="row" spacing={1} alignItems="center">
-                <A component={Link} to={PATHS[lookup_key]}>{DISPLAY_NAMES[lookup_key]}</A>
-                {query.data?.data.team !== undefined && <ResourceChip
-                    lookup_key="TEAM"
-                    resource_id={id_from_ref_props<number>(query.data.data.team)}
-                    sx={{fontSize: "smaller"}}
-                />}
-            </Stack>}
-            action={action}
-        />
-        {isExpanded? cardBody : cardSummary}
-    </Card>
+    const filter_mode = activeFilters[lookup_key].mode === FILTER_MODES.ANY? "some" : "every"
+    const passes_filters = activeFilters[lookup_key].filters.length === 0 ||
+        activeFilters[lookup_key].filters[filter_mode](f => f.family.fun(query.data?.data[f.key], f.test_versus))
+
+    const cardContent = !passes_filters? <Fragment key={resource_id} /> :
+        <Card key={resource_id} className={clsx(classes.item_card)} {...cardProps}>
+            <CardHeader
+                avatar={<Avatar variant="square"><ICON /></Avatar>}
+                title={<A component={Link} to={`${PATHS[lookup_key]}/${resource_id}`}>
+                    <Representation
+                        resource_id={resource_id}
+                        lookup_key={lookup_key}
+                        prefix={family_key && query.data?.data.family ?
+                            <Representation
+                                resource_id={id_from_ref_props<string>(query.data?.data.family)}
+                                lookup_key={family_key}
+                                suffix=" "
+                            /> : undefined}
+                    />
+                </A>}
+                subheader={<Stack direction="row" spacing={1} alignItems="center">
+                    <A component={Link} to={PATHS[lookup_key]}>{DISPLAY_NAMES[lookup_key]}</A>
+                    {query.data?.data.team !== undefined && <ResourceChip
+                        lookup_key="TEAM"
+                        resource_id={id_from_ref_props<number>(query.data.data.team)}
+                        sx={{fontSize: "smaller"}}
+                    />}
+                </Stack>}
+                action={action}
+            />
+            {isExpanded? cardBody : cardSummary}
+        </Card>
 
     const getErrorBody: QueryDependentElement = (queries) => <ErrorCard
         status={queries.find(q => q.isError)?.error?.response?.status}

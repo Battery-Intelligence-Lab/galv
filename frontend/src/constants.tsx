@@ -9,6 +9,7 @@ import HolidayVillageIcon from "@mui/icons-material/HolidayVillage";
 import PeopleAltIcon from "@mui/icons-material/PeopleAlt";
 import BatchPredictionIcon from '@mui/icons-material/BatchPrediction';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
+import CancelIcon from '@mui/icons-material/Cancel';
 
 import {
     CellFamiliesApi, CellsApi, CyclerTestsApi, EquipmentApi,
@@ -45,6 +46,7 @@ export const ICONS = {
     LAB: HolidayVillageIcon,
     TEAM: PeopleAltIcon,
     CREATE: AddCircleIcon,
+    CANCEL: CancelIcon
 } as const
 
 /**

@@ -43,6 +43,8 @@ import CellList from "./Components/cell/CellList";
 import {PATHS, ICONS, LookupKey} from "./constants";
 import ErrorBoundary from "./Components/utils/ErrorBoundary";
 import ResourceCard from "./Components/utils/ResourceCard";
+import FilterBar from "./Components/filtering/FilterBar";
+import {FilterContextProvider} from "./Components/filtering/FilterContext";
 
 const drawerWidth = 240;
 const useStyles = makeStyles()((theme) => {
@@ -291,7 +293,10 @@ export default function Core() {
           <List>{mainListItems}</List>
         </Drawer>
         <main className={classes.content}>
-          <Outlet />
+          <FilterContextProvider>
+            <FilterBar key="filter_bar" />
+            <Outlet key="main_content" />
+          </FilterContextProvider>
         </main>
         <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={handleSnackbarClose}>
           <Alert onClose={handleSnackbarClose} severity={apiMessage?.severity} sx={{ width: '100%' }}>
