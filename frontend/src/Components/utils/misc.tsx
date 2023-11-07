@@ -1,15 +1,11 @@
 import {useParams} from "react-router-dom";
 import {Serializable} from "./TypeChanger";
-import {FIELDS, LookupKey, PATHS} from "../../constants";
+import {FIELDS, is_lookup_key, LookupKey, PATHS} from "../../constants";
 
 export type ObjectReferenceProps =
     { uuid: string } |
     { id: number } |
     { url: string }
-export type ExpandableCardProps = ObjectReferenceProps & {
-    expanded?: boolean
-    editing?: boolean
-}
 export type PaginatedAPIResponse<T = any> = {
     count: number
     next: string | null
@@ -72,8 +68,8 @@ export function get_url_components(url: string):
             .find(k => PATHS[k as keyof typeof PATHS] === `/${parts[2]}`)
         if (lookup_key === undefined) return undefined
 
-        if (!Object.keys(FIELDS).includes(lookup_key)) {
-            console.warn(`${lookup_key} is a PATHS key but not an FIELDS key`, url)
+        if (!is_lookup_key(lookup_key)) {
+            console.warn(`${lookup_key} is a PATHS key but not an LOOKUP_KEY`, url)
             return undefined
         }
 
@@ -83,7 +79,7 @@ export function get_url_components(url: string):
     return undefined
 }
 
-export function build_placeholder_url(lookup_key: keyof typeof PATHS & string, uuid: string = 'new') {
+export function build_placeholder_url(lookup_key: keyof typeof PATHS, uuid: string = 'new') {
     return `https://galv${PATHS[lookup_key]}/${uuid}`
 }
 

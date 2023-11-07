@@ -1,34 +1,27 @@
 import Chip, {ChipProps} from "@mui/material/Chip";
-import useStyles from "../../UseStyles";
-import {useQuery} from "@tanstack/react-query";
+import useStyles from "../UseStyles";
 import clsx from "clsx";
 import {Link} from "react-router-dom";
-import React, {useContext, useEffect, useState} from "react";
-import {id_from_ref_props} from "./misc";
-import LoadingChip from "../utils/LoadingChip";
-import QueryWrapper, {QueryWrapperProps} from "../utils/QueryWrapper";
-import {AxiosError, AxiosResponse} from "axios";
-import ErrorChip from "../error/ErrorChip";
-import {
-    API_HANDLERS,
-    PATHS, ICONS, API_SLUGS, FAMILY_LOOKUP_KEYS, LookupKey
-} from "../../constants";
+import React, {useContext} from "react";
+import LoadingChip from "./LoadingChip";
+import QueryWrapper, {QueryWrapperProps} from "./utils/QueryWrapper";
+import ErrorChip from "./error/ErrorChip";
+import {PATHS, FAMILY_LOOKUP_KEYS, LookupKey} from "../constants";
 import {Family} from "./ResourceCard";
-import ErrorBoundary from "./ErrorBoundary";
+import ErrorBoundary from "./utils/ErrorBoundary";
 import Representation from "./Representation";
-import {FilterContext} from "../filtering/FilterContext";
-import ApiResourceContextProvider, {useApiResource} from "./ApiResourceContext";
+import {FilterContext} from "./filtering/FilterContext";
+import ApiResourceContextProvider, {useApiResource} from "./utils/ApiResourceContext";
 import LookupKeyIcon from "./LookupKeyIcon";
 
 type ResourceFamilyChipProps = {
     resource_id: string|number
     lookup_key: LookupKey
     short_name?: boolean
-}
+} & Partial<QueryWrapperProps> & ChipProps & {component?: React.ElementType}
 
 export function ResourceChip<T extends Family>(
-    {resource_id, lookup_key, loading, error, success, short_name, ...chipProps}:
-        ResourceFamilyChipProps & Partial<QueryWrapperProps> & ChipProps & {component?: React.ElementType}
+    {resource_id, lookup_key, loading, error, success, short_name, ...chipProps}: ResourceFamilyChipProps
 ) {
     // console.log(`ResourceChip`, {uuid, lookup_key, loading, error, success, chipProps})
     const { classes } = useStyles();
@@ -77,9 +70,7 @@ export function ResourceChip<T extends Family>(
     />
 }
 
-export default function WrappedResourceChip<T extends Family>(
-    props: ResourceFamilyChipProps & Partial<QueryWrapperProps> & ChipProps
-) {
+export default function WrappedResourceChip<T extends Family>(props: ResourceFamilyChipProps) {
     return <ErrorBoundary
         fallback={(error: Error) => <ErrorChip
             target={`${props.lookup_key} ${props.resource_id}`}

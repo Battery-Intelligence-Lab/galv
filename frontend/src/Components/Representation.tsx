@@ -1,4 +1,4 @@
-import {API_HANDLERS, API_SLUGS, DISPLAY_NAMES, FIELDS, LookupKey, PRIORITY_LEVELS} from "../../constants";
+import {API_HANDLERS, API_SLUGS, DISPLAY_NAMES, FIELDS, LookupKey, PRIORITY_LEVELS} from "../constants";
 import {AxiosError, AxiosResponse} from "axios";
 import {useQuery} from "@tanstack/react-query";
 import {BaseResource} from "./ResourceCard";

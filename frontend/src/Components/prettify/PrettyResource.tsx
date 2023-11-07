@@ -3,17 +3,17 @@ import {ChipProps} from "@mui/material/Chip";
 import React, {useEffect, useState} from "react";
 import useStyles from "../../UseStyles";
 import {AxiosError, AxiosResponse} from "axios";
-import {build_placeholder_url, get_url_components, id_from_ref_props, PaginatedAPIResponse} from "./misc";
+import {build_placeholder_url, get_url_components, id_from_ref_props, PaginatedAPIResponse} from "../utils/misc";
 import {useQuery} from "@tanstack/react-query";
 import TextField from "@mui/material/TextField";
 import clsx from "clsx";
 import ButtonBase from "@mui/material/ButtonBase";
-import ResourceChip from "./ResourceChip";
+import ResourceChip from "../ResourceChip";
 import {PrettyComponentProps, PrettyString} from "./Prettify";
 import Autocomplete, {createFilterOptions} from "@mui/material/Autocomplete";
 import CircularProgress from "@mui/material/CircularProgress";
 import {CreateFilterOptionsConfig} from "@mui/material";
-import {representation} from "./Representation";
+import {representation} from "../Representation";
 
 export const PrettyResourceSelect = (
     {value, onChange, edit_mode, lookup_key, ...childProps}:

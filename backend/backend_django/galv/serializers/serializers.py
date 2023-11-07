@@ -706,13 +706,12 @@ class ObservedFileSerializer(serializers.HyperlinkedModelSerializer, Permissions
     class Meta:
         model = ObservedFile
         read_only_fields = [
-            'url', 'uuid', 'harvester', 'path',
+            'url', 'uuid', 'harvester', 'name', 'path',
             'state',
             'parser',
             'num_rows',
             'first_sample_no',
             'last_sample_no',
-            'num_rows',
             'extra_metadata',
             'has_required_columns',
             'last_observed_time', 'last_observed_size', 'upload_errors',

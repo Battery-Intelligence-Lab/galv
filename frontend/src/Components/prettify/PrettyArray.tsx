@@ -11,7 +11,7 @@ import {ListProps} from "@mui/material";
 import Prettify from "./Prettify";
 import useStyles from "../../UseStyles";
 import clsx from "clsx";
-import {detect_type, Serializable, TypeChangerSupportedTypeName} from "./TypeChanger";
+import {detect_type, Serializable, TypeChangerSupportedTypeName} from "../utils/TypeChanger";
 
 type PrettyArrayProps = Pick<PrettyObjectProps, "nest_level" | "edit_mode"> & {
     target: Serializable[]

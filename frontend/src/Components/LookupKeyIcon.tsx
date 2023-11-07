@@ -1,5 +1,5 @@
 import Tooltip, {TooltipProps} from "@mui/material/Tooltip";
-import {DISPLAY_NAMES, ICONS, LookupKey} from "../../constants";
+import {DISPLAY_NAMES, ICONS, LookupKey} from "../constants";
 import {SvgIconProps} from "@mui/material/SvgIcon";
 
 export default function LookupKeyIcon (

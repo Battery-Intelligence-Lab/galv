@@ -37,14 +37,12 @@ import Stack from "@mui/material/Stack";
 import Snackbar from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert";
 import axios, {AxiosError} from "axios";
-import Experiments from "./Experiments";
-import CyclerTestList from "./Components/cycler-test/CyclerTestList";
-import CellList from "./Components/cell/CellList";
-import {PATHS, ICONS, LookupKey} from "./constants";
+import {PATHS, ICONS, LookupKey, LOOKUP_KEYS} from "./constants";
 import ErrorBoundary from "./Components/utils/ErrorBoundary";
-import ResourceCard from "./Components/utils/ResourceCard";
+import ResourceCard from "./Components/ResourceCard";
 import FilterBar from "./Components/filtering/FilterBar";
 import {FilterContextProvider} from "./Components/filtering/FilterContext";
+import {ResourceList} from "./Components/ResourceList";
 
 const drawerWidth = 240;
 const useStyles = makeStyles()((theme) => {
@@ -322,9 +320,14 @@ export default function Core() {
   }
 
   function ResourceCardWrapper() {
+    const navigate = useNavigate()
     const {type, id} = useParams()
     const lookup_key = get_lookup_key_from_pathname(type)
     console.log(`ResourceCardWrapper`, {type, id, lookup_key})
+    if (!lookup_key || !id) {
+      navigate(PATHS.DASHBOARD)
+      return <></>
+    }
     return <ResourceCard
         resource_id={id ?? -1}
         lookup_key={lookup_key ?? "CYCLER_TEST"}
@@ -338,21 +341,21 @@ export default function Core() {
       <Route path="/login" element={<Login />}/>
       <Route path={PATHS.DASHBOARD} element={Layout}>
         <Route path="/:type/:id" element={<ResourceCardWrapper/>}/>  {/* Handles direct resource lookups */}
-        <Route path={PATHS.EXPERIMENT} element={<Experiments/>} />
-        <Route path={PATHS.CYCLER_TEST} element={<CyclerTestList/>} />
-        <Route path={PATHS.DATASET} element={<>TODO</>} />
-        <Route path={PATHS.CELL} element={<CellList/>} />
-        <Route path={PATHS.CELL_FAMILY} element={<>TODO</>} />
-        <Route path={PATHS.EQUIPMENT} element={<>TODO</>} />
-        <Route path={PATHS.EQUIPMENT_FAMILY} element={<>TODO</>} />
-        <Route path={PATHS.SCHEDULE} element={<>TODO</>} />
-        <Route path={PATHS.SCHEDULE_FAMILY} element={<>TODO</>} />
+        {/*<Route path={PATHS.EXPERIMENT} element={<ResourceList lookup_key={"EXPERIMENT"}/>} />*/}
+        <Route path={PATHS.CYCLER_TEST} element={<ResourceList lookup_key={LOOKUP_KEYS.CYCLER_TEST}/>} />
+        {/*<Route path={PATHS.DATASET} element={<ResourceList lookup_key={"DATASET"}/>} />*/}
+        <Route path={PATHS.CELL} element={<ResourceList lookup_key={LOOKUP_KEYS.CELL}/>} />
+        <Route path={PATHS.CELL_FAMILY} element={<ResourceList lookup_key={LOOKUP_KEYS.CELL_FAMILY}/>} />
+        <Route path={PATHS.EQUIPMENT} element={<ResourceList lookup_key={LOOKUP_KEYS.EQUIPMENT}/>} />
+        <Route path={PATHS.EQUIPMENT_FAMILY} element={<ResourceList lookup_key={LOOKUP_KEYS.EQUIPMENT_FAMILY}/>} />
+        <Route path={PATHS.SCHEDULE} element={<ResourceList lookup_key={LOOKUP_KEYS.SCHEDULE}/>} />
+        <Route path={PATHS.SCHEDULE_FAMILY} element={<ResourceList lookup_key={LOOKUP_KEYS.SCHEDULE_FAMILY}/>} />
         <Route path={PATHS.LAB} element={<>TODO</>} />
         <Route path={PATHS.TEAM} element={<>TODO</>} />
         {/*<Route path={profilePath} element={UserProfile()} />*/}
         {/*<Route path={tokenPath} element={Tokens()} />*/}
         {/*<Route index element={Dashboard()} />*/}
-        <Route index element={<CyclerTestList/>} />
+        <Route index element={<ResourceList lookup_key={LOOKUP_KEYS.CYCLER_TEST}/>} />
       </Route>
     </Routes>
   </ErrorBoundary>

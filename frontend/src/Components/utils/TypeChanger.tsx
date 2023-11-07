@@ -18,7 +18,7 @@ import useStyles from "../../UseStyles";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import {build_placeholder_url, get_url_components} from "./misc";
-import {API_HANDLERS, DISPLAY_NAMES, ICONS, is_lookup_key, PATHS} from "../../constants";
+import {API_HANDLERS, DISPLAY_NAMES, ICONS, is_lookup_key, LookupKey, PATHS} from "../../constants";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import {OverridableComponent} from "@mui/material/OverridableComponent";
 
@@ -97,7 +97,7 @@ export type Serializable =
 
 export type SerializableObject = {[key: string]: Serializable}
 
-export type TypeChangerSupportedTypeName = (keyof typeof type_map | keyof typeof API_HANDLERS) & string
+export type TypeChangerSupportedTypeName = (keyof typeof type_map | LookupKey) & string
 
 export type TypeChangerProps = {
     currentValue?: Serializable
@@ -221,24 +221,12 @@ export const get_conversion_fun = (type: string) => {
         case 'object': return obj
         case 'array': return arr
     }
-    if (Object.keys(API_HANDLERS).includes(type))
+    if (is_lookup_key(type))
         return (v: any) => {
             const clean = (s: string): string => s.replace(/[^a-zA-Z0-9-_]/g, '')
-            let page, entry
-            if (Object.keys(API_HANDLERS).includes(type)) {
-                page = type
-                entry = clean(v) || 'new'
-            } else {
-                const components = get_url_components(v)
-                if (components) {
-                    page = components.lookup_key
-                    entry = components.resource_id
-                } else {
-                    console.error(`Could not get url components for ${v}`, type, v)
-                    throw new Error(`Could not get url components for ${v}`)
-                }
-            }
-            return build_placeholder_url(page as keyof typeof PATHS, entry)
+            const page = type
+            const entry = clean(v) || 'new'
+            return build_placeholder_url(page, entry)
         }
     console.error(`Could not get conversion function for ${type}`, type)
     throw new Error(`Could not get conversion function for ${type}`)
@@ -255,7 +243,7 @@ export default function TypeChanger(
 
     useEffect(
         () => _setValue(typeof lock_type === 'string'? lock_type : detect_type(currentValue)),
-        [currentValue]
+        [currentValue, lock_type]
     )
 
     return <Tooltip

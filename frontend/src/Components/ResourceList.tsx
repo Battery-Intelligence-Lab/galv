@@ -3,9 +3,8 @@
 // of Oxford, and the 'Galv' Developers. All rights reserved.
 
 import React from "react";
-import useStyles from "../../UseStyles";
+import useStyles from "../UseStyles";
 import {useQuery} from "@tanstack/react-query";
-import {CyclerTest, CyclerTestsApi, PaginatedCyclerTestList} from "../../api_codegen";
 import Container from "@mui/material/Container";
 import Typography from "@mui/material/Typography";
 import {Link} from "react-router-dom";
@@ -15,19 +14,30 @@ import clsx from "clsx";
 import Grid from "@mui/material/Unstable_Grid2";
 import CircularProgress from "@mui/material/CircularProgress";
 import Skeleton from "@mui/material/Skeleton";
-import ResourceCard from "../utils/ResourceCard";
-import ResourceCreator from "../utils/ResourceCreator";
+import ResourceCard, {BaseResource} from "./ResourceCard";
+import ResourceCreator from "./ResourceCreator";
+import {API_HANDLERS, API_SLUGS, DISPLAY_NAMES, DISPLAY_NAMES_PLURAL, LookupKey} from "../constants";
+import ErrorBoundary from "./utils/ErrorBoundary";
 
+type PaginatedAPIResponse<T = any> = {
+    count: number
+    next: string | null
+    previous: string | null
+    results: T[]
+}
 
-export default function CyclerTestList() {
+export function ResourceList<T extends BaseResource>({lookup_key}: {lookup_key: LookupKey}) {
     const { classes } = useStyles();
 
     // API handler
-    const api_handler = new CyclerTestsApi()
+    const api_handler = new API_HANDLERS[lookup_key]()
+    const get = api_handler[
+        `${API_SLUGS[lookup_key]}List` as keyof typeof api_handler
+        ] as () => Promise<AxiosResponse<PaginatedAPIResponse<T>>>
     // Queries
-    const query = useQuery<AxiosResponse<PaginatedCyclerTestList>, AxiosError>({
-        queryKey: ['cycler_tests_list'],
-        queryFn: () => api_handler.cyclerTestsList()
+    const query = useQuery<AxiosResponse<PaginatedAPIResponse<T>>, AxiosError>({
+        queryKey: [lookup_key, 'list'],
+        queryFn: () => get.bind(api_handler)()
     })
 
     return (
@@ -38,7 +48,7 @@ export default function CyclerTestList() {
                     variant="h3"
                     className={clsx(classes.page_title, classes.text)}
                 >
-                    Cycler Tests
+                    {DISPLAY_NAMES[lookup_key]}
                     {query.isLoading && <CircularProgress sx={{color: (t) => t.palette.text.disabled, marginLeft: "1em"}} />}
                 </Typography>
             </Grid>
@@ -50,18 +60,27 @@ export default function CyclerTestList() {
                 }
                 { query.data?.data.results && (query.data.data.results.length === 0 ?
                     !axios.defaults.headers.common['Authorization']?
-                        <p><Link to="/login">Log in</Link> to see Cycler Tests</p> :
-                        <p>No Cycler Tests found</p> :
+                        <p><Link to="/login">Log in</Link> to see {DISPLAY_NAMES_PLURAL[lookup_key]}</p> :
+                        <p>No {DISPLAY_NAMES_PLURAL[lookup_key]} found</p> :
                     query.data?.data.results.map(
-                        (cycler_test: CyclerTest, i) => <ResourceCard
-                            key={`cycler_test_${i}`}
-                            resource_id={cycler_test.uuid}
-                            lookup_key="CYCLER_TEST"
+                        (resource: T, i) => <ResourceCard
+                            key={`resource_${i}`}
+                            resource_id={resource.uuid as string ?? resource.id as number}
+                            lookup_key={lookup_key}
                         />
                     ))
                 }
-                <ResourceCreator key={'creator'} lookup_key={"CYCLER_TEST"} />
+                <ResourceCreator key={'creator'} lookup_key={lookup_key} />
             </Stack>
         </Container>
     );
+}
+
+export default function WrappedResourceList(props: {lookup_key: LookupKey}) {
+    return <ErrorBoundary
+        fallback={<p>{props.lookup_key}: Could not load {DISPLAY_NAMES_PLURAL[props.lookup_key]}</p>}
+        key={props.lookup_key}
+    >
+        <ResourceList {...props} />
+    </ErrorBoundary>
 }

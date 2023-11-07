@@ -7,10 +7,10 @@ import ClearIcon from "@mui/icons-material/Clear";
 import PrettyObject from "./PrettyObject";
 import Checkbox, {CheckboxProps} from "@mui/material/Checkbox";
 import PrettyArray from "./PrettyArray";
-import TypeChanger, {detect_type, Serializable, TypeChangerProps, TypeChangerSupportedTypeName} from "./TypeChanger";
+import TypeChanger, {detect_type, Serializable, TypeChangerProps, TypeChangerSupportedTypeName} from "../utils/TypeChanger";
 import Stack from "@mui/material/Stack";
 import {ChipProps} from "@mui/material/Chip";
-import {API_HANDLERS, is_lookup_key} from "../../constants";
+import {is_lookup_key} from "../../constants";
 import PrettyResource from "./PrettyResource";
 
 type PrettifyProps = {
@@ -162,7 +162,10 @@ export function Pretty(
         />
     }
 
-    console.error("Prettify failure", {target, nest_level, edit_mode, onEdit, ...childProps})
+    console.error(
+        "Prettify failure",
+        {target, nest_level, edit_mode, onEdit, lock_type_to, lock_child_type_to, inferred_type: type, ...childProps}
+    )
     throw new Error(`Could not prettify value: ${value}`)
 }
 

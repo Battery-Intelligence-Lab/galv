@@ -1,5 +1,5 @@
 import {createContext, PropsWithChildren, useContext} from "react";
-import {BaseResource} from "./ResourceCard";
+import {BaseResource} from "../ResourceCard";
 import {API_HANDLERS, API_SLUGS, FAMILY_LOOKUP_KEYS, get_has_family, LookupKey} from "../../constants";
 import {AxiosError, AxiosResponse} from "axios";
 import {useQuery, UseQueryResult} from "@tanstack/react-query";

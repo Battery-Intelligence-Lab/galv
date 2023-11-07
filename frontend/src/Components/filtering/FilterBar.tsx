@@ -24,7 +24,7 @@ import clsx from "clsx";
 import useStyles from "../../UseStyles";
 import {ButtonGroup} from "@mui/material";
 import Button from "@mui/material/Button";
-import LookupKeyIcon from "../utils/LookupKeyIcon";
+import LookupKeyIcon from "../LookupKeyIcon";
 
 type FilterChipProps = {
     filter: Filter
@@ -172,7 +172,6 @@ export default function FilterBar() {
             {
                 Object.entries(activeFilters).map(([lookup_key, content]) => {
                     const _key = lookup_key as LookupKey
-                    const ICON = ICONS[_key]
                     if (content.filters.length === 0) return <Fragment key={_key}></Fragment>
                     return <Stack direction="row" spacing={1} key={_key} className={clsx("horizontal")}>
                         <LookupKeyIcon key='icon' lookupKey={_key} fontSize="small" />

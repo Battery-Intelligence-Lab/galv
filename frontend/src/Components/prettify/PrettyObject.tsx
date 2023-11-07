@@ -9,11 +9,11 @@ import TableCell from "@mui/material/TableCell";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import Prettify from "./Prettify";
-import {SerializableObject, Serializable} from "./TypeChanger";
+import {SerializableObject, Serializable} from "../utils/TypeChanger";
 import {API_HANDLERS, API_SLUGS, Field, FIELDS, LookupKey, PRIORITY_LEVELS} from "../../constants";
 import {AxiosError, AxiosResponse} from "axios";
 import {useQuery} from "@tanstack/react-query";
-import {BaseResource} from "./ResourceCard";
+import {BaseResource} from "../ResourceCard";
 
 export type PrettyObjectProps = {
     target?: SerializableObject

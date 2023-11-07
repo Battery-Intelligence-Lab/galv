@@ -1,8 +1,8 @@
-import CardActionBar from "../utils/CardActionBar";
-import {deep_copy, id_from_ref_props} from "./misc";
-import PrettyObject, {PrettyObjectFromQuery} from "./PrettyObject";
-import useStyles from "../../UseStyles";
-import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
+import CardActionBar from "./CardActionBar";
+import {deep_copy, id_from_ref_props} from "./utils/misc";
+import PrettyObject, {PrettyObjectFromQuery} from "./prettify/PrettyObject";
+import useStyles from "../UseStyles";
+import {useMutation, useQueryClient} from "@tanstack/react-query";
 import Card, {CardProps} from "@mui/material/Card";
 import {Link} from "react-router-dom";
 import clsx from "clsx";
@@ -15,11 +15,11 @@ import CardContent from "@mui/material/CardContent";
 import Grid from "@mui/material/Unstable_Grid2";
 import Avatar from "@mui/material/Avatar";
 import React, {Fragment, ReactNode, useContext, useEffect, useRef, useState} from "react";
-import ErrorCard from "../error/ErrorCard";
-import QueryWrapper, {QueryDependentElement} from "../utils/QueryWrapper";
+import ErrorCard from "./error/ErrorCard";
+import QueryWrapper, {QueryDependentElement} from "./utils/QueryWrapper";
 import {AxiosError, AxiosResponse} from "axios";
 import Divider from "@mui/material/Divider";
-import {Serializable, SerializableObject} from "./TypeChanger";
+import {Serializable, SerializableObject} from "./utils/TypeChanger";
 import {
     API_HANDLERS,
     API_SLUGS,
@@ -30,13 +30,13 @@ import {
     FIELDS,
     ICONS, is_lookup_key,
     PATHS, PRIORITY_LEVELS, LookupKey, get_has_family, get_is_family
-} from "../../constants";
+} from "../constants";
 import ResourceChip from "./ResourceChip";
-import ErrorBoundary from "./ErrorBoundary";
-import UndoRedoProvider, {UndoRedoContext} from "./UndoRedoContext";
+import ErrorBoundary from "./utils/ErrorBoundary";
+import UndoRedoProvider, {UndoRedoContext} from "./utils/UndoRedoContext";
 import Representation from "./Representation";
-import {FILTER_MODES, FilterContext} from "../filtering/FilterContext";
-import ApiResourceContextProvider, {useApiResource} from "./ApiResourceContext";
+import {FilterContext} from "./filtering/FilterContext";
+import ApiResourceContextProvider, {useApiResource} from "./utils/ApiResourceContext";
 
 export type Permissions = { read?: boolean, write?: boolean, create?: boolean, destroy?: boolean }
 type child_keys = "cells"|"equipment"|"schedules"
@@ -229,6 +229,8 @@ function ResourceCard<T extends BaseResource>(
                     const data = deep_copy(d)
                     if (get_is_family(lookup_key))
                         delete data[CHILD_PROPERTY_NAMES[lookup_key]]
+                    // Keys child has are not inherited
+                    Object.keys(d).forEach(k => apiResource?.[k] !== undefined && delete data[k])
                     return data
                 }}
             />}

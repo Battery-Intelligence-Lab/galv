@@ -7,17 +7,14 @@ import RedoIcon from "@mui/icons-material/Redo";
 import SaveIcon from "@mui/icons-material/Save";
 import CloseIcon from "@mui/icons-material/Close";
 import Stack from "@mui/material/Stack";
-import CountBadge from "./CountBadge";
+import CountBadge from "./utils/CountBadge";
 import {Link} from "react-router-dom";
-import ManageSearchIcon from "@mui/icons-material/ManageSearch";
 import RemoveIcon from "@mui/icons-material/Remove";
 import AddIcon from "@mui/icons-material/Add";
-import {DISPLAY_NAMES, DISPLAY_NAMES_PLURAL, FAMILY_LOOKUP_KEYS, ICONS, PATHS} from "../../constants";
+import {DISPLAY_NAMES, DISPLAY_NAMES_PLURAL, FAMILY_LOOKUP_KEYS, ICONS, LookupKey, PATHS} from "../constants";
 
 type CardActionBarProps = {
-    lookup_key: keyof typeof ICONS &
-        keyof typeof PATHS &
-        keyof typeof DISPLAY_NAMES
+    lookup_key: LookupKey
     resource_id?: string|number
     family_uuid?: string
     highlight_count?: number

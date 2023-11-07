@@ -4,7 +4,6 @@ import {FAMILY_LOOKUP_KEYS, FIELDS, get_has_family, LookupKey} from "../../const
 import {useImmer} from "use-immer";
 import {IApiResourceContext} from "../utils/ApiResourceContext";
 
-type FilterableData = {[key: string]: Serializable}
 type FilterFunction = (value: Serializable, test_versus: any) => boolean
 export type Filter = {key: string; family: FilterFamily; test_versus: any}
 
