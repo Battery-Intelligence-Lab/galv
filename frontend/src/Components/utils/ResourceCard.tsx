@@ -29,13 +29,14 @@ import {
     FAMILY_LOOKUP_KEYS,
     FIELDS,
     ICONS, is_lookup_key,
-    PATHS, PRIORITY_LEVELS, LookupKey
+    PATHS, PRIORITY_LEVELS, LookupKey, get_has_family, get_is_family
 } from "../../constants";
 import ResourceChip from "./ResourceChip";
 import ErrorBoundary from "./ErrorBoundary";
 import UndoRedoProvider, {UndoRedoContext} from "./UndoRedoContext";
 import Representation from "./Representation";
 import {FILTER_MODES, FilterContext} from "../filtering/FilterContext";
+import ApiResourceContextProvider, {useApiResource} from "./ApiResourceContext";
 
 export type Permissions = { read?: boolean, write?: boolean, create?: boolean, destroy?: boolean }
 type child_keys = "cells"|"equipment"|"schedules"
@@ -70,8 +71,8 @@ function ResourceCard<T extends BaseResource>(
     const [isEditMode, _setIsEditMode] = useState<boolean>(editing || false)
     const [isExpanded, setIsExpanded] = useState<boolean>(expanded || isEditMode)
 
-    const {activeFilters} = useContext(FilterContext)
-
+    const {passesFilters} = useContext(FilterContext)
+    const {apiResource, family, apiQuery} = useApiResource<T>()
     // useContext is wrapped in useRef because we update the context in our useEffect API data hook
     const UndoRedo = useContext(UndoRedoContext)
     const UndoRedoRef = useRef(UndoRedo)
@@ -81,22 +82,9 @@ function ResourceCard<T extends BaseResource>(
         if (e) setIsExpanded(e)
     }
 
-    const api_handler = new API_HANDLERS[lookup_key]()
-    const get = api_handler[
-        `${API_SLUGS[lookup_key]}Retrieve` as keyof typeof api_handler
-        ] as (uuid: string) => Promise<AxiosResponse<T>>
-    const patch = api_handler[
-        `${API_SLUGS[lookup_key]}PartialUpdate` as keyof typeof api_handler
-        ] as (uuid: string, data: SerializableObject) => Promise<AxiosResponse<T>>
-
-    const query = useQuery<AxiosResponse<T>, AxiosError>({
-        queryKey: [lookup_key, resource_id],
-        queryFn: () => get.bind(api_handler)(String(resource_id))
-    })
-
     useEffect(() => {
-        if (query.data) {
-            const data = deep_copy(query.data.data)
+        if (apiResource) {
+            const data = deep_copy(apiResource)
             Object.entries(FIELDS[lookup_key]).forEach(([k, v]) => {
                 if (v.readonly) {
                     delete data[k]
@@ -104,9 +92,15 @@ function ResourceCard<T extends BaseResource>(
             })
             UndoRedoRef.current.set(data)
         }
-    }, [query.data, lookup_key]);
+    }, [apiResource, lookup_key]);
+
+
 
     // Mutations for saving edits
+    const api_handler = new API_HANDLERS[lookup_key]()
+    const patch = api_handler[
+        `${API_SLUGS[lookup_key]}PartialUpdate` as keyof typeof api_handler
+        ] as (uuid: string, data: SerializableObject) => Promise<AxiosResponse<T>>
     const queryClient = useQueryClient()
     const update_mutation =
         useMutation<AxiosResponse<T>, AxiosError, SerializableObject>(
@@ -124,16 +118,10 @@ function ResourceCard<T extends BaseResource>(
                 },
             })
 
-    // Type guards for family and children
-    const get_has_family = (key: string|number): key is keyof typeof FAMILY_LOOKUP_KEYS =>
-        Object.keys(FAMILY_LOOKUP_KEYS).includes(key as string)
-    const has_family = get_has_family(lookup_key)
-    const get_is_family = (key: string|number): key is keyof typeof CHILD_PROPERTY_NAMES =>
-        Object.keys(CHILD_PROPERTY_NAMES).includes(key as string)
-    const is_family = get_is_family(lookup_key)
-
-    const family_key = has_family? FAMILY_LOOKUP_KEYS[lookup_key] : undefined
-    const children: string[] = is_family? query.data?.data[CHILD_PROPERTY_NAMES[lookup_key]] as string[] : []
+    const family_key = get_has_family(lookup_key)?
+        FAMILY_LOOKUP_KEYS[lookup_key] : undefined
+    const children: string[] = get_is_family(lookup_key)?
+        apiResource?.[CHILD_PROPERTY_NAMES[lookup_key]] as string[] : []
 
     const is_ct_resource = Object.keys(FIELDS[lookup_key]).includes("cycler_tests")
 
@@ -144,13 +132,13 @@ function ResourceCard<T extends BaseResource>(
     const action = <CardActionBar
         lookup_key={lookup_key}
         resource_id={resource_id}
-        family_uuid={query.data?.data.family? id_from_ref_props<string>(query.data?.data.family) : undefined}
-        highlight_count={query.data?.data.cycler_tests?.length ?? children?.length}
+        family_uuid={family?.uuid as string|undefined}
+        highlight_count={apiResource?.cycler_tests?.length ?? children?.length}
         highlight_lookup_key={
             is_ct_resource? "CYCLER_TEST" :
-                is_family? CHILD_LOOKUP_KEYS[lookup_key] : undefined
+                get_is_family(lookup_key)? CHILD_LOOKUP_KEYS[lookup_key] : undefined
         }
-        editable={!!query.data?.data.permissions.write}
+        editable={!!apiResource?.permissions.write}
         editing={isEditMode}
         setEditing={setEditing}
         onUndo={UndoRedo.undo}
@@ -200,7 +188,7 @@ function ResourceCard<T extends BaseResource>(
     }}>
         <Stack spacing={1}>
             <Divider key="read-props-header">Read-only properties</Divider>
-            {query.data && <PrettyObjectFromQuery
+            {apiResource && <PrettyObjectFromQuery
                 resource_id={resource_id}
                 lookup_key={lookup_key}
                 key="read-props"
@@ -226,16 +214,16 @@ function ResourceCard<T extends BaseResource>(
                 lookup_key={lookup_key}
                 onEdit={UndoRedo.update}
             />}
-            {has_family && <Divider key="family-props-header">
+            {family && <Divider key="family-props-header">
                 Inherited from
-                {query.data?.data.family?
+                {family?
                     <ResourceChip
-                        resource_id={id_from_ref_props<string>(query.data?.data.family)}
+                        resource_id={family.uuid as string}
                         lookup_key={family_key!}
                     /> : FAMILY_ICON && <LoadingChip icon={<FAMILY_ICON/>}/> }
             </Divider>}
-            {query.data?.data.family && family_key && <PrettyObjectFromQuery
-                resource_id={id_from_ref_props<string>(query.data?.data.family)}
+            {family && family_key && <PrettyObjectFromQuery
+                resource_id={family.uuid as string}
                 lookup_key={family_key}
                 filter={(d, lookup_key) => {
                     const data = deep_copy(d)
@@ -274,18 +262,14 @@ function ResourceCard<T extends BaseResource>(
     }
 
     const cardSummary = <CardContent>
-        {query.data && <Grid container spacing={1}>{
+        {apiResource && <Grid container spacing={1}>{
             Object.entries(FIELDS[lookup_key])
                 .filter(([_, v]) => v.priority === PRIORITY_LEVELS.SUMMARY)
-                .map(([k, v]) => <Grid key={k}>{summarise(query.data.data[k], v.many, k, v.type)}</Grid>)
+                .map(([k, v]) => <Grid key={k}>{summarise(apiResource[k], v.many, k, v.type)}</Grid>)
         }</Grid>}
     </CardContent>
 
-    const filter_mode = activeFilters[lookup_key].mode === FILTER_MODES.ANY? "some" : "every"
-    const passes_filters = activeFilters[lookup_key].filters.length === 0 ||
-        activeFilters[lookup_key].filters[filter_mode](f => f.family.fun(query.data?.data[f.key], f.test_versus))
-
-    const cardContent = !passes_filters? <Fragment key={resource_id} /> :
+    const cardContent = !passesFilters({apiResource, family}, lookup_key)? <Fragment key={resource_id} /> :
         <Card key={resource_id} className={clsx(classes.item_card)} {...cardProps}>
             <CardHeader
                 avatar={<Avatar variant="square"><ICON /></Avatar>}
@@ -293,9 +277,9 @@ function ResourceCard<T extends BaseResource>(
                     <Representation
                         resource_id={resource_id}
                         lookup_key={lookup_key}
-                        prefix={family_key && query.data?.data.family ?
+                        prefix={family_key && family ?
                             <Representation
-                                resource_id={id_from_ref_props<string>(query.data?.data.family)}
+                                resource_id={family.uuid as string}
                                 lookup_key={family_key}
                                 suffix=" "
                             /> : undefined}
@@ -303,9 +287,9 @@ function ResourceCard<T extends BaseResource>(
                 </A>}
                 subheader={<Stack direction="row" spacing={1} alignItems="center">
                     <A component={Link} to={PATHS[lookup_key]}>{DISPLAY_NAMES[lookup_key]}</A>
-                    {query.data?.data.team !== undefined && <ResourceChip
+                    {apiResource?.team !== undefined && <ResourceChip
                         lookup_key="TEAM"
-                        resource_id={id_from_ref_props<number>(query.data.data.team)}
+                        resource_id={id_from_ref_props<number>(apiResource?.team)}
                         sx={{fontSize: "smaller"}}
                     />}
                 </Stack>}
@@ -328,7 +312,7 @@ function ResourceCard<T extends BaseResource>(
     />
 
     return <QueryWrapper
-        queries={[query]}
+        queries={apiQuery? [apiQuery] : []}
         loading={loadingBody}
         error={getErrorBody}
         success={cardContent}
@@ -351,7 +335,9 @@ export default function WrappedResourceCard<T extends BaseResource>(props: Resou
                 }
             />}
         >
-            <ResourceCard<T> {...props} />
+            <ApiResourceContextProvider lookup_key={props.lookup_key} resource_id={props.resource_id}>
+                <ResourceCard<T> {...props} />
+            </ApiResourceContextProvider>
         </ErrorBoundary>
     </UndoRedoProvider>
 }

@@ -19,6 +19,7 @@ import {
     TeamsApi
 } from "./api_codegen";
 import {TypeChangerSupportedTypeName} from "./Components/utils/TypeChanger";
+import Tooltip, {TooltipProps} from "@mui/material/Tooltip";
 
 /**
  * This is a list of various resources grouped under a common name for each
@@ -308,6 +309,8 @@ export const FAMILY_LOOKUP_KEYS = {
     SCHEDULE: "SCHEDULE_FAMILY",
 } as const
 
+export const get_has_family = (key: string|number): key is keyof typeof FAMILY_LOOKUP_KEYS =>
+    Object.keys(FAMILY_LOOKUP_KEYS).includes(key as string)
 /**
  * Lookup map to get the child lookup key for each resource family.
  */
@@ -325,3 +328,6 @@ export const CHILD_PROPERTY_NAMES  = {
     EQUIPMENT_FAMILY: "equipment",
     SCHEDULE_FAMILY: "schedules",
 } as const
+
+export const get_is_family = (key: string|number): key is keyof typeof CHILD_PROPERTY_NAMES =>
+    Object.keys(CHILD_PROPERTY_NAMES).includes(key as string)

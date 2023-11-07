@@ -105,7 +105,7 @@ export default makeStyles()((theme) => {
       margin: theme.spacing(0.5),
       borderRadius: theme.spacing(0.5),
       borderColor: "transparent",
-      "&:hover": {
+      "&:not(.filter_failed):hover": {
         borderColor: theme.palette.primary.light,
         " .MuiSvgIcon-root": {
           color: theme.palette.primary.light
@@ -114,6 +114,9 @@ export default makeStyles()((theme) => {
       " .MuiSvgIcon-root": {
         width: "1em",
         height: "1em",
+      },
+      "&.filter_failed": {
+        color: theme.palette.text.disabled,
       }
     },
     item_card: {

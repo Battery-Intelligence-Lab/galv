@@ -3,7 +3,7 @@ import useStyles from "../../UseStyles";
 import {useQuery} from "@tanstack/react-query";
 import clsx from "clsx";
 import {Link} from "react-router-dom";
-import React from "react";
+import React, {useContext, useEffect, useState} from "react";
 import {id_from_ref_props} from "./misc";
 import LoadingChip from "../utils/LoadingChip";
 import QueryWrapper, {QueryWrapperProps} from "../utils/QueryWrapper";
@@ -16,6 +16,9 @@ import {
 import {Family} from "./ResourceCard";
 import ErrorBoundary from "./ErrorBoundary";
 import Representation from "./Representation";
+import {FilterContext} from "../filtering/FilterContext";
+import ApiResourceContextProvider, {useApiResource} from "./ApiResourceContext";
+import LookupKeyIcon from "./LookupKeyIcon";
 
 type ResourceFamilyChipProps = {
     resource_id: string|number
@@ -23,67 +26,71 @@ type ResourceFamilyChipProps = {
     short_name?: boolean
 }
 
-export default function ResourceChip<T extends Family>(
+export function ResourceChip<T extends Family>(
     {resource_id, lookup_key, loading, error, success, short_name, ...chipProps}:
         ResourceFamilyChipProps & Partial<QueryWrapperProps> & ChipProps & {component?: React.ElementType}
 ) {
     // console.log(`ResourceChip`, {uuid, lookup_key, loading, error, success, chipProps})
     const { classes } = useStyles();
 
-    const ICON = ICONS[lookup_key]
+    const {passesFilters} = useContext(FilterContext)
+    const {apiResource, family, apiQuery} = useApiResource<T>()
 
-    const api_handler = new API_HANDLERS[lookup_key]()
-    const api_get = api_handler[
-        `${API_SLUGS[lookup_key]}Retrieve` as keyof typeof api_handler
-        ] as (uuid: string) => Promise<AxiosResponse<T>>
-    const query = useQuery<AxiosResponse<T>, AxiosError>({
-        queryKey: [lookup_key, resource_id],
-        queryFn: () => api_get.bind(api_handler)(String(resource_id))
-    })
+    const passes = passesFilters({apiResource, family}, lookup_key)
 
+    const icon = <LookupKeyIcon lookupKey={lookup_key}/>
+
+    return <QueryWrapper
+        queries={apiQuery? [apiQuery] : []}
+        loading={loading || <LoadingChip url={`/${PATHS[lookup_key]}/${resource_id}`} icon={icon} {...chipProps}/>}
+        error={error? error : (queries) => <ErrorChip
+            status={queries[0].error?.response?.status}
+            target={`${PATHS[lookup_key]}/${resource_id}`}
+            detail={queries[0].error?.response?.data?.toString()}
+            key={resource_id}
+            icon={icon}
+            variant="outlined"
+            {...chipProps as ChipProps as any}
+        />
+        }
+        success={success || <Chip
+            key={resource_id}
+            className={clsx(classes.item_chip, {'filter_failed': !passes})}
+            icon={icon}
+            variant="outlined"
+            label={<Representation
+                resource_id={resource_id}
+                lookup_key={lookup_key}
+                prefix={(!short_name && family) ?
+                    <Representation
+                        resource_id={family.uuid as string}
+                        lookup_key={FAMILY_LOOKUP_KEYS[lookup_key as keyof typeof FAMILY_LOOKUP_KEYS]}
+                        suffix=" "
+                    /> : undefined
+                }
+            />}
+            clickable={true}
+            component={passes? Link : undefined}
+            to={passes? `${PATHS[lookup_key]}/${resource_id}` : undefined}
+            {...chipProps as ChipProps as any}
+        />}
+    />
+}
+
+export default function WrappedResourceChip<T extends Family>(
+    props: ResourceFamilyChipProps & Partial<QueryWrapperProps> & ChipProps
+) {
     return <ErrorBoundary
         fallback={(error: Error) => <ErrorChip
-            target={`${lookup_key} ${resource_id}`}
+            target={`${props.lookup_key} ${props.resource_id}`}
             detail={error.message}
-            key={resource_id}
-            icon={<ICON />}
+            key={props.resource_id}
+            icon={<LookupKeyIcon lookupKey={props.lookup_key}/>}
             variant="outlined"
         />}
     >
-        <QueryWrapper
-            queries={[query]}
-            loading={loading || <LoadingChip url={`/${PATHS[lookup_key]}/${resource_id}`} icon={<ICON/>} {...chipProps}/>}
-            error={error? error : (queries) => <ErrorChip
-                status={queries[0].error?.response?.status}
-                target={`${PATHS[lookup_key]}/${resource_id}`}
-                detail={queries[0].error?.response?.data?.toString()}
-                key={resource_id}
-                icon={<ICON />}
-                variant="outlined"
-                {...chipProps as ChipProps as any}
-            />
-            }
-            success={success || <Chip
-                key={resource_id}
-                className={clsx(classes.item_chip)}
-                icon={<ICON />}
-                variant="outlined"
-                label={<Representation
-                    resource_id={resource_id}
-                    lookup_key={lookup_key}
-                    prefix={(!short_name && query.data?.data.family) ?
-                        <Representation
-                            resource_id={id_from_ref_props<string>(query.data?.data.family)}
-                            lookup_key={FAMILY_LOOKUP_KEYS[lookup_key as keyof typeof FAMILY_LOOKUP_KEYS]}
-                            suffix=" "
-                        /> : undefined
-                    }
-                />}
-                clickable={true}
-                component={Link}
-                to={`${PATHS[lookup_key]}/${resource_id}`}
-                {...chipProps as ChipProps as any}
-            />}
-        />
+        <ApiResourceContextProvider lookup_key={props.lookup_key} resource_id={props.resource_id}>
+            <ResourceChip<T> {...props}/>
+        </ApiResourceContextProvider>
     </ErrorBoundary>
 }

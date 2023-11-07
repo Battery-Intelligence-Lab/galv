@@ -20,10 +20,11 @@ import Select from "@mui/material/Select";
 import TextField from "@mui/material/TextField";
 import Autocomplete from "@mui/material/Autocomplete";
 import Typography from "@mui/material/Typography";
-import IconButton from "@mui/material/IconButton";
 import clsx from "clsx";
 import useStyles from "../../UseStyles";
 import {ButtonGroup} from "@mui/material";
+import Button from "@mui/material/Button";
+import LookupKeyIcon from "../utils/LookupKeyIcon";
 
 type FilterChipProps = {
     filter: Filter
@@ -31,7 +32,7 @@ type FilterChipProps = {
 
 function FilterChip({filter, ...chipProps}: FilterChipProps & ChipProps) {
     return <Tooltip title={filter.family.get_name(filter, false)}>
-        <Chip size="small" label={filter.family.get_name(filter, true)} {...chipProps}/>
+        <Chip label={filter.family.get_name(filter, true)} {...chipProps}/>
     </Tooltip>
 }
 
@@ -77,11 +78,9 @@ function FilterCreateForm({onCreate, onCancel}: FilterCreateFormProps) {
             >
                 <MenuItem key='none' value="" disabled />
                 {Object.keys(FIELDS).map((lookup_key) => {
-                    const ICON = ICONS[lookup_key as LookupKey]
-                    return <MenuItem value={lookup_key as LookupKey} key={lookup_key}>
-                        <Tooltip title={DISPLAY_NAMES_PLURAL[lookup_key as LookupKey]} describeChild={true}>
-                            <ICON fontSize="small"/>
-                        </Tooltip>
+                    const _key = lookup_key as LookupKey
+                    return <MenuItem value={_key} key={_key}>
+                        <LookupKeyIcon lookupKey={_key} tooltipProps={{placement: 'left'}}/>
                     </MenuItem>
                 })}
             </Select>
@@ -132,19 +131,31 @@ function FilterCreateForm({onCreate, onCancel}: FilterCreateFormProps) {
         </Stack>
         <Stack direction="row" spacing={0.5} key="summary" className={clsx('summary')}>
             <Typography key="summary" className={clsx('summary-text')}>
-                {family !== "" && family.get_name({key: key || 'X', test_versus: value || 'Y', family}, false)}
+                {
+                    family !== "" &&
+                    `View ${DISPLAY_NAMES_PLURAL[lookupKey]} where 
+                    ${family.get_name({key: key || 'X', test_versus: value || 'Y', family}, false)}`
+                }
             </Typography>
             <ButtonGroup>
-                <IconButton key="create" onClick={() => {
+                <Button
+                    key="create"
+                    onClick={() => {
                     if (family === "" || value === "" || key === "") return
                     onCreate(lookupKey, {key, family, test_versus: value})
                     reset()
-                }} >
-                    <ICONS.CREATE fontSize="small" />
-                </IconButton>
-                <IconButton key="cancel" onClick={() => {onCancel && onCancel(); reset()}} >
-                    <ICONS.CANCEL fontSize="small" />
-                </IconButton>
+                }}
+                    disabled={family === "" || value === "" || key === ""}
+                >
+                    Add filter
+                </Button>
+                <Button
+                    key="cancel"
+                    onClick={() => {onCancel && onCancel(); reset()}}
+                    disabled={family === "" && value === "" && key === ""}
+                >
+                    X
+                </Button>
             </ButtonGroup>
         </Stack>
     </Stack>
@@ -165,7 +176,7 @@ export default function FilterBar() {
                     const ICON = ICONS[_key]
                     if (content.filters.length === 0) return <Fragment key={_key}></Fragment>
                     return <Stack direction="row" spacing={1} key={_key} className={clsx("horizontal")}>
-                        <ICON key='icon' fontSize="small" />
+                        <LookupKeyIcon key='icon' lookupKey={_key} fontSize="small" />
                         <ToggleButtonGroup
                             key='mode'
                             value={content.mode}

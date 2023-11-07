@@ -1,7 +1,8 @@
-import React, {createContext, PropsWithChildren} from "react";
+import React, {createContext, PropsWithChildren, useEffect, useState} from "react";
 import {Serializable, TypeChangerSupportedTypeName} from "../utils/TypeChanger";
-import {FIELDS, LookupKey} from "../../constants";
+import {FAMILY_LOOKUP_KEYS, FIELDS, get_has_family, LookupKey} from "../../constants";
 import {useImmer} from "use-immer";
+import {IApiResourceContext} from "../utils/ApiResourceContext";
 
 type FilterableData = {[key: string]: Serializable}
 type FilterFunction = (value: Serializable, test_versus: any) => boolean
@@ -102,12 +103,14 @@ export type ActiveFilters = {
 export interface IFilterContext {
     activeFilters: ActiveFilters
     setActiveFilters: (filters: ActiveFilters) => void
+    passesFilters: (data: IApiResourceContext, lookup_key: LookupKey) => boolean
 }
 
 export const FilterContext = createContext<IFilterContext>({
     activeFilters: Object.fromEntries(Object.keys(FIELDS)
         .map((k) => [k as LookupKey, {mode: FILTER_MODES.ALL, filters: [] as Filter[]}])) as ActiveFilters,
-    setActiveFilters: () => {}
+    setActiveFilters: () => {},
+    passesFilters: () => true
 })
 
 export function FilterContextProvider(props: PropsWithChildren<any>) {
@@ -117,7 +120,33 @@ export function FilterContextProvider(props: PropsWithChildren<any>) {
         )) as ActiveFilters
     )
 
-    return <FilterContext.Provider value={{activeFilters, setActiveFilters}}>
+    const [passesFilters, setPassesFilters] =
+        useState<(data: IApiResourceContext, lookup_key: LookupKey) => boolean>(() => () => true)
+
+    useEffect(() => {
+        setPassesFilters(() => (data: IApiResourceContext, lookup_key: LookupKey) => {
+            if (data.apiResource === undefined) return true
+            const family_lookup_key = get_has_family(lookup_key) ? FAMILY_LOOKUP_KEYS[lookup_key] : undefined
+            const filter_mode = activeFilters[lookup_key].mode === FILTER_MODES.ANY? "some" : "every"
+            // if there are no filters, everything passes
+            return activeFilters[lookup_key].filters.length === 0 ||
+                (
+                    // the resource has to pass its filters
+                    activeFilters[lookup_key].filters[filter_mode](
+                        f => f.family.fun(data.apiResource?.[f.key], f.test_versus)
+                    ) && (
+                        // if the resource has a family, that has to pass its filters, too
+                        !family_lookup_key || activeFilters[family_lookup_key].filters[filter_mode](
+                            f => f.family.fun(data.family?.[f.key], f.test_versus)
+                        )
+                    )
+                )
+        })
+    }, [activeFilters])
+
+    console.log(`FilterContextProvider`, {activeFilters, passesFilters})
+
+    return <FilterContext.Provider value={{activeFilters, setActiveFilters, passesFilters}}>
         {props.children}
     </FilterContext.Provider>
 }
