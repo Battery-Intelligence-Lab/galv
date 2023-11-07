@@ -116,7 +116,7 @@ export const FilterContext = createContext<IFilterContext>({
 export function FilterContextProvider(props: PropsWithChildren<any>) {
     const [activeFilters, setActiveFilters] = useImmer<ActiveFilters>(
         Object.fromEntries(Object.keys(FIELDS).map((k) =>
-            [k as LookupKey, {mode: FILTER_MODES.ALL, filters: [{key: "uuid", family: FILTER_FUNCTIONS[3], test_versus: "0"}] as Filter[]}]
+            [k as LookupKey, {mode: FILTER_MODES.ALL, filters: [] as Filter[]}]
         )) as ActiveFilters
     )
 

@@ -152,7 +152,6 @@ function FilterCreateForm({onCreate, onCancel}: FilterCreateFormProps) {
                 <Button
                     key="cancel"
                     onClick={() => {onCancel && onCancel(); reset()}}
-                    disabled={family === "" && value === "" && key === ""}
                 >
                     X
                 </Button>
@@ -164,7 +163,7 @@ function FilterCreateForm({onCreate, onCancel}: FilterCreateFormProps) {
 export default function FilterBar() {
 
     const {activeFilters, setActiveFilters} = useContext(FilterContext)
-    const [creating, setCreating] = useState<boolean>(true)
+    const [creating, setCreating] = useState<boolean>(false)
 
     const {classes} = useStyles()
 
@@ -221,13 +220,12 @@ export default function FilterBar() {
                     }}
                     onCancel={() => setCreating(false)}
                 /> :
-                <Chip
+                <Button
                     key='new_filter'
                     className={clsx("new_filter")}
-                    icon={<ICONS.CREATE fontSize="small"/>}
-                    label="New filter"
+                    endIcon={<ICONS.CREATE fontSize="small"/>}
                     onClick={() => setCreating(true)}
-                />
+                >New filter</Button>
         }
     </Grid>
 }

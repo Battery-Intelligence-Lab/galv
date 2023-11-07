@@ -90,7 +90,13 @@ export default makeStyles()((theme) => {
     filter_bar: {
       justifyContent: "space-between",
       margin: theme.spacing(0.5),
-      "& .create_form": {
+      maxHeight: theme.spacing(15),
+      overflowY: "auto",
+      "& .create_form, & .new_filter": {
+        position: "sticky",
+        top: 0,
+        marginTop: theme.spacing(1),
+        height: "min-content",
         "& .summary": {
           justifyContent: "space-between",
         }
