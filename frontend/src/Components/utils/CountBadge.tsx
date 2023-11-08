@@ -7,7 +7,7 @@ import Tooltip from "@mui/material/Tooltip";
 import {ReactNode} from "react";
 
 type CountBadgeProps = {
-    icon: JSX.Element
+    icon: ReactNode
     url?: string
     tooltip?: ReactNode
 }

@@ -220,6 +220,19 @@ export default function Core() {
           <ListItemText primary="Schedules" />
         </ListItemButton>
         <Divider component="li" />
+        <ListItemButton selected={pathIs(PATHS.HARVESTER)} component={Link} to={PATHS.HARVESTER}>
+          <ListItemIcon>
+            <ICONS.HARVESTER/>
+          </ListItemIcon>
+          <ListItemText primary="Harvesters" />
+        </ListItemButton>
+        <ListItemButton selected={pathIs(PATHS.PATH)} component={Link} to={PATHS.PATH}>
+          <ListItemIcon>
+            <ICONS.PATH/>
+          </ListItemIcon>
+          <ListItemText primary="Paths" />
+        </ListItemButton>
+        <Divider component="li" />
         <ListItemButton selected={pathIs(PATHS.LAB)} component={Link} to={PATHS.LAB}>
           <ListItemIcon>
             <ICONS.LAB/>
@@ -323,15 +336,17 @@ export default function Core() {
     const navigate = useNavigate()
     const {type, id} = useParams()
     const lookup_key = get_lookup_key_from_pathname(type)
-    console.log(`ResourceCardWrapper`, {type, id, lookup_key})
+
     if (!lookup_key || !id) {
       navigate(PATHS.DASHBOARD)
       return <></>
     }
+
     return <ResourceCard
         resource_id={id ?? -1}
         lookup_key={lookup_key ?? "CYCLER_TEST"}
         expanded={true}
+        sx={{margin: (t) => t.spacing(1)}}
     />
   }
 
@@ -350,6 +365,8 @@ export default function Core() {
         <Route path={PATHS.EQUIPMENT_FAMILY} element={<ResourceList lookup_key={LOOKUP_KEYS.EQUIPMENT_FAMILY}/>} />
         <Route path={PATHS.SCHEDULE} element={<ResourceList lookup_key={LOOKUP_KEYS.SCHEDULE}/>} />
         <Route path={PATHS.SCHEDULE_FAMILY} element={<ResourceList lookup_key={LOOKUP_KEYS.SCHEDULE_FAMILY}/>} />
+        <Route path={PATHS.HARVESTER} element={<ResourceList lookup_key={LOOKUP_KEYS.HARVESTER}/>} />
+        <Route path={PATHS.PATH} element={<ResourceList lookup_key={LOOKUP_KEYS.PATH}/>} />
         <Route path={PATHS.LAB} element={<ResourceList lookup_key={LOOKUP_KEYS.LAB}/>} />
         <Route path={PATHS.TEAM} element={<ResourceList lookup_key={LOOKUP_KEYS.TEAM}/>} />
         {/*<Route path={profilePath} element={UserProfile()} />*/}

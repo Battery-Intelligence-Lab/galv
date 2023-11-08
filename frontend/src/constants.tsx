@@ -12,15 +12,16 @@ import AddCircleIcon from '@mui/icons-material/AddCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
 import CloudSyncIcon from '@mui/icons-material/CloudSync';
 import PersonIcon from '@mui/icons-material/Person';
+import FolderIcon from '@mui/icons-material/Folder';
 
 import {
     CellFamiliesApi, CellsApi, CyclerTestsApi, EquipmentApi,
     EquipmentFamiliesApi, ExperimentsApi,
-    FilesApi, HarvestersApi, LabsApi,
+    FilesApi, HarvestersApi, LabsApi, MonitoredPathsApi,
     ScheduleFamiliesApi, SchedulesApi,
     TeamsApi, UsersApi
 } from "./api_codegen";
-import {TypeChangerSupportedTypeName} from "./Components/utils/TypeChanger";
+import {Serializable, TypeChangerSupportedTypeName} from "./Components/utils/TypeChanger";
 
 /**
  * This is a list of various resources grouped under a common name for each
@@ -31,6 +32,7 @@ import {TypeChangerSupportedTypeName} from "./Components/utils/TypeChanger";
  */
 export const LOOKUP_KEYS = {
     HARVESTER: "HARVESTER",
+    PATH: "PATH",
     FILE: "FILE",
     CELL_FAMILY: "CELL_FAMILY",
     EQUIPMENT_FAMILY: "EQUIPMENT_FAMILY",
@@ -42,7 +44,7 @@ export const LOOKUP_KEYS = {
     SCHEDULE: "SCHEDULE",
     LAB: "LAB",
     TEAM: "TEAM",
-    USER: "USER"
+    USER: "USER",
 } as const
 
 export type LookupKey = keyof typeof LOOKUP_KEYS
@@ -55,6 +57,7 @@ export const is_lookup_key = (key: any): key is LookupKey => Object.keys(LOOKUP_
  */
 export const ICONS = {
     [LOOKUP_KEYS.HARVESTER]: CloudSyncIcon,
+    [LOOKUP_KEYS.PATH]: FolderIcon,
     [LOOKUP_KEYS.FILE]: PollIcon,
     [LOOKUP_KEYS.CELL_FAMILY]: BatchPredictionIcon,
     [LOOKUP_KEYS.EQUIPMENT_FAMILY]: BatchPredictionIcon,
@@ -80,6 +83,7 @@ export const ICONS = {
  */
 export const PATHS = {
     [LOOKUP_KEYS.HARVESTER]: "/harvesters",
+    [LOOKUP_KEYS.PATH]: "/paths",
     [LOOKUP_KEYS.FILE]: "/files",
     DASHBOARD: "/",
     [LOOKUP_KEYS.EXPERIMENT]: "/experiments",
@@ -103,6 +107,7 @@ export const PATHS = {
  */
 export const DISPLAY_NAMES = {
     [LOOKUP_KEYS.HARVESTER]: "Harvester",
+    [LOOKUP_KEYS.PATH]: "Path",
     [LOOKUP_KEYS.FILE]: "File",
     DASHBOARD: "Dashboard",
     [LOOKUP_KEYS.EXPERIMENT]: "Experiment",
@@ -126,6 +131,7 @@ export const DISPLAY_NAMES = {
  */
 export const DISPLAY_NAMES_PLURAL = {
     [LOOKUP_KEYS.HARVESTER]: "Harvesters",
+    [LOOKUP_KEYS.PATH]: "Paths",
     [LOOKUP_KEYS.FILE]: "Files",
     DASHBOARD: "Dashboard",
     [LOOKUP_KEYS.EXPERIMENT]: "Experiments",
@@ -150,6 +156,7 @@ export const DISPLAY_NAMES_PLURAL = {
  */
 export const API_HANDLERS = {
     [LOOKUP_KEYS.HARVESTER]: HarvestersApi,
+    [LOOKUP_KEYS.PATH]: MonitoredPathsApi,
     [LOOKUP_KEYS.FILE]: FilesApi,
     [LOOKUP_KEYS.CELL_FAMILY]: CellFamiliesApi,
     [LOOKUP_KEYS.EQUIPMENT_FAMILY]: EquipmentFamiliesApi,
@@ -176,7 +183,8 @@ export const API_HANDLERS = {
  * ```
  */
 export const API_SLUGS = {
-    [LOOKUP_KEYS.HARVESTER]: "harvester",
+    [LOOKUP_KEYS.HARVESTER]: "harvesters",
+    [LOOKUP_KEYS.PATH]: "monitoredPaths",
     [LOOKUP_KEYS.FILE]: "files",
     [LOOKUP_KEYS.CELL]: "cells",
     [LOOKUP_KEYS.EQUIPMENT]: "equipment",
@@ -216,6 +224,10 @@ export type Field = {
     priority?: number
     // createonly fields are required at create time, but otherwise readonly
     createonly?: boolean
+    // If field data need transforming from API to frontend, provide a function here.
+    // It is called in ApiResourceContextProvider, and may be called multiple times,
+    // so it should handle receiving already transformed data.
+    transformation?: (d: Serializable) => Serializable
 }
 const always_fields: {[key: string]: Field} = {
     url: {readonly: true, type: "string"},
@@ -242,17 +254,32 @@ export const FIELDS = {
         environment_variables: {readonly: true, type: "string"},
         active: {readonly: true, type: "string", priority: PRIORITY_LEVELS.CONTEXT},
     },
+    [LOOKUP_KEYS.PATH]: {
+        ...generic_fields,
+        path: {readonly: false, type: "string", priority: PRIORITY_LEVELS.IDENTITY},
+        regex: {readonly: false, type: "string", priority: PRIORITY_LEVELS.IDENTITY},
+        stable_time: {readonly: false, type: "number"},
+        active: {readonly: false, type: "boolean", priority: PRIORITY_LEVELS.SUMMARY},
+        harvester: {
+            readonly: true,
+            type: LOOKUP_KEYS.HARVESTER,
+            priority: PRIORITY_LEVELS.CONTEXT,
+            createonly: true
+        },
+        files: {readonly: true, type: LOOKUP_KEYS.FILE, many: true, priority: PRIORITY_LEVELS.SUMMARY},
+        ...team_fields,
+    },
     [LOOKUP_KEYS.FILE]: {
         ...generic_fields,
         name: {readonly: true, type: "string", priority: PRIORITY_LEVELS.IDENTITY},
-        path: {readonly: true, type: "string", priority: PRIORITY_LEVELS.CONTEXT},
+        state: {readonly: true, type: "string", priority: PRIORITY_LEVELS.SUMMARY},
+        path: {readonly: true, type: "string", priority: PRIORITY_LEVELS.SUMMARY},
+        parser: {readonly: true, type: "string", priority: PRIORITY_LEVELS.SUMMARY},
         harvester: {readonly: true, type: LOOKUP_KEYS.HARVESTER, priority: PRIORITY_LEVELS.CONTEXT},
         last_observed_size: {readonly: true, type: "number"},
         last_observed_time: {readonly: true, type: "string"},
-        state: {readonly: true, type: "string"},
-        data_generation_date: {readonly: true, type: "string"},
+        data_generation_date: {readonly: true, type: "string", priority: PRIORITY_LEVELS.SUMMARY},
         inferred_format: {readonly: true, type: "string"},
-        parser: {readonly: true, type: "string"},
         num_rows: {readonly: true, type: "number"},
         first_sample_no: {readonly: true, type: "number"},
         last_sample_no: {readonly: true, type: "number"},
@@ -339,16 +366,44 @@ export const FIELDS = {
         id: {readonly: true, type: "number"},
         name: {readonly: false, type: "string", priority: PRIORITY_LEVELS.IDENTITY},
         lab: {readonly: true, type: LOOKUP_KEYS.LAB, priority: PRIORITY_LEVELS.CONTEXT},
-        members: {readonly: true, type: LOOKUP_KEYS.USER, many: true},
-        admins: {readonly: true, type: LOOKUP_KEYS.USER, many: true},
+        member_group: {
+            readonly: true,
+            type: LOOKUP_KEYS.USER,
+            many: true,
+            priority: PRIORITY_LEVELS.SUMMARY,
+            transformation: (group: any) => group?.users ?? group ?? []
+        },
+        admin_group: {
+            readonly: true,
+            type: LOOKUP_KEYS.USER,
+            many: true,
+            priority: PRIORITY_LEVELS.SUMMARY,
+            transformation: (group: any) => group?.users ?? group ?? []
+        },
+        monitored_paths: {readonly: true, type: LOOKUP_KEYS.PATH, many: true},
+        cellfamily_resources: {readonly: true, type: LOOKUP_KEYS.CELL_FAMILY, many: true, priority: PRIORITY_LEVELS.CONTEXT},
+        cell_resources: {readonly: true, type: LOOKUP_KEYS.CELL, many: true, priority: PRIORITY_LEVELS.CONTEXT},
+        equipmentfamily_resources: {readonly: true, type: LOOKUP_KEYS.EQUIPMENT_FAMILY, many: true, priority: PRIORITY_LEVELS.CONTEXT},
+        equipment_resources: {readonly: true, type: LOOKUP_KEYS.EQUIPMENT, many: true, priority: PRIORITY_LEVELS.CONTEXT},
+        schedulefamily_resources: {readonly: true, type: LOOKUP_KEYS.SCHEDULE_FAMILY, many: true, priority: PRIORITY_LEVELS.CONTEXT},
+        schedule_resources: {readonly: true, type: LOOKUP_KEYS.SCHEDULE, many: true, priority: PRIORITY_LEVELS.CONTEXT},
+        cyclertest_resources: {readonly: true, type: LOOKUP_KEYS.CYCLER_TEST, many: true, priority: PRIORITY_LEVELS.CONTEXT},
+        experiment_resources: {readonly: true, type: LOOKUP_KEYS.EXPERIMENT, many: true, priority: PRIORITY_LEVELS.CONTEXT},
     },
     [LOOKUP_KEYS.LAB]: {
         ...always_fields,
         id: {readonly: true, type: "number"},
         name: {readonly: false, type: "string", priority: PRIORITY_LEVELS.IDENTITY},
-        description: {readonly: false, type: "string"},
-        admin_group: {readonly: true, type: LOOKUP_KEYS.USER, many: true},
-        teams: {readonly: true, type: LOOKUP_KEYS.TEAM, many: true},
+        description: {readonly: false, type: "string", priority: PRIORITY_LEVELS.SUMMARY},
+        admin_group: {
+            readonly: true,
+            type: LOOKUP_KEYS.USER,
+            many: true,
+            transformation: (group: any) => group?.users ?? group ?? [],
+            priority: PRIORITY_LEVELS.SUMMARY
+        },
+        teams: {readonly: true, type: LOOKUP_KEYS.TEAM, many: true, priority: PRIORITY_LEVELS.SUMMARY},
+        harvesters: {readonly: true, type: LOOKUP_KEYS.HARVESTER, many: true, priority: PRIORITY_LEVELS.SUMMARY},
     },
     [LOOKUP_KEYS.USER]: {
         ...always_fields,

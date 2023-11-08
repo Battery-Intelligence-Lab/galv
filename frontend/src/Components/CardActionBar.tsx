@@ -11,16 +11,26 @@ import CountBadge from "./utils/CountBadge";
 import {Link} from "react-router-dom";
 import RemoveIcon from "@mui/icons-material/Remove";
 import AddIcon from "@mui/icons-material/Add";
-import {DISPLAY_NAMES, DISPLAY_NAMES_PLURAL, FAMILY_LOOKUP_KEYS, ICONS, LookupKey, PATHS} from "../constants";
+import {
+    DISPLAY_NAMES,
+    DISPLAY_NAMES_PLURAL,
+    FAMILY_LOOKUP_KEYS, FIELDS,
+    ICONS, is_lookup_key, LOOKUP_KEYS,
+    LookupKey,
+    PATHS,
+    PRIORITY_LEVELS
+} from "../constants";
+import {useApiResource} from "./utils/ApiResourceContext";
+import LookupKeyIcon from "./LookupKeyIcon";
+import {BaseResource} from "./ResourceCard";
+import {IconProps} from "@mui/material";
+import {SvgIconProps} from "@mui/material/SvgIcon";
+import {id_from_ref_props} from "./utils/misc";
 
 type CardActionBarProps = {
     lookup_key: LookupKey
     resource_id?: string|number
-    family_uuid?: string
-    highlight_count?: number
-    highlight_lookup_key?: keyof typeof ICONS &
-        keyof typeof PATHS &
-        keyof typeof DISPLAY_NAMES_PLURAL
+    excludeContext?: boolean
     editable?: boolean
     editing?: boolean
     setEditing?: (editing: boolean) => void
@@ -33,6 +43,7 @@ type CardActionBarProps = {
     destroyable?: boolean
     expanded?: boolean
     setExpanded?: (expanded: boolean) => void
+    iconProps?: Partial<SvgIconProps>
 }
 
 /**
@@ -43,6 +54,47 @@ type CardActionBarProps = {
  * @constructor
  */
 export default function CardActionBar(props: CardActionBarProps) {
+
+    const {apiResource} = useApiResource()
+    const iconProps: Partial<SvgIconProps> = {
+        fontSize: "large",
+        ...props.iconProps
+    }
+
+    const context_section = <>{
+        Object.entries(FIELDS[props.lookup_key])
+            .filter(([k, v]) => is_lookup_key(v.type))
+            .map(([k, v]) => {
+                const relative_lookup_key = v.type as LookupKey
+                let content: ReactNode
+                if (v.many) {
+                    const relative_value = apiResource?.[k] as BaseResource[]|undefined
+                    content = <CountBadge
+                        key={`highlight`}
+                        icon={<LookupKeyIcon lookupKey={relative_lookup_key} tooltip={false} {...iconProps}/>}
+                        badgeContent={relative_value?.length}
+                        url={PATHS[relative_lookup_key]}
+                    />
+                } else {
+                    const relative_value = apiResource?.[k] as BaseResource|undefined
+                    const relative_id = relative_value? id_from_ref_props(relative_value) : undefined
+                    content = <IconButton
+                        component={Link}
+                        to={`${PATHS[relative_lookup_key]}/${relative_id}`
+                        }>
+                        <LookupKeyIcon lookupKey={relative_lookup_key} tooltip={false} {...iconProps}/>
+                    </IconButton>
+                }
+                return <Tooltip
+                    title={`View ${(v.many? DISPLAY_NAMES_PLURAL: DISPLAY_NAMES)[relative_lookup_key]}`}
+                    arrow
+                    describeChild
+                    key={k}
+                >
+                    <div>{content}</div>
+                </Tooltip>
+            })
+    }</>
 
     let edit_section: ReactNode
     if (props.editable) {
@@ -60,7 +112,7 @@ export default function CardActionBar(props: CardActionBarProps) {
                 key="edit"
             >
                 <IconButton onClick={() => props.setEditing!(true)}>
-                    <EditIcon fontSize="large"/>
+                    <EditIcon {...iconProps}/>
                 </IconButton>
             </Tooltip>
         } else {
@@ -72,14 +124,14 @@ export default function CardActionBar(props: CardActionBarProps) {
                 {props.onUndo && <Tooltip title={`Undo`} arrow describeChild key="undo">
                 <span>
                 <IconButton onClick={props.onUndo!} disabled={!props.undoable}>
-                    <UndoIcon fontSize="large"/>
+                    <UndoIcon {...iconProps}/>
                 </IconButton>
                 </span>
                 </Tooltip>}
                 {props.onRedo && <Tooltip title={`Redo`} arrow describeChild key="redo">
                     <span>
                     <IconButton onClick={props.onRedo!} disabled={!props.redoable}>
-                        <RedoIcon fontSize="large"/>
+                        <RedoIcon {...iconProps}/>
                     </IconButton>
                     </span>
                 </Tooltip>}
@@ -91,7 +143,7 @@ export default function CardActionBar(props: CardActionBarProps) {
                         if (props.onEditSave!())
                             props.setEditing!(false)
                     }}>
-                        <SaveIcon fontSize="large" color="success"/>
+                        <SaveIcon {...iconProps} color="success"/>
                     </IconButton>
                 </Tooltip>
                 {undo_buttons}
@@ -100,28 +152,15 @@ export default function CardActionBar(props: CardActionBarProps) {
                         if (props.onEditDiscard!())
                             props.setEditing!(false)
                     }}>
-                        <CloseIcon fontSize="large" color="error"/>
+                        <CloseIcon {...iconProps} color="error"/>
                     </IconButton>
                 </Tooltip>
             </>
         }
     }
 
-    const highlight_lookup_key = props.highlight_lookup_key
-    const ICON = highlight_lookup_key? ICONS[highlight_lookup_key] : () => <></>
-
-    const family_key = props.lookup_key in FAMILY_LOOKUP_KEYS?
-        FAMILY_LOOKUP_KEYS[props.lookup_key as keyof typeof FAMILY_LOOKUP_KEYS] : undefined
-    const FAMILY_ICON = family_key? ICONS[family_key] : () => <></>
-
     return <Stack direction="row" spacing={1} alignItems="center">
-        {highlight_lookup_key && <CountBadge
-            key={`highlight`}
-            icon={<ICON fontSize="large"/>}
-            badgeContent={props.highlight_count}
-            url={PATHS[highlight_lookup_key]}
-            tooltip={`View related ${DISPLAY_NAMES_PLURAL[highlight_lookup_key]}`}
-        />}
+        {!props.excludeContext && context_section}
         {props.editable && edit_section}
         {props.destroyable && <Tooltip
             title={`Delete this ${DISPLAY_NAMES[props.lookup_key]}`}
@@ -130,25 +169,14 @@ export default function CardActionBar(props: CardActionBarProps) {
             key="delete"
         >
             <IconButton component={Link} to={`${PATHS[props.lookup_key]}/${props.resource_id}/delete`}>
-                <EditIcon fontSize="large"/>
+                <EditIcon {...iconProps}/>
             </IconButton>
         </Tooltip>}
-        {/*<Tooltip title={`Go to ${DISPLAY_NAMES[props.lookup_key]} Page`} arrow describeChild key="goto">*/}
-        {/*    <IconButton component={Link} to={`${PATHS[props.lookup_key]}/${props.resource_id}`}>*/}
-        {/*        <ManageSearchIcon fontSize="large"/>*/}
-        {/*    </IconButton>*/}
-        {/*</Tooltip>*/}
-        {props.family_uuid && family_key &&
-            <Tooltip title={`Go to ${DISPLAY_NAMES[family_key]} Page`} arrow describeChild key="family">
-                <IconButton component={Link} to={`${PATHS[family_key]}/${props.family_uuid}`}>
-                    <FAMILY_ICON fontSize="large"/>
-                </IconButton>
-            </Tooltip>}
         {props.expanded !== undefined &&
             props.setExpanded !== undefined &&
             <Tooltip title={props.expanded ? "Hide Details" : "Show Details"} arrow describeChild key="expand">
                 <IconButton onClick={() => props.setExpanded!(!props.expanded)}>
-                    {props.expanded ? <RemoveIcon fontSize="large"/> : <AddIcon fontSize="large"/>}
+                    {props.expanded ? <RemoveIcon {...iconProps}/> : <AddIcon {...iconProps}/>}
                 </IconButton>
             </Tooltip>}
     </Stack>

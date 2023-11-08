@@ -82,6 +82,7 @@ function ResourceCreator<T extends BaseResource>(
     // The card action bar controls the expanded state and editing state
     const action = <CardActionBar
         lookup_key={lookup_key}
+        excludeContext={true}
         editable={true}
         editing={true}
         setEditing={() => {}}

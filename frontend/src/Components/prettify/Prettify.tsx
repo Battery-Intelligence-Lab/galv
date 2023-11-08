@@ -15,8 +15,8 @@ import PrettyResource from "./PrettyResource";
 
 type PrettifyProps = {
     target: any
-    nest_level: number
-    edit_mode: boolean
+    nest_level?: number
+    edit_mode?: boolean
     // onEdit is called when the user leaves the field
     // If it returns a value, the value is set as the new value for the field
     onEdit?: (value: Serializable) => Serializable|void
@@ -173,6 +173,8 @@ export default function Prettify(
     {hide_type_changer, ...props}: PrettifyProps &
         Partial<TextFieldProps | TypographyProps | Omit<CheckboxProps, "onChange"> | SvgIconProps>
 ) {
+    props.nest_level = props.nest_level ?? 0
+    props.edit_mode = props.edit_mode ?? false
     const pretty = <Pretty {...props} />
     return props.edit_mode && props.onEdit && !hide_type_changer?
         <TypeChangeWrapper

@@ -143,8 +143,6 @@ export function FilterContextProvider(props: PropsWithChildren<any>) {
         })
     }, [activeFilters])
 
-    console.log(`FilterContextProvider`, {activeFilters, passesFilters})
-
     return <FilterContext.Provider value={{activeFilters, setActiveFilters, passesFilters}}>
         {props.children}
     </FilterContext.Provider>

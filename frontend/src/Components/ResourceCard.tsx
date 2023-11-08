@@ -37,6 +37,8 @@ import UndoRedoProvider, {UndoRedoContext} from "./utils/UndoRedoContext";
 import Representation from "./Representation";
 import {FilterContext} from "./filtering/FilterContext";
 import ApiResourceContextProvider, {useApiResource} from "./utils/ApiResourceContext";
+import Chip from "@mui/material/Chip";
+import Prettify from "./prettify/Prettify";
 
 export type Permissions = { read?: boolean, write?: boolean, create?: boolean, destroy?: boolean }
 type child_keys = "cells"|"equipment"|"schedules"
@@ -120,10 +122,6 @@ function ResourceCard<T extends BaseResource>(
 
     const family_key = get_has_family(lookup_key)?
         FAMILY_LOOKUP_KEYS[lookup_key] : undefined
-    const children: string[] = get_is_family(lookup_key)?
-        apiResource?.[CHILD_PROPERTY_NAMES[lookup_key]] as string[] : []
-
-    const is_ct_resource = Object.keys(FIELDS[lookup_key]).includes("cycler_tests")
 
     const ICON = ICONS[lookup_key]
     const FAMILY_ICON = family_key? ICONS[family_key] : undefined
@@ -132,12 +130,6 @@ function ResourceCard<T extends BaseResource>(
     const action = <CardActionBar
         lookup_key={lookup_key}
         resource_id={resource_id}
-        family_uuid={family?.uuid as string|undefined}
-        highlight_count={apiResource?.cycler_tests?.length ?? children?.length}
-        highlight_lookup_key={
-            is_ct_resource? "CYCLER_TEST" :
-                get_is_family(lookup_key)? CHILD_LOOKUP_KEYS[lookup_key] : undefined
-        }
         editable={!!apiResource?.permissions.write}
         editing={isEditMode}
         setEditing={setEditing}
@@ -169,14 +161,7 @@ function ResourceCard<T extends BaseResource>(
             </Stack>}
             action={action}
         />
-        {isExpanded? <CardContent>
-            {FAMILY_ICON !== undefined && <Grid container>
-                <LoadingChip icon={<FAMILY_ICON/>}/>
-            </Grid>}
-            {is_ct_resource && <Grid container>
-                <LoadingChip icon={<ICONS.CYCLER_TEST/>}/>
-            </Grid>}
-        </CardContent> : <CardContent />}
+        <CardContent />
     </Card>
 
     const cardBody = <CardContent sx={{
@@ -260,7 +245,7 @@ function ResourceCard<T extends BaseResource>(
                 resource_id={id_from_ref_props<string>(data as string|number)}
                 lookup_key={lookup}
                 short_name={is_family_child(lookup, lookup_key)}
-            /> : <>`${key}: ${data}`</>
+            /> : <Prettify target={data} />
     }
 
     const cardSummary = <CardContent>

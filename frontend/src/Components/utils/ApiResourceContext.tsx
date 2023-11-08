@@ -1,6 +1,6 @@
 import {createContext, PropsWithChildren, useContext} from "react";
 import {BaseResource} from "../ResourceCard";
-import {API_HANDLERS, API_SLUGS, FAMILY_LOOKUP_KEYS, get_has_family, LookupKey} from "../../constants";
+import {API_HANDLERS, API_SLUGS, FAMILY_LOOKUP_KEYS, FIELDS, get_has_family, LookupKey} from "../../constants";
 import {AxiosError, AxiosResponse} from "axios";
 import {useQuery, UseQueryResult} from "@tanstack/react-query";
 import {id_from_ref_props} from "./misc";
@@ -27,6 +27,15 @@ type ApiResourceContextProviderProps = {
     resource_id: string|number
 }
 
+export const get_select_function = (lookup_key: LookupKey) =>
+    <T extends BaseResource>(data: AxiosResponse<T>) => {
+        Object.entries(FIELDS[lookup_key]).forEach(([k, v]) => {
+            if (v.transformation !== undefined)
+                data.data[k] = v.transformation(data.data[k])
+        })
+        return data
+    }
+
 function ApiResourceContextStandaloneProvider<T extends BaseResource>(
     {lookup_key, resource_id, children}: PropsWithChildren<ApiResourceContextProviderProps>
 ) {
@@ -36,7 +45,8 @@ function ApiResourceContextStandaloneProvider<T extends BaseResource>(
         ] as (uuid: string) => Promise<AxiosResponse<T>>
     const query = useQuery<AxiosResponse<T>, AxiosError>({
         queryKey: [lookup_key, resource_id],
-        queryFn: () => get.bind(api_handler)(String(resource_id))
+        queryFn: () => get.bind(api_handler)(String(resource_id)),
+        select: get_select_function(lookup_key),
     })
 
     return <ApiResourceContext.Provider value={{apiResource: query.data?.data, apiQuery: query}}>
@@ -56,7 +66,8 @@ function ApiResourceContextWithFamilyProvider<T extends BaseResource>(
         ] as (uuid: string) => Promise<AxiosResponse<T>>
     const query = useQuery<AxiosResponse<T>, AxiosError>({
         queryKey: [lookup_key, resource_id],
-        queryFn: () => get.bind(api_handler)(String(resource_id))
+        queryFn: () => get.bind(api_handler)(String(resource_id)),
+        select: get_select_function(lookup_key),
     })
 
     const family_lookup_key = FAMILY_LOOKUP_KEYS[lookup_key]
@@ -70,7 +81,8 @@ function ApiResourceContextWithFamilyProvider<T extends BaseResource>(
             query.data?.data.family? id_from_ref_props(query.data?.data?.family) : "never"
         ],
         queryFn: () => family_get.bind(family_api_handler)(id_from_ref_props<string>(query.data?.data?.family!)),
-        enabled: !!query.data?.data?.family
+        enabled: !!query.data?.data?.family,
+        select: get_select_function(family_lookup_key),
     })
 
     return <ApiResourceContext.Provider value={{

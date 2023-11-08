@@ -18,6 +18,7 @@ import ResourceCard, {BaseResource} from "./ResourceCard";
 import ResourceCreator from "./ResourceCreator";
 import {API_HANDLERS, API_SLUGS, DISPLAY_NAMES_PLURAL, LookupKey} from "../constants";
 import ErrorBoundary from "./utils/ErrorBoundary";
+import {get_select_function} from "./utils/ApiResourceContext";
 
 type PaginatedAPIResponse<T = any> = {
     count: number
@@ -42,7 +43,13 @@ export function ResourceList<T extends BaseResource>({lookup_key}: {lookup_key: 
             try {
                 // Update the cache for each resource
                 r.data.results.forEach((resource: T) => {
-                    queryClient.setQueryData([lookup_key, resource.id], r)
+                    queryClient.setQueryData(
+                        [lookup_key, resource.uuid ?? resource.id ?? "no id in List response"],
+                        get_select_function(lookup_key)({
+                            ...r,
+                            data: resource
+                        })
+                    )
                 })
             } catch {}
             return r
