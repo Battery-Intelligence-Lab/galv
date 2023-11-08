@@ -341,17 +341,17 @@ export default function Core() {
       <Route path="/login" element={<Login />}/>
       <Route path={PATHS.DASHBOARD} element={Layout}>
         <Route path="/:type/:id" element={<ResourceCardWrapper/>}/>  {/* Handles direct resource lookups */}
-        {/*<Route path={PATHS.EXPERIMENT} element={<ResourceList lookup_key={"EXPERIMENT"}/>} />*/}
+        <Route path={PATHS.EXPERIMENT} element={<ResourceList lookup_key={LOOKUP_KEYS.EXPERIMENT}/>} />
         <Route path={PATHS.CYCLER_TEST} element={<ResourceList lookup_key={LOOKUP_KEYS.CYCLER_TEST}/>} />
-        {/*<Route path={PATHS.DATASET} element={<ResourceList lookup_key={"DATASET"}/>} />*/}
+        <Route path={PATHS.FILE} element={<ResourceList lookup_key={LOOKUP_KEYS.FILE}/>} />
         <Route path={PATHS.CELL} element={<ResourceList lookup_key={LOOKUP_KEYS.CELL}/>} />
         <Route path={PATHS.CELL_FAMILY} element={<ResourceList lookup_key={LOOKUP_KEYS.CELL_FAMILY}/>} />
         <Route path={PATHS.EQUIPMENT} element={<ResourceList lookup_key={LOOKUP_KEYS.EQUIPMENT}/>} />
         <Route path={PATHS.EQUIPMENT_FAMILY} element={<ResourceList lookup_key={LOOKUP_KEYS.EQUIPMENT_FAMILY}/>} />
         <Route path={PATHS.SCHEDULE} element={<ResourceList lookup_key={LOOKUP_KEYS.SCHEDULE}/>} />
         <Route path={PATHS.SCHEDULE_FAMILY} element={<ResourceList lookup_key={LOOKUP_KEYS.SCHEDULE_FAMILY}/>} />
-        <Route path={PATHS.LAB} element={<>TODO</>} />
-        <Route path={PATHS.TEAM} element={<>TODO</>} />
+        <Route path={PATHS.LAB} element={<ResourceList lookup_key={LOOKUP_KEYS.LAB}/>} />
+        <Route path={PATHS.TEAM} element={<ResourceList lookup_key={LOOKUP_KEYS.TEAM}/>} />
         {/*<Route path={profilePath} element={UserProfile()} />*/}
         {/*<Route path={tokenPath} element={Tokens()} />*/}
         {/*<Route index element={Dashboard()} />*/}

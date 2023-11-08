@@ -4,7 +4,7 @@
 
 import React from "react";
 import useStyles from "../UseStyles";
-import {useQuery} from "@tanstack/react-query";
+import {useQuery, useQueryClient} from "@tanstack/react-query";
 import Container from "@mui/material/Container";
 import Typography from "@mui/material/Typography";
 import {Link} from "react-router-dom";
@@ -16,7 +16,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import Skeleton from "@mui/material/Skeleton";
 import ResourceCard, {BaseResource} from "./ResourceCard";
 import ResourceCreator from "./ResourceCreator";
-import {API_HANDLERS, API_SLUGS, DISPLAY_NAMES, DISPLAY_NAMES_PLURAL, LookupKey} from "../constants";
+import {API_HANDLERS, API_SLUGS, DISPLAY_NAMES_PLURAL, LookupKey} from "../constants";
 import ErrorBoundary from "./utils/ErrorBoundary";
 
 type PaginatedAPIResponse<T = any> = {
@@ -35,9 +35,18 @@ export function ResourceList<T extends BaseResource>({lookup_key}: {lookup_key: 
         `${API_SLUGS[lookup_key]}List` as keyof typeof api_handler
         ] as () => Promise<AxiosResponse<PaginatedAPIResponse<T>>>
     // Queries
+    const queryClient = useQueryClient()
     const query = useQuery<AxiosResponse<PaginatedAPIResponse<T>>, AxiosError>({
         queryKey: [lookup_key, 'list'],
-        queryFn: () => get.bind(api_handler)()
+        queryFn: () => get.bind(api_handler)().then(r => {
+            try {
+                // Update the cache for each resource
+                r.data.results.forEach((resource: T) => {
+                    queryClient.setQueryData([lookup_key, resource.id], r)
+                })
+            } catch {}
+            return r
+        })
     })
 
     return (
@@ -48,7 +57,7 @@ export function ResourceList<T extends BaseResource>({lookup_key}: {lookup_key: 
                     variant="h3"
                     className={clsx(classes.page_title, classes.text)}
                 >
-                    {DISPLAY_NAMES[lookup_key]}
+                    {DISPLAY_NAMES_PLURAL[lookup_key]}
                     {query.isLoading && <CircularProgress sx={{color: (t) => t.palette.text.disabled, marginLeft: "1em"}} />}
                 </Typography>
             </Grid>

@@ -1,6 +1,6 @@
 import {useParams} from "react-router-dom";
 import {Serializable} from "./TypeChanger";
-import {FIELDS, is_lookup_key, LookupKey, PATHS} from "../../constants";
+import { is_lookup_key, LookupKey, PATHS} from "../../constants";
 
 export type ObjectReferenceProps =
     { uuid: string } |

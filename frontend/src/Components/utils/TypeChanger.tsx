@@ -18,7 +18,7 @@ import useStyles from "../../UseStyles";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import {build_placeholder_url, get_url_components} from "./misc";
-import {API_HANDLERS, DISPLAY_NAMES, ICONS, is_lookup_key, LookupKey, PATHS} from "../../constants";
+import {API_HANDLERS, DISPLAY_NAMES, ICONS, is_lookup_key, LookupKey} from "../../constants";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import {OverridableComponent} from "@mui/material/OverridableComponent";
 
