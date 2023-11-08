@@ -251,8 +251,8 @@ class LabSerializer(serializers.HyperlinkedModelSerializer, PermissionsMixin):
 
     class Meta:
         model = Lab
-        fields = ['url', 'id', 'name', 'description', 'admin_group', 'teams', 'permissions']
-        read_only_fields = ['url', 'id', 'teams', 'admin_group', 'permissions']
+        fields = ['url', 'id', 'name', 'description', 'admin_group', 'harvesters', 'teams', 'permissions']
+        read_only_fields = ['url', 'id', 'teams', 'admin_group', 'harvesters', 'permissions']
 
 class WithTeamMixin(serializers.Serializer):
     team = TruncatedHyperlinkedRelatedIdField(
@@ -581,6 +581,22 @@ class HarvesterSerializer(serializers.HyperlinkedModelSerializer, PermissionsMix
 
 
 class MonitoredPathSerializer(serializers.HyperlinkedModelSerializer, PermissionsMixin, WithTeamMixin, CreateOnlyMixin):
+    files = serializers.SerializerMethodField(help_text="Files on this MonitoredPath")
+
+    def get_files(self, instance):
+        request = self.context['request']
+        files = ObservedFile.objects.filter(harvester__lab=instance.team.lab)
+        file_ids = []
+        for file in files:
+            if instance.matches(file.path):
+                file_ids.append(file.uuid)
+        data = ObservedFileSerializer(
+            ObservedFile.objects.filter(uuid__in=file_ids),
+            many=True,
+            context={'request': request}
+        ).data
+        return [f['url'] for f in data]
+
     harvester = TruncatedHyperlinkedRelatedIdField(
         'HarvesterSerializer',
         ['name'],
@@ -645,8 +661,8 @@ class MonitoredPathSerializer(serializers.HyperlinkedModelSerializer, Permission
 
     class Meta:
         model = MonitoredPath
-        fields = ['url', 'uuid', 'path', 'regex', 'stable_time', 'active', 'harvester', 'team', 'permissions']
-        read_only_fields = ['url', 'uuid', 'permissions']
+        fields = ['url', 'uuid', 'path', 'regex', 'stable_time', 'active', 'files', 'harvester', 'team', 'permissions']
+        read_only_fields = ['url', 'uuid', 'files', 'harvester', 'permissions']
         extra_kwargs = augment_extra_kwargs({
             'harvester': {'create_only': True},
             'team': {'create_only': True}

@@ -721,8 +721,6 @@ class HarvesterEnvVar(models.Model):
         unique_together = [['harvester', 'key']]
 
 
-# TODO: Monitored paths can't be automatically added at HarvesterTime unless
-#   a team is specified.
 class MonitoredPath(UUIDModel, ResourceModelPermissionsMixin):
     harvester = models.ForeignKey(
         to=Harvester,
