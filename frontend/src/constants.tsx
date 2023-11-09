@@ -16,10 +16,11 @@ import FolderIcon from '@mui/icons-material/Folder';
 import VpnKeyIcon from '@mui/icons-material/VpnKey';
 
 import {
-    CellFamiliesApi, CellsApi, CyclerTestsApi, EquipmentApi,
-    EquipmentFamiliesApi, ExperimentsApi,
+    CellChemistriesApi,
+    CellFamiliesApi, CellFormFactorsApi, CellManufacturersApi, CellModelsApi, CellsApi, CyclerTestsApi, EquipmentApi,
+    EquipmentFamiliesApi, EquipmentManufacturersApi, EquipmentModelsApi, EquipmentTypesApi, ExperimentsApi,
     FilesApi, HarvestersApi, LabsApi, MonitoredPathsApi,
-    ScheduleFamiliesApi, SchedulesApi,
+    ScheduleFamiliesApi, ScheduleIdentifiersApi, SchedulesApi,
     TeamsApi, TokensApi, UsersApi
 } from "./api_codegen";
 import {Serializable, TypeChangerSupportedTypeName} from "./Components/TypeChanger";
@@ -30,6 +31,8 @@ import {Serializable, TypeChangerSupportedTypeName} from "./Components/TypeChang
  * This allows us to pass a single identifier for the resource type to
  * various components, which can then use this identifier to determine
  * which API to use, which icon to display, etc.
+ *
+ * TODO: Eventually these could all be exposed as part of a useLookupKey context.
  */
 export const LOOKUP_KEYS = {
     HARVESTER: "HARVESTER",
@@ -49,9 +52,22 @@ export const LOOKUP_KEYS = {
     TOKEN: "TOKEN",
 } as const
 
-export type LookupKey = keyof typeof LOOKUP_KEYS
+export const AUTOCOMPLETE_KEYS = {
+    CELL_MANUFACTURER: "CELL_MANUFACTURER",
+    CELL_MODEL: "CELL_MODEL",
+    CELL_FORM_FACTOR: "CELL_FORM_FACTOR",
+    CELL_CHEMISTRY: "CELL_CHEMISTRY",
+    EQUIPMENT_TYPE: "EQUIPMENT_TYPE",
+    EQUIPMENT_MANUFACTURER: "EQUIPMENT_MANUFACTURER",
+    EQUIPMENT_MODEL: "EQUIPMENT_MODEL",
+    SCHEDULE_IDENTIFIER: "SCHEDULE_IDENTIFIER",
+} as const
 
+export type LookupKey = keyof typeof LOOKUP_KEYS
 export const is_lookup_key = (key: any): key is LookupKey => Object.keys(LOOKUP_KEYS).includes(key)
+
+export type AutocompleteKey = keyof typeof AUTOCOMPLETE_KEYS
+export const is_autocomplete_key = (key: any): key is AutocompleteKey => Object.keys(AUTOCOMPLETE_KEYS).includes(key)
 
 /**
  * Icons for each resource type.
@@ -173,6 +189,14 @@ export const API_HANDLERS = {
     [LOOKUP_KEYS.TEAM]: TeamsApi,
     [LOOKUP_KEYS.USER]: UsersApi,
     [LOOKUP_KEYS.TOKEN]: TokensApi,
+    [AUTOCOMPLETE_KEYS.CELL_MANUFACTURER]: CellManufacturersApi,
+    [AUTOCOMPLETE_KEYS.CELL_MODEL]: CellModelsApi,
+    [AUTOCOMPLETE_KEYS.CELL_FORM_FACTOR]: CellFormFactorsApi,
+    [AUTOCOMPLETE_KEYS.CELL_CHEMISTRY]: CellChemistriesApi,
+    [AUTOCOMPLETE_KEYS.EQUIPMENT_TYPE]: EquipmentTypesApi,
+    [AUTOCOMPLETE_KEYS.EQUIPMENT_MANUFACTURER]: EquipmentManufacturersApi,
+    [AUTOCOMPLETE_KEYS.EQUIPMENT_MODEL]: EquipmentModelsApi,
+    [AUTOCOMPLETE_KEYS.SCHEDULE_IDENTIFIER]: ScheduleIdentifiersApi,
 } as const
 
 /**
@@ -202,6 +226,14 @@ export const API_SLUGS = {
     [LOOKUP_KEYS.TEAM]: "teams",
     [LOOKUP_KEYS.USER]: "users",
     [LOOKUP_KEYS.TOKEN]: "tokens",
+    [AUTOCOMPLETE_KEYS.CELL_MANUFACTURER]: "cell_manufacturers",
+    [AUTOCOMPLETE_KEYS.CELL_MODEL]: "cell_models",
+    [AUTOCOMPLETE_KEYS.CELL_FORM_FACTOR]: "cell_form_factors",
+    [AUTOCOMPLETE_KEYS.CELL_CHEMISTRY]: "cell_chemistries",
+    [AUTOCOMPLETE_KEYS.EQUIPMENT_TYPE]: "equipment_types",
+    [AUTOCOMPLETE_KEYS.EQUIPMENT_MANUFACTURER]: "equipment_manufacturers",
+    [AUTOCOMPLETE_KEYS.EQUIPMENT_MODEL]: "equipment_models",
+    [AUTOCOMPLETE_KEYS.SCHEDULE_IDENTIFIER]: "schedule_identifiers",
 } as const
 
 
@@ -245,7 +277,10 @@ const generic_fields: {[key: string]: Field} = {
     uuid: {readonly: true, type: "string"},
     ...always_fields,
 }
-
+const autocomplete_fields: {[key: string]: Field} = {
+    value: {readonly: true, type: "string"},
+    ld_value: {readonly: true, type: "string"},
+}
 /**
  * Lookup map to get the properties of the fields in each resource type.
  */
@@ -337,10 +372,10 @@ export const FIELDS = {
     [LOOKUP_KEYS.CELL_FAMILY]: {
         ...generic_fields,
         ...team_fields,
-        manufacturer: {readonly: false, type: "string", priority: PRIORITY_LEVELS.IDENTITY},
-        model: {readonly: false, type: "string", priority: PRIORITY_LEVELS.IDENTITY},
-        form_factor: {readonly: false, type: "string", priority: PRIORITY_LEVELS.CONTEXT},
-        chemistry: {readonly: false, type: "string", priority: PRIORITY_LEVELS.CONTEXT},
+        manufacturer: {readonly: false, type: AUTOCOMPLETE_KEYS.CELL_MANUFACTURER, priority: PRIORITY_LEVELS.IDENTITY},
+        model: {readonly: false, type: AUTOCOMPLETE_KEYS.CELL_MODEL, priority: PRIORITY_LEVELS.IDENTITY},
+        form_factor: {readonly: false, type: AUTOCOMPLETE_KEYS.CELL_FORM_FACTOR, priority: PRIORITY_LEVELS.CONTEXT},
+        chemistry: {readonly: false, type: AUTOCOMPLETE_KEYS.CELL_CHEMISTRY, priority: PRIORITY_LEVELS.CONTEXT},
         cells: {readonly: true, type: "CELL", many: true, priority: PRIORITY_LEVELS.SUMMARY},
         nominal_voltage: {readonly: false, type: "number"},
         nominal_capacity: {readonly: false, type: "number"},
@@ -352,15 +387,15 @@ export const FIELDS = {
     [LOOKUP_KEYS.EQUIPMENT_FAMILY]: {
         ...generic_fields,
         ...team_fields,
-        manufacturer: {readonly: false, type: "string", priority: PRIORITY_LEVELS.IDENTITY},
-        model: {readonly: false, type: "string", priority: PRIORITY_LEVELS.IDENTITY},
-        type: {readonly: false, type: "string", priority: PRIORITY_LEVELS.CONTEXT},
+        manufacturer: {readonly: false, type: AUTOCOMPLETE_KEYS.EQUIPMENT_MANUFACTURER, priority: PRIORITY_LEVELS.IDENTITY},
+        model: {readonly: false, type: AUTOCOMPLETE_KEYS.EQUIPMENT_MODEL, priority: PRIORITY_LEVELS.IDENTITY},
+        type: {readonly: false, type: AUTOCOMPLETE_KEYS.EQUIPMENT_TYPE, priority: PRIORITY_LEVELS.CONTEXT},
         equipment: {readonly: true, type: LOOKUP_KEYS.EQUIPMENT, many: true, priority: PRIORITY_LEVELS.SUMMARY},
     },
     [LOOKUP_KEYS.SCHEDULE_FAMILY]: {
         ...generic_fields,
         ...team_fields,
-        identifier: {readonly: false, type: "string", priority: PRIORITY_LEVELS.IDENTITY},
+        identifier: {readonly: false, type: AUTOCOMPLETE_KEYS.SCHEDULE_IDENTIFIER, priority: PRIORITY_LEVELS.IDENTITY},
         description: {readonly: false, type: "string"},
         ambient_temperature: {readonly: false, type: "number"},
         pybamm_template: {readonly: false, type: "object"},
@@ -425,6 +460,14 @@ export const FIELDS = {
         created: {readonly: true, type: "string"},
         expiry: {readonly: true, type: "string", priority: PRIORITY_LEVELS.SUMMARY},
     },
+    [AUTOCOMPLETE_KEYS.CELL_MANUFACTURER]: autocomplete_fields,
+    [AUTOCOMPLETE_KEYS.CELL_MODEL]: autocomplete_fields,
+    [AUTOCOMPLETE_KEYS.CELL_FORM_FACTOR]: autocomplete_fields,
+    [AUTOCOMPLETE_KEYS.CELL_CHEMISTRY]: autocomplete_fields,
+    [AUTOCOMPLETE_KEYS.EQUIPMENT_TYPE]: autocomplete_fields,
+    [AUTOCOMPLETE_KEYS.EQUIPMENT_MANUFACTURER]: autocomplete_fields,
+    [AUTOCOMPLETE_KEYS.EQUIPMENT_MODEL]: autocomplete_fields,
+    [AUTOCOMPLETE_KEYS.SCHEDULE_IDENTIFIER]: autocomplete_fields,
 } as const
 
 /**

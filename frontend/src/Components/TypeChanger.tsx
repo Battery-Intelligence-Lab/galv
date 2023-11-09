@@ -18,7 +18,7 @@ import useStyles from "../styles/UseStyles";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import {build_placeholder_url, get_url_components} from "./misc";
-import {API_HANDLERS, DISPLAY_NAMES, ICONS, is_lookup_key, LookupKey} from "../constants";
+import {API_HANDLERS, AutocompleteKey, DISPLAY_NAMES, ICONS, is_lookup_key, LookupKey} from "../constants";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import {OverridableComponent} from "@mui/material/OverridableComponent";
 
@@ -97,7 +97,8 @@ export type Serializable =
 
 export type SerializableObject = {[key: string]: Serializable}
 
-export type TypeChangerSupportedTypeName = (keyof typeof type_map | LookupKey) & string
+export type TypeChangerDetectableTypeName = (keyof typeof type_map & string) | LookupKey
+export type TypeChangerSupportedTypeName = TypeChangerDetectableTypeName | AutocompleteKey
 
 export type TypeChangerProps = {
     currentValue?: Serializable
@@ -110,7 +111,7 @@ export type TypeChangerProps = {
 
 export type TypeChangerPopoverProps = {
     value?: TypeChangerSupportedTypeName
-    onTypeChange: (newValue: TypeChangerSupportedTypeName) => void
+    onTypeChange: (newValue: TypeChangerDetectableTypeName) => void
 } & PopoverProps
 
 function TypeChangeResourcePopover({onTypeChange, ...props}: TypeChangerPopoverProps) {
@@ -131,7 +132,7 @@ function TypeChangeResourcePopover({onTypeChange, ...props}: TypeChangerPopoverP
             size="small"
             exclusive
             value={props.value}
-            onChange={(_, v: keyof typeof API_HANDLERS) => onTypeChange(v)}
+            onChange={(_, v: TypeChangerDetectableTypeName) => onTypeChange(v)}
         >
             {Object.keys(API_HANDLERS).map((lookup_key) => {
                 const ICON = ICONS[lookup_key as keyof typeof ICONS]
@@ -177,7 +178,7 @@ function TypeChangePopover({value, onTypeChange, ...props}: TypeChangerPopoverPr
                 size="small"
                 exclusive
                 value={value}
-                onChange={(_, v: TypeChangerSupportedTypeName) => onTypeChange(v)}
+                onChange={(_, v: TypeChangerDetectableTypeName) => onTypeChange(v)}
             >
                 {Object.entries(type_map).map(([type, ICON]) =>
                     <ToggleButton value={type} key={type} selected={value === type} disabled={value === type}>
@@ -203,7 +204,7 @@ function TypeChangePopover({value, onTypeChange, ...props}: TypeChangerPopoverPr
     </Popover>
 }
 
-export const detect_type = (v: Serializable): TypeChangerSupportedTypeName => {
+export const detect_type = (v: Serializable): TypeChangerDetectableTypeName => {
     if (v instanceof Array) return 'array'
     if (typeof v === 'string')
         return get_url_components(v)?.lookup_key ?? 'string'
