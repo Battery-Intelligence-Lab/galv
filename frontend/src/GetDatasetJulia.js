@@ -2,12 +2,12 @@ import React, {useState, useEffect} from "react";
 import SyntaxHighlighter from 'react-syntax-highlighter';
 import { docco } from 'react-syntax-highlighter/dist/cjs/styles/hljs';
 import Typography from '@mui/material/Typography';
-import Connection from "./APIConnection";
 import {CircularProgress} from "@mui/material";
+import {useCurrentUser} from "./Components/CurrentUserContext";
 
 
 export default function GetDatasetJulia({dataset}) {
-    const token = Connection.user?.token;
+    const {user} = useCurrentUser()
     const [columns, setColumns] = useState("")
     const [code, setCode] = useState(<CircularProgress/>)
 
@@ -17,12 +17,12 @@ export default function GetDatasetJulia({dataset}) {
     const host = `http://api.${domain}`
 
     useEffect(() => {
-        Promise.all(dataset.columns.map(column =>
-            Connection.fetch(column)
-                .then(r => r.content)
-                .then(col => `      '${col.name}': ${col.id},`)
-        ))
-            .then(cols => setColumns(cols.join('\n')))
+        // Promise.all(dataset.columns.map(column =>
+        //     Connection.fetch(column)
+        //         .then(r => r.content)
+        //         .then(col => `      '${col.name}': ${col.id},`)
+        // ))
+        //     .then(cols => setColumns(cols.join('\n')))
     }, [dataset])
 
     useEffect(() => {
@@ -52,7 +52,7 @@ using JSON
 using DataFrames
 
 host = "${host}"
-headers = Dict{String, String}("Authorization" => "Bearer ${token}")
+headers = Dict{String, String}("Authorization" => "Bearer ${user?.token ?? 'your_token_here'}")
 
 # Configuration
 verbose = true
@@ -165,7 +165,7 @@ vprintln("All datasets complete.")
 `
                 }</SyntaxHighlighter>
             )
-    }, [columns, dataset.id, host, token])
+    }, [columns, dataset.id, host, user])
 
     return (
         <React.Fragment>

@@ -1,7 +1,7 @@
 import CardActionBar from "./CardActionBar";
-import {get_url_components} from "./utils/misc";
+import {get_url_components} from "./misc";
 import PrettyObject from "./prettify/PrettyObject";
-import useStyles from "../UseStyles";
+import useStyles from "../styles/UseStyles";
 import {useMutation, useQueryClient} from "@tanstack/react-query";
 import Card, {CardProps} from "@mui/material/Card";
 import clsx from "clsx";
@@ -11,14 +11,16 @@ import Avatar from "@mui/material/Avatar";
 import React, {useContext, useEffect, useRef, useState} from "react";
 import ErrorCard from "./error/ErrorCard";
 import {AxiosError, AxiosResponse} from "axios";
-import {Serializable, SerializableObject} from "./utils/TypeChanger";
+import {Serializable, SerializableObject} from "./TypeChanger";
 import {API_HANDLERS, API_SLUGS, DISPLAY_NAMES, FIELDS, ICONS, LookupKey, PRIORITY_LEVELS} from "../constants";
-import ErrorBoundary from "./utils/ErrorBoundary";
-import UndoRedoProvider, {UndoRedoContext} from "./utils/UndoRedoContext";
+import ErrorBoundary from "./ErrorBoundary";
+import UndoRedoProvider, {UndoRedoContext} from "./UndoRedoContext";
 import {BaseResource} from "./ResourceCard";
 import {Modal} from "@mui/material";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
+import Stack from "@mui/material/Stack";
+import {useSnackbarMessenger} from "./SnackbarMessengerContext";
 
 function ResourceCreator<T extends BaseResource>(
     { lookup_key, onCreate, onDiscard, ...cardProps}:
@@ -48,6 +50,7 @@ function ResourceCreator<T extends BaseResource>(
         ] as (data: SerializableObject) => Promise<AxiosResponse<T>>
 
     // Mutations for saving edits
+    const {postSnackbarMessage} = useSnackbarMessenger()
     const queryClient = useQueryClient()
     const create_mutation =
         useMutation<AxiosResponse<T>, AxiosError, SerializableObject>(
@@ -75,6 +78,17 @@ function ResourceCreator<T extends BaseResource>(
                 },
                 onError: (error, variables, context) => {
                     console.error(error, {variables, context})
+                    const d = error.response?.data as SerializableObject
+                    const firstError = Object.entries(d)[0]
+                    postSnackbarMessage({
+                        message: <Stack>
+                            <span>{`Error creating new ${DISPLAY_NAMES[lookup_key]} 
+                        (HTTP ${error.response?.status} - ${error.response?.statusText}).`}</span>
+                            <span style={{fontWeight: "bold"}}>{`${firstError[0]}: ${firstError[1]}`}</span>
+                            {Object.keys(d).length > 1 && <span>+ {Object.keys(d).length - 1} more</span>}
+                        </Stack>,
+                        severity: 'error'
+                    })
                     onCreate(error)
                 },
             })
@@ -128,7 +142,7 @@ function ResourceCreator<T extends BaseResource>(
     </CardContent>
 
     return <Card
-        className={clsx(classes.item_card, classes.item_create_card)}
+        className={clsx(classes.itemCard, classes.itemCreateCard)}
         {...cardProps}
     >
         {cardHeader}

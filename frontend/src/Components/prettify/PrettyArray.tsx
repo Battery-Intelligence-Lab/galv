@@ -9,9 +9,9 @@ import ArrowRightIcon from "@mui/icons-material/ArrowRight";
 import {PrettyObjectProps} from "./PrettyObject";
 import {ListProps} from "@mui/material";
 import Prettify from "./Prettify";
-import useStyles from "../../UseStyles";
+import useStyles from "../../styles/UseStyles";
 import clsx from "clsx";
-import {detect_type, Serializable, TypeChangerSupportedTypeName} from "../utils/TypeChanger";
+import {detect_type, Serializable, TypeChangerSupportedTypeName} from "../TypeChanger";
 
 type PrettyArrayProps = Pick<PrettyObjectProps, "nest_level" | "edit_mode"> & {
     target: Serializable[]
@@ -42,8 +42,8 @@ export default function PrettyArray(
 
     return <List
         className={clsx(
-            classes.pretty_array,
-            {[classes.pretty_nested]: _nest_level % 2}
+            classes.prettyArray,
+            {[classes.prettyNested]: _nest_level % 2}
         )}
         dense={true}
         {...childProps}

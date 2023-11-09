@@ -14,11 +14,11 @@ import IconButton from "@mui/material/IconButton";
 import Popover, {PopoverProps} from "@mui/material/Popover";
 import {SvgIconTypeMap} from "@mui/material/SvgIcon";
 import clsx from "clsx";
-import useStyles from "../../UseStyles";
+import useStyles from "../styles/UseStyles";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import {build_placeholder_url, get_url_components} from "./misc";
-import {API_HANDLERS, DISPLAY_NAMES, ICONS, is_lookup_key, LookupKey} from "../../constants";
+import {API_HANDLERS, DISPLAY_NAMES, ICONS, is_lookup_key, LookupKey} from "../constants";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import {OverridableComponent} from "@mui/material/OverridableComponent";
 
@@ -116,7 +116,7 @@ export type TypeChangerPopoverProps = {
 function TypeChangeResourcePopover({onTypeChange, ...props}: TypeChangerPopoverProps) {
     const {classes} = useStyles()
     return <Popover
-        className={clsx(classes.type_changer_popover, classes.type_changer_resource_popover)}
+        className={clsx(classes.typeChangerPopover, classes.typeChangerResourcePopover)}
         anchorOrigin={{
             vertical: 'bottom',
             horizontal: 'center',
@@ -171,7 +171,7 @@ function TypeChangePopover({value, onTypeChange, ...props}: TypeChangerPopoverPr
         return <ICON />
     }
 
-    return <Popover className={clsx(classes.type_changer_popover)} {...props}>
+    return <Popover className={clsx(classes.typeChangerPopover)} {...props}>
         <Stack direction="row" alignItems="center" spacing={1} ref={resourcePopoverAnchorRef}>
             <ToggleButtonGroup
                 size="small"
@@ -271,7 +271,7 @@ export default function TypeChanger(
             <IconButton
                 onClick={(e) => setPopoverAnchor(e.currentTarget || null)}
                 disabled={lock_type !== false}
-                className={clsx(classes.type_changer_button)}
+                className={clsx(classes.typeChangerButton)}
             >
                 {
                     is_lookup_key(value)?

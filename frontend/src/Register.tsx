@@ -10,53 +10,18 @@ import Alert from '@mui/material/Alert';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
-import { useNavigate } from "react-router-dom";
-import { ReactComponent as GalvIcon} from './Galv-icon.svg';
-import Connection, {User} from "./APIConnection";
 import Grid from "@mui/material/Grid";
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
-import {useMutation, useQueryClient} from "@tanstack/react-query";
-import {LoginApi} from "./api_codegen";
-import {save_login_response} from "./AxiosConfig";
-
-const useStyles = makeStyles()((theme) => {
-  return {
-    paper: {
-      marginTop: theme.spacing(8),
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-    },
-    icon: {
-      margin: theme.spacing(1),
-      width: theme.spacing(7),
-      height: theme.spacing(10),
-    },
-    form: {
-      width: '100%', // Fix IE 11 issue.
-      marginTop: theme.spacing(1),
-    },
-    submit: {
-      margin: theme.spacing(3, 0, 2),
-    },
-    textActive: {
-      backgroundColor: theme.palette.primary.main,
-      color: theme.palette.common.white,
-      textAlign: 'center',
-      cursor: 'pointer',
-    },
-    textInactive: {
-      textAlign: 'center',
-      cursor: 'pointer',
-    }
-  }
-});
+import {User} from "./api_codegen";
+import {useCurrentUser} from "./Components/CurrentUserContext";
+import {ReactSVG} from "react-svg";
+import UseStyles from "./styles/UseStyles";
 
 
 export default function Login() {
-  const { classes } = useStyles();
+  const { classes } = UseStyles();
   const [createdUser, setCreatedUser] = useState<User|null>(null)
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -64,7 +29,7 @@ export default function Login() {
   const [error, setError] = useState('')
   const [registerMode, setRegisterMode] = useState<boolean>(false)
 
-  const navigate = useNavigate();
+  const {login} = useCurrentUser()
 
   const submit = useRef<HTMLButtonElement>(null);
   const username_input = useRef<HTMLDivElement>(null);
@@ -80,22 +45,6 @@ export default function Login() {
     }
   }
 
-  const queryClient = useQueryClient()
-  const api_handler = new LoginApi()
-  const login = useMutation({
-    mutationFn: () => {
-      console.log('login', username, password)
-      return api_handler.loginCreate({
-        headers: {Authorization: `Basic ${btoa(username + ":" + password)}`}
-      })
-    },
-    onSuccess: (data) => {
-      save_login_response(data.data)
-      queryClient.invalidateQueries({predicate: q => true})
-      navigate('/')
-    }
-  })
-
   const onSubmitClick = (e: FormEvent)=>{
     e.preventDefault()
     if (username === "") username_input.current?.focus();
@@ -103,12 +52,10 @@ export default function Login() {
     else if (registerMode && email === "") email_input.current?.focus();
     else {
       if (registerMode) {
-        Connection.create_user(username, email, password)
-            .then(user => {console.log('new user', user); return user})
-            .then(user => setCreatedUser(user))
-            .catch(e => setError(e.message))
+        // TODO
+        console.error("Register mode not implemented")
       } else
-        login.mutate()
+        login(username, password)
     }
   }
 
@@ -249,8 +196,8 @@ export default function Login() {
   return (
       <Container component="main" maxWidth="xs">
         <CssBaseline />
-        <div className={classes.paper}>
-          <GalvIcon className={classes.icon} />
+        <div className={classes.loginPaper}>
+            <ReactSVG className={classes.galvLogo} src="Galv-logo.svg" />
           {createdUser !== null? createdUserContent : formContent}
         </div>
       </Container>

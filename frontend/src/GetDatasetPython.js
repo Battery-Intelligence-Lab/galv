@@ -2,12 +2,12 @@ import React, {useState, useEffect} from "react";
 import SyntaxHighlighter from 'react-syntax-highlighter';
 import { docco } from 'react-syntax-highlighter/dist/cjs/styles/hljs';
 import Typography from '@mui/material/Typography';
-import Connection from "./APIConnection";
 import {CircularProgress} from "@mui/material";
+import {useCurrentUser} from "./Components/CurrentUserContext";
 
 
 export default function GetDatasetPython({dataset}) {
-    const token = Connection.user?.token;
+    const {user} = useCurrentUser()
     const [columns, setColumns] = useState("")
     const [code, setCode] = useState(<CircularProgress/>)
 
@@ -17,12 +17,12 @@ export default function GetDatasetPython({dataset}) {
     const host = `http://api.${domain}`
 
     useEffect(() => {
-        Promise.all(dataset.columns.map(column =>
-            Connection.fetch(column)
-                .then(r => r.content)
-                .then(col => `      '${col.name}': ${col.id},`)
-        ))
-            .then(cols => setColumns(cols.join('\n')))
+        // Promise.all(dataset.columns.map(column =>
+        //     Connection.fetch(column)
+        //         .then(r => r.content)
+        //         .then(col => `      '${col.name}': ${col.id},`)
+        // ))
+        //     .then(cols => setColumns(cols.join('\n')))
     }, [dataset])
 
     useEffect(() => {
@@ -47,7 +47,7 @@ export default function GetDatasetPython({dataset}) {
 import urllib3  # install via pip if not available
 
 host = "${host}"
-headers = {'Authorization': 'Bearer ${token}'}
+headers = {'Authorization': 'Bearer ${user?.token ?? 'your_token_here'}'}
 
 # Configuration
 verbose = True
@@ -122,7 +122,7 @@ if verbose:
 `
                 }</SyntaxHighlighter>
             )
-    }, [columns, dataset.id, host, token])
+    }, [columns, dataset.id, host, user])
 
     return (
         <React.Fragment>

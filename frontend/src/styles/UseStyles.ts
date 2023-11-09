@@ -27,67 +27,132 @@ const item = (theme: Theme) => ({
   }
 })
 export default makeStyles()((theme) => {
+
+  const drawerWidth = theme.spacing(30);
+  const appBarHeight = theme.spacing(8);
+
   return {
-    container: {},
-    button: {
-      margin: theme.spacing(1),
+    userLoginBox: {
+      backgroundColor: theme.palette.background.default,
     },
-    chips: {
+    loginPaper: {
+      marginTop: theme.spacing(8),
       display: 'flex',
-      flexWrap: 'wrap',
+      flexDirection: 'column',
+      alignItems: 'center',
     },
-    chip: {
-      margin: 2,
+    icon: {
+      margin: theme.spacing(1),
+      width: theme.spacing(7),
+      height: theme.spacing(10),
+    },
+    form: {
+      width: '100%', // Fix IE 11 issue.
+      marginTop: theme.spacing(1),
+    },
+    submit: {
+      margin: theme.spacing(3, 0, 2),
+    },
+    textActive: {
+      backgroundColor: theme.palette.primary.main,
+      color: theme.palette.common.white,
+      textAlign: 'center',
+      cursor: 'pointer',
+    },
+    textInactive: {
+      textAlign: 'center',
+      cursor: 'pointer',
+    },
+    root: {
+      display: 'flex',
+    },
+    toolbar: {
+      paddingRight: 24, // keep right padding when drawer closed
+    },
+    toolbarIcon: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'flex-end',
+      padding: '0 8px',
+      // ...theme.mixins.toolbar,
+    },
+    appBar: {
+      zIndex: theme.zIndex.drawer + 1,
+      transition: theme.transitions.create(['width', 'margin'], {
+        easing: theme.transitions.easing.sharp,
+        duration: theme.transitions.duration.leavingScreen,
+      }),
+      height: appBarHeight,
+    },
+    appBarShift: {
+      marginLeft: drawerWidth,
+      width: `calc(100% - ${drawerWidth}px)`,
+      transition: theme.transitions.create(['width', 'margin'], {
+        easing: theme.transitions.easing.sharp,
+        duration: theme.transitions.duration.enteringScreen,
+      }),
+    },
+    galvLogo: {
+      "& div": {
+        display: 'flex',
+        "& svg": {
+          height: `calc(${appBarHeight} - ${theme.spacing(2)})`,
+          width: "auto",
+        },
+      },
+    },
+    menuButton: {
+      marginRight: 36,
+    },
+    menuButtonHidden: {
+      display: 'none',
+    },
+    title: {
+      marginLeft: 16,
+      flexGrow: 1,
+    },
+    drawerPaper: {
+      position: 'relative',
+      paddingTop: 20,
+      whiteSpace: 'nowrap',
+      width: drawerWidth,
+      transition: theme.transitions.create('width', {
+        easing: theme.transitions.easing.sharp,
+        duration: theme.transitions.duration.enteringScreen,
+      }),
+    },
+    drawerPaperClose: {
+      overflowX: 'hidden',
+      transition: theme.transitions.create('width', {
+        easing: theme.transitions.easing.sharp,
+        duration: theme.transitions.duration.leavingScreen,
+      }),
+      width: theme.spacing(7),
+      [theme.breakpoints.up('sm')]: {
+        width: theme.spacing(9),
+      },
+    },
+    content: {
+      flexGrow: 1,
+      height: '100vh',
+      overflow: 'auto',
+      paddingTop: theme.spacing(9),
+      paddingLeft: theme.spacing(0),
+      paddingRight: theme.spacing(0),
+      paddingBottom: theme.spacing(0),
+      fontFamily: 'Helvetica Neue,Helvetica,Arial,sans-serif',
     },
     deleteIcon: {
       "&:hover": {color: theme.palette.error.light},
       "&:focus": {color: theme.palette.error.light}
     },
-    head: {
-      backgroundColor: theme.palette.primary.light,
-    },
-    headCell: {
-      color: theme.palette.common.black,
-    },
-    iconButton: {
-      padding: 10,
-    },
-    infoIcon: {
-      "&:hover": {color: theme.palette.info.light},
-      "&:focus": {color: theme.palette.info.light}
-    },
-    input: {
-      marginLeft: theme.spacing(0),
-      flex: 1,
-    },
-    inputAdornment: {
-      color: theme.palette.text.disabled,
-    },
-    newTableCell: {paddingTop: theme.spacing(4)},
-    newTableRow: {},
     paper: {marginBottom: theme.spacing(2)},
-    refreshIcon: {
-      "&:hover": {color: theme.palette.warning.light},
-      "&:focus": {color: theme.palette.warning.light}
-    },
-    resize: {
-      fontSize: '10pt',
-    },
-    saveIcon: {
-      "&:hover": {color: theme.palette.success.light},
-      "&:focus": {color: theme.palette.success.light}
-    },
-    table: {
-      minWidth: 650,
-    },
-
     text: {},
-    page_title: {
+    pageTitle: {
       marginBottom: theme.spacing(2),
       color: theme.palette.text.secondary,
     },
-
-    filter_bar: {
+    filterBar: {
       justifyContent: "space-between",
       margin: theme.spacing(0.5),
       maxHeight: theme.spacing(15),
@@ -105,7 +170,7 @@ export default makeStyles()((theme) => {
         alignItems: "center",
       }
     },
-    item_chip: {
+    itemChip: {
       width: "min-content",
       minWidth: theme.spacing(5),
       margin: theme.spacing(0.5),
@@ -125,24 +190,23 @@ export default makeStyles()((theme) => {
         color: theme.palette.text.disabled,
       }
     },
-    item_card: {
+    itemCard: {
       ...item(theme)
     },
-    item_create_card: {
+    itemCreateCard: {
       height: `calc(100vh - ${theme.spacing(8)})`,
     },
-    item_page: {
+    itemPage: {
       ...item(theme)
     },
-    team_chip: {},
     error: {color: theme.palette.error.main},
-    count_badge: {
+    countBadge: {
       " .MuiBadge-badge": {
         backgroundColor: theme.palette.grey.A100,
         color: theme.palette.grey.A700,
       },
     },
-    pretty_table: {
+    prettyTable: {
       backgroundColor: theme.palette.background.paper,
       "& td, & th": {
         border: "none",
@@ -166,7 +230,7 @@ export default makeStyles()((theme) => {
         }
       }
     },
-    pretty_array: {
+    prettyArray: {
       backgroundColor: theme.palette.background.paper,
       "& .MuiListItem-root": {
         paddingLeft: theme.spacing(0.5),
@@ -177,16 +241,16 @@ export default makeStyles()((theme) => {
         }
       }
     },
-    pretty_nested: {
+    prettyNested: {
       backgroundColor: theme.palette.grey.A100,
     },
-    pretty_select: {
-        width: 300,
+    prettySelect: {
+      width: 300,
     },
-    type_changer_button: {},
-    type_changer_popover: {
+    typeChangerButton: {},
+    typeChangerPopover: {
       zIndex: 5000,
     },
-    type_changer_resource_popover: {}
+    typeChangerResourcePopover: {}
   }
 });

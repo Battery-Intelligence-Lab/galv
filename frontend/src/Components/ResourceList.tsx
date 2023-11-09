@@ -3,11 +3,10 @@
 // of Oxford, and the 'Galv' Developers. All rights reserved.
 
 import React from "react";
-import useStyles from "../UseStyles";
+import useStyles from "../styles/UseStyles";
 import {useQuery, useQueryClient} from "@tanstack/react-query";
 import Container from "@mui/material/Container";
 import Typography from "@mui/material/Typography";
-import {Link} from "react-router-dom";
 import axios, {AxiosError, AxiosResponse} from "axios";
 import Stack from "@mui/material/Stack";
 import clsx from "clsx";
@@ -17,8 +16,10 @@ import Skeleton from "@mui/material/Skeleton";
 import ResourceCard, {BaseResource} from "./ResourceCard";
 import ResourceCreator from "./ResourceCreator";
 import {API_HANDLERS, API_SLUGS, DISPLAY_NAMES_PLURAL, LookupKey} from "../constants";
-import ErrorBoundary from "./utils/ErrorBoundary";
-import {get_select_function} from "./utils/ApiResourceContext";
+import ErrorBoundary from "./ErrorBoundary";
+import {get_select_function} from "./ApiResourceContext";
+import Button from "@mui/material/Button";
+import {useCurrentUser} from "./CurrentUserContext";
 
 type PaginatedAPIResponse<T = any> = {
     count: number
@@ -56,13 +57,15 @@ export function ResourceList<T extends BaseResource>({lookup_key}: {lookup_key: 
         })
     })
 
+    const {setLoginFormOpen} = useCurrentUser()
+
     return (
         <Container maxWidth="lg">
             <Grid container justifyContent="space-between" key="header">
                 <Typography
                     component="h1"
                     variant="h3"
-                    className={clsx(classes.page_title, classes.text)}
+                    className={clsx(classes.pageTitle, classes.text)}
                 >
                     {DISPLAY_NAMES_PLURAL[lookup_key]}
                     {query.isLoading && <CircularProgress sx={{color: (t) => t.palette.text.disabled, marginLeft: "1em"}} />}
@@ -76,7 +79,7 @@ export function ResourceList<T extends BaseResource>({lookup_key}: {lookup_key: 
                 }
                 { query.data?.data.results && (query.data.data.results.length === 0 ?
                     !axios.defaults.headers.common['Authorization']?
-                        <p><Link to="/login">Log in</Link> to see {DISPLAY_NAMES_PLURAL[lookup_key]}</p> :
+                        <p><Button onClick={() => setLoginFormOpen(true)}>Log in</Button> to see {DISPLAY_NAMES_PLURAL[lookup_key]}</p> :
                         <p>No {DISPLAY_NAMES_PLURAL[lookup_key]} found</p> :
                     query.data?.data.results.map(
                         (resource: T, i) => <ResourceCard

@@ -2,16 +2,16 @@ import React from "react";
 import SyntaxHighlighter from 'react-syntax-highlighter';
 import { docco } from 'react-syntax-highlighter/dist/cjs/styles/hljs';
 import Typography from '@mui/material/Typography';
-import Connection from "./APIConnection";
+import {useCurrentUser} from "./Components/CurrentUserContext";
 
 
 export default function GetDatasetMatlab({dataset}) {
-  const token = Connection.user?.token;
+  const {user} = useCurrentUser()
 
   let domain = window.location.href.split('/')[2];
   domain = domain.split(':')[0]
 
-  const host = Connection.url || `${window.location.protocol}//api.${domain}/`;
+  const host = `${window.location.protocol}//api.${domain}/`;
   const codeString = `%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % 
 % galv REST API access
@@ -34,7 +34,7 @@ export default function GetDatasetMatlab({dataset}) {
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % login to galv > Generate API Token
-token = '${token}';
+token = '${user?.token ?? 'your_token_here'}';
 apiURL = '${host}datasets';
 options = weboptions('HeaderFields', {'Authorization' ['Bearer ' token]});
 

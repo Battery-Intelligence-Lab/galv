@@ -1,7 +1,7 @@
 import CardActionBar from "./CardActionBar";
-import {deep_copy, id_from_ref_props} from "./utils/misc";
+import {deep_copy, id_from_ref_props} from "./misc";
 import PrettyObject, {PrettyObjectFromQuery} from "./prettify/PrettyObject";
-import useStyles from "../UseStyles";
+import useStyles from "../styles/UseStyles";
 import {useMutation, useQueryClient} from "@tanstack/react-query";
 import Card, {CardProps} from "@mui/material/Card";
 import {Link} from "react-router-dom";
@@ -16,10 +16,10 @@ import Grid from "@mui/material/Unstable_Grid2";
 import Avatar from "@mui/material/Avatar";
 import React, {Fragment, ReactNode, useContext, useEffect, useRef, useState} from "react";
 import ErrorCard from "./error/ErrorCard";
-import QueryWrapper, {QueryDependentElement} from "./utils/QueryWrapper";
+import QueryWrapper, {QueryDependentElement} from "./QueryWrapper";
 import {AxiosError, AxiosResponse} from "axios";
 import Divider from "@mui/material/Divider";
-import {Serializable, SerializableObject} from "./utils/TypeChanger";
+import {Serializable, SerializableObject} from "./TypeChanger";
 import {
     API_HANDLERS,
     API_SLUGS,
@@ -32,13 +32,13 @@ import {
     PATHS, PRIORITY_LEVELS, LookupKey, get_has_family, get_is_family
 } from "../constants";
 import ResourceChip from "./ResourceChip";
-import ErrorBoundary from "./utils/ErrorBoundary";
-import UndoRedoProvider, {UndoRedoContext} from "./utils/UndoRedoContext";
+import ErrorBoundary from "./ErrorBoundary";
+import UndoRedoProvider, {UndoRedoContext} from "./UndoRedoContext";
 import Representation from "./Representation";
 import {FilterContext} from "./filtering/FilterContext";
-import ApiResourceContextProvider, {useApiResource} from "./utils/ApiResourceContext";
-import Chip from "@mui/material/Chip";
+import ApiResourceContextProvider, {useApiResource} from "./ApiResourceContext";
 import Prettify from "./prettify/Prettify";
+import {useSnackbarMessenger} from "./SnackbarMessengerContext";
 
 export type Permissions = { read?: boolean, write?: boolean, create?: boolean, destroy?: boolean }
 type child_keys = "cells"|"equipment"|"schedules"
@@ -97,8 +97,8 @@ function ResourceCard<T extends BaseResource>(
     }, [apiResource, lookup_key]);
 
 
-
     // Mutations for saving edits
+    const {postSnackbarMessage} = useSnackbarMessenger()
     const api_handler = new API_HANDLERS[lookup_key]()
     const patch = api_handler[
         `${API_SLUGS[lookup_key]}PartialUpdate` as keyof typeof api_handler
@@ -117,6 +117,17 @@ function ResourceCard<T extends BaseResource>(
                 },
                 onError: (error, variables, context) => {
                     console.error(error, {variables, context})
+                    const d = error.response?.data as SerializableObject
+                    const firstError = Object.entries(d)[0]
+                    postSnackbarMessage({
+                        message: <Stack>
+                            <span>{`Error updating ${DISPLAY_NAMES[lookup_key]}/${resource_id}  
+                        (HTTP ${error.response?.status} - ${error.response?.statusText}).`}</span>
+                            <span style={{fontWeight: "bold"}}>{`${firstError[0]}: ${firstError[1]}`}</span>
+                            {Object.keys(d).length > 1 && <span>+ {Object.keys(d).length - 1} more</span>}
+                        </Stack>,
+                        severity: 'error'
+                    })
                 },
             })
 
@@ -151,7 +162,7 @@ function ResourceCard<T extends BaseResource>(
         setExpanded={setIsExpanded}
     />
 
-    const loadingBody = <Card key={resource_id} className={clsx(classes.item_card)} {...cardProps}>
+    const loadingBody = <Card key={resource_id} className={clsx(classes.itemCard)} {...cardProps}>
         <CardHeader
             avatar={<CircularProgress sx={{color: (t) => t.palette.text.disabled}}/>}
             title={<A component={Link} to={`${PATHS[lookup_key]}/${resource_id}`}>{resource_id}</A>}
@@ -257,7 +268,7 @@ function ResourceCard<T extends BaseResource>(
     </CardContent>
 
     const cardContent = !passesFilters({apiResource, family}, lookup_key)? <Fragment key={resource_id} /> :
-        <Card key={resource_id} className={clsx(classes.item_card)} {...cardProps}>
+        <Card key={resource_id} className={clsx(classes.itemCard)} {...cardProps}>
             <CardHeader
                 avatar={<Avatar variant="square"><ICON /></Avatar>}
                 title={<A component={Link} to={`${PATHS[lookup_key]}/${resource_id}`}>

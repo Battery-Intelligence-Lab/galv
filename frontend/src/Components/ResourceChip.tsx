@@ -1,17 +1,17 @@
 import Chip, {ChipProps} from "@mui/material/Chip";
-import useStyles from "../UseStyles";
+import useStyles from "../styles/UseStyles";
 import clsx from "clsx";
 import {Link} from "react-router-dom";
 import React, {useContext} from "react";
 import LoadingChip from "./LoadingChip";
-import QueryWrapper, {QueryWrapperProps} from "./utils/QueryWrapper";
+import QueryWrapper, {QueryWrapperProps} from "./QueryWrapper";
 import ErrorChip from "./error/ErrorChip";
 import {PATHS, FAMILY_LOOKUP_KEYS, LookupKey} from "../constants";
 import {Family} from "./ResourceCard";
-import ErrorBoundary from "./utils/ErrorBoundary";
+import ErrorBoundary from "./ErrorBoundary";
 import Representation from "./Representation";
 import {FilterContext} from "./filtering/FilterContext";
-import ApiResourceContextProvider, {useApiResource} from "./utils/ApiResourceContext";
+import ApiResourceContextProvider, {useApiResource} from "./ApiResourceContext";
 import LookupKeyIcon from "./LookupKeyIcon";
 
 type ResourceFamilyChipProps = {
@@ -48,7 +48,7 @@ export function ResourceChip<T extends Family>(
         }
         success={success || <Chip
             key={resource_id}
-            className={clsx(classes.item_chip, {'filter_failed': !passes})}
+            className={clsx(classes.itemChip, {'filter_failed': !passes})}
             icon={icon}
             variant="outlined"
             label={<Representation

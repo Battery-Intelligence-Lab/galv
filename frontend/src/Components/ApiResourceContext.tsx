@@ -1,9 +1,18 @@
 import {createContext, PropsWithChildren, useContext} from "react";
-import {BaseResource} from "../ResourceCard";
-import {API_HANDLERS, API_SLUGS, FAMILY_LOOKUP_KEYS, FIELDS, get_has_family, LookupKey} from "../../constants";
+import {BaseResource} from "./ResourceCard";
+import {
+    API_HANDLERS,
+    API_SLUGS,
+    DISPLAY_NAMES,
+    FAMILY_LOOKUP_KEYS,
+    FIELDS,
+    get_has_family,
+    LookupKey
+} from "../constants";
 import {AxiosError, AxiosResponse} from "axios";
 import {useQuery, UseQueryResult} from "@tanstack/react-query";
 import {id_from_ref_props} from "./misc";
+import {useSnackbarMessenger} from "./SnackbarMessengerContext";
 
 export interface IApiResourceContext<T extends BaseResource = BaseResource> {
     apiResource?: T
@@ -39,13 +48,21 @@ export const get_select_function = (lookup_key: LookupKey) =>
 function ApiResourceContextStandaloneProvider<T extends BaseResource>(
     {lookup_key, resource_id, children}: PropsWithChildren<ApiResourceContextProviderProps>
 ) {
+    const {postSnackbarMessage} = useSnackbarMessenger()
     const api_handler = new API_HANDLERS[lookup_key]()
     const get = api_handler[
         `${API_SLUGS[lookup_key]}Retrieve` as keyof typeof api_handler
         ] as (uuid: string) => Promise<AxiosResponse<T>>
     const query = useQuery<AxiosResponse<T>, AxiosError>({
         queryKey: [lookup_key, resource_id],
-        queryFn: () => get.bind(api_handler)(String(resource_id)),
+        queryFn: () => get.bind(api_handler)(String(resource_id)).catch(e => {
+            postSnackbarMessage({
+                message: `Error retrieving ${DISPLAY_NAMES[lookup_key]}/${resource_id}  
+                (HTTP ${e.response?.status} - ${e.response?.statusText}): ${e.response?.data?.detail}`,
+                severity: 'error'
+            })
+            throw e
+        }),
         select: get_select_function(lookup_key),
     })
 
@@ -60,13 +77,21 @@ function ApiResourceContextWithFamilyProvider<T extends BaseResource>(
     if (!get_has_family(lookup_key))
         throw new Error(`Cannot use ApiResourceContextWithFamilyProvider for ${lookup_key} because it does not have a family.`)
 
+    const {postSnackbarMessage} = useSnackbarMessenger()
     const api_handler = new API_HANDLERS[lookup_key]()
     const get = api_handler[
         `${API_SLUGS[lookup_key]}Retrieve` as keyof typeof api_handler
         ] as (uuid: string) => Promise<AxiosResponse<T>>
     const query = useQuery<AxiosResponse<T>, AxiosError>({
         queryKey: [lookup_key, resource_id],
-        queryFn: () => get.bind(api_handler)(String(resource_id)),
+        queryFn: () => get.bind(api_handler)(String(resource_id)).catch(e => {
+            postSnackbarMessage({
+                message: `Error retrieving ${DISPLAY_NAMES[lookup_key]}/${resource_id}  
+                (HTTP ${e.response?.status} - ${e.response?.statusText}): ${e.response?.data?.detail}`,
+                severity: 'error'
+            })
+            throw e
+        }),
         select: get_select_function(lookup_key),
     })
 
@@ -80,7 +105,15 @@ function ApiResourceContextWithFamilyProvider<T extends BaseResource>(
             family_lookup_key,
             query.data?.data.family? id_from_ref_props(query.data?.data?.family) : "never"
         ],
-        queryFn: () => family_get.bind(family_api_handler)(id_from_ref_props<string>(query.data?.data?.family!)),
+        queryFn: () => family_get.bind(family_api_handler)(id_from_ref_props<string>(query.data?.data?.family!))
+            .catch(e => {
+                postSnackbarMessage({
+                    message: `Error retrieving ${DISPLAY_NAMES[lookup_key]}/${resource_id}  
+                (HTTP ${e.response?.status} - ${e.response?.statusText}): ${e.response?.data?.detail}`,
+                    severity: 'error'
+                })
+                throw e
+            }),
         enabled: !!query.data?.data?.family,
         select: get_select_function(family_lookup_key),
     })

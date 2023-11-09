@@ -1,6 +1,6 @@
 import React, {Fragment, useContext, useState} from "react";
 import Stack from "@mui/material/Stack";
-import {Serializable} from "../utils/TypeChanger";
+import {Serializable} from "../TypeChanger";
 import Chip, {ChipProps} from "@mui/material/Chip";
 import Tooltip from "@mui/material/Tooltip";
 import {
@@ -21,7 +21,7 @@ import TextField from "@mui/material/TextField";
 import Autocomplete from "@mui/material/Autocomplete";
 import Typography from "@mui/material/Typography";
 import clsx from "clsx";
-import useStyles from "../../UseStyles";
+import useStyles from "../../styles/UseStyles";
 import {ButtonGroup} from "@mui/material";
 import Button from "@mui/material/Button";
 import LookupKeyIcon from "../LookupKeyIcon";
@@ -167,7 +167,7 @@ export default function FilterBar() {
 
     const {classes} = useStyles()
 
-    return <Grid container key="filter_bar_content" className={clsx(classes.filter_bar)}>
+    return <Grid container key="filter_bar_content" className={clsx(classes.filterBar)}>
         <Stack spacing={1} key="existing_filters" className={clsx("existing_filters")}>
             {
                 Object.entries(activeFilters).map(([lookup_key, content]) => {

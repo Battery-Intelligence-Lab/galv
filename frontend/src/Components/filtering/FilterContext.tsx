@@ -1,8 +1,8 @@
 import React, {createContext, PropsWithChildren, useEffect, useState} from "react";
-import {Serializable, TypeChangerSupportedTypeName} from "../utils/TypeChanger";
+import {Serializable, TypeChangerSupportedTypeName} from "../TypeChanger";
 import {FAMILY_LOOKUP_KEYS, FIELDS, get_has_family, LookupKey} from "../../constants";
 import {useImmer} from "use-immer";
-import {IApiResourceContext} from "../utils/ApiResourceContext";
+import {IApiResourceContext} from "../ApiResourceContext";
 
 type FilterFunction = (value: Serializable, test_versus: any) => boolean
 export type Filter = {key: string; family: FilterFamily; test_versus: any}

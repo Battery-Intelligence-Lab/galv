@@ -4,7 +4,7 @@ import CardContent from "@mui/material/CardContent";
 import {Link} from "react-router-dom";
 import React, {ReactElement} from "react";
 import CardHeader, {CardHeaderProps} from "@mui/material/CardHeader";
-import useStyles from "../../UseStyles";
+import useStyles from "../../styles/UseStyles";
 import {ErrorProps} from "./ErrorPage";
 
 export type ErrorCardProps = ErrorProps & {header?: ReactElement<CardHeaderProps>}
@@ -26,7 +26,7 @@ export default function ErrorCard(props: ErrorCardProps & CardProps) {
         else
             content = <CardContent>An unknown error occurred.</CardContent>
     }
-    return <Card className={clsx(classes.item_card, classes.error)} {...props as CardProps}>
+    return <Card className={clsx(classes.itemCard, classes.error)} {...props as CardProps}>
         {props.header || <CardHeader avatar={"E"} title="Error"/>}
         {content}
     </Card>

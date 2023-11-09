@@ -13,15 +13,16 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import CloudSyncIcon from '@mui/icons-material/CloudSync';
 import PersonIcon from '@mui/icons-material/Person';
 import FolderIcon from '@mui/icons-material/Folder';
+import VpnKeyIcon from '@mui/icons-material/VpnKey';
 
 import {
     CellFamiliesApi, CellsApi, CyclerTestsApi, EquipmentApi,
     EquipmentFamiliesApi, ExperimentsApi,
     FilesApi, HarvestersApi, LabsApi, MonitoredPathsApi,
     ScheduleFamiliesApi, SchedulesApi,
-    TeamsApi, UsersApi
+    TeamsApi, TokensApi, UsersApi
 } from "./api_codegen";
-import {Serializable, TypeChangerSupportedTypeName} from "./Components/utils/TypeChanger";
+import {Serializable, TypeChangerSupportedTypeName} from "./Components/TypeChanger";
 
 /**
  * This is a list of various resources grouped under a common name for each
@@ -45,6 +46,7 @@ export const LOOKUP_KEYS = {
     LAB: "LAB",
     TEAM: "TEAM",
     USER: "USER",
+    TOKEN: "TOKEN",
 } as const
 
 export type LookupKey = keyof typeof LOOKUP_KEYS
@@ -71,6 +73,7 @@ export const ICONS = {
     [LOOKUP_KEYS.LAB]: HolidayVillageIcon,
     [LOOKUP_KEYS.TEAM]: PeopleAltIcon,
     [LOOKUP_KEYS.USER]: PersonIcon,
+    [LOOKUP_KEYS.TOKEN]: VpnKeyIcon,
     CREATE: AddCircleIcon,
     CANCEL: CancelIcon
 } as const
@@ -98,8 +101,8 @@ export const PATHS = {
     [LOOKUP_KEYS.LAB]: "/labs",
     [LOOKUP_KEYS.TEAM]: "/teams",
     [LOOKUP_KEYS.USER]: "/users",
+    [LOOKUP_KEYS.TOKEN]: "/tokens",
     PROFILE: "/profile",
-    TOKEN: "/tokens",
 } as const
 
 /**
@@ -122,8 +125,8 @@ export const DISPLAY_NAMES = {
     [LOOKUP_KEYS.LAB]: "Lab",
     [LOOKUP_KEYS.TEAM]: "Team",
     [LOOKUP_KEYS.USER]: "User",
+    [LOOKUP_KEYS.TOKEN]: "Token",
     PROFILE: "Profile",
-    TOKEN: "Token",
 } as const
 
 /**
@@ -146,8 +149,8 @@ export const DISPLAY_NAMES_PLURAL = {
     [LOOKUP_KEYS.LAB]: "Labs",
     [LOOKUP_KEYS.TEAM]: "Teams",
     [LOOKUP_KEYS.USER]: "Users",
+    [LOOKUP_KEYS.TOKEN]: "Tokens",
     PROFILE: "Profile",
-    TOKEN: "Tokens",
 } as const
 
 /**
@@ -169,6 +172,7 @@ export const API_HANDLERS = {
     [LOOKUP_KEYS.LAB]: LabsApi,
     [LOOKUP_KEYS.TEAM]: TeamsApi,
     [LOOKUP_KEYS.USER]: UsersApi,
+    [LOOKUP_KEYS.TOKEN]: TokensApi,
 } as const
 
 /**
@@ -197,6 +201,7 @@ export const API_SLUGS = {
     [LOOKUP_KEYS.LAB]: "labs",
     [LOOKUP_KEYS.TEAM]: "teams",
     [LOOKUP_KEYS.USER]: "users",
+    [LOOKUP_KEYS.TOKEN]: "tokens",
 } as const
 
 
@@ -412,7 +417,14 @@ export const FIELDS = {
         email: {readonly: false, type: "string"},
         first_name: {readonly: false, type: "string"},
         last_name: {readonly: false, type: "string"},
-    }
+    },
+    [LOOKUP_KEYS.TOKEN]: {
+        ...always_fields,
+        id: {readonly: true, type: "number"},
+        name: {readonly: true, type: "string", createonly: true, priority: PRIORITY_LEVELS.IDENTITY},
+        created: {readonly: true, type: "string"},
+        expiry: {readonly: true, type: "string", priority: PRIORITY_LEVELS.SUMMARY},
+    },
 } as const
 
 /**

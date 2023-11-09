@@ -1,17 +1,19 @@
 import Chip, {ChipProps} from "@mui/material/Chip";
 import clsx from "clsx";
-import {Link} from "react-router-dom";
 import React, {ReactNode} from "react";
-import useStyles from "../../UseStyles";
+import useStyles from "../../styles/UseStyles";
 import {ErrorProps} from "./ErrorPage";
 import Tooltip from "@mui/material/Tooltip";
+import {useCurrentUser} from "../CurrentUserContext";
+import Button from "@mui/material/Button";
 
 export default function ErrorChip(props: ErrorProps & ChipProps) {
     const {classes} = useStyles();
+    const {setLoginFormOpen} = useCurrentUser()
     let content: ReactNode = props.message || ""
     if (!props.message) {
         if (props.status === 401)
-            content = <Link to={'/login'}>Log in required</Link>
+            content = <Button onClick={() => setLoginFormOpen(true)}>Log in required</Button>
         else if (props.status === 403)
             content = `Permission denied.`
         else if (props.status === 404)
@@ -27,7 +29,7 @@ export default function ErrorChip(props: ErrorProps & ChipProps) {
         describeChild
     >
         <Chip
-            className={clsx(classes.item_chip, classes.error)}
+            className={clsx(classes.itemChip, classes.error)}
             label={content as ReactNode}
             {...props as ChipProps}
         />

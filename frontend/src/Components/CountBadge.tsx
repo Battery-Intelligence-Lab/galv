@@ -2,7 +2,7 @@ import {Link} from "react-router-dom";
 import Badge, {BadgeProps} from "@mui/material/Badge";
 import IconButton from "@mui/material/IconButton";
 import clsx from "clsx";
-import UseStyles from "../../UseStyles";
+import UseStyles from "../styles/UseStyles";
 import Tooltip from "@mui/material/Tooltip";
 import {ReactNode} from "react";
 
@@ -15,7 +15,7 @@ type CountBadgeProps = {
 export default function CountBadge(props: CountBadgeProps & BadgeProps) {
     const {classes} = UseStyles();
     let content =
-        <Badge overlap="circular" className={clsx(classes.count_badge)} {...props as BadgeProps}>
+        <Badge overlap="circular" className={clsx(classes.countBadge)} {...props as BadgeProps}>
         <IconButton disabled={!props.url || props.badgeContent === 0}>
             {props.icon}
         </IconButton>

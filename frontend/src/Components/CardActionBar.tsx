@@ -7,25 +7,25 @@ import RedoIcon from "@mui/icons-material/Redo";
 import SaveIcon from "@mui/icons-material/Save";
 import CloseIcon from "@mui/icons-material/Close";
 import Stack from "@mui/material/Stack";
-import CountBadge from "./utils/CountBadge";
+import CountBadge from "./CountBadge";
 import {Link} from "react-router-dom";
 import RemoveIcon from "@mui/icons-material/Remove";
 import AddIcon from "@mui/icons-material/Add";
 import {
     DISPLAY_NAMES,
     DISPLAY_NAMES_PLURAL,
-    FAMILY_LOOKUP_KEYS, FIELDS,
-    ICONS, is_lookup_key, LOOKUP_KEYS,
+    FIELDS,
+    is_lookup_key,
     LookupKey,
     PATHS,
-    PRIORITY_LEVELS
 } from "../constants";
-import {useApiResource} from "./utils/ApiResourceContext";
+import {useApiResource} from "./ApiResourceContext";
 import LookupKeyIcon from "./LookupKeyIcon";
 import {BaseResource} from "./ResourceCard";
-import {IconProps} from "@mui/material";
 import {SvgIconProps} from "@mui/material/SvgIcon";
-import {id_from_ref_props} from "./utils/misc";
+import {id_from_ref_props} from "./misc";
+import clsx from "clsx";
+import UseStyles from "../styles/UseStyles";
 
 type CardActionBarProps = {
     lookup_key: LookupKey
@@ -55,6 +55,7 @@ type CardActionBarProps = {
  */
 export default function CardActionBar(props: CardActionBarProps) {
 
+    const {classes} = UseStyles()
     const {apiResource} = useApiResource()
     const iconProps: Partial<SvgIconProps> = {
         fontSize: "large",
@@ -169,7 +170,7 @@ export default function CardActionBar(props: CardActionBarProps) {
             key="delete"
         >
             <IconButton component={Link} to={`${PATHS[props.lookup_key]}/${props.resource_id}/delete`}>
-                <EditIcon {...iconProps}/>
+                <EditIcon className={clsx(classes.deleteIcon)} {...iconProps}/>
             </IconButton>
         </Tooltip>}
         {props.expanded !== undefined &&

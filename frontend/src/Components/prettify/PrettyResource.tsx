@@ -1,9 +1,9 @@
 import {API_HANDLERS, API_SLUGS, DISPLAY_NAMES, FAMILY_LOOKUP_KEYS, LookupKey} from "../../constants";
 import {ChipProps} from "@mui/material/Chip";
 import React, {useEffect, useState} from "react";
-import useStyles from "../../UseStyles";
+import useStyles from "../../styles/UseStyles";
 import {AxiosError, AxiosResponse} from "axios";
-import {build_placeholder_url, get_url_components, id_from_ref_props, PaginatedAPIResponse} from "../utils/misc";
+import {build_placeholder_url, get_url_components, id_from_ref_props, PaginatedAPIResponse} from "../misc";
 import {useQuery} from "@tanstack/react-query";
 import TextField from "@mui/material/TextField";
 import clsx from "clsx";
@@ -68,7 +68,7 @@ export const PrettyResourceSelect = (
     const {classes} = useStyles()
 
     return <Autocomplete
-        className={clsx(classes.pretty_select)}
+        className={clsx(classes.prettySelect)}
         freeSolo={true}
         filterOptions={createFilterOptions({stringify: represent} as CreateFilterOptionsConfig<any>)}
         open={open}

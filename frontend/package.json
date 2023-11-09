@@ -30,6 +30,7 @@
     "react-router-dom": "^6.4.3",
     "react-scripts": "4.0.3",
     "react-smooth-dnd": "^0.11.1",
+    "react-svg": "^16.1.29",
     "react-syntax-highlighter": "^15.5.0",
     "react-token-auth": "^2.3.8",
     "tss-react": "^4.8.2",

@@ -1,6 +1,6 @@
 import TableContainer, {TableContainerProps} from "@mui/material/TableContainer";
 import React from "react";
-import useStyles from "../../UseStyles";
+import useStyles from "../../styles/UseStyles";
 import clsx from "clsx";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
@@ -9,7 +9,7 @@ import TableCell from "@mui/material/TableCell";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import Prettify from "./Prettify";
-import {SerializableObject, Serializable} from "../utils/TypeChanger";
+import {SerializableObject, Serializable} from "../TypeChanger";
 import {API_HANDLERS, API_SLUGS, Field, FIELDS, LookupKey, PRIORITY_LEVELS} from "../../constants";
 import {AxiosError, AxiosResponse} from "axios";
 import {useQuery} from "@tanstack/react-query";
@@ -98,8 +98,8 @@ export default function PrettyObject(
     return <>
         <TableContainer
             className={clsx(
-                classes.pretty_table,
-                {[classes.pretty_nested]: _nest_level % 2}
+                classes.prettyTable,
+                {[classes.prettyNested]: _nest_level % 2}
             )}
             {...table_props as TableContainerProps}
         >
