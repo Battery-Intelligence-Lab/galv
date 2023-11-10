@@ -69,7 +69,7 @@ export function ResourceList<T extends BaseResource>({lookup_key}: {lookup_key: 
         if (!axios.defaults.headers.common['Authorization'])
             content = <p><Button onClick={() => setLoginFormOpen(true)}>Log in</Button> to see {DISPLAY_NAMES_PLURAL[lookup_key]}</p>
         else
-            content = <p>There are no {DISPLAY_NAMES_PLURAL[lookup_key].toLowerCase()} to see.</p>
+            content = <p>No {DISPLAY_NAMES_PLURAL[lookup_key].toLowerCase()} on the server are visible for this account.</p>
     } else {
         content = query.data.data.results.map(
             (resource: T, i) => <ResourceCard

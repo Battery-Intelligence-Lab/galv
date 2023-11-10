@@ -170,7 +170,7 @@ export function Pretty(
             edit_mode={edit_mode}
             autocomplete_key={type}
             {...childProps as
-                (Partial<AutocompleteProps<string, any, true, any>|TypographyProps>)
+                (Omit<Partial<AutocompleteProps<string, any, true, any>|TypographyProps>, "onChange">)
             }
         />
     }

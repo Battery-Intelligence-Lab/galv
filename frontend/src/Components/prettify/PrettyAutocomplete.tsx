@@ -14,7 +14,7 @@ export default function PrettyAutocomplete(
     {value, onChange, edit_mode, autocomplete_key, ...childProps}:
         {autocomplete_key: AutocompleteKey} &
         PrettyComponentProps &
-        (Partial<AutocompleteProps<string, any, true, any>|TypographyProps>)
+        Omit<Partial<AutocompleteProps<string, any, true, any>|TypographyProps>, "onChange">
 ) {
 
     const api_handler = new API_HANDLERS[autocomplete_key]()
