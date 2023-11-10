@@ -10,7 +10,7 @@ import {
     Link,
     useNavigate,
     useLocation,
-    matchPath, useParams,
+    matchPath, useParams, useSearchParams,
 } from "react-router-dom";
 import UserLogin from "./UserLogin"
 import CssBaseline from '@mui/material/CssBaseline';
@@ -149,15 +149,10 @@ export function Core() {
                     >
                         <MenuIcon />
                     </IconButton>
-                    <ReactSVG className={classes.galvLogo} src="Galv-logo.svg" />
+                    <ReactSVG className={classes.galvLogo} src="%PUBLIC_URL%/Galv-logo.svg" />
                     <Typography component="h1" variant="h6" color="inherit" noWrap className={classes.title}>
                     </Typography>
 
-                    <Button color="inherit" onClick={() => {
-                        navigate(PATHS.PROFILE)
-                    }}>
-                        Manage Profile
-                    </Button>
                     <Button color="inherit" onClick={() => {
                         navigate(PATHS.TOKEN)
                     }}>
@@ -209,6 +204,7 @@ export function Core() {
     function ResourceCardWrapper() {
         const navigate = useNavigate()
         const {type, id} = useParams()
+        const [searchParams] = useSearchParams();
         const lookup_key = get_lookup_key_from_pathname(type)
 
         if (!lookup_key || !id) {
@@ -220,6 +216,7 @@ export function Core() {
             resource_id={id ?? -1}
             lookup_key={lookup_key ?? "CYCLER_TEST"}
             expanded={true}
+            editing={searchParams.get('editing') === 'true'}
             sx={{margin: (t) => t.spacing(1)}}
         />
     }
@@ -227,7 +224,6 @@ export function Core() {
     /* A <Routes> looks through its children <Route>s and renders the first one that matches the current URL. */
     return <ErrorBoundary fallback={MyFallbackComponent}>
         <Routes>
-            <Route path="/login" element={<UserLogin />}/>
             <Route path={PATHS.DASHBOARD} element={Layout}>
                 <Route path="/:type/:id" element={<ResourceCardWrapper/>}/>  {/* Handles direct resource lookups */}
                 <Route path={PATHS.EXPERIMENT} element={<ResourceList lookup_key={LOOKUP_KEYS.EXPERIMENT}/>} />
@@ -253,6 +249,8 @@ export function Core() {
 }
 
 export default function WrappedCore() {
+    // CurrentUserContextProvider relies on SnackbarMessengerContextProvider to alert when
+    // the user is logged out by the server
     return <SnackbarMessengerContextProvider>
         <CurrentUserContextProvider>
             <Core />

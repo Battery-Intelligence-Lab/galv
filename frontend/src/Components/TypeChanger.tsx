@@ -18,7 +18,15 @@ import useStyles from "../styles/UseStyles";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import {build_placeholder_url, get_url_components} from "./misc";
-import {API_HANDLERS, AutocompleteKey, DISPLAY_NAMES, ICONS, is_lookup_key, LookupKey} from "../constants";
+import {
+    API_HANDLERS,
+    AutocompleteKey,
+    DISPLAY_NAMES,
+    ICONS,
+    is_autocomplete_key,
+    is_lookup_key,
+    LookupKey
+} from "../constants";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import {OverridableComponent} from "@mui/material/OverridableComponent";
 
@@ -277,7 +285,9 @@ export default function TypeChanger(
                 {
                     is_lookup_key(value)?
                         React.createElement(ICONS[value]) :
-                        React.createElement(type_map[value as keyof typeof type_map].icon)
+                        is_autocomplete_key(value)?
+                            React.createElement(type_map.string.icon) :
+                            React.createElement(type_map[value as keyof typeof type_map].icon)
                 }
             </IconButton>
         </span>

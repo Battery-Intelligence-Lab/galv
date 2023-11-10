@@ -7,7 +7,7 @@ import {IApiResourceContext} from "../ApiResourceContext";
 type FilterFunction = (value: Serializable, test_versus: any) => boolean
 export type Filter = {key: string; family: FilterFamily; test_versus: any}
 
-export type FilterableKeyType = TypeChangerSupportedTypeName & ("string"|"number"|"array")
+export type FilterableKeyType = TypeChangerSupportedTypeName & ("boolean"|"string"|"number"|"array")
 
 export type FilterFamily = {
     name: string
@@ -16,13 +16,25 @@ export type FilterFamily = {
     fun: FilterFunction
 }
 
+const value_to_string = (value: Serializable): string => {
+    return (value instanceof Object && "value" in value)? value.value as string : String(value)
+}
+
 export const FILTER_FUNCTIONS: readonly FilterFamily[] = [
     {
-        name: "equals",
-        applies_to: ["string", "number"],
+        name: "is",
+        applies_to: ["string", "number", "boolean"],
         get_name: (filter, short_name) => short_name ?
-            `${filter.key} = ${filter.test_versus}` : `${filter.key} equals ${filter.test_versus}`,
-        fun: (value, test_versus) => value === test_versus
+            `${filter.key} = ${filter.test_versus}` : `${filter.key} is ${filter.test_versus}`,
+        fun: (value, test_versus) => {
+            switch(typeof value) {
+                case "string": return value_to_string(value) === String(test_versus)
+                case "number": return value === Number(test_versus)
+                case "boolean": return value === Boolean(test_versus)
+            }
+            console.error(`Cannot compare ${typeof value} to ${typeof test_versus}`, value, test_versus)
+            throw new Error(`'is' filter can only be used for strings, numbers, and booleans`)
+        }
     },
     {
         name: "includes",
@@ -36,21 +48,24 @@ export const FILTER_FUNCTIONS: readonly FilterFamily[] = [
         applies_to: ["string"],
         get_name: (filter, short_name) => short_name ?
             `${filter.key} = ${filter.test_versus}...` : `${filter.key} starts with ${filter.test_versus}`,
-        fun: (value, test_versus) => typeof value === "string" && value.startsWith(test_versus)
+        fun: (value, test_versus) =>
+            typeof value_to_string(value) === "string" && value_to_string(value).startsWith(test_versus)
     },
     {
         name: "has substring",
         applies_to: ["string"],
         get_name: (filter, short_name) => short_name ?
             `${filter.key} = ...${filter.test_versus}...` : `${filter.key} has substring ${filter.test_versus}`,
-        fun: (value, test_versus) => typeof value === "string" && value.includes(test_versus)
+        fun: (value, test_versus) =>
+            typeof value_to_string(value) === "string" && value_to_string(value).includes(test_versus)
     },
     {
         name: "ends with",
         applies_to: ["string"],
         get_name: (filter, short_name) => short_name ?
             `${filter.key} = ...${filter.test_versus}` : `${filter.key} ends with ${filter.test_versus}`,
-        fun: (value, test_versus) => typeof value === "string" && value.endsWith(test_versus)
+        fun: (value, test_versus) =>
+            typeof value_to_string(value) === "string" && value_to_string(value).endsWith(test_versus)
     },
     {
         name: "less than",
@@ -128,18 +143,20 @@ export function FilterContextProvider(props: PropsWithChildren<any>) {
             const family_lookup_key = get_has_family(lookup_key) ? FAMILY_LOOKUP_KEYS[lookup_key] : undefined
             const filter_mode = activeFilters[lookup_key].mode === FILTER_MODES.ANY? "some" : "every"
             // if there are no filters, everything passes
-            return activeFilters[lookup_key].filters.length === 0 ||
-                (
-                    // the resource has to pass its filters
-                    activeFilters[lookup_key].filters[filter_mode](
-                        f => f.family.fun(data.apiResource?.[f.key], f.test_versus)
-                    ) && (
-                        // if the resource has a family, that has to pass its filters, too
-                        !family_lookup_key || activeFilters[family_lookup_key].filters[filter_mode](
-                            f => f.family.fun(data.family?.[f.key], f.test_versus)
-                        )
+            return (
+                activeFilters[lookup_key].filters.length === 0 &&
+                (!family_lookup_key || activeFilters[family_lookup_key].filters.length === 0)
+            ) || (
+                // the resource has to pass its filters
+                activeFilters[lookup_key].filters[filter_mode](
+                    f => f.family.fun(data.apiResource?.[f.key], f.test_versus)
+                ) && (
+                    // if the resource has a family, that has to pass its filters, too
+                    !family_lookup_key || activeFilters[family_lookup_key].filters[filter_mode](
+                        f => f.family.fun(data.family?.[f.key], f.test_versus)
                     )
                 )
+            )
         })
     }, [activeFilters])
 

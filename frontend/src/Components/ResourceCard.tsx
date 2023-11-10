@@ -43,13 +43,15 @@ import {useSnackbarMessenger} from "./SnackbarMessengerContext";
 export type Permissions = { read?: boolean, write?: boolean, create?: boolean, destroy?: boolean }
 type child_keys = "cells"|"equipment"|"schedules"
 export type BaseResource = ({uuid: string} | {id: number}) & {
-    permissions: Permissions,
+    url: string,
+    permissions?: Permissions,
     team?: string,
     family?: string,
     cycler_tests?: string[],
 } & {[key in child_keys]?: string[]} & SerializableObject
 export type Family = BaseResource & ({cells: string[]} | {equipment: string[]} | {schedules: string[]})
 export type Resource = { family: string, cycler_tests: string[] } & BaseResource
+export type AutocompleteResource = { value: string, ld_value: string, url: string, id: number }
 
 export type ResourceCardProps = {
     resource_id: string|number
@@ -114,6 +116,8 @@ function ResourceCard<T extends BaseResource>(
                         return
                     }
                     queryClient.setQueryData([lookup_key, resource_id], data)
+                    // Also invalidate autocomplete cache because we may have updated options
+                    queryClient.invalidateQueries(['autocomplete'])
                 },
                 onError: (error, variables, context) => {
                     console.error(error, {variables, context})
@@ -141,7 +145,7 @@ function ResourceCard<T extends BaseResource>(
     const action = <CardActionBar
         lookup_key={lookup_key}
         resource_id={resource_id}
-        editable={!!apiResource?.permissions.write}
+        editable={!!apiResource?.permissions?.write}
         editing={isEditMode}
         setEditing={setEditing}
         onUndo={UndoRedo.undo}

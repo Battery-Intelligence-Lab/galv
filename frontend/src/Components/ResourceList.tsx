@@ -2,7 +2,7 @@
 // Copyright  (c) 2020-2023, The Chancellor, Masters and Scholars of the University
 // of Oxford, and the 'Galv' Developers. All rights reserved.
 
-import React from "react";
+import React, {ReactNode} from "react";
 import useStyles from "../styles/UseStyles";
 import {useQuery, useQueryClient} from "@tanstack/react-query";
 import Container from "@mui/material/Container";
@@ -52,12 +52,33 @@ export function ResourceList<T extends BaseResource>({lookup_key}: {lookup_key: 
                         })
                     )
                 })
-            } catch {}
+            } catch (e) {
+                console.error("Error updating cache from list data.", e)
+            }
             return r
         })
     })
 
     const {setLoginFormOpen} = useCurrentUser()
+
+    let content: ReactNode
+
+    if (query.isInitialLoading) {
+        content = Array(5).fill(0).map((_, i) => <Skeleton key={i} variant="rounded" height="6em"/>)
+    } else if (!query.data || query.data.data.results.length === 0) {
+        if (!axios.defaults.headers.common['Authorization'])
+            content = <p><Button onClick={() => setLoginFormOpen(true)}>Log in</Button> to see {DISPLAY_NAMES_PLURAL[lookup_key]}</p>
+        else
+            content = <p>There are no {DISPLAY_NAMES_PLURAL[lookup_key].toLowerCase()} to see.</p>
+    } else {
+        content = query.data.data.results.map(
+            (resource: T, i) => <ResourceCard
+                key={`resource_${i}`}
+                resource_id={resource.uuid as string ?? resource.id as number}
+                lookup_key={lookup_key}
+            />
+        )
+    }
 
     return (
         <Container maxWidth="lg">
@@ -72,23 +93,7 @@ export function ResourceList<T extends BaseResource>({lookup_key}: {lookup_key: 
                 </Typography>
             </Grid>
             <Stack spacing={2} key="body">
-                {
-                    query.isInitialLoading && [1, 2, 3, 4, 5].map((i) =>
-                        <Skeleton key={i} variant="rounded" height="6em"/>
-                    )
-                }
-                { query.data?.data.results && (query.data.data.results.length === 0 ?
-                    !axios.defaults.headers.common['Authorization']?
-                        <p><Button onClick={() => setLoginFormOpen(true)}>Log in</Button> to see {DISPLAY_NAMES_PLURAL[lookup_key]}</p> :
-                        <p>No {DISPLAY_NAMES_PLURAL[lookup_key]} found</p> :
-                    query.data?.data.results.map(
-                        (resource: T, i) => <ResourceCard
-                            key={`resource_${i}`}
-                            resource_id={resource.uuid as string ?? resource.id as number}
-                            lookup_key={lookup_key}
-                        />
-                    ))
-                }
+                {content}
                 <ResourceCreator key={'creator'} lookup_key={lookup_key} />
             </Stack>
         </Container>

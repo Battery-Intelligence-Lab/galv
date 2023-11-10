@@ -10,15 +10,18 @@ import Box from "@mui/material/Box";
 import {useCurrentUser} from "./Components/CurrentUserContext";
 import UseStyles from "./styles/UseStyles";
 import Popover from "@mui/material/Popover";
-import { ICONS } from "./constants";
+import {ICONS, PATHS} from "./constants";
 import Grid from "@mui/material/Unstable_Grid2";
+import {useNavigate} from "react-router-dom";
 
 export default function UserLogin() {
     const {user, login, logout, loginFormOpen, setLoginFormOpen} = useCurrentUser()
+    const navigate = useNavigate()
     const { classes } = UseStyles();
 
     const [username, setUsername] = useState('')
     const [password, setPassword] = useState('')
+
     // useState + useCallback to avoid child popover rendering with a null anchorEl
     const [popoverAnchorEl, setPopoverAnchorEl] = useState<HTMLElement|null>(null)
     const popoverAnchorRef = useCallback(
@@ -37,7 +40,16 @@ export default function UserLogin() {
                 <ICONS.USER />
                 <Typography>{user.username}</Typography>
             </Button>
-            {loginFormOpen && <Button
+            {loginFormOpen && <Grid container>
+                <Button
+                onClick={() => {
+                    setLoginFormOpen(false)
+                    navigate(`${PATHS.USER}/${user.id}?editing=true`)
+                }}
+            >
+                Manage profile
+            </Button>
+                <Button
                 onClick={() => {
                     setUsername('')
                     setPassword('')
@@ -46,7 +58,8 @@ export default function UserLogin() {
                 }}
             >
                 Logout
-            </Button>}
+            </Button>
+            </Grid>}
         </Grid>
 
     return <Grid className={classes.userLoginBox} container>

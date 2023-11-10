@@ -101,6 +101,8 @@ class GetOrCreateTextStringSerializer(serializers.ModelSerializer):
     For use with AutoCompleteEntry models: Simply returns the value field. Read-only.
     """
     def to_representation(self, instance):
+        if get_output_style(self.context['request']) != OUTPUT_STYLE_CONTEXT:
+            return super().to_representation(instance)
         return instance.value
 
     def to_internal_value(self, data):

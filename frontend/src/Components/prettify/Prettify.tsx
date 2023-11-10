@@ -10,8 +10,10 @@ import PrettyArray from "./PrettyArray";
 import TypeChanger, {detect_type, Serializable, TypeChangerProps, TypeChangerSupportedTypeName} from "../TypeChanger";
 import Stack from "@mui/material/Stack";
 import {ChipProps} from "@mui/material/Chip";
-import {is_lookup_key} from "../../constants";
+import {is_autocomplete_key, is_lookup_key} from "../../constants";
 import PrettyResource from "./PrettyResource";
+import PrettyAutocomplete from "./PrettyAutocomplete";
+import {AutocompleteProps} from "@mui/material/Autocomplete";
 
 type PrettifyProps = {
     target: any
@@ -159,6 +161,17 @@ export function Pretty(
             edit_mode={edit_mode}
             lookup_key={type}
             {...childProps as Partial<ChipProps>}
+        />
+    }
+    if (is_autocomplete_key(type)) {
+        return <PrettyAutocomplete
+            value={value}
+            onChange={(v) => onEdit && onEdit(v)}
+            edit_mode={edit_mode}
+            autocomplete_key={type}
+            {...childProps as
+                (Partial<AutocompleteProps<string, any, true, any>|TypographyProps>)
+            }
         />
     }
 

@@ -99,7 +99,7 @@ export default function PrettyObject(
         <TableContainer
             className={clsx(
                 classes.prettyTable,
-                {[classes.prettyNested]: _nest_level % 2}
+                {[classes.prettyNested]: _nest_level % 2, edit_mode: _edit_mode},
             )}
             {...table_props as TableContainerProps}
         >
@@ -121,6 +121,7 @@ export default function PrettyObject(
                                             }}
                                             target={key}
                                             label="key"
+                                            fullWidth={true}
                                         /> :
                                         <Typography variant="subtitle2" component="span" textAlign="right">
                                             {key}
@@ -128,7 +129,7 @@ export default function PrettyObject(
                                     }
                                 </Stack>
                             </TableCell>
-                            <TableCell width="90%" key={`value_${i}`} align="left">
+                            <TableCell key={`value_${i}`} align="left">
                                 <Stack alignItems="stretch" justifyContent="flex-start">
                                     <Prettify
                                         nest_level={_nest_level}

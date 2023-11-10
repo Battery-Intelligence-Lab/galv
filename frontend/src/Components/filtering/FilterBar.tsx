@@ -11,7 +11,16 @@ import {
     FilterFamily,
     FilterMode
 } from "./FilterContext";
-import {DISPLAY_NAMES_PLURAL, Field, FIELDS, ICONS, is_lookup_key, LookupKey} from "../../constants";
+import {
+    DISPLAY_NAMES_PLURAL,
+    Field,
+    FIELDS,
+    ICONS,
+    is_autocomplete_key,
+    is_lookup_key,
+    LOOKUP_KEYS,
+    LookupKey
+} from "../../constants";
 import Grid from "@mui/material/Unstable_Grid2";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import ToggleButton from "@mui/material/ToggleButton";
@@ -47,14 +56,14 @@ function FilterCreateForm({onCreate, onCancel}: FilterCreateFormProps) {
     const [value, setValue] = useState<Serializable>("")
     const [key, setKey] = useState<string>("")
     const [lookupKey, setLookupKey] =
-        useState<LookupKey>(Object.keys(FIELDS)[0] as LookupKey)
+        useState<LookupKey>(Object.keys(LOOKUP_KEYS)[0] as LookupKey)
     const [family, setFamily] = useState<FilterFamily|"">("")
 
     const reset = () => {
         setValue("")
         setKey("")
         setFamily("")
-        setLookupKey(Object.keys(FIELDS)[0] as LookupKey)
+        setLookupKey(Object.keys(LOOKUP_KEYS)[0] as LookupKey)
     }
 
     const is_family_appropriate = (family: FilterFamily, key: string): boolean => {
@@ -62,8 +71,9 @@ function FilterCreateForm({onCreate, onCancel}: FilterCreateFormProps) {
         const k = key as keyof typeof field
         if (!field || !field[k]) return true
         const field_info = field[k] as Field
+        const type = is_autocomplete_key(field_info.type)? "string" : field_info.type
 
-        return family.applies_to.includes(field_info.type as any)
+        return family.applies_to.includes(type as any)
     }
 
     return <Stack className={clsx("create_form")} spacing={0.5}>
@@ -77,7 +87,7 @@ function FilterCreateForm({onCreate, onCancel}: FilterCreateFormProps) {
                 size="small"
             >
                 <MenuItem key='none' value="" disabled />
-                {Object.keys(FIELDS).map((lookup_key) => {
+                {Object.keys(LOOKUP_KEYS).map((lookup_key) => {
                     const _key = lookup_key as LookupKey
                     return <MenuItem value={_key} key={_key}>
                         <LookupKeyIcon lookupKey={_key} tooltipProps={{placement: 'left'}}/>
@@ -89,6 +99,10 @@ function FilterCreateForm({onCreate, onCancel}: FilterCreateFormProps) {
                 freeSolo
                 options={
                     Object.entries(FIELDS[lookupKey])
+                        .map(([k, v]) => [
+                            k,
+                            {...v, type: is_autocomplete_key(v.type)? "string" : v.type}
+                        ] as [string, Field])
                         .filter(([k, v]) => isFilterableField(v))
                         .map(([k, _]) => k)
                 }

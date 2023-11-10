@@ -228,7 +228,10 @@ export default makeStyles()((theme) => {
         "& *": {
           textAlign: "right",
         }
-      }
+      },
+      "&:not(.edit_mode) td": {
+        width: "100%",
+      },
     },
     prettyArray: {
       backgroundColor: theme.palette.background.paper,

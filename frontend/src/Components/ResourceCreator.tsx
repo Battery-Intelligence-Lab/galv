@@ -74,6 +74,8 @@ function ResourceCreator<T extends BaseResource>(
                         if (typeof v === 'string' || v instanceof Array)
                             invalidate(v)
                     })
+                    // Also invalidate autocomplete cache because we may have updated options
+                    queryClient.invalidateQueries(['autocomplete'])
                     onCreate()
                 },
                 onError: (error, variables, context) => {

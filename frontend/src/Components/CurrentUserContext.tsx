@@ -3,6 +3,9 @@ import {KnoxUser, LoginApi, User} from "../api_codegen";
 import {useMutation, useQueryClient} from "@tanstack/react-query";
 import {AxiosError, AxiosResponse} from "axios";
 import axios from "axios/index";
+import {useSnackbarMessenger} from "./SnackbarMessengerContext";
+import Button from "@mui/material/Button";
+import Stack from "@mui/material/Stack";
 
 export type LoginUser = Pick<KnoxUser, "token"> & User
 
@@ -29,6 +32,8 @@ export default function CurrentUserContextProvider({children}: {children: React.
     const [username, setUsername] = useState<string>('')
     const [password, setPassword] = useState<string>('')
     const [loginFormOpen, setLoginFormOpen] = useState<boolean>(false)
+
+    const {postSnackbarMessage} = useSnackbarMessenger()
 
     const queryClient = useQueryClient()
     const api_handler = new LoginApi()
@@ -59,6 +64,24 @@ export default function CurrentUserContextProvider({children}: {children: React.
         setPassword(password)
         Login.mutate()
     }
+
+    axios.interceptors.response.use(
+        null,
+        // 401 should log the user out and display a message
+        (error) => {
+            if (error.response?.status === 401) {
+                Logout()
+                postSnackbarMessage({
+                    message: <Stack direction="row" spacing={1}>
+                        You have been logged out.
+                        <Button onClick={() => setLoginFormOpen(true)}>Log in</Button>
+                    </Stack>,
+                    severity: 'warning'
+                })
+                return Promise.reject(error)
+            }
+        }
+    )
 
     return <CurrentUserContext.Provider value={{user, login: do_login, logout: Logout, loginFormOpen, setLoginFormOpen}}>
         {children}

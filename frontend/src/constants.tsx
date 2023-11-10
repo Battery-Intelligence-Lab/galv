@@ -39,13 +39,13 @@ export const LOOKUP_KEYS = {
     PATH: "PATH",
     FILE: "FILE",
     CELL_FAMILY: "CELL_FAMILY",
+    CELL: "CELL",
     EQUIPMENT_FAMILY: "EQUIPMENT_FAMILY",
+    EQUIPMENT: "EQUIPMENT",
     SCHEDULE_FAMILY: "SCHEDULE_FAMILY",
+    SCHEDULE: "SCHEDULE",
     EXPERIMENT: "EXPERIMENT",
     CYCLER_TEST: "CYCLER_TEST",
-    CELL: "CELL",
-    EQUIPMENT: "EQUIPMENT",
-    SCHEDULE: "SCHEDULE",
     LAB: "LAB",
     TEAM: "TEAM",
     USER: "USER",
@@ -142,7 +142,6 @@ export const DISPLAY_NAMES = {
     [LOOKUP_KEYS.TEAM]: "Team",
     [LOOKUP_KEYS.USER]: "User",
     [LOOKUP_KEYS.TOKEN]: "Token",
-    PROFILE: "Profile",
 } as const
 
 /**
@@ -166,7 +165,6 @@ export const DISPLAY_NAMES_PLURAL = {
     [LOOKUP_KEYS.TEAM]: "Teams",
     [LOOKUP_KEYS.USER]: "Users",
     [LOOKUP_KEYS.TOKEN]: "Tokens",
-    PROFILE: "Profile",
 } as const
 
 /**
@@ -226,14 +224,14 @@ export const API_SLUGS = {
     [LOOKUP_KEYS.TEAM]: "teams",
     [LOOKUP_KEYS.USER]: "users",
     [LOOKUP_KEYS.TOKEN]: "tokens",
-    [AUTOCOMPLETE_KEYS.CELL_MANUFACTURER]: "cell_manufacturers",
-    [AUTOCOMPLETE_KEYS.CELL_MODEL]: "cell_models",
-    [AUTOCOMPLETE_KEYS.CELL_FORM_FACTOR]: "cell_form_factors",
-    [AUTOCOMPLETE_KEYS.CELL_CHEMISTRY]: "cell_chemistries",
-    [AUTOCOMPLETE_KEYS.EQUIPMENT_TYPE]: "equipment_types",
-    [AUTOCOMPLETE_KEYS.EQUIPMENT_MANUFACTURER]: "equipment_manufacturers",
-    [AUTOCOMPLETE_KEYS.EQUIPMENT_MODEL]: "equipment_models",
-    [AUTOCOMPLETE_KEYS.SCHEDULE_IDENTIFIER]: "schedule_identifiers",
+    [AUTOCOMPLETE_KEYS.CELL_MANUFACTURER]: "cellManufacturers",
+    [AUTOCOMPLETE_KEYS.CELL_MODEL]: "cellModels",
+    [AUTOCOMPLETE_KEYS.CELL_FORM_FACTOR]: "cellFormFactors",
+    [AUTOCOMPLETE_KEYS.CELL_CHEMISTRY]: "cellChemistries",
+    [AUTOCOMPLETE_KEYS.EQUIPMENT_TYPE]: "equipmentTypes",
+    [AUTOCOMPLETE_KEYS.EQUIPMENT_MANUFACTURER]: "equipmentManufacturers",
+    [AUTOCOMPLETE_KEYS.EQUIPMENT_MODEL]: "equipmentModels",
+    [AUTOCOMPLETE_KEYS.SCHEDULE_IDENTIFIER]: "scheduleIdentifiers",
 } as const
 
 
@@ -278,6 +276,8 @@ const generic_fields: {[key: string]: Field} = {
     ...always_fields,
 }
 const autocomplete_fields: {[key: string]: Field} = {
+    url: {readonly: true, type: "string"},
+    id: {readonly: true, type: "number"},
     value: {readonly: true, type: "string"},
     ld_value: {readonly: true, type: "string"},
 }
@@ -328,6 +328,7 @@ export const FIELDS = {
         upload_errors: {readonly: true, type: "string", many: true},
         column_errors: {readonly: true, type: "string", many: true},
         columns: {readonly: true, type: "string", many: true},
+        upload_info: {readonly: true, type: "string"},
     },
     [LOOKUP_KEYS.EXPERIMENT]: {
         title: {readonly: false, type: "string", priority: PRIORITY_LEVELS.IDENTITY},
@@ -452,6 +453,9 @@ export const FIELDS = {
         email: {readonly: false, type: "string"},
         first_name: {readonly: false, type: "string"},
         last_name: {readonly: false, type: "string"},
+        is_staff: {readonly: true, type: "boolean", priority: PRIORITY_LEVELS.HIDDEN},
+        is_superuser: {readonly: true, type: "boolean"},
+        groups: {readonly: true, type: "object", many: true, priority: PRIORITY_LEVELS.HIDDEN},
     },
     [LOOKUP_KEYS.TOKEN]: {
         ...always_fields,
