@@ -23,7 +23,6 @@ import List from '@mui/material/List';
 import Typography from '@mui/material/Typography';
 import Divider from '@mui/material/Divider';
 import IconButton from '@mui/material/IconButton';
-import Button from '@mui/material/Button';
 import MenuIcon from '@mui/icons-material/Menu';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 
@@ -41,6 +40,7 @@ import {ResourceList} from "./Components/ResourceList";
 import CurrentUserContextProvider from "./Components/CurrentUserContext";
 import useStyles from "./styles/UseStyles";
 import {SnackbarMessenger, SnackbarMessengerContextProvider} from "./Components/SnackbarMessengerContext";
+import Tooltip from "@mui/material/Tooltip";
 
 export const pathMatches = (path: string, pathname: string) => matchPath({path: path, end: true}, pathname) !== null
 
@@ -133,8 +133,6 @@ export function Core() {
         </Stack>
     );
 
-    let navigate = useNavigate();
-
     const Layout = (
         <div className={classes.root}>
             <CssBaseline />
@@ -149,15 +147,16 @@ export function Core() {
                     >
                         <MenuIcon />
                     </IconButton>
-                    <ReactSVG className={classes.galvLogo} src="%PUBLIC_URL%/Galv-logo.svg" />
+                    <Link to={PATHS.DASHBOARD} className={classes.title}>
+                        <Tooltip title="Galv" describeChild={true} placement="bottom-start" arrow>
+                            <div>
+                                <ReactSVG className={classes.galvLogo} src="/Galv-logo.svg" />
+                            </div>
+                        </Tooltip>
+                    </Link>
                     <Typography component="h1" variant="h6" color="inherit" noWrap className={classes.title}>
                     </Typography>
 
-                    <Button color="inherit" onClick={() => {
-                        navigate(PATHS.TOKEN)
-                    }}>
-                        Manage API Tokens
-                    </Button>
                     <UserLogin />
                 </Toolbar>
             </AppBar>
@@ -221,26 +220,26 @@ export function Core() {
         />
     }
 
+    function ResourceListWrapper() {
+        const navigate = useNavigate()
+        const {type} = useParams()
+        const lookup_key = get_lookup_key_from_pathname(type)
+
+        if (!lookup_key) {
+            navigate(PATHS.DASHBOARD)
+            return <></>
+        }
+
+        return <ResourceList lookup_key={lookup_key ?? "CYCLER_TEST"}/>
+    }
+
     /* A <Routes> looks through its children <Route>s and renders the first one that matches the current URL. */
     return <ErrorBoundary fallback={MyFallbackComponent}>
         <Routes>
             <Route path={PATHS.DASHBOARD} element={Layout}>
+                {/*<Route path={PATHS.GRAPH} element={<DatasetChart />} />*/}
                 <Route path="/:type/:id" element={<ResourceCardWrapper/>}/>  {/* Handles direct resource lookups */}
-                <Route path={PATHS.EXPERIMENT} element={<ResourceList lookup_key={LOOKUP_KEYS.EXPERIMENT}/>} />
-                <Route path={PATHS.CYCLER_TEST} element={<ResourceList lookup_key={LOOKUP_KEYS.CYCLER_TEST}/>} />
-                <Route path={PATHS.FILE} element={<ResourceList lookup_key={LOOKUP_KEYS.FILE}/>} />
-                <Route path={PATHS.CELL} element={<ResourceList lookup_key={LOOKUP_KEYS.CELL}/>} />
-                <Route path={PATHS.CELL_FAMILY} element={<ResourceList lookup_key={LOOKUP_KEYS.CELL_FAMILY}/>} />
-                <Route path={PATHS.EQUIPMENT} element={<ResourceList lookup_key={LOOKUP_KEYS.EQUIPMENT}/>} />
-                <Route path={PATHS.EQUIPMENT_FAMILY} element={<ResourceList lookup_key={LOOKUP_KEYS.EQUIPMENT_FAMILY}/>} />
-                <Route path={PATHS.SCHEDULE} element={<ResourceList lookup_key={LOOKUP_KEYS.SCHEDULE}/>} />
-                <Route path={PATHS.SCHEDULE_FAMILY} element={<ResourceList lookup_key={LOOKUP_KEYS.SCHEDULE_FAMILY}/>} />
-                <Route path={PATHS.HARVESTER} element={<ResourceList lookup_key={LOOKUP_KEYS.HARVESTER}/>} />
-                <Route path={PATHS.PATH} element={<ResourceList lookup_key={LOOKUP_KEYS.PATH}/>} />
-                <Route path={PATHS.LAB} element={<ResourceList lookup_key={LOOKUP_KEYS.LAB}/>} />
-                <Route path={PATHS.TEAM} element={<ResourceList lookup_key={LOOKUP_KEYS.TEAM}/>} />
-                {/*<Route path={profilePath} element={UserProfile()} />*/}
-                <Route path={PATHS.TOKEN} element={<ResourceList lookup_key={LOOKUP_KEYS.TOKEN}/>} />
+                <Route path={"/:type"} element={<ResourceListWrapper/>}/>  {/* Handles resource lists */}
                 {/*<Route index element={Dashboard()} />*/}
                 <Route index element={<ResourceList lookup_key={LOOKUP_KEYS.CYCLER_TEST}/>} />
             </Route>

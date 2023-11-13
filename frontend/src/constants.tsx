@@ -14,6 +14,8 @@ import CloudSyncIcon from '@mui/icons-material/CloudSync';
 import PersonIcon from '@mui/icons-material/Person';
 import FolderIcon from '@mui/icons-material/Folder';
 import VpnKeyIcon from '@mui/icons-material/VpnKey';
+import ManageAccountsIcon from '@mui/icons-material/ManageAccounts';
+import LogoutIcon from '@mui/icons-material/Logout';
 
 import {
     CellChemistriesApi,
@@ -80,7 +82,6 @@ export const ICONS = {
     [LOOKUP_KEYS.CELL_FAMILY]: BatchPredictionIcon,
     [LOOKUP_KEYS.EQUIPMENT_FAMILY]: BatchPredictionIcon,
     [LOOKUP_KEYS.SCHEDULE_FAMILY]: BatchPredictionIcon,
-    DASHBOARD: HomeIcon,
     [LOOKUP_KEYS.EXPERIMENT]: DatasetLinkedIcon,
     [LOOKUP_KEYS.CYCLER_TEST]: MultilineChartIcon,
     [LOOKUP_KEYS.CELL]: BatteryFullIcon,
@@ -90,6 +91,9 @@ export const ICONS = {
     [LOOKUP_KEYS.TEAM]: PeopleAltIcon,
     [LOOKUP_KEYS.USER]: PersonIcon,
     [LOOKUP_KEYS.TOKEN]: VpnKeyIcon,
+    DASHBOARD: HomeIcon,
+    MANAGE_ACCOUNT: ManageAccountsIcon,
+    LOGOUT: LogoutIcon,
     CREATE: AddCircleIcon,
     CANCEL: CancelIcon
 } as const
@@ -107,7 +111,7 @@ export const PATHS = {
     DASHBOARD: "/",
     [LOOKUP_KEYS.EXPERIMENT]: "/experiments",
     [LOOKUP_KEYS.CYCLER_TEST]: "/cycler_tests",
-    DATASET: "/datasets",
+    GRAPH: "/graphs",
     [LOOKUP_KEYS.CELL]: "/cells",
     [LOOKUP_KEYS.CELL_FAMILY]: "/cell_families",
     [LOOKUP_KEYS.EQUIPMENT]: "/equipment",

@@ -17,7 +17,7 @@ import {representation} from "../Representation";
 
 export const PrettyResourceSelect = (
     {value, onChange, edit_mode, lookup_key, ...childProps}:
-        { lookup_key: LookupKey } & PrettyComponentProps & Partial<ChipProps>
+        { lookup_key: LookupKey } & PrettyComponentProps & Partial<Omit<ChipProps, "onChange">>
 ) => {
 
     const api_handler = new API_HANDLERS[lookup_key]()

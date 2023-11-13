@@ -33,7 +33,11 @@ export default makeStyles()((theme) => {
 
   return {
     userLoginBox: {
-      backgroundColor: theme.palette.background.default,
+      "& .MuiButton-root": {
+        backgroundColor: theme.palette.primary.main,
+        boxShadow: "none",
+        border: "none"
+      },
     },
     loginPaper: {
       marginTop: theme.spacing(8),
