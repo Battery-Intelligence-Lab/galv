@@ -282,6 +282,7 @@ const always_fields: {[key: string]: Field} = {
 }
 const team_fields: {[key: string]: Field} = {
     team: {readonly: true, type: "TEAM", createonly: true},
+    validation_results: {readonly: true, type: "object", many: true},
 }
 const generic_fields: {[key: string]: Field} = {
     uuid: {readonly: true, type: "string"},
@@ -348,7 +349,7 @@ export const FIELDS = {
         authors: {readonly: false, type: LOOKUP_KEYS.USER, many: true, priority: PRIORITY_LEVELS.CONTEXT},
         protocol: {readonly: true, type: "string"},
         protocol_file: {readonly: true, type: "string"},
-        cycler_tests: {readonly: false, type: LOOKUP_KEYS.CYCLER_TEST, many: true, priority: PRIORITY_LEVELS.SUMMARY},
+        cycler_tests: {readonly: true, type: LOOKUP_KEYS.CYCLER_TEST, many: true, priority: PRIORITY_LEVELS.SUMMARY},
         ...team_fields,
     },
     [LOOKUP_KEYS.CYCLER_TEST]: {
@@ -381,6 +382,7 @@ export const FIELDS = {
         ...team_fields,
         schedule_file: {readonly: false, type: "string"},
         pybamm_schedule_variables: {readonly: false, type: "object"},
+        in_use: {readonly: true, type: "boolean"},
     },
     [LOOKUP_KEYS.CELL_FAMILY]: {
         ...generic_fields,
@@ -396,6 +398,7 @@ export const FIELDS = {
         initial_dc_resistance: {readonly: false, type: "number"},
         energy_density: {readonly: false, type: "number"},
         power_density: {readonly: false, type: "number"},
+        in_use: {readonly: true, type: "boolean"},
     },
     [LOOKUP_KEYS.EQUIPMENT_FAMILY]: {
         ...generic_fields,
@@ -404,6 +407,7 @@ export const FIELDS = {
         model: {readonly: false, type: AUTOCOMPLETE_KEYS.EQUIPMENT_MODEL, priority: PRIORITY_LEVELS.IDENTITY},
         type: {readonly: false, type: AUTOCOMPLETE_KEYS.EQUIPMENT_TYPE, priority: PRIORITY_LEVELS.CONTEXT},
         equipment: {readonly: true, type: LOOKUP_KEYS.EQUIPMENT, many: true, priority: PRIORITY_LEVELS.SUMMARY},
+        in_use: {readonly: true, type: "boolean"},
     },
     [LOOKUP_KEYS.SCHEDULE_FAMILY]: {
         ...generic_fields,
@@ -413,6 +417,7 @@ export const FIELDS = {
         ambient_temperature: {readonly: false, type: "number"},
         pybamm_template: {readonly: false, type: "object"},
         schedules: {readonly: true, type: LOOKUP_KEYS.SCHEDULE, many: true, priority: PRIORITY_LEVELS.SUMMARY},
+        in_use: {readonly: true, type: "boolean"},
     },
     [LOOKUP_KEYS.TEAM]: {
         ...always_fields,
