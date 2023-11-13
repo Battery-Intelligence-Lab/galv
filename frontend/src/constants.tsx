@@ -16,6 +16,7 @@ import FolderIcon from '@mui/icons-material/Folder';
 import VpnKeyIcon from '@mui/icons-material/VpnKey';
 import ManageAccountsIcon from '@mui/icons-material/ManageAccounts';
 import LogoutIcon from '@mui/icons-material/Logout';
+import SchemaIcon from '@mui/icons-material/Schema';
 
 import {
     CellChemistriesApi,
@@ -23,7 +24,7 @@ import {
     EquipmentFamiliesApi, EquipmentManufacturersApi, EquipmentModelsApi, EquipmentTypesApi, ExperimentsApi,
     FilesApi, HarvestersApi, LabsApi, MonitoredPathsApi,
     ScheduleFamiliesApi, ScheduleIdentifiersApi, SchedulesApi,
-    TeamsApi, TokensApi, UsersApi
+    TeamsApi, TokensApi, UsersApi, ValidationSchemasApi
 } from "./api_codegen";
 import {Serializable, TypeChangerSupportedTypeName} from "./Components/TypeChanger";
 
@@ -48,6 +49,7 @@ export const LOOKUP_KEYS = {
     SCHEDULE: "SCHEDULE",
     EXPERIMENT: "EXPERIMENT",
     CYCLER_TEST: "CYCLER_TEST",
+    VALIDATION_SCHEMA: "VALIDATION_SCHEMA",
     LAB: "LAB",
     TEAM: "TEAM",
     USER: "USER",
@@ -87,6 +89,7 @@ export const ICONS = {
     [LOOKUP_KEYS.CELL]: BatteryFullIcon,
     [LOOKUP_KEYS.EQUIPMENT]: PrecisionManufacturingIcon,
     [LOOKUP_KEYS.SCHEDULE]: AssignmentIcon,
+    [LOOKUP_KEYS.VALIDATION_SCHEMA]: SchemaIcon,
     [LOOKUP_KEYS.LAB]: HolidayVillageIcon,
     [LOOKUP_KEYS.TEAM]: PeopleAltIcon,
     [LOOKUP_KEYS.USER]: PersonIcon,
@@ -118,6 +121,7 @@ export const PATHS = {
     [LOOKUP_KEYS.EQUIPMENT_FAMILY]: "/equipment_families",
     [LOOKUP_KEYS.SCHEDULE]: "/schedules",
     [LOOKUP_KEYS.SCHEDULE_FAMILY]: "/schedule_families",
+    [LOOKUP_KEYS.VALIDATION_SCHEMA]: "/validation_schemas",
     [LOOKUP_KEYS.LAB]: "/labs",
     [LOOKUP_KEYS.TEAM]: "/teams",
     [LOOKUP_KEYS.USER]: "/users",
@@ -142,6 +146,7 @@ export const DISPLAY_NAMES = {
     [LOOKUP_KEYS.EQUIPMENT_FAMILY]: "Equipment Family",
     [LOOKUP_KEYS.SCHEDULE]: "Schedule",
     [LOOKUP_KEYS.SCHEDULE_FAMILY]: "Schedule Family",
+    [LOOKUP_KEYS.VALIDATION_SCHEMA]: "Validation Schema",
     [LOOKUP_KEYS.LAB]: "Lab",
     [LOOKUP_KEYS.TEAM]: "Team",
     [LOOKUP_KEYS.USER]: "User",
@@ -165,6 +170,7 @@ export const DISPLAY_NAMES_PLURAL = {
     [LOOKUP_KEYS.EQUIPMENT_FAMILY]: "Equipment Families",
     [LOOKUP_KEYS.SCHEDULE]: "Schedules",
     [LOOKUP_KEYS.SCHEDULE_FAMILY]: "Schedule Families",
+    [LOOKUP_KEYS.VALIDATION_SCHEMA]: "Validation Schemas",
     [LOOKUP_KEYS.LAB]: "Labs",
     [LOOKUP_KEYS.TEAM]: "Teams",
     [LOOKUP_KEYS.USER]: "Users",
@@ -187,6 +193,7 @@ export const API_HANDLERS = {
     [LOOKUP_KEYS.CELL]: CellsApi,
     [LOOKUP_KEYS.EQUIPMENT]: EquipmentApi,
     [LOOKUP_KEYS.SCHEDULE]: SchedulesApi,
+    [LOOKUP_KEYS.VALIDATION_SCHEMA]: ValidationSchemasApi,
     [LOOKUP_KEYS.LAB]: LabsApi,
     [LOOKUP_KEYS.TEAM]: TeamsApi,
     [LOOKUP_KEYS.USER]: UsersApi,
@@ -224,6 +231,7 @@ export const API_SLUGS = {
     [LOOKUP_KEYS.SCHEDULE_FAMILY]: "scheduleFamilies",
     [LOOKUP_KEYS.EXPERIMENT]: "experiments",
     [LOOKUP_KEYS.CYCLER_TEST]: "cyclerTests",
+    [LOOKUP_KEYS.VALIDATION_SCHEMA]: "validationSchemas",
     [LOOKUP_KEYS.LAB]: "labs",
     [LOOKUP_KEYS.TEAM]: "teams",
     [LOOKUP_KEYS.USER]: "users",
@@ -434,6 +442,12 @@ export const FIELDS = {
         schedule_resources: {readonly: true, type: LOOKUP_KEYS.SCHEDULE, many: true, priority: PRIORITY_LEVELS.CONTEXT},
         cyclertest_resources: {readonly: true, type: LOOKUP_KEYS.CYCLER_TEST, many: true, priority: PRIORITY_LEVELS.CONTEXT},
         experiment_resources: {readonly: true, type: LOOKUP_KEYS.EXPERIMENT, many: true, priority: PRIORITY_LEVELS.CONTEXT},
+    },
+    [LOOKUP_KEYS.VALIDATION_SCHEMA]: {
+        ...generic_fields,
+        name: {readonly: false, type: "string", priority: PRIORITY_LEVELS.IDENTITY},
+        schema: {readonly: false, type: "object"},
+        ...team_fields,
     },
     [LOOKUP_KEYS.LAB]: {
         ...always_fields,

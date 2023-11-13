@@ -31,7 +31,7 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import {ReactSVG} from 'react-svg';
 import Stack from "@mui/material/Stack";
-import {PATHS, ICONS, LookupKey, LOOKUP_KEYS} from "./constants";
+import {PATHS, ICONS, LookupKey, LOOKUP_KEYS, DISPLAY_NAMES_PLURAL} from "./constants";
 import ErrorBoundary from "./Components/ErrorBoundary";
 import ResourceCard from "./Components/ResourceCard";
 import FilterBar from "./Components/filtering/FilterBar";
@@ -41,6 +41,7 @@ import CurrentUserContextProvider from "./Components/CurrentUserContext";
 import useStyles from "./styles/UseStyles";
 import {SnackbarMessenger, SnackbarMessengerContextProvider} from "./Components/SnackbarMessengerContext";
 import Tooltip from "@mui/material/Tooltip";
+import LookupKeyIcon from "./Components/LookupKeyIcon";
 
 export const pathMatches = (path: string, pathname: string) => matchPath({path: path, end: true}, pathname) !== null
 
@@ -51,12 +52,24 @@ export function Core() {
     const { classes } = useStyles();
 
     const [open, setOpen] = React.useState(false);
-    const handleDrawerOpen = () => {
-        setOpen(true);
+    const toggleDrawerOpen = () => {
+        setOpen(!open);
     };
     const handleDrawerClose = () => {
         setOpen(false);
     };
+
+    const LI = ({lookupKey}: { lookupKey: LookupKey }) => <ListItemButton
+        selected={pathIs(PATHS[lookupKey])}
+        component={Link}
+        to={PATHS[lookupKey]}
+        key={lookupKey}
+    >
+        <ListItemIcon>
+            <LookupKeyIcon lookupKey={lookupKey} tooltip={!open} tooltipProps={{placement: "right"}} />
+        </ListItemIcon>
+        <ListItemText primary={DISPLAY_NAMES_PLURAL[lookupKey]} />
+    </ListItemButton>
 
     const mainListItems = (
         <Stack>
@@ -67,69 +80,25 @@ export function Core() {
                 <ListItemText primary="Dashboard" />
             </ListItemButton>
             <Divider component="li" />
-            <ListItemButton selected={pathIs(PATHS.EXPERIMENT)} component={Link} to={PATHS.EXPERIMENT}>
-                <ListItemIcon>
-                    <ICONS.EXPERIMENT />
-                </ListItemIcon>
-                <ListItemText primary="Experiments" />
-            </ListItemButton>
-            <ListItemButton selected={pathIs(PATHS.CYCLER_TEST)} component={Link} to={PATHS.CYCLER_TEST}>
-                <ListItemIcon>
-                    <ICONS.CYCLER_TEST />
-                </ListItemIcon>
-                <ListItemText primary="Cycler Tests" />
-            </ListItemButton>
+            {[LOOKUP_KEYS.EXPERIMENT, LOOKUP_KEYS.CYCLER_TEST].map(lookupKey => <LI lookupKey={lookupKey} />)}
             <Divider component="li" />
-            <ListItemButton selected={pathIs(PATHS.FILE)} component={Link} to={PATHS.FILE}>
-                <ListItemIcon>
-                    <ICONS.FILE />
-                </ListItemIcon>
-                <ListItemText primary="Datasets" />
-            </ListItemButton>
-            <ListItemButton selected={pathIs(PATHS.CELL)} component={Link} to={PATHS.CELL}>
-                <ListItemIcon>
-                    <ICONS.CELL />
-                </ListItemIcon>
-                <ListItemText primary="Cells" />
-            </ListItemButton>
-            <ListItemButton selected={pathIs(PATHS.EQUIPMENT)} component={Link} to={PATHS.EQUIPMENT}>
-                <ListItemIcon>
-                    <ICONS.EQUIPMENT/>
-                </ListItemIcon>
-                <ListItemText primary="Equipment" />
-            </ListItemButton>
-            <ListItemButton selected={pathIs(PATHS.SCHEDULE)} component={Link} to={PATHS.SCHEDULE}>
-                <ListItemIcon>
-                    <ICONS.SCHEDULE/>
-                </ListItemIcon>
-                <ListItemText primary="Schedules" />
-            </ListItemButton>
+            {[
+                LOOKUP_KEYS.FILE,
+                LOOKUP_KEYS.CELL,
+                LOOKUP_KEYS.EQUIPMENT,
+                LOOKUP_KEYS.SCHEDULE,
+            ].map(lookupKey => <LI lookupKey={lookupKey} />)}
             <Divider component="li" />
-            <ListItemButton selected={pathIs(PATHS.HARVESTER)} component={Link} to={PATHS.HARVESTER}>
-                <ListItemIcon>
-                    <ICONS.HARVESTER/>
-                </ListItemIcon>
-                <ListItemText primary="Harvesters" />
-            </ListItemButton>
-            <ListItemButton selected={pathIs(PATHS.PATH)} component={Link} to={PATHS.PATH}>
-                <ListItemIcon>
-                    <ICONS.PATH/>
-                </ListItemIcon>
-                <ListItemText primary="Paths" />
-            </ListItemButton>
+            {[
+                LOOKUP_KEYS.HARVESTER,
+                LOOKUP_KEYS.PATH,
+                LOOKUP_KEYS.VALIDATION_SCHEMA,
+            ].map(lookupKey => <LI lookupKey={lookupKey} />)}
             <Divider component="li" />
-            <ListItemButton selected={pathIs(PATHS.LAB)} component={Link} to={PATHS.LAB}>
-                <ListItemIcon>
-                    <ICONS.LAB/>
-                </ListItemIcon>
-                <ListItemText primary="Labs" />
-            </ListItemButton>
-            <ListItemButton selected={pathIs(PATHS.TEAM)} component={Link} to={PATHS.TEAM}>
-                <ListItemIcon>
-                    <ICONS.TEAM/>
-                </ListItemIcon>
-                <ListItemText primary="Teams" />
-            </ListItemButton>
+            {[
+                LOOKUP_KEYS.LAB,
+                LOOKUP_KEYS.TEAM,
+            ].map(lookupKey => <LI lookupKey={lookupKey} />)}
         </Stack>
     );
 
@@ -142,8 +111,8 @@ export function Core() {
                         edge="start"
                         color="inherit"
                         aria-label="open drawer"
-                        onClick={handleDrawerOpen}
-                        className={clsx(classes.menuButton, open && classes.menuButtonHidden)}
+                        onClick={toggleDrawerOpen}
+                        className={clsx(classes.menuButton)}
                     >
                         <MenuIcon />
                     </IconButton>
@@ -155,8 +124,8 @@ export function Core() {
                         </Tooltip>
                     </Link>
                     <Typography component="h1" variant="h6" color="inherit" noWrap className={classes.title}>
+                        The Battery Development Metadata Secretary
                     </Typography>
-
                     <UserLogin />
                 </Toolbar>
             </AppBar>
