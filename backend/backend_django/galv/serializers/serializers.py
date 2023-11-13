@@ -5,13 +5,9 @@ import os.path
 import re
 
 import jsonschema
-from django.db.models import Q
-from django.urls import reverse, resolve
+from django.urls import reverse
 from drf_spectacular.utils import extend_schema_field
 from rest_framework.exceptions import ValidationError
-from urllib.parse import urlparse
-
-from rest_framework.status import HTTP_403_FORBIDDEN
 
 from ..models import Harvester, \
     HarvesterEnvVar, \
@@ -37,7 +33,7 @@ from knox.models import AuthToken
 from .utils import AdditionalPropertiesModelSerializer, GetOrCreateTextField, augment_extra_kwargs, url_help_text, \
     get_model_field, PermissionsMixin, TruncatedUserHyperlinkedRelatedIdField, \
     TruncatedGroupHyperlinkedRelatedIdField, TruncatedHyperlinkedRelatedIdField, \
-    CreateOnlyMixin
+    CreateOnlyMixin, WithValidationMixin
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer, PermissionsMixin):
@@ -254,7 +250,7 @@ class LabSerializer(serializers.HyperlinkedModelSerializer, PermissionsMixin):
         fields = ['url', 'id', 'name', 'description', 'admin_group', 'harvesters', 'teams', 'permissions']
         read_only_fields = ['url', 'id', 'teams', 'admin_group', 'harvesters', 'permissions']
 
-class WithTeamMixin(serializers.Serializer):
+class WithTeamMixin(WithValidationMixin):
     team = TruncatedHyperlinkedRelatedIdField(
         'TeamSerializer',
         ['name'],

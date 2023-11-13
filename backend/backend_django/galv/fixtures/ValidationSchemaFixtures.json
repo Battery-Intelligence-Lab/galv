@@ -12,7 +12,7 @@
                 "$defs": {
                     "GalvUUID": {
                         "type": "string",
-                        "description": "Universally unique identifier for the experiment, assigned by Galv [type 5, galv.oxrse.uk namespace]",
+                        "description": "Universally unique identifier for the experiment",
                         "format": "uuid",
                         "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-[0-9a-f]{4}-[0-9a-f]{12}$",
                         "readOnly": true
@@ -84,11 +84,19 @@
                             "uuid": {
                                 "$ref": "#/$defs/GalvUUID"
                             },
-                            "Identifier": {
+                            "identifier": {
                                 "type": "string",
                                 "description": "Identifier for the cell"
-                            },
-                            "Datasheet": {
+                            }
+                        },
+                        "required": ["identifier"]
+                    },
+                    "CellFamily": {
+                        "type": "object",
+                        "description": "Electrochemical cell type used in the experiment",
+                        "additionalProperties": true,
+                        "properties": {
+                            "datasheet": {
                                 "oneOf": [
                                     {
                                         "type": "string",
@@ -104,58 +112,79 @@
                                 "description": "URL to the cell datasheet",
                                 "format": "uri"
                             },
-                            "Manufacturer": {
+                            "manufacturer": {
                                 "type": "string",
                                 "description": "Name of the cell manufacturer"
                             },
-                            "Model": {
+                            "model": {
                                 "type": "string",
                                 "description": "Name of the cell model"
                             },
-                            "Mass": {
+                            "mass": {
                                 "type": "number",
                                 "description": "Mass of the cell in grams",
                                 "exclusiveMinimum": 0
                             },
-                            "Form Factor": {
+                            "form_factor": {
                                 "type": "string",
                                 "description": "Form factor of the cell, e.g. 'pouch'"
                             },
-                            "Negative Electrode": {
+                            "negative_electrode": {
                                 "$ref": "#/$defs/Electrode"
                             },
-                            "Positive Electrode": {
+                            "positive_electrode": {
                                 "$ref": "#/$defs/Electrode"
+                            },
+                            "family": {
+                                "$ref": "#/$defs/GalvUUID",
+                                "description": "UUID of the CellFamily"
                             }
                         },
-                        "required": ["Model"]
+                        "required": ["model", "family"]
+                    },
+                    "EquipmentFamily": {
+                        "type": "object",
+                        "definition": "Equipment used to make observations on the Cell, producing the readings in the Columns",
+                        "properties": {
+                            "description": {
+                                "type": "string",
+                                "description": "Description of the equipment"
+                            },
+                            "calibration_date": {
+                                "type": "string",
+                                "description": "Date of the equipment calibration",
+                                "format": "date"
+                            },
+                            "manufacturer": {
+                                "type": "string",
+                                "description": "Name of the equipment manufacturer"
+                            },
+                            "model": {
+                                "type": "string",
+                                "description": "Model number of the equipment"
+                            },
+                            "type": {
+                                "type": "string",
+                                "description": "Type of equipment, e.g. 'cycler'"
+                            }
+                        },
+                        "required": ["model", "manufacturer", "type"],
+                        "additionalProperties": true
                     },
                     "Equipment": {
                         "type": "object",
                         "definition": "Equipment used to make observations on the Cell, producing the readings in the Columns",
                         "properties": {
-                            "Description": {
-                                "type": "string",
-                                "description": "Description of the equipment"
-                            },
-                            "Calibration Date": {
-                                "type": "string",
-                                "description": "Date of the equipment calibration",
-                                "format": "date"
-                            },
-                            "Manufacturer": {
-                                "type": "string",
-                                "description": "Name of the equipment manufacturer"
-                            },
-                            "Model Number": {
-                                "type": "string",
-                                "description": "Model number of the equipment"
-                            },
-                            "Identifier": {
+                            "identifier": {
                                 "type": "string",
                                 "description": "Serial number or other unique identifier for the equipment"
+                            },
+                            "family": {
+                                "$ref": "#/$defs/GalvUUID",
+                                "description": "UUID of the EquipmentFamily"
                             }
                         },
+                        "required": ["identifier"],
                         "additionalProperties": true
                     },
                     "Column": {
@@ -164,29 +193,29 @@
                         "unevaluatedProperties": true,
                         "description": "A variable in the cycler data file represented as a column of values",
                         "properties": {
-                            "Description": {
+                            "description": {
                                 "type": "string",
                                 "description": "Description of the column"
                             },
-                            "Units": {
+                            "units": {
                                 "type": "string",
                                 "description": "Units of the column"
                             },
-                            "Data": {
+                            "data": {
                                 "type": "array",
                                 "description": "Array of values in the column",
                                 "items": {
                                     "type": "number"
                                 }
                             },
-                            "Ontology": {
+                            "ontology": {
                                 "type": "string",
                                 "description": "URI to the ontology term for the column"
                             }
                         },
                         "required": [
-                            "Units",
-                            "Data"
+                            "units",
+                            "data"
                         ]
                     },
                     "Dataframe": {

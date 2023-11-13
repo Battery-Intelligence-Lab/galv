@@ -125,17 +125,6 @@ class _GetOrCreateTextStringViewSet(ListModelMixin, viewsets.GenericViewSet):
     #     return Response(GetOrCreateTextStringSerializer(text_string).data)
 
 
-class _WithValidationResultMixin(viewsets.GenericViewSet):
-    @action(detail=True, methods=['GET'])
-    def with_validation(self, request, pk):
-        obj = self.get_object()
-        self.check_object_permissions(request, obj)
-        return Response(
-            validate_against_schemas(
-                self.serializer_class(obj, context={'request': request})
-            )
-        )
-
 @extend_schema(
     summary="Log in to retrieve an API Token for use elsewhere in the API.",
     description="""
@@ -470,7 +459,7 @@ File parsing reports may contain metadata or data to store.
         }
     )
 )
-class HarvesterViewSet(viewsets.ModelViewSet, _WithValidationResultMixin):
+class HarvesterViewSet(viewsets.ModelViewSet):
     """
     Harvesters monitor a set of MonitoredPaths and send reports about ObservedFiles
     within those paths.
@@ -827,7 +816,7 @@ or the time for which files need to be stable before being imported.
         """
     )
 )
-class MonitoredPathViewSet(viewsets.ModelViewSet, _WithValidationResultMixin):
+class MonitoredPathViewSet(viewsets.ModelViewSet):
     """
     A MonitoredPath refers to a directory accessible by a Harvester in which
     data files will reside. Those files will be scanned periodically by the Harvester,
@@ -890,7 +879,7 @@ harvester program to rerun the import process when it next scans the file.
         """
     )
 )
-class ObservedFileViewSet(viewsets.ModelViewSet, _WithValidationResultMixin):
+class ObservedFileViewSet(viewsets.ModelViewSet):
     """
     ObservedFiles are files that exist (or have existed) in a MonitoredPath and have
     been reported to Galv by the Harvester.
@@ -1067,7 +1056,7 @@ to prevent accidental updating.
         """
     )
 )
-class CellFamilyViewSet(viewsets.ModelViewSet, _WithValidationResultMixin):
+class CellFamilyViewSet(viewsets.ModelViewSet):
     """
     CellFamilies describe types of Cell.
     """
@@ -1125,7 +1114,7 @@ Dump the Cell in RDF (JSON-LD) format.
         """
     )
 )
-class CellViewSet(viewsets.ModelViewSet, _WithValidationResultMixin):
+class CellViewSet(viewsets.ModelViewSet):
     """
     Cells are specific cells which have generated data stored in Datasets/ObservedFiles.
     """
@@ -1191,7 +1180,7 @@ to prevent accidental updating.
         """
     )
 )
-class EquipmentFamilyViewSet(viewsets.ModelViewSet, _WithValidationResultMixin):
+class EquipmentFamilyViewSet(viewsets.ModelViewSet):
     """
     EquipmentFamilies describe types of Equipment.
     """
@@ -1244,7 +1233,7 @@ Equipment that _is_ used in a Cycler Tests is locked to prevent accidental updat
         """
     )
 )
-class EquipmentViewSet(viewsets.ModelViewSet, _WithValidationResultMixin):
+class EquipmentViewSet(viewsets.ModelViewSet):
     """
     Equipment can be attached to Datasets and used to view Datasets which
     have used similar equipment.
@@ -1302,7 +1291,7 @@ to prevent accidental updating.
         """
     )
 )
-class ScheduleFamilyViewSet(viewsets.ModelViewSet,_WithValidationResultMixin):
+class ScheduleFamilyViewSet(viewsets.ModelViewSet):
     """
     Schedules can be attached to Cycler Tests and used to view Cycler Tests which
     have used similar equipment.
@@ -1353,7 +1342,7 @@ Schedules that _is_ used in a Cycler Tests is locked to prevent accidental updat
         """
     )
 )
-class ScheduleViewSet(viewsets.ModelViewSet, _WithValidationResultMixin):
+class ScheduleViewSet(viewsets.ModelViewSet):
     """
     Schedules can be attached to Cycler Tests and used to view Cycler Tests which
     have used similar equipment.
@@ -1365,7 +1354,7 @@ class ScheduleViewSet(viewsets.ModelViewSet, _WithValidationResultMixin):
     search_fields = ['@family__identifier']
     http_method_names = ['get', 'post', 'patch', 'delete', 'options']
 
-class CyclerTestViewSet(viewsets.ModelViewSet, _WithValidationResultMixin):
+class CyclerTestViewSet(viewsets.ModelViewSet):
     """
     Cycler Tests are the primary object in the database.
     They represent a single test conducted on a specific cell using specific equipment,
@@ -1402,7 +1391,7 @@ Experiments are collections of Cycler Tests which are grouped together for analy
         """
     )
 )
-class ExperimentViewSet(viewsets.ModelViewSet, _WithValidationResultMixin):
+class ExperimentViewSet(viewsets.ModelViewSet):
     """
     Experiments are collections of Cycler Tests which are grouped together for analysis.
     """
