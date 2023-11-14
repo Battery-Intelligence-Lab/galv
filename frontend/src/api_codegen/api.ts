@@ -976,6 +976,12 @@ export interface Lab {
      */
     'admin_group': LabAdminGroup;
     /**
+     * 
+     * @type {Array<string>}
+     * @memberof Lab
+     */
+    'harvesters': Array<string>;
+    /**
      * Teams in this Lab
      * @type {Array<string>}
      * @memberof Lab
@@ -1093,13 +1099,19 @@ export interface MonitoredPath {
      */
     'active'?: boolean;
     /**
-     * Harvester this MonitoredPath belongs to
+     * Files on this MonitoredPath
+     * @type {string}
+     * @memberof MonitoredPath
+     */
+    'files': string;
+    /**
+     * Harvester this MonitoredPath is on
      * @type {string}
      * @memberof MonitoredPath
      */
     'harvester': string;
     /**
-     * Team this resource belongs to
+     * Team this MonitoredPath belongs to
      * @type {string}
      * @memberof MonitoredPath
      */
@@ -1135,6 +1147,12 @@ export interface ObservedFile {
      * @memberof ObservedFile
      */
     'harvester': string;
+    /**
+     * Name of the file
+     * @type {string}
+     * @memberof ObservedFile
+     */
+    'name': string | null;
     /**
      * Absolute file path
      * @type {string}
@@ -1225,12 +1243,6 @@ export interface ObservedFile {
      * @memberof ObservedFile
      */
     'permissions': CellPermissions;
-    /**
-     * Name of the file
-     * @type {string}
-     * @memberof ObservedFile
-     */
-    'name'?: string | null;
 }
 
 export const ObservedFileStateEnum = {
@@ -1802,6 +1814,37 @@ export interface PaginatedScheduleList {
      * @memberof PaginatedScheduleList
      */
     'results'?: Array<Schedule>;
+}
+/**
+ * 
+ * @export
+ * @interface PaginatedSchemaValidationList
+ */
+export interface PaginatedSchemaValidationList {
+    /**
+     * 
+     * @type {number}
+     * @memberof PaginatedSchemaValidationList
+     */
+    'count'?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof PaginatedSchemaValidationList
+     */
+    'next'?: string | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof PaginatedSchemaValidationList
+     */
+    'previous'?: string | null;
+    /**
+     * 
+     * @type {Array<SchemaValidation>}
+     * @memberof PaginatedSchemaValidationList
+     */
+    'results'?: Array<SchemaValidation>;
 }
 /**
  * 
@@ -2488,6 +2531,12 @@ export interface PatchedLab {
      */
     'admin_group'?: LabAdminGroup;
     /**
+     * 
+     * @type {Array<string>}
+     * @memberof PatchedLab
+     */
+    'harvesters'?: Array<string>;
+    /**
      * Teams in this Lab
      * @type {Array<string>}
      * @memberof PatchedLab
@@ -2543,13 +2592,19 @@ export interface PatchedMonitoredPath {
      */
     'active'?: boolean;
     /**
-     * Harvester this MonitoredPath belongs to
+     * Files on this MonitoredPath
+     * @type {string}
+     * @memberof PatchedMonitoredPath
+     */
+    'files'?: string;
+    /**
+     * Harvester this MonitoredPath is on
      * @type {string}
      * @memberof PatchedMonitoredPath
      */
     'harvester'?: string;
     /**
-     * Team this resource belongs to
+     * Team this MonitoredPath belongs to
      * @type {string}
      * @memberof PatchedMonitoredPath
      */
@@ -2585,6 +2640,12 @@ export interface PatchedObservedFile {
      * @memberof PatchedObservedFile
      */
     'harvester'?: string;
+    /**
+     * Name of the file
+     * @type {string}
+     * @memberof PatchedObservedFile
+     */
+    'name'?: string | null;
     /**
      * Absolute file path
      * @type {string}
@@ -2675,12 +2736,6 @@ export interface PatchedObservedFile {
      * @memberof PatchedObservedFile
      */
     'permissions'?: CellPermissions;
-    /**
-     * Name of the file
-     * @type {string}
-     * @memberof PatchedObservedFile
-     */
-    'name'?: string | null;
 }
 
 export const PatchedObservedFileStateEnum = {
@@ -3226,6 +3281,66 @@ export interface ScheduleFamily {
      */
     'permissions': CellPermissions;
 }
+/**
+ * 
+ * @export
+ * @interface SchemaValidation
+ */
+export interface SchemaValidation {
+    /**
+     * Canonical URL for this object
+     * @type {string}
+     * @memberof SchemaValidation
+     */
+    'url': string;
+    /**
+     * Auto-assigned object identifier
+     * @type {number}
+     * @memberof SchemaValidation
+     */
+    'id': number;
+    /**
+     * Validation schema used
+     * @type {string}
+     * @memberof SchemaValidation
+     */
+    'schema': string;
+    /**
+     * Target of validation
+     * @type {string}
+     * @memberof SchemaValidation
+     */
+    'validation_target': string;
+    /**
+     * Validation status
+     * @type {string}
+     * @memberof SchemaValidation
+     */
+    'status': SchemaValidationStatusEnum;
+    /**
+     * 
+     * @type {CellPermissions}
+     * @memberof SchemaValidation
+     */
+    'permissions': CellPermissions;
+    /**
+     * Validation detail
+     * @type {{ [key: string]: any; }}
+     * @memberof SchemaValidation
+     */
+    'detail': { [key: string]: any; } | null;
+}
+
+export const SchemaValidationStatusEnum = {
+    Valid: 'VALID',
+    Invalid: 'INVALID',
+    Skipped: 'SKIPPED',
+    Unchecked: 'UNCHECKED',
+    Error: 'ERROR'
+} as const;
+
+export type SchemaValidationStatusEnum = typeof SchemaValidationStatusEnum[keyof typeof SchemaValidationStatusEnum];
+
 /**
  * 
  * @export
@@ -3811,45 +3926,6 @@ export const CellFamiliesApiAxiosParamCreator = function (configuration?: Config
                 options: localVarRequestOptions,
             };
         },
-        /**
-         * CellFamilies describe types of Cell.
-         * @param {string} uuid A UUID string identifying this cell family.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        cellFamiliesWithValidationRetrieve: async (uuid: string, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'uuid' is not null or undefined
-            assertParamExists('cellFamiliesWithValidationRetrieve', 'uuid', uuid)
-            const localVarPath = `/cell_families/{uuid}/with_validation/`
-                .replace(`{${"uuid"}}`, encodeURIComponent(String(uuid)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            // authentication cookieAuth required
-
-            // authentication knoxTokenAuth required
-            // http bearer authentication required
-            await setBearerAuthToObject(localVarHeaderParameter, configuration)
-
-
-    
-            setSearchParams(localVarUrlObj, localVarQueryParameter);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
     }
 };
 
@@ -3917,16 +3993,6 @@ export const CellFamiliesApiFp = function(configuration?: Configuration) {
             const localVarAxiosArgs = await localVarAxiosParamCreator.cellFamiliesRetrieve(uuid, options);
             return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
         },
-        /**
-         * CellFamilies describe types of Cell.
-         * @param {string} uuid A UUID string identifying this cell family.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        async cellFamiliesWithValidationRetrieve(uuid: string, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CellFamily>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.cellFamiliesWithValidationRetrieve(uuid, options);
-            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
-        },
     }
 };
 
@@ -3988,15 +4054,6 @@ export const CellFamiliesApiFactory = function (configuration?: Configuration, b
          */
         cellFamiliesRetrieve(uuid: string, options?: any): AxiosPromise<CellFamily> {
             return localVarFp.cellFamiliesRetrieve(uuid, options).then((request) => request(axios, basePath));
-        },
-        /**
-         * CellFamilies describe types of Cell.
-         * @param {string} uuid A UUID string identifying this cell family.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        cellFamiliesWithValidationRetrieve(uuid: string, options?: any): AxiosPromise<CellFamily> {
-            return localVarFp.cellFamiliesWithValidationRetrieve(uuid, options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -4068,17 +4125,6 @@ export class CellFamiliesApi extends BaseAPI {
      */
     public cellFamiliesRetrieve(uuid: string, options?: AxiosRequestConfig) {
         return CellFamiliesApiFp(this.configuration).cellFamiliesRetrieve(uuid, options).then((request) => request(this.axios, this.basePath));
-    }
-
-    /**
-     * CellFamilies describe types of Cell.
-     * @param {string} uuid A UUID string identifying this cell family.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof CellFamiliesApi
-     */
-    public cellFamiliesWithValidationRetrieve(uuid: string, options?: AxiosRequestConfig) {
-        return CellFamiliesApiFp(this.configuration).cellFamiliesWithValidationRetrieve(uuid, options).then((request) => request(this.axios, this.basePath));
     }
 }
 
@@ -4689,45 +4735,6 @@ export const CellsApiAxiosParamCreator = function (configuration?: Configuration
                 options: localVarRequestOptions,
             };
         },
-        /**
-         * Cells are specific cells which have generated data stored in Datasets/ObservedFiles.
-         * @param {string} uuid A UUID string identifying this cell.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        cellsWithValidationRetrieve: async (uuid: string, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'uuid' is not null or undefined
-            assertParamExists('cellsWithValidationRetrieve', 'uuid', uuid)
-            const localVarPath = `/cells/{uuid}/with_validation/`
-                .replace(`{${"uuid"}}`, encodeURIComponent(String(uuid)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            // authentication cookieAuth required
-
-            // authentication knoxTokenAuth required
-            // http bearer authentication required
-            await setBearerAuthToObject(localVarHeaderParameter, configuration)
-
-
-    
-            setSearchParams(localVarUrlObj, localVarQueryParameter);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
     }
 };
 
@@ -4806,16 +4813,6 @@ export const CellsApiFp = function(configuration?: Configuration) {
             const localVarAxiosArgs = await localVarAxiosParamCreator.cellsRetrieve(uuid, options);
             return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
         },
-        /**
-         * Cells are specific cells which have generated data stored in Datasets/ObservedFiles.
-         * @param {string} uuid A UUID string identifying this cell.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        async cellsWithValidationRetrieve(uuid: string, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Cell>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.cellsWithValidationRetrieve(uuid, options);
-            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
-        },
     }
 };
 
@@ -4887,15 +4884,6 @@ export const CellsApiFactory = function (configuration?: Configuration, basePath
          */
         cellsRetrieve(uuid: string, options?: any): AxiosPromise<Cell> {
             return localVarFp.cellsRetrieve(uuid, options).then((request) => request(axios, basePath));
-        },
-        /**
-         * Cells are specific cells which have generated data stored in Datasets/ObservedFiles.
-         * @param {string} uuid A UUID string identifying this cell.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        cellsWithValidationRetrieve(uuid: string, options?: any): AxiosPromise<Cell> {
-            return localVarFp.cellsWithValidationRetrieve(uuid, options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -4979,17 +4967,6 @@ export class CellsApi extends BaseAPI {
      */
     public cellsRetrieve(uuid: string, options?: AxiosRequestConfig) {
         return CellsApiFp(this.configuration).cellsRetrieve(uuid, options).then((request) => request(this.axios, this.basePath));
-    }
-
-    /**
-     * Cells are specific cells which have generated data stored in Datasets/ObservedFiles.
-     * @param {string} uuid A UUID string identifying this cell.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof CellsApi
-     */
-    public cellsWithValidationRetrieve(uuid: string, options?: AxiosRequestConfig) {
-        return CellsApiFp(this.configuration).cellsWithValidationRetrieve(uuid, options).then((request) => request(this.axios, this.basePath));
     }
 }
 
@@ -5851,45 +5828,6 @@ export const CyclerTestsApiAxiosParamCreator = function (configuration?: Configu
                 options: localVarRequestOptions,
             };
         },
-        /**
-         * Cycler Tests are the primary object in the database. They represent a single test conducted on a specific cell using specific equipment, according to a specific schedule.  The test produces a dataset which can be associated with the Cycler Test, and Cycler Tests can be grouped together into Experiments.
-         * @param {string} uuid A UUID string identifying this cycler test.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        cyclerTestsWithValidationRetrieve: async (uuid: string, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'uuid' is not null or undefined
-            assertParamExists('cyclerTestsWithValidationRetrieve', 'uuid', uuid)
-            const localVarPath = `/cycler_tests/{uuid}/with_validation/`
-                .replace(`{${"uuid"}}`, encodeURIComponent(String(uuid)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            // authentication cookieAuth required
-
-            // authentication knoxTokenAuth required
-            // http bearer authentication required
-            await setBearerAuthToObject(localVarHeaderParameter, configuration)
-
-
-    
-            setSearchParams(localVarUrlObj, localVarQueryParameter);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
     }
 };
 
@@ -5952,16 +5890,6 @@ export const CyclerTestsApiFp = function(configuration?: Configuration) {
             const localVarAxiosArgs = await localVarAxiosParamCreator.cyclerTestsRetrieve(uuid, options);
             return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
         },
-        /**
-         * Cycler Tests are the primary object in the database. They represent a single test conducted on a specific cell using specific equipment, according to a specific schedule.  The test produces a dataset which can be associated with the Cycler Test, and Cycler Tests can be grouped together into Experiments.
-         * @param {string} uuid A UUID string identifying this cycler test.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        async cyclerTestsWithValidationRetrieve(uuid: string, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CyclerTest>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.cyclerTestsWithValidationRetrieve(uuid, options);
-            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
-        },
     }
 };
 
@@ -6018,15 +5946,6 @@ export const CyclerTestsApiFactory = function (configuration?: Configuration, ba
          */
         cyclerTestsRetrieve(uuid: string, options?: any): AxiosPromise<CyclerTest> {
             return localVarFp.cyclerTestsRetrieve(uuid, options).then((request) => request(axios, basePath));
-        },
-        /**
-         * Cycler Tests are the primary object in the database. They represent a single test conducted on a specific cell using specific equipment, according to a specific schedule.  The test produces a dataset which can be associated with the Cycler Test, and Cycler Tests can be grouped together into Experiments.
-         * @param {string} uuid A UUID string identifying this cycler test.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        cyclerTestsWithValidationRetrieve(uuid: string, options?: any): AxiosPromise<CyclerTest> {
-            return localVarFp.cyclerTestsWithValidationRetrieve(uuid, options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -6093,17 +6012,6 @@ export class CyclerTestsApi extends BaseAPI {
      */
     public cyclerTestsRetrieve(uuid: string, options?: AxiosRequestConfig) {
         return CyclerTestsApiFp(this.configuration).cyclerTestsRetrieve(uuid, options).then((request) => request(this.axios, this.basePath));
-    }
-
-    /**
-     * Cycler Tests are the primary object in the database. They represent a single test conducted on a specific cell using specific equipment, according to a specific schedule.  The test produces a dataset which can be associated with the Cycler Test, and Cycler Tests can be grouped together into Experiments.
-     * @param {string} uuid A UUID string identifying this cycler test.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof CyclerTestsApi
-     */
-    public cyclerTestsWithValidationRetrieve(uuid: string, options?: AxiosRequestConfig) {
-        return CyclerTestsApiFp(this.configuration).cyclerTestsWithValidationRetrieve(uuid, options).then((request) => request(this.axios, this.basePath));
     }
 }
 
@@ -6326,45 +6234,6 @@ export const EquipmentApiAxiosParamCreator = function (configuration?: Configura
                 options: localVarRequestOptions,
             };
         },
-        /**
-         * Equipment can be attached to Datasets and used to view Datasets which have used similar equipment.
-         * @param {string} uuid A UUID string identifying this equipment.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        equipmentWithValidationRetrieve: async (uuid: string, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'uuid' is not null or undefined
-            assertParamExists('equipmentWithValidationRetrieve', 'uuid', uuid)
-            const localVarPath = `/equipment/{uuid}/with_validation/`
-                .replace(`{${"uuid"}}`, encodeURIComponent(String(uuid)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            // authentication cookieAuth required
-
-            // authentication knoxTokenAuth required
-            // http bearer authentication required
-            await setBearerAuthToObject(localVarHeaderParameter, configuration)
-
-
-    
-            setSearchParams(localVarUrlObj, localVarQueryParameter);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
     }
 };
 
@@ -6432,16 +6301,6 @@ export const EquipmentApiFp = function(configuration?: Configuration) {
             const localVarAxiosArgs = await localVarAxiosParamCreator.equipmentRetrieve(uuid, options);
             return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
         },
-        /**
-         * Equipment can be attached to Datasets and used to view Datasets which have used similar equipment.
-         * @param {string} uuid A UUID string identifying this equipment.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        async equipmentWithValidationRetrieve(uuid: string, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Equipment>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.equipmentWithValidationRetrieve(uuid, options);
-            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
-        },
     }
 };
 
@@ -6503,15 +6362,6 @@ export const EquipmentApiFactory = function (configuration?: Configuration, base
          */
         equipmentRetrieve(uuid: string, options?: any): AxiosPromise<Equipment> {
             return localVarFp.equipmentRetrieve(uuid, options).then((request) => request(axios, basePath));
-        },
-        /**
-         * Equipment can be attached to Datasets and used to view Datasets which have used similar equipment.
-         * @param {string} uuid A UUID string identifying this equipment.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        equipmentWithValidationRetrieve(uuid: string, options?: any): AxiosPromise<Equipment> {
-            return localVarFp.equipmentWithValidationRetrieve(uuid, options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -6583,17 +6433,6 @@ export class EquipmentApi extends BaseAPI {
      */
     public equipmentRetrieve(uuid: string, options?: AxiosRequestConfig) {
         return EquipmentApiFp(this.configuration).equipmentRetrieve(uuid, options).then((request) => request(this.axios, this.basePath));
-    }
-
-    /**
-     * Equipment can be attached to Datasets and used to view Datasets which have used similar equipment.
-     * @param {string} uuid A UUID string identifying this equipment.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof EquipmentApi
-     */
-    public equipmentWithValidationRetrieve(uuid: string, options?: AxiosRequestConfig) {
-        return EquipmentApiFp(this.configuration).equipmentWithValidationRetrieve(uuid, options).then((request) => request(this.axios, this.basePath));
     }
 }
 
@@ -6816,45 +6655,6 @@ export const EquipmentFamiliesApiAxiosParamCreator = function (configuration?: C
                 options: localVarRequestOptions,
             };
         },
-        /**
-         * EquipmentFamilies describe types of Equipment.
-         * @param {string} uuid A UUID string identifying this equipment family.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        equipmentFamiliesWithValidationRetrieve: async (uuid: string, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'uuid' is not null or undefined
-            assertParamExists('equipmentFamiliesWithValidationRetrieve', 'uuid', uuid)
-            const localVarPath = `/equipment_families/{uuid}/with_validation/`
-                .replace(`{${"uuid"}}`, encodeURIComponent(String(uuid)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            // authentication cookieAuth required
-
-            // authentication knoxTokenAuth required
-            // http bearer authentication required
-            await setBearerAuthToObject(localVarHeaderParameter, configuration)
-
-
-    
-            setSearchParams(localVarUrlObj, localVarQueryParameter);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
     }
 };
 
@@ -6922,16 +6722,6 @@ export const EquipmentFamiliesApiFp = function(configuration?: Configuration) {
             const localVarAxiosArgs = await localVarAxiosParamCreator.equipmentFamiliesRetrieve(uuid, options);
             return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
         },
-        /**
-         * EquipmentFamilies describe types of Equipment.
-         * @param {string} uuid A UUID string identifying this equipment family.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        async equipmentFamiliesWithValidationRetrieve(uuid: string, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<EquipmentFamily>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.equipmentFamiliesWithValidationRetrieve(uuid, options);
-            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
-        },
     }
 };
 
@@ -6993,15 +6783,6 @@ export const EquipmentFamiliesApiFactory = function (configuration?: Configurati
          */
         equipmentFamiliesRetrieve(uuid: string, options?: any): AxiosPromise<EquipmentFamily> {
             return localVarFp.equipmentFamiliesRetrieve(uuid, options).then((request) => request(axios, basePath));
-        },
-        /**
-         * EquipmentFamilies describe types of Equipment.
-         * @param {string} uuid A UUID string identifying this equipment family.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        equipmentFamiliesWithValidationRetrieve(uuid: string, options?: any): AxiosPromise<EquipmentFamily> {
-            return localVarFp.equipmentFamiliesWithValidationRetrieve(uuid, options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -7073,17 +6854,6 @@ export class EquipmentFamiliesApi extends BaseAPI {
      */
     public equipmentFamiliesRetrieve(uuid: string, options?: AxiosRequestConfig) {
         return EquipmentFamiliesApiFp(this.configuration).equipmentFamiliesRetrieve(uuid, options).then((request) => request(this.axios, this.basePath));
-    }
-
-    /**
-     * EquipmentFamilies describe types of Equipment.
-     * @param {string} uuid A UUID string identifying this equipment family.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof EquipmentFamiliesApi
-     */
-    public equipmentFamiliesWithValidationRetrieve(uuid: string, options?: AxiosRequestConfig) {
-        return EquipmentFamiliesApiFp(this.configuration).equipmentFamiliesWithValidationRetrieve(uuid, options).then((request) => request(this.axios, this.basePath));
     }
 }
 
@@ -7652,45 +7422,6 @@ export const ExperimentsApiAxiosParamCreator = function (configuration?: Configu
                 options: localVarRequestOptions,
             };
         },
-        /**
-         * Experiments are collections of Cycler Tests which are grouped together for analysis.
-         * @param {string} uuid A UUID string identifying this experiment.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        experimentsWithValidationRetrieve: async (uuid: string, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'uuid' is not null or undefined
-            assertParamExists('experimentsWithValidationRetrieve', 'uuid', uuid)
-            const localVarPath = `/experiments/{uuid}/with_validation/`
-                .replace(`{${"uuid"}}`, encodeURIComponent(String(uuid)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            // authentication cookieAuth required
-
-            // authentication knoxTokenAuth required
-            // http bearer authentication required
-            await setBearerAuthToObject(localVarHeaderParameter, configuration)
-
-
-    
-            setSearchParams(localVarUrlObj, localVarQueryParameter);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
     }
 };
 
@@ -7756,16 +7487,6 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
             const localVarAxiosArgs = await localVarAxiosParamCreator.experimentsRetrieve(uuid, options);
             return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
         },
-        /**
-         * Experiments are collections of Cycler Tests which are grouped together for analysis.
-         * @param {string} uuid A UUID string identifying this experiment.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        async experimentsWithValidationRetrieve(uuid: string, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Experiment>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.experimentsWithValidationRetrieve(uuid, options);
-            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
-        },
     }
 };
 
@@ -7825,15 +7546,6 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, ba
          */
         experimentsRetrieve(uuid: string, options?: any): AxiosPromise<Experiment> {
             return localVarFp.experimentsRetrieve(uuid, options).then((request) => request(axios, basePath));
-        },
-        /**
-         * Experiments are collections of Cycler Tests which are grouped together for analysis.
-         * @param {string} uuid A UUID string identifying this experiment.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        experimentsWithValidationRetrieve(uuid: string, options?: any): AxiosPromise<Experiment> {
-            return localVarFp.experimentsWithValidationRetrieve(uuid, options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -7903,17 +7615,6 @@ export class ExperimentsApi extends BaseAPI {
      */
     public experimentsRetrieve(uuid: string, options?: AxiosRequestConfig) {
         return ExperimentsApiFp(this.configuration).experimentsRetrieve(uuid, options).then((request) => request(this.axios, this.basePath));
-    }
-
-    /**
-     * Experiments are collections of Cycler Tests which are grouped together for analysis.
-     * @param {string} uuid A UUID string identifying this experiment.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof ExperimentsApi
-     */
-    public experimentsWithValidationRetrieve(uuid: string, options?: AxiosRequestConfig) {
-        return ExperimentsApiFp(this.configuration).experimentsWithValidationRetrieve(uuid, options).then((request) => request(this.axios, this.basePath));
     }
 }
 
@@ -8093,45 +7794,6 @@ export const FilesApiAxiosParamCreator = function (configuration?: Configuration
                 options: localVarRequestOptions,
             };
         },
-        /**
-         * ObservedFiles are files that exist (or have existed) in a MonitoredPath and have been reported to Galv by the Harvester.  An ObservedFile instance will have file metadata (size, modification time), and a status representing its import state. It may be linked to HarvestErrors encountered while importing the file, and/or to Datasets representing the content of imported files.
-         * @param {string} uuid A UUID string identifying this observed file.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        filesWithValidationRetrieve: async (uuid: string, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'uuid' is not null or undefined
-            assertParamExists('filesWithValidationRetrieve', 'uuid', uuid)
-            const localVarPath = `/files/{uuid}/with_validation/`
-                .replace(`{${"uuid"}}`, encodeURIComponent(String(uuid)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            // authentication cookieAuth required
-
-            // authentication knoxTokenAuth required
-            // http bearer authentication required
-            await setBearerAuthToObject(localVarHeaderParameter, configuration)
-
-
-    
-            setSearchParams(localVarUrlObj, localVarQueryParameter);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
     }
 };
 
@@ -8187,16 +7849,6 @@ export const FilesApiFp = function(configuration?: Configuration) {
             const localVarAxiosArgs = await localVarAxiosParamCreator.filesRetrieve(uuid, options);
             return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
         },
-        /**
-         * ObservedFiles are files that exist (or have existed) in a MonitoredPath and have been reported to Galv by the Harvester.  An ObservedFile instance will have file metadata (size, modification time), and a status representing its import state. It may be linked to HarvestErrors encountered while importing the file, and/or to Datasets representing the content of imported files.
-         * @param {string} uuid A UUID string identifying this observed file.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        async filesWithValidationRetrieve(uuid: string, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ObservedFile>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.filesWithValidationRetrieve(uuid, options);
-            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
-        },
     }
 };
 
@@ -8247,15 +7899,6 @@ export const FilesApiFactory = function (configuration?: Configuration, basePath
          */
         filesRetrieve(uuid: string, options?: any): AxiosPromise<ObservedFile> {
             return localVarFp.filesRetrieve(uuid, options).then((request) => request(axios, basePath));
-        },
-        /**
-         * ObservedFiles are files that exist (or have existed) in a MonitoredPath and have been reported to Galv by the Harvester.  An ObservedFile instance will have file metadata (size, modification time), and a status representing its import state. It may be linked to HarvestErrors encountered while importing the file, and/or to Datasets representing the content of imported files.
-         * @param {string} uuid A UUID string identifying this observed file.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        filesWithValidationRetrieve(uuid: string, options?: any): AxiosPromise<ObservedFile> {
-            return localVarFp.filesWithValidationRetrieve(uuid, options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -8314,17 +7957,6 @@ export class FilesApi extends BaseAPI {
      */
     public filesRetrieve(uuid: string, options?: AxiosRequestConfig) {
         return FilesApiFp(this.configuration).filesRetrieve(uuid, options).then((request) => request(this.axios, this.basePath));
-    }
-
-    /**
-     * ObservedFiles are files that exist (or have existed) in a MonitoredPath and have been reported to Galv by the Harvester.  An ObservedFile instance will have file metadata (size, modification time), and a status representing its import state. It may be linked to HarvestErrors encountered while importing the file, and/or to Datasets representing the content of imported files.
-     * @param {string} uuid A UUID string identifying this observed file.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof FilesApi
-     */
-    public filesWithValidationRetrieve(uuid: string, options?: AxiosRequestConfig) {
-        return FilesApiFp(this.configuration).filesWithValidationRetrieve(uuid, options).then((request) => request(this.axios, this.basePath));
     }
 }
 
@@ -8935,45 +8567,6 @@ export const HarvestersApiAxiosParamCreator = function (configuration?: Configur
                 options: localVarRequestOptions,
             };
         },
-        /**
-         * Harvesters monitor a set of MonitoredPaths and send reports about ObservedFiles within those paths. A Harvester belongs to a Lab and its Monitored Paths are used by Teams within the Lab.  When Harvesters communicate with the API they do so using special Harvester API Keys. These provide access to the report and configuration endpoints.  Harvesters are created by a separate software package available within Galv.
-         * @param {string} uuid A UUID string identifying this harvester.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        harvestersWithValidationRetrieve: async (uuid: string, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'uuid' is not null or undefined
-            assertParamExists('harvestersWithValidationRetrieve', 'uuid', uuid)
-            const localVarPath = `/harvesters/{uuid}/with_validation/`
-                .replace(`{${"uuid"}}`, encodeURIComponent(String(uuid)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            // authentication cookieAuth required
-
-            // authentication knoxTokenAuth required
-            // http bearer authentication required
-            await setBearerAuthToObject(localVarHeaderParameter, configuration)
-
-
-    
-            setSearchParams(localVarUrlObj, localVarQueryParameter);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
     }
 };
 
@@ -9019,16 +8612,6 @@ export const HarvestersApiFp = function(configuration?: Configuration) {
             const localVarAxiosArgs = await localVarAxiosParamCreator.harvestersRetrieve(uuid, options);
             return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
         },
-        /**
-         * Harvesters monitor a set of MonitoredPaths and send reports about ObservedFiles within those paths. A Harvester belongs to a Lab and its Monitored Paths are used by Teams within the Lab.  When Harvesters communicate with the API they do so using special Harvester API Keys. These provide access to the report and configuration endpoints.  Harvesters are created by a separate software package available within Galv.
-         * @param {string} uuid A UUID string identifying this harvester.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        async harvestersWithValidationRetrieve(uuid: string, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Harvester>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.harvestersWithValidationRetrieve(uuid, options);
-            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
-        },
     }
 };
 
@@ -9070,15 +8653,6 @@ export const HarvestersApiFactory = function (configuration?: Configuration, bas
          */
         harvestersRetrieve(uuid: string, options?: any): AxiosPromise<Harvester> {
             return localVarFp.harvestersRetrieve(uuid, options).then((request) => request(axios, basePath));
-        },
-        /**
-         * Harvesters monitor a set of MonitoredPaths and send reports about ObservedFiles within those paths. A Harvester belongs to a Lab and its Monitored Paths are used by Teams within the Lab.  When Harvesters communicate with the API they do so using special Harvester API Keys. These provide access to the report and configuration endpoints.  Harvesters are created by a separate software package available within Galv.
-         * @param {string} uuid A UUID string identifying this harvester.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        harvestersWithValidationRetrieve(uuid: string, options?: any): AxiosPromise<Harvester> {
-            return localVarFp.harvestersWithValidationRetrieve(uuid, options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -9126,17 +8700,6 @@ export class HarvestersApi extends BaseAPI {
      */
     public harvestersRetrieve(uuid: string, options?: AxiosRequestConfig) {
         return HarvestersApiFp(this.configuration).harvestersRetrieve(uuid, options).then((request) => request(this.axios, this.basePath));
-    }
-
-    /**
-     * Harvesters monitor a set of MonitoredPaths and send reports about ObservedFiles within those paths. A Harvester belongs to a Lab and its Monitored Paths are used by Teams within the Lab.  When Harvesters communicate with the API they do so using special Harvester API Keys. These provide access to the report and configuration endpoints.  Harvesters are created by a separate software package available within Galv.
-     * @param {string} uuid A UUID string identifying this harvester.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof HarvestersApi
-     */
-    public harvestersWithValidationRetrieve(uuid: string, options?: AxiosRequestConfig) {
-        return HarvestersApiFp(this.configuration).harvestersWithValidationRetrieve(uuid, options).then((request) => request(this.axios, this.basePath));
     }
 }
 
@@ -9878,45 +9441,6 @@ export const MonitoredPathsApiAxiosParamCreator = function (configuration?: Conf
                 options: localVarRequestOptions,
             };
         },
-        /**
-         * A MonitoredPath refers to a directory accessible by a Harvester in which data files will reside. Those files will be scanned periodically by the Harvester, becoming ObservedFiles once they are reported to Galv by the Harvester.  MonitoredPaths can be created or updated by a Harvester\'s admins and users, as well as any users who have been given explicit permissions to edit the MonitoredPath.
-         * @param {string} uuid A UUID string identifying this monitored path.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        monitoredPathsWithValidationRetrieve: async (uuid: string, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'uuid' is not null or undefined
-            assertParamExists('monitoredPathsWithValidationRetrieve', 'uuid', uuid)
-            const localVarPath = `/monitored_paths/{uuid}/with_validation/`
-                .replace(`{${"uuid"}}`, encodeURIComponent(String(uuid)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            // authentication cookieAuth required
-
-            // authentication knoxTokenAuth required
-            // http bearer authentication required
-            await setBearerAuthToObject(localVarHeaderParameter, configuration)
-
-
-    
-            setSearchParams(localVarUrlObj, localVarQueryParameter);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
     }
 };
 
@@ -9984,16 +9508,6 @@ export const MonitoredPathsApiFp = function(configuration?: Configuration) {
             const localVarAxiosArgs = await localVarAxiosParamCreator.monitoredPathsRetrieve(uuid, options);
             return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
         },
-        /**
-         * A MonitoredPath refers to a directory accessible by a Harvester in which data files will reside. Those files will be scanned periodically by the Harvester, becoming ObservedFiles once they are reported to Galv by the Harvester.  MonitoredPaths can be created or updated by a Harvester\'s admins and users, as well as any users who have been given explicit permissions to edit the MonitoredPath.
-         * @param {string} uuid A UUID string identifying this monitored path.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        async monitoredPathsWithValidationRetrieve(uuid: string, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<MonitoredPath>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.monitoredPathsWithValidationRetrieve(uuid, options);
-            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
-        },
     }
 };
 
@@ -10055,15 +9569,6 @@ export const MonitoredPathsApiFactory = function (configuration?: Configuration,
          */
         monitoredPathsRetrieve(uuid: string, options?: any): AxiosPromise<MonitoredPath> {
             return localVarFp.monitoredPathsRetrieve(uuid, options).then((request) => request(axios, basePath));
-        },
-        /**
-         * A MonitoredPath refers to a directory accessible by a Harvester in which data files will reside. Those files will be scanned periodically by the Harvester, becoming ObservedFiles once they are reported to Galv by the Harvester.  MonitoredPaths can be created or updated by a Harvester\'s admins and users, as well as any users who have been given explicit permissions to edit the MonitoredPath.
-         * @param {string} uuid A UUID string identifying this monitored path.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        monitoredPathsWithValidationRetrieve(uuid: string, options?: any): AxiosPromise<MonitoredPath> {
-            return localVarFp.monitoredPathsWithValidationRetrieve(uuid, options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -10135,17 +9640,6 @@ export class MonitoredPathsApi extends BaseAPI {
      */
     public monitoredPathsRetrieve(uuid: string, options?: AxiosRequestConfig) {
         return MonitoredPathsApiFp(this.configuration).monitoredPathsRetrieve(uuid, options).then((request) => request(this.axios, this.basePath));
-    }
-
-    /**
-     * A MonitoredPath refers to a directory accessible by a Harvester in which data files will reside. Those files will be scanned periodically by the Harvester, becoming ObservedFiles once they are reported to Galv by the Harvester.  MonitoredPaths can be created or updated by a Harvester\'s admins and users, as well as any users who have been given explicit permissions to edit the MonitoredPath.
-     * @param {string} uuid A UUID string identifying this monitored path.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof MonitoredPathsApi
-     */
-    public monitoredPathsWithValidationRetrieve(uuid: string, options?: AxiosRequestConfig) {
-        return MonitoredPathsApiFp(this.configuration).monitoredPathsWithValidationRetrieve(uuid, options).then((request) => request(this.axios, this.basePath));
     }
 }
 
@@ -10368,45 +9862,6 @@ export const ScheduleFamiliesApiAxiosParamCreator = function (configuration?: Co
                 options: localVarRequestOptions,
             };
         },
-        /**
-         * Schedules can be attached to Cycler Tests and used to view Cycler Tests which have used similar equipment.
-         * @param {string} uuid A UUID string identifying this schedule family.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        scheduleFamiliesWithValidationRetrieve: async (uuid: string, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'uuid' is not null or undefined
-            assertParamExists('scheduleFamiliesWithValidationRetrieve', 'uuid', uuid)
-            const localVarPath = `/schedule_families/{uuid}/with_validation/`
-                .replace(`{${"uuid"}}`, encodeURIComponent(String(uuid)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            // authentication cookieAuth required
-
-            // authentication knoxTokenAuth required
-            // http bearer authentication required
-            await setBearerAuthToObject(localVarHeaderParameter, configuration)
-
-
-    
-            setSearchParams(localVarUrlObj, localVarQueryParameter);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
     }
 };
 
@@ -10474,16 +9929,6 @@ export const ScheduleFamiliesApiFp = function(configuration?: Configuration) {
             const localVarAxiosArgs = await localVarAxiosParamCreator.scheduleFamiliesRetrieve(uuid, options);
             return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
         },
-        /**
-         * Schedules can be attached to Cycler Tests and used to view Cycler Tests which have used similar equipment.
-         * @param {string} uuid A UUID string identifying this schedule family.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        async scheduleFamiliesWithValidationRetrieve(uuid: string, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ScheduleFamily>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.scheduleFamiliesWithValidationRetrieve(uuid, options);
-            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
-        },
     }
 };
 
@@ -10545,15 +9990,6 @@ export const ScheduleFamiliesApiFactory = function (configuration?: Configuratio
          */
         scheduleFamiliesRetrieve(uuid: string, options?: any): AxiosPromise<ScheduleFamily> {
             return localVarFp.scheduleFamiliesRetrieve(uuid, options).then((request) => request(axios, basePath));
-        },
-        /**
-         * Schedules can be attached to Cycler Tests and used to view Cycler Tests which have used similar equipment.
-         * @param {string} uuid A UUID string identifying this schedule family.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        scheduleFamiliesWithValidationRetrieve(uuid: string, options?: any): AxiosPromise<ScheduleFamily> {
-            return localVarFp.scheduleFamiliesWithValidationRetrieve(uuid, options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -10625,17 +10061,6 @@ export class ScheduleFamiliesApi extends BaseAPI {
      */
     public scheduleFamiliesRetrieve(uuid: string, options?: AxiosRequestConfig) {
         return ScheduleFamiliesApiFp(this.configuration).scheduleFamiliesRetrieve(uuid, options).then((request) => request(this.axios, this.basePath));
-    }
-
-    /**
-     * Schedules can be attached to Cycler Tests and used to view Cycler Tests which have used similar equipment.
-     * @param {string} uuid A UUID string identifying this schedule family.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof ScheduleFamiliesApi
-     */
-    public scheduleFamiliesWithValidationRetrieve(uuid: string, options?: AxiosRequestConfig) {
-        return ScheduleFamiliesApiFp(this.configuration).scheduleFamiliesWithValidationRetrieve(uuid, options).then((request) => request(this.axios, this.basePath));
     }
 }
 
@@ -10974,45 +10399,6 @@ export const SchedulesApiAxiosParamCreator = function (configuration?: Configura
                 options: localVarRequestOptions,
             };
         },
-        /**
-         * Schedules can be attached to Cycler Tests and used to view Cycler Tests which have used similar equipment.
-         * @param {string} uuid A UUID string identifying this schedule.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        schedulesWithValidationRetrieve: async (uuid: string, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'uuid' is not null or undefined
-            assertParamExists('schedulesWithValidationRetrieve', 'uuid', uuid)
-            const localVarPath = `/schedules/{uuid}/with_validation/`
-                .replace(`{${"uuid"}}`, encodeURIComponent(String(uuid)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            // authentication cookieAuth required
-
-            // authentication knoxTokenAuth required
-            // http bearer authentication required
-            await setBearerAuthToObject(localVarHeaderParameter, configuration)
-
-
-    
-            setSearchParams(localVarUrlObj, localVarQueryParameter);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
     }
 };
 
@@ -11080,16 +10466,6 @@ export const SchedulesApiFp = function(configuration?: Configuration) {
             const localVarAxiosArgs = await localVarAxiosParamCreator.schedulesRetrieve(uuid, options);
             return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
         },
-        /**
-         * Schedules can be attached to Cycler Tests and used to view Cycler Tests which have used similar equipment.
-         * @param {string} uuid A UUID string identifying this schedule.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        async schedulesWithValidationRetrieve(uuid: string, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Schedule>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.schedulesWithValidationRetrieve(uuid, options);
-            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
-        },
     }
 };
 
@@ -11151,15 +10527,6 @@ export const SchedulesApiFactory = function (configuration?: Configuration, base
          */
         schedulesRetrieve(uuid: string, options?: any): AxiosPromise<Schedule> {
             return localVarFp.schedulesRetrieve(uuid, options).then((request) => request(axios, basePath));
-        },
-        /**
-         * Schedules can be attached to Cycler Tests and used to view Cycler Tests which have used similar equipment.
-         * @param {string} uuid A UUID string identifying this schedule.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        schedulesWithValidationRetrieve(uuid: string, options?: any): AxiosPromise<Schedule> {
-            return localVarFp.schedulesWithValidationRetrieve(uuid, options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -11232,16 +10599,190 @@ export class SchedulesApi extends BaseAPI {
     public schedulesRetrieve(uuid: string, options?: AxiosRequestConfig) {
         return SchedulesApiFp(this.configuration).schedulesRetrieve(uuid, options).then((request) => request(this.axios, this.basePath));
     }
+}
 
+
+/**
+ * SchemaValidationsApi - axios parameter creator
+ * @export
+ */
+export const SchemaValidationsApiAxiosParamCreator = function (configuration?: Configuration) {
+    return {
+        /**
+         * SchemaValidations are the results of validating Galv objects against ValidationSchemas.
+         * @param {number} [limit] Number of results to return per page.
+         * @param {number} [offset] The initial index from which to return the results.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        schemaValidationsList: async (limit?: number, offset?: number, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/schema_validations/`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication cookieAuth required
+
+            // authentication knoxTokenAuth required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+            if (limit !== undefined) {
+                localVarQueryParameter['limit'] = limit;
+            }
+
+            if (offset !== undefined) {
+                localVarQueryParameter['offset'] = offset;
+            }
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * SchemaValidations are the results of validating Galv objects against ValidationSchemas.
+         * @param {number} id A unique integer value identifying this schema validation.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        schemaValidationsRetrieve: async (id: number, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('schemaValidationsRetrieve', 'id', id)
+            const localVarPath = `/schema_validations/{id}/`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication cookieAuth required
+
+            // authentication knoxTokenAuth required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+    }
+};
+
+/**
+ * SchemaValidationsApi - functional programming interface
+ * @export
+ */
+export const SchemaValidationsApiFp = function(configuration?: Configuration) {
+    const localVarAxiosParamCreator = SchemaValidationsApiAxiosParamCreator(configuration)
+    return {
+        /**
+         * SchemaValidations are the results of validating Galv objects against ValidationSchemas.
+         * @param {number} [limit] Number of results to return per page.
+         * @param {number} [offset] The initial index from which to return the results.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async schemaValidationsList(limit?: number, offset?: number, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<PaginatedSchemaValidationList>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.schemaValidationsList(limit, offset, options);
+            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+        },
+        /**
+         * SchemaValidations are the results of validating Galv objects against ValidationSchemas.
+         * @param {number} id A unique integer value identifying this schema validation.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async schemaValidationsRetrieve(id: number, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<SchemaValidation>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.schemaValidationsRetrieve(id, options);
+            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+        },
+    }
+};
+
+/**
+ * SchemaValidationsApi - factory interface
+ * @export
+ */
+export const SchemaValidationsApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
+    const localVarFp = SchemaValidationsApiFp(configuration)
+    return {
+        /**
+         * SchemaValidations are the results of validating Galv objects against ValidationSchemas.
+         * @param {number} [limit] Number of results to return per page.
+         * @param {number} [offset] The initial index from which to return the results.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        schemaValidationsList(limit?: number, offset?: number, options?: any): AxiosPromise<PaginatedSchemaValidationList> {
+            return localVarFp.schemaValidationsList(limit, offset, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * SchemaValidations are the results of validating Galv objects against ValidationSchemas.
+         * @param {number} id A unique integer value identifying this schema validation.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        schemaValidationsRetrieve(id: number, options?: any): AxiosPromise<SchemaValidation> {
+            return localVarFp.schemaValidationsRetrieve(id, options).then((request) => request(axios, basePath));
+        },
+    };
+};
+
+/**
+ * SchemaValidationsApi - object-oriented interface
+ * @export
+ * @class SchemaValidationsApi
+ * @extends {BaseAPI}
+ */
+export class SchemaValidationsApi extends BaseAPI {
     /**
-     * Schedules can be attached to Cycler Tests and used to view Cycler Tests which have used similar equipment.
-     * @param {string} uuid A UUID string identifying this schedule.
+     * SchemaValidations are the results of validating Galv objects against ValidationSchemas.
+     * @param {number} [limit] Number of results to return per page.
+     * @param {number} [offset] The initial index from which to return the results.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
-     * @memberof SchedulesApi
+     * @memberof SchemaValidationsApi
      */
-    public schedulesWithValidationRetrieve(uuid: string, options?: AxiosRequestConfig) {
-        return SchedulesApiFp(this.configuration).schedulesWithValidationRetrieve(uuid, options).then((request) => request(this.axios, this.basePath));
+    public schemaValidationsList(limit?: number, offset?: number, options?: AxiosRequestConfig) {
+        return SchemaValidationsApiFp(this.configuration).schemaValidationsList(limit, offset, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * SchemaValidations are the results of validating Galv objects against ValidationSchemas.
+     * @param {number} id A unique integer value identifying this schema validation.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof SchemaValidationsApi
+     */
+    public schemaValidationsRetrieve(id: number, options?: AxiosRequestConfig) {
+        return SchemaValidationsApiFp(this.configuration).schemaValidationsRetrieve(id, options).then((request) => request(this.axios, this.basePath));
     }
 }
 

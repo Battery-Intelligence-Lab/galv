@@ -89,7 +89,7 @@ export default function PrettyArray(
                                 _onEdit(newItems)
                                 return ""
                             }}
-                            lock_type_to={child_type ?? detect_type(items[items.length - 1]) ?? "string"}
+                            lock_type_to={child_type ?? detect_type(items[items.length - 1] ?? "")}
                         />
                     </ListItem>
                 </Container> :

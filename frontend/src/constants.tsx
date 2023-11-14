@@ -17,6 +17,12 @@ import VpnKeyIcon from '@mui/icons-material/VpnKey';
 import ManageAccountsIcon from '@mui/icons-material/ManageAccounts';
 import LogoutIcon from '@mui/icons-material/Logout';
 import SchemaIcon from '@mui/icons-material/Schema';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import PendingIcon from '@mui/icons-material/Pending';
+import ErrorIcon from '@mui/icons-material/Error';
+import HideSourceIcon from '@mui/icons-material/HideSource';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 
 import {
     CellChemistriesApi,
@@ -98,7 +104,14 @@ export const ICONS = {
     MANAGE_ACCOUNT: ManageAccountsIcon,
     LOGOUT: LogoutIcon,
     CREATE: AddCircleIcon,
-    CANCEL: CancelIcon
+    CANCEL: CancelIcon,
+    EXPAND_MORE: ExpandMoreIcon,
+    EXPAND_LESS: ExpandLessIcon,
+    validation_status_ERROR: ErrorIcon,
+    validation_status_UNCHECKED: PendingIcon,
+    validation_status_VALID: CheckCircleIcon,
+    validation_status_INVALID: CancelIcon,
+    validation_status_SKIPPED: HideSourceIcon,
 } as const
 
 /**

@@ -42,6 +42,7 @@ import useStyles from "./styles/UseStyles";
 import {SnackbarMessenger, SnackbarMessengerContextProvider} from "./Components/SnackbarMessengerContext";
 import Tooltip from "@mui/material/Tooltip";
 import LookupKeyIcon from "./Components/LookupKeyIcon";
+import Dashboard from "./Dashboard";
 
 export const pathMatches = (path: string, pathname: string) => matchPath({path: path, end: true}, pathname) !== null
 
@@ -65,40 +66,40 @@ export function Core() {
         to={PATHS[lookupKey]}
         key={lookupKey}
     >
-        <ListItemIcon>
+        <ListItemIcon key="icon">
             <LookupKeyIcon lookupKey={lookupKey} tooltip={!open} tooltipProps={{placement: "right"}} />
         </ListItemIcon>
-        <ListItemText primary={DISPLAY_NAMES_PLURAL[lookupKey]} />
+        <ListItemText key="text" primary={DISPLAY_NAMES_PLURAL[lookupKey]} />
     </ListItemButton>
 
     const mainListItems = (
         <Stack>
-            <ListItemButton selected={pathIs(PATHS.DASHBOARD)} component={Link} to={PATHS.DASHBOARD}>
+            <ListItemButton key="dashboard" selected={pathIs(PATHS.DASHBOARD)} component={Link} to={PATHS.DASHBOARD}>
                 <ListItemIcon>
                     <ICONS.DASHBOARD />
                 </ListItemIcon>
                 <ListItemText primary="Dashboard" />
             </ListItemButton>
-            <Divider component="li" />
-            {[LOOKUP_KEYS.EXPERIMENT, LOOKUP_KEYS.CYCLER_TEST].map(lookupKey => <LI lookupKey={lookupKey} />)}
-            <Divider component="li" />
+            <Divider component="li" key="div0" />
+            {[LOOKUP_KEYS.EXPERIMENT, LOOKUP_KEYS.CYCLER_TEST].map(lookupKey => <LI key={lookupKey} lookupKey={lookupKey} />)}
+            <Divider component="li" key="div1" />
             {[
                 LOOKUP_KEYS.FILE,
                 LOOKUP_KEYS.CELL,
                 LOOKUP_KEYS.EQUIPMENT,
                 LOOKUP_KEYS.SCHEDULE,
-            ].map(lookupKey => <LI lookupKey={lookupKey} />)}
-            <Divider component="li" />
+            ].map(lookupKey => <LI key={lookupKey} lookupKey={lookupKey} />)}
+            <Divider component="li" key="div2" />
             {[
                 LOOKUP_KEYS.HARVESTER,
                 LOOKUP_KEYS.PATH,
                 LOOKUP_KEYS.VALIDATION_SCHEMA,
-            ].map(lookupKey => <LI lookupKey={lookupKey} />)}
-            <Divider component="li" />
+            ].map(lookupKey => <LI key={lookupKey} lookupKey={lookupKey} />)}
+            <Divider component="li" key="div3" />
             {[
                 LOOKUP_KEYS.LAB,
                 LOOKUP_KEYS.TEAM,
-            ].map(lookupKey => <LI lookupKey={lookupKey} />)}
+            ].map(lookupKey => <LI key={lookupKey} lookupKey={lookupKey} />)}
         </Stack>
     );
 
@@ -209,8 +210,7 @@ export function Core() {
                 {/*<Route path={PATHS.GRAPH} element={<DatasetChart />} />*/}
                 <Route path="/:type/:id" element={<ResourceCardWrapper/>}/>  {/* Handles direct resource lookups */}
                 <Route path={"/:type"} element={<ResourceListWrapper/>}/>  {/* Handles resource lists */}
-                {/*<Route index element={Dashboard()} />*/}
-                <Route index element={<ResourceList lookup_key={LOOKUP_KEYS.CYCLER_TEST}/>} />
+                <Route index element={<Dashboard key="dashboard" />} />
             </Route>
         </Routes>
     </ErrorBoundary>

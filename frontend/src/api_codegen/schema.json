@@ -319,47 +319,6 @@
                 }
             }
         },
-        "/cell_families/{uuid}/with_validation/": {
-            "get": {
-                "operationId": "cell_families_with_validation_retrieve",
-                "description": "CellFamilies describe types of Cell.",
-                "parameters": [
-                    {
-                        "in": "path",
-                        "name": "uuid",
-                        "schema": {
-                            "type": "string",
-                            "format": "uuid"
-                        },
-                        "description": "A UUID string identifying this cell family.",
-                        "required": true
-                    }
-                ],
-                "tags": [
-                    "cell_families"
-                ],
-                "security": [
-                    {
-                        "knoxTokenAuth": []
-                    },
-                    {
-                        "cookieAuth": []
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/CellFamily"
-                                }
-                            }
-                        },
-                        "description": ""
-                    }
-                }
-            }
-        },
         "/cell_form_factors/": {
             "get": {
                 "operationId": "cell_form_factors_list",
@@ -819,47 +778,6 @@
                 "operationId": "cells_rdf_retrieve",
                 "description": "\nDump the Cell in RDF (JSON-LD) format.\n        ",
                 "summary": "View a Cell in RDF (JSON-LD)",
-                "parameters": [
-                    {
-                        "in": "path",
-                        "name": "uuid",
-                        "schema": {
-                            "type": "string",
-                            "format": "uuid"
-                        },
-                        "description": "A UUID string identifying this cell.",
-                        "required": true
-                    }
-                ],
-                "tags": [
-                    "cells"
-                ],
-                "security": [
-                    {
-                        "knoxTokenAuth": []
-                    },
-                    {
-                        "cookieAuth": []
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Cell"
-                                }
-                            }
-                        },
-                        "description": ""
-                    }
-                }
-            }
-        },
-        "/cells/{uuid}/with_validation/": {
-            "get": {
-                "operationId": "cells_with_validation_retrieve",
-                "description": "Cells are specific cells which have generated data stored in Datasets/ObservedFiles.",
                 "parameters": [
                     {
                         "in": "path",
@@ -1466,47 +1384,6 @@
                 }
             }
         },
-        "/cycler_tests/{uuid}/with_validation/": {
-            "get": {
-                "operationId": "cycler_tests_with_validation_retrieve",
-                "description": "Cycler Tests are the primary object in the database.\nThey represent a single test conducted on a specific cell using specific equipment,\naccording to a specific schedule.\n\nThe test produces a dataset which can be associated with the Cycler Test,\nand Cycler Tests can be grouped together into Experiments.",
-                "parameters": [
-                    {
-                        "in": "path",
-                        "name": "uuid",
-                        "schema": {
-                            "type": "string",
-                            "format": "uuid"
-                        },
-                        "description": "A UUID string identifying this cycler test.",
-                        "required": true
-                    }
-                ],
-                "tags": [
-                    "cycler_tests"
-                ],
-                "security": [
-                    {
-                        "knoxTokenAuth": []
-                    },
-                    {
-                        "cookieAuth": []
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/CyclerTest"
-                                }
-                            }
-                        },
-                        "description": ""
-                    }
-                }
-            }
-        },
         "/equipment/": {
             "get": {
                 "operationId": "equipment_list",
@@ -1739,47 +1616,6 @@
                 }
             }
         },
-        "/equipment/{uuid}/with_validation/": {
-            "get": {
-                "operationId": "equipment_with_validation_retrieve",
-                "description": "Equipment can be attached to Datasets and used to view Datasets which\nhave used similar equipment.",
-                "parameters": [
-                    {
-                        "in": "path",
-                        "name": "uuid",
-                        "schema": {
-                            "type": "string",
-                            "format": "uuid"
-                        },
-                        "description": "A UUID string identifying this equipment.",
-                        "required": true
-                    }
-                ],
-                "tags": [
-                    "equipment"
-                ],
-                "security": [
-                    {
-                        "knoxTokenAuth": []
-                    },
-                    {
-                        "cookieAuth": []
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Equipment"
-                                }
-                            }
-                        },
-                        "description": ""
-                    }
-                }
-            }
-        },
         "/equipment_families/": {
             "get": {
                 "operationId": "equipment_families_list",
@@ -2008,47 +1844,6 @@
                 "responses": {
                     "204": {
                         "description": "No response body"
-                    }
-                }
-            }
-        },
-        "/equipment_families/{uuid}/with_validation/": {
-            "get": {
-                "operationId": "equipment_families_with_validation_retrieve",
-                "description": "EquipmentFamilies describe types of Equipment.",
-                "parameters": [
-                    {
-                        "in": "path",
-                        "name": "uuid",
-                        "schema": {
-                            "type": "string",
-                            "format": "uuid"
-                        },
-                        "description": "A UUID string identifying this equipment family.",
-                        "required": true
-                    }
-                ],
-                "tags": [
-                    "equipment_families"
-                ],
-                "security": [
-                    {
-                        "knoxTokenAuth": []
-                    },
-                    {
-                        "cookieAuth": []
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/EquipmentFamily"
-                                }
-                            }
-                        },
-                        "description": ""
                     }
                 }
             }
@@ -2505,47 +2300,6 @@
                 }
             }
         },
-        "/experiments/{uuid}/with_validation/": {
-            "get": {
-                "operationId": "experiments_with_validation_retrieve",
-                "description": "Experiments are collections of Cycler Tests which are grouped together for analysis.",
-                "parameters": [
-                    {
-                        "in": "path",
-                        "name": "uuid",
-                        "schema": {
-                            "type": "string",
-                            "format": "uuid"
-                        },
-                        "description": "A UUID string identifying this experiment.",
-                        "required": true
-                    }
-                ],
-                "tags": [
-                    "experiments"
-                ],
-                "security": [
-                    {
-                        "knoxTokenAuth": []
-                    },
-                    {
-                        "cookieAuth": []
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Experiment"
-                                }
-                            }
-                        },
-                        "description": ""
-                    }
-                }
-            }
-        },
         "/files/": {
             "get": {
                 "operationId": "files_list",
@@ -2701,47 +2455,6 @@
                 "operationId": "files_reimport_retrieve",
                 "description": "\nA File will usually only be imported once, provided it is created, written to,\nand then left alone. Files will naturally be reimported if they grow in size\nagain.\nIf an error was encountered while processing a file, or you have other reasons\nfor wishing to repeat the import process, you can use this endpoint to force the\nharvester program to rerun the import process when it next scans the file.\n\n*Note*: This request may be overwritten if the file changes size before it is next scanned.\n        ",
                 "summary": "Force a File to be re-imported",
-                "parameters": [
-                    {
-                        "in": "path",
-                        "name": "uuid",
-                        "schema": {
-                            "type": "string",
-                            "format": "uuid"
-                        },
-                        "description": "A UUID string identifying this observed file.",
-                        "required": true
-                    }
-                ],
-                "tags": [
-                    "files"
-                ],
-                "security": [
-                    {
-                        "knoxTokenAuth": []
-                    },
-                    {
-                        "cookieAuth": []
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/ObservedFile"
-                                }
-                            }
-                        },
-                        "description": ""
-                    }
-                }
-            }
-        },
-        "/files/{uuid}/with_validation/": {
-            "get": {
-                "operationId": "files_with_validation_retrieve",
-                "description": "ObservedFiles are files that exist (or have existed) in a MonitoredPath and have\nbeen reported to Galv by the Harvester.\n\nAn ObservedFile instance will have file metadata (size, modification time), and a\nstatus representing its import state. It may be linked to HarvestErrors\nencountered while importing the file, and/or to Datasets representing the content\nof imported files.",
                 "parameters": [
                     {
                         "in": "path",
@@ -3161,47 +2874,6 @@
                         }
                     }
                 },
-                "security": [
-                    {
-                        "knoxTokenAuth": []
-                    },
-                    {
-                        "cookieAuth": []
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Harvester"
-                                }
-                            }
-                        },
-                        "description": ""
-                    }
-                }
-            }
-        },
-        "/harvesters/{uuid}/with_validation/": {
-            "get": {
-                "operationId": "harvesters_with_validation_retrieve",
-                "description": "Harvesters monitor a set of MonitoredPaths and send reports about ObservedFiles\nwithin those paths.\nA Harvester belongs to a Lab and its Monitored Paths are used by Teams within the Lab.\n\nWhen Harvesters communicate with the API they do so using special Harvester API Keys.\nThese provide access to the report and configuration endpoints.\n\nHarvesters are created by a separate software package available within Galv.",
-                "parameters": [
-                    {
-                        "in": "path",
-                        "name": "uuid",
-                        "schema": {
-                            "type": "string",
-                            "format": "uuid"
-                        },
-                        "description": "A UUID string identifying this harvester.",
-                        "required": true
-                    }
-                ],
-                "tags": [
-                    "harvesters"
-                ],
                 "security": [
                     {
                         "knoxTokenAuth": []
@@ -3714,47 +3386,6 @@
                 }
             }
         },
-        "/monitored_paths/{uuid}/with_validation/": {
-            "get": {
-                "operationId": "monitored_paths_with_validation_retrieve",
-                "description": "A MonitoredPath refers to a directory accessible by a Harvester in which\ndata files will reside. Those files will be scanned periodically by the Harvester,\nbecoming ObservedFiles once they are reported to Galv by the Harvester.\n\nMonitoredPaths can be created or updated by a Harvester's admins and users, as\nwell as any users who have been given explicit permissions to edit the MonitoredPath.",
-                "parameters": [
-                    {
-                        "in": "path",
-                        "name": "uuid",
-                        "schema": {
-                            "type": "string",
-                            "format": "uuid"
-                        },
-                        "description": "A UUID string identifying this monitored path.",
-                        "required": true
-                    }
-                ],
-                "tags": [
-                    "monitored_paths"
-                ],
-                "security": [
-                    {
-                        "knoxTokenAuth": []
-                    },
-                    {
-                        "cookieAuth": []
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/MonitoredPath"
-                                }
-                            }
-                        },
-                        "description": ""
-                    }
-                }
-            }
-        },
         "/schedule_families/": {
             "get": {
                 "operationId": "schedule_families_list",
@@ -3983,47 +3614,6 @@
                 "responses": {
                     "204": {
                         "description": "No response body"
-                    }
-                }
-            }
-        },
-        "/schedule_families/{uuid}/with_validation/": {
-            "get": {
-                "operationId": "schedule_families_with_validation_retrieve",
-                "description": "Schedules can be attached to Cycler Tests and used to view Cycler Tests which\nhave used similar equipment.",
-                "parameters": [
-                    {
-                        "in": "path",
-                        "name": "uuid",
-                        "schema": {
-                            "type": "string",
-                            "format": "uuid"
-                        },
-                        "description": "A UUID string identifying this schedule family.",
-                        "required": true
-                    }
-                ],
-                "tags": [
-                    "schedule_families"
-                ],
-                "security": [
-                    {
-                        "knoxTokenAuth": []
-                    },
-                    {
-                        "cookieAuth": []
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/ScheduleFamily"
-                                }
-                            }
-                        },
-                        "description": ""
                     }
                 }
             }
@@ -4334,24 +3924,32 @@
                 }
             }
         },
-        "/schedules/{uuid}/with_validation/": {
+        "/schema_validations/": {
             "get": {
-                "operationId": "schedules_with_validation_retrieve",
-                "description": "Schedules can be attached to Cycler Tests and used to view Cycler Tests which\nhave used similar equipment.",
+                "operationId": "schema_validations_list",
+                "description": "SchemaValidations are the results of validating Galv objects against ValidationSchemas.",
                 "parameters": [
                     {
-                        "in": "path",
-                        "name": "uuid",
+                        "name": "limit",
+                        "required": false,
+                        "in": "query",
+                        "description": "Number of results to return per page.",
                         "schema": {
-                            "type": "string",
-                            "format": "uuid"
-                        },
-                        "description": "A UUID string identifying this schedule.",
-                        "required": true
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "offset",
+                        "required": false,
+                        "in": "query",
+                        "description": "The initial index from which to return the results.",
+                        "schema": {
+                            "type": "integer"
+                        }
                     }
                 ],
                 "tags": [
-                    "schedules"
+                    "schema_validations"
                 ],
                 "security": [
                     {
@@ -4366,7 +3964,47 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/Schedule"
+                                    "$ref": "#/components/schemas/PaginatedSchemaValidationList"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/schema_validations/{id}/": {
+            "get": {
+                "operationId": "schema_validations_retrieve",
+                "description": "SchemaValidations are the results of validating Galv objects against ValidationSchemas.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this schema validation.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "schema_validations"
+                ],
+                "security": [
+                    {
+                        "knoxTokenAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SchemaValidation"
                                 }
                             }
                         },
@@ -6485,6 +6123,14 @@
                         ],
                         "description": "Group of users who can edit this Lab"
                     },
+                    "harvesters": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "format": "uri"
+                        },
+                        "readOnly": true
+                    },
                     "teams": {
                         "type": "array",
                         "items": {
@@ -6512,6 +6158,7 @@
                 },
                 "required": [
                     "admin_group",
+                    "harvesters",
                     "id",
                     "name",
                     "permissions",
@@ -6551,15 +6198,22 @@
                     "active": {
                         "type": "boolean"
                     },
+                    "files": {
+                        "type": "string",
+                        "readOnly": true,
+                        "description": "Files on this MonitoredPath"
+                    },
                     "harvester": {
                         "type": "string",
                         "format": "uri",
-                        "description": "Harvester this MonitoredPath belongs to"
+                        "readOnly": true,
+                        "description": "Harvester this MonitoredPath is on"
                     },
                     "team": {
                         "type": "string",
                         "format": "uri",
-                        "description": "Team this resource belongs to"
+                        "readOnly": true,
+                        "description": "Team this MonitoredPath belongs to"
                     },
                     "permissions": {
                         "type": "object",
@@ -6578,6 +6232,7 @@
                     }
                 },
                 "required": [
+                    "files",
                     "harvester",
                     "path",
                     "permissions",
@@ -6606,6 +6261,12 @@
                         "format": "uri",
                         "readOnly": true,
                         "description": "Harvester this File belongs to"
+                    },
+                    "name": {
+                        "type": "string",
+                        "readOnly": true,
+                        "nullable": true,
+                        "description": "Name of the file"
                     },
                     "path": {
                         "type": "string",
@@ -6719,11 +6380,6 @@
                             }
                         },
                         "readOnly": true
-                    },
-                    "name": {
-                        "type": "string",
-                        "nullable": true,
-                        "description": "Name of the file"
                     }
                 },
                 "required": [
@@ -6736,6 +6392,7 @@
                     "last_observed_size",
                     "last_observed_time",
                     "last_sample_no",
+                    "name",
                     "num_rows",
                     "parser",
                     "path",
@@ -7229,6 +6886,33 @@
                         "type": "array",
                         "items": {
                             "$ref": "#/components/schemas/Schedule"
+                        }
+                    }
+                }
+            },
+            "PaginatedSchemaValidationList": {
+                "type": "object",
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=400&limit=100"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=200&limit=100"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/SchemaValidation"
                         }
                     }
                 }
@@ -7924,6 +7608,14 @@
                         ],
                         "description": "Group of users who can edit this Lab"
                     },
+                    "harvesters": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "format": "uri"
+                        },
+                        "readOnly": true
+                    },
                     "teams": {
                         "type": "array",
                         "items": {
@@ -7982,15 +7674,22 @@
                     "active": {
                         "type": "boolean"
                     },
+                    "files": {
+                        "type": "string",
+                        "readOnly": true,
+                        "description": "Files on this MonitoredPath"
+                    },
                     "harvester": {
                         "type": "string",
                         "format": "uri",
-                        "description": "Harvester this MonitoredPath belongs to"
+                        "readOnly": true,
+                        "description": "Harvester this MonitoredPath is on"
                     },
                     "team": {
                         "type": "string",
                         "format": "uri",
-                        "description": "Team this resource belongs to"
+                        "readOnly": true,
+                        "description": "Team this MonitoredPath belongs to"
                     },
                     "permissions": {
                         "type": "object",
@@ -8028,6 +7727,12 @@
                         "format": "uri",
                         "readOnly": true,
                         "description": "Harvester this File belongs to"
+                    },
+                    "name": {
+                        "type": "string",
+                        "readOnly": true,
+                        "nullable": true,
+                        "description": "Name of the file"
                     },
                     "path": {
                         "type": "string",
@@ -8141,11 +7846,6 @@
                             }
                         },
                         "readOnly": true
-                    },
-                    "name": {
-                        "type": "string",
-                        "nullable": true,
-                        "description": "Name of the file"
                     }
                 }
             },
@@ -8641,6 +8341,76 @@
                     "team",
                     "url",
                     "uuid"
+                ]
+            },
+            "SchemaValidation": {
+                "type": "object",
+                "properties": {
+                    "url": {
+                        "type": "string",
+                        "format": "uri",
+                        "readOnly": true,
+                        "description": "Canonical URL for this object"
+                    },
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "description": "Auto-assigned object identifier"
+                    },
+                    "schema": {
+                        "type": "string",
+                        "format": "uri",
+                        "readOnly": true,
+                        "description": "Validation schema used"
+                    },
+                    "validation_target": {
+                        "type": "string",
+                        "readOnly": true,
+                        "description": "Target of validation"
+                    },
+                    "status": {
+                        "enum": [
+                            "VALID",
+                            "INVALID",
+                            "SKIPPED",
+                            "UNCHECKED",
+                            "ERROR"
+                        ],
+                        "type": "string",
+                        "readOnly": true,
+                        "description": "Validation status"
+                    },
+                    "permissions": {
+                        "type": "object",
+                        "properties": {
+                            "read": {
+                                "type": "boolean"
+                            },
+                            "write": {
+                                "type": "boolean"
+                            },
+                            "create": {
+                                "type": "boolean"
+                            }
+                        },
+                        "readOnly": true
+                    },
+                    "detail": {
+                        "type": "object",
+                        "additionalProperties": {},
+                        "readOnly": true,
+                        "nullable": true,
+                        "description": "Validation detail"
+                    }
+                },
+                "required": [
+                    "detail",
+                    "id",
+                    "permissions",
+                    "schema",
+                    "status",
+                    "url",
+                    "validation_target"
                 ]
             },
             "Team": {

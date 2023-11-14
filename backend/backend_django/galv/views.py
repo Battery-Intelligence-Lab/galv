@@ -1715,6 +1715,6 @@ class SchemaValidationViewSet(viewsets.ReadOnlyModelViewSet):
     """
     permission_classes = [DRYPermissions]
     filter_backends = [SchemaValidationFilterBackend]
-    filter_fields = ['schema__uuid']
+    filter_fields = ['schema__uuid', 'object_id', 'content_type__model']
     serializer_class = SchemaValidationSerializer
     queryset = SchemaValidation.objects.all().order_by('-last_update')
