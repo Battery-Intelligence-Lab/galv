@@ -43,6 +43,9 @@ python manage.py loaddata galv/fixtures/*
 #python manage.py loaddata galv/fixtures/CyclerTestFixtures.json
 #python manage.py loaddata galv/fixtures/ValidationSchemaFixtures.json
 
+>&2 echo "... starting validation monitor loop"
+./validation_monitor.sh &
+
 >&2 echo "Initialisation complete - starting server"
 
 if [ -z "${DJANGO_TEST}" ]; then

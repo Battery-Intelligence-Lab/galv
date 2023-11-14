@@ -159,11 +159,3 @@ def render_pybamm_schedule(schedule, cell, validate = True):
             missing = re.findall(r"\{([\w_]+)}", as_string)
             raise ScheduleRenderError(f"Schedule variables {missing} not filled in")
     return rendered_schedule
-
-
-class ValidatableBySchemaMixin():
-    """
-    Subclasses are picked up by a crawl in ValidationSchemaViewSet and used
-    to list possible values for validation schema root keys.
-    """
-    pass

@@ -5,15 +5,22 @@ import os
 import re
 from typing import Type
 
+import jsonschema
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.fields import ArrayField
-from django.db import models
 from django.contrib.auth.models import User, Group, AnonymousUser
 import random
+from django.conf import settings
+from django.db import models
+from django.test import RequestFactory
+from jsonschema.exceptions import _WrappedReferencingError
+from rest_framework import serializers
 
 #from dry_rest_permissions.generics import allow_staff_or_superuser
 
 from .utils import AdditionalPropertiesModel, JSONModel, LDSources, render_pybamm_schedule, UUIDModel, \
-    combine_rdf_props, ValidatableBySchemaMixin
+    combine_rdf_props
 from .autocomplete_entries import *
 
 class FileState(models.TextChoices):
@@ -24,6 +31,14 @@ class FileState(models.TextChoices):
     STABLE = "STABLE"
     IMPORTING = "IMPORTING"
     IMPORTED = "IMPORTED"
+
+
+class ValidationStatus(models.TextChoices):
+    VALID = "VALID"
+    INVALID = "INVALID"
+    SKIPPED = "SKIPPED"
+    UNCHECKED = "UNCHECKED"
+    ERROR = "ERROR"
 
 
 # Proxy User and Group models so that we can apply DRYPermissions
@@ -341,6 +356,31 @@ class ResourceModelPermissionsMixin(models.Model):
         abstract = True
 
 
+class ValidatableBySchemaMixin(models.Model):
+    """
+    Subclasses are picked up by a crawl in ValidationSchemaViewSet and used
+    to list possible values for validation schema root keys.
+    """
+    def save(
+            self, force_insert=False, force_update=False, using=None, update_fields=None
+    ):
+        super(ValidatableBySchemaMixin, self).save(force_insert, force_update, using, update_fields)
+        for schema in ValidationSchema.objects.all():
+            SchemaValidation.objects.filter(
+                content_type=ContentType.objects.get_for_model(self),
+                object_id=self.pk
+            ).update_or_create(
+                schema=schema,
+                content_type=ContentType.objects.get_for_model(self),
+                object_id=self.pk,
+                status=ValidationStatus.UNCHECKED,
+                detail=None
+            )
+
+    class Meta:
+        abstract = True
+
+
 class BibliographicInfo(models.Model):
     user = models.OneToOneField(to=UserProxy, on_delete=models.CASCADE, null=False, blank=False)
     bibjson = models.JSONField(null=False, blank=False)
@@ -478,7 +518,7 @@ class Schedule(JSONModel, ValidatableBySchemaMixin, ResourceModelPermissionsMixi
     def __str__(self):
         return f"{str(self.uuid)} [{str(self.family)}]"
 
-class Harvester(UUIDModel, ValidatableBySchemaMixin):
+class Harvester(UUIDModel):
     name = models.TextField(
         help_text="Human-friendly Harvester identifier"
     )
@@ -655,7 +695,7 @@ class ObservedFile(UUIDModel, ValidatableBySchemaMixin):
         unique_together = [['path', 'harvester']]
 
 
-class CyclerTest(JSONModel, ValidatableBySchemaMixin, ResourceModelPermissionsMixin):
+class CyclerTest(JSONModel, ResourceModelPermissionsMixin, ValidatableBySchemaMixin):
     cell = models.ForeignKey(to=Cell, on_delete=models.CASCADE, null=False, help_text="Cell that was tested", related_name="cycler_tests")
     schedule = models.ForeignKey(to=Schedule, null=True, blank=True, on_delete=models.CASCADE, help_text="Schedule used to test the cell", related_name="cycler_tests")
     equipment = models.ManyToManyField(to=Equipment, help_text="Equipment used to test the cell", related_name="cycler_tests")
@@ -842,7 +882,7 @@ class DataUnit(models.Model):
         return f"{self.name} - {self.description}"
 
 
-class DataColumnType(models.Model, ValidatableBySchemaMixin):
+class DataColumnType(ValidatableBySchemaMixin):
     unit = models.ForeignKey(
         to=DataUnit,
         on_delete=models.SET_NULL,
@@ -1015,17 +1055,6 @@ class TimeseriesRangeLabel(models.Model):
         return f"{self.label} [{self.range_start}, {self.range_end}]: {self.info}"
 
 
-class ValidationSchema(AdditionalPropertiesModel, ResourceModelPermissionsMixin):
-    """
-    JSON schema that can be used for validating components.
-    """
-    name = models.TextField(null=False, help_text="Human-friendly identifier")
-    schema = models.JSONField(help_text="JSON Schema")
-
-    def __str__(self):
-        return f"{self.name} [ValidationSchema {self.uuid}]"
-
-
 class KnoxAuthToken(models.Model):
     knox_token_key = models.TextField(help_text="KnoxToken reference ([token_key]_[user_id]")
     name = models.TextField(help_text="Convenient human-friendly name")
@@ -1060,3 +1089,109 @@ class HarvesterUser(AnonymousUser):
     @property
     def is_active(self):
         return self.harvester.active
+
+
+class ValidationSchema(AdditionalPropertiesModel, ResourceModelPermissionsMixin):
+    """
+    JSON schema that can be used for validating components.
+    """
+    name = models.TextField(null=False, help_text="Human-friendly identifier")
+    schema = models.JSONField(help_text="JSON Schema")
+
+    def save(
+            self, force_insert=False, force_update=False, using=None, update_fields=None
+    ):
+        super(ValidationSchema, self).save(force_insert, force_update, using, update_fields)
+        SchemaValidation.objects.filter(schema=self).update(status=ValidationStatus.UNCHECKED, detail=None)
+
+    def __str__(self):
+        return f"{self.name} [ValidationSchema {self.uuid}]"
+
+
+class SchemaValidation(models.Model):
+    """
+    Whether a component is valid according to a ValidationSchema.
+    """
+    schema = models.ForeignKey(to=ValidationSchema, on_delete=models.CASCADE, null=False,
+                               help_text="ValidationSchema used to validate the component")
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.CharField(max_length=36)
+    validation_target = GenericForeignKey("content_type", "object_id")
+    status = models.TextField(null=False, help_text="Validation status", choices=ValidationStatus.choices)
+    detail = models.JSONField(null=True, help_text="Validation detail")
+    last_update = models.DateTimeField(auto_now=True, null=False, help_text="Date and time of last status update")
+
+    @staticmethod
+    def has_read_permission(request):
+        return True
+
+    @staticmethod
+    def has_write_permission(request):
+        return False
+
+    def has_object_read_permission(self, request):
+        return self.schema.has_object_read_permission(request)
+
+    def __str__(self):
+        return f"{self.validation_target.__str__} vs {self.schema.__str__}: {self.status}"
+
+    def validate(self):
+        """
+        Validate the component against the schema.
+        """
+        try:
+            # Get the object's serializer
+            import galv.serializers as galv_serializers
+            model_class = self.content_type.model_class()
+            serializer = None
+            for s in dir(galv_serializers):
+                x = getattr(galv_serializers, s)
+                try:
+                    if issubclass(x, serializers.Serializer):
+                        if hasattr(x, 'Meta') and hasattr(x.Meta, 'model'):
+                            if x.Meta.model == model_class:
+                                serializer = x
+                                break
+                except:
+                    pass
+            if serializer is None:
+                self.status = ValidationStatus.ERROR
+                self.detail = f"Could not find serializer for {model_class}"
+                return
+
+            # Serialize the object and validate against the schema
+            mock_request = RequestFactory().get('/')
+            mock_request.META['SERVER_NAME'] = settings.ALLOWED_HOSTS[0]
+            mock_request.user = User.objects.filter(is_superuser=True).first()
+            data = serializer(self.validation_target, context={'request': mock_request}).data
+            d = data if isinstance(data, list) else [data]
+            try:
+                # Create the schema to validate against by asserting we have type classname
+                s = self.schema.schema
+                s['type'] = "array"
+                s['items'] = {'$ref': f"#/$defs/{model_class.__name__}"}
+                jsonschema.validate(d, s)
+                self.status = ValidationStatus.VALID
+            except jsonschema.exceptions.ValidationError as e:
+                self.status = ValidationStatus.INVALID
+                self.detail = {
+                    'message': e.message,
+                    'context': e.context,
+                    'cause': e.cause,
+                    'json_path': e.json_path,
+                    'validator': e.validator,
+                    'validator_value': e.validator_value
+                }
+            except _WrappedReferencingError:
+                self.status = ValidationStatus.SKIPPED
+
+        except Exception as e:
+            self.status = ValidationStatus.ERROR
+            self.detail = f"Error during validation: {e}"
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["content_type", "object_id"]),
+            models.Index(fields=["status"]),
+            models.Index(fields=["schema"])
+        ]

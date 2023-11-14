@@ -2,11 +2,8 @@ import json
 from collections import OrderedDict
 
 import django.db.models
-import jsonschema
-from django.urls import reverse
 from drf_spectacular.utils import extend_schema_field
 from dry_rest_permissions.generics import DRYPermissionsField
-from jsonschema.exceptions import _WrappedReferencingError
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from django.core.exceptions import ValidationError as DjangoValidationError
@@ -201,72 +198,6 @@ class AdditionalPropertiesModelSerializer(serializers.HyperlinkedModelSerializer
         new_data = {**new_data, **super().to_internal_value(leftover_data)}
         return new_data
 
-
-class WithValidationMixin(serializers.ModelSerializer):
-    def to_representation(self, instance):
-        data = super().to_representation(instance)
-        if hasattr(self.Meta, 'include_validation') and not self.Meta.include_validation:
-            return data
-        return validate_against_schemas(
-            data,
-            self.Meta.model,
-            self.context
-        )
-
-    def to_internal_value(self, data):
-        if 'validation_results' in data:
-            del data['validation_results']
-        return super().to_internal_value(data)
-
-
-def validate_against_schemas(data, model, context, schemas = None):
-    """
-    Validate a serializer against a list of JSON schemas.
-    """
-    d = data if isinstance(data, list) else [data]
-    if schemas is None:
-        schemas = ValidationSchema.objects.filter(team__in=user_teams(context['request'].user))
-    validation_results = []
-    for schema in schemas:
-        try:
-            # Create the schema to validate against by asserting we have type classname
-            s = schema.schema
-            s['type'] = "array"
-            s['items'] = {'$ref': f"#/$defs/{model.__name__}"}
-            jsonschema.validate(d, s)
-            validation_results.append({
-                'schema': reverse('validationschema-detail', args=[schema.pk]),
-                'schema_name': schema.name,
-                'error': None,
-                'passed': True,
-                'skipped': False,
-            })
-        except jsonschema.exceptions.ValidationError as e:
-            validation_results.append({
-                'schema': reverse('validationschema-detail', args=[schema.pk]),
-                'schema_name': schema.name,
-                'error': {
-                    'message': e.message,
-                    'context': e.context,
-                    'cause': e.cause,
-                    'json_path': e.json_path,
-                    'validator': e.validator,
-                    'validator_value': e.validator_value
-                },
-                'passed': False,
-                'skipped': False,
-            })
-        except _WrappedReferencingError:
-            validation_results.append({
-                'schema': reverse('validationschema-detail', args=[schema.pk]),
-                'schema_name': schema.name,
-                'passed': False,
-                'skipped': True,
-            })
-    return {
-        **data,
-        'validation_results': validation_results
-    }
 
 @extend_schema_field({
         'type': 'object',

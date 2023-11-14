@@ -97,3 +97,12 @@ class ResourceFilterBackend(DRYPermissionFiltersBase):
             (Q(any_user_can_read=True) & Q(any_user_can_read=user_approved)) |
             Q(anonymous_can_read=True)
         )
+
+class SchemaValidationFilterBackend(ResourceFilterBackend):
+    action_routing = True
+    def filter_list_queryset(self, request, queryset, view):
+        schemas = [q.schema for q in queryset]
+        for schema in schemas:
+            if not schema.has_object_read_permission(request):
+                schemas.pop(schemas.index(schema))
+        return queryset.filter(schema__in=schemas)

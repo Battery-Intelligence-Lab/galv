@@ -5,7 +5,7 @@ import os.path
 import re
 
 import jsonschema
-from django.urls import reverse
+from rest_framework.reverse import reverse
 from drf_spectacular.utils import extend_schema_field
 from rest_framework.exceptions import ValidationError
 
@@ -23,7 +23,7 @@ from ..models import Harvester, \
     KnoxAuthToken, CellFamily, EquipmentTypes, CellFormFactors, CellChemistries, CellModels, CellManufacturers, \
     EquipmentManufacturers, EquipmentModels, EquipmentFamily, Schedule, ScheduleIdentifiers, CyclerTest, \
     render_pybamm_schedule, ScheduleFamily, ValidationSchema, Experiment, Lab, Team, GroupProxy, UserProxy, user_labs, \
-    user_teams
+    user_teams, SchemaValidation
 from ..models.utils import ScheduleRenderError
 from django.utils import timezone
 from django.conf.global_settings import DATA_UPLOAD_MAX_MEMORY_SIZE
@@ -33,7 +33,7 @@ from knox.models import AuthToken
 from .utils import AdditionalPropertiesModelSerializer, GetOrCreateTextField, augment_extra_kwargs, url_help_text, \
     get_model_field, PermissionsMixin, TruncatedUserHyperlinkedRelatedIdField, \
     TruncatedGroupHyperlinkedRelatedIdField, TruncatedHyperlinkedRelatedIdField, \
-    CreateOnlyMixin, WithValidationMixin
+    CreateOnlyMixin
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer, PermissionsMixin):
@@ -250,7 +250,7 @@ class LabSerializer(serializers.HyperlinkedModelSerializer, PermissionsMixin):
         fields = ['url', 'id', 'name', 'description', 'admin_group', 'harvesters', 'teams', 'permissions']
         read_only_fields = ['url', 'id', 'teams', 'admin_group', 'harvesters', 'permissions']
 
-class WithTeamMixin(WithValidationMixin):
+class WithTeamMixin(serializers.Serializer):
     team = TruncatedHyperlinkedRelatedIdField(
         'TeamSerializer',
         ['name'],
@@ -799,10 +799,6 @@ class DataColumnSerializer(serializers.HyperlinkedModelSerializer, PermissionsMi
         help_text="File this Column belongs to"
     )
 
-
-    def uri(self, rel_url: str) -> str:
-        return self.context['request'].build_absolute_uri(rel_url)
-
     def get_name(self, instance) -> str:
         return instance.get_name()
 
@@ -824,7 +820,7 @@ class DataColumnSerializer(serializers.HyperlinkedModelSerializer, PermissionsMi
 
 
     def get_values(self, instance) -> str:
-        return self.uri(reverse('datacolumn-values', args=(instance.id,)))
+        return reverse('datacolumn-values', args=(instance.id,), request=self.context['request'])
 
     class Meta:
         model = DataColumn
@@ -913,7 +909,7 @@ class KnoxTokenSerializer(serializers.HyperlinkedModelSerializer):
         return self.knox_token(instance).expiry
 
     def get_url(self, instance) -> str:
-        return self.context['request'].build_absolute_uri(reverse('tokens-detail', args=(instance.id,)))
+        reverse('tokens-detail', args=(instance.id,), request=self.context['request'])
 
     class Meta:
         model = KnoxAuthToken
@@ -1005,3 +1001,28 @@ class HarvesterCreateSerializer(HarvesterSerializer, PermissionsMixin):
         fields = ['name', 'lab', 'permissions']
         read_only_fields = ['permissions']
         extra_kwargs = {'name': {'required': True}, 'lab': {'required': True}}
+
+
+class SchemaValidationSerializer(serializers.HyperlinkedModelSerializer, PermissionsMixin):
+    schema = TruncatedHyperlinkedRelatedIdField(
+        'ValidationSchemaSerializer',
+        ['name'],
+        'validationschema-detail',
+        help_text="Validation schema used",
+        read_only=True
+    )
+
+    validation_target = serializers.SerializerMethodField(help_text="Target of validation")
+
+    def get_validation_target(self, instance):
+        return reverse(
+            f"{instance.content_type.model}-detail",
+            args=(instance.object_id,),
+            request=self.context['request']
+        )
+
+    class Meta:
+        model = SchemaValidation
+        fields = ['url', 'id', 'schema', 'validation_target', 'status', 'permissions', 'detail']
+        read_only_fields = [*fields]
+        extra_kwargs = augment_extra_kwargs()

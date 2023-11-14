@@ -4,19 +4,15 @@
 from __future__ import annotations
 
 import datetime
-from typing import List
 
 import knox.auth
 import os
-from django.db.models import Q
 from django.http import StreamingHttpResponse
 from django.urls import NoReverseMatch
-from drf_spectacular.types import OpenApiTypes
 from dry_rest_permissions.generics import DRYPermissions
 from rest_framework.mixins import ListModelMixin
 from rest_framework.reverse import reverse
 
-from .models.utils import ValidatableBySchemaMixin
 from .serializers import HarvesterSerializer, \
     HarvesterCreateSerializer, \
     HarvesterConfigSerializer, \
@@ -32,7 +28,7 @@ from .serializers import HarvesterSerializer, \
     KnoxTokenSerializer, \
     KnoxTokenFullSerializer, CellFamilySerializer, EquipmentFamilySerializer, \
     ScheduleSerializer, CyclerTestSerializer, ScheduleFamilySerializer, DataColumnTypeSerializer, DataColumnSerializer, \
-    ExperimentSerializer, LabSerializer, TeamSerializer, ValidationSchemaSerializer
+    ExperimentSerializer, LabSerializer, TeamSerializer, ValidationSchemaSerializer, SchemaValidationSerializer
 from .models import Harvester, \
     HarvestError, \
     MonitoredPath, \
@@ -51,15 +47,12 @@ from .models import Harvester, \
     FileState, \
     KnoxAuthToken, CellFamily, EquipmentTypes, EquipmentModels, EquipmentManufacturers, CellModels, CellManufacturers, \
     CellChemistries, CellFormFactors, ScheduleIdentifiers, EquipmentFamily, Schedule, CyclerTest, ScheduleFamily, \
-    ValidationSchema, Experiment, Lab, Team, UserProxy, GroupProxy
+    ValidationSchema, Experiment, Lab, Team, UserProxy, GroupProxy, ValidatableBySchemaMixin, SchemaValidation
 from .permissions import HarvesterFilterBackend, TeamFilterBackend, LabFilterBackend, GroupFilterBackend, \
-    ResourceFilterBackend, ObservedFileFilterBackend, UserFilterBackend
-from .serializers.utils import GetOrCreateTextStringSerializer, validate_against_schemas, \
-    get_GetOrCreateTextStringSerializer
-from .utils import get_files_from_path
+    ResourceFilterBackend, ObservedFileFilterBackend, UserFilterBackend, SchemaValidationFilterBackend
+from .serializers.utils import get_GetOrCreateTextStringSerializer
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
-from django.core import validators
 from rest_framework import viewsets, serializers, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -1714,3 +1707,14 @@ class ValidationSchemaViewSet(viewsets.ModelViewSet):
             'describes': url(m.__name__)
         } for m in ValidatableBySchemaMixin.__subclasses__() if url(m.__name__) is not None]
         )
+
+
+class SchemaValidationViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    SchemaValidations are the results of validating Galv objects against ValidationSchemas.
+    """
+    permission_classes = [DRYPermissions]
+    filter_backends = [SchemaValidationFilterBackend]
+    filter_fields = ['schema__uuid']
+    serializer_class = SchemaValidationSerializer
+    queryset = SchemaValidation.objects.all().order_by('-last_update')
