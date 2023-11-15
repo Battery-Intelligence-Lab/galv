@@ -8,8 +8,9 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from django.core.exceptions import ValidationError as DjangoValidationError
 
-from galv.models import ValidationSchema, GroupProxy, UserProxy, user_teams
+from galv.models import ValidationSchema, GroupProxy, UserProxy, user_teams, VALIDATION_MOCK_ENDPOINT
 from rest_framework.fields import DictField
+
 
 url_help_text = "Canonical URL for this object"
 
@@ -17,6 +18,8 @@ OUTPUT_STYLE_FLAT = 'flat'
 OUTPUT_STYLE_CONTEXT = 'context'
 
 def get_output_style(request):
+    if request.path == VALIDATION_MOCK_ENDPOINT:
+        return OUTPUT_STYLE_FLAT
     if request.query_params.get('style') in [OUTPUT_STYLE_FLAT, OUTPUT_STYLE_CONTEXT]:
         return request.query_params['style']
     if 'html' in request.accepted_media_type or request.query_params.get('format') == 'html':
@@ -357,4 +360,23 @@ class TruncatedGroupHyperlinkedRelatedIdField(TruncatedHyperlinkedRelatedIdField
 class TruncatedUserHyperlinkedRelatedIdField(TruncatedHyperlinkedRelatedIdField, UserProxyField):
     def to_representation(self, instance):
         instance.__class__ = UserProxy
+        return super().to_representation(instance)
+
+
+class ValidationPresentationMixin(serializers.Serializer):
+    """
+    Resources with families perform inline expansion of family properties during validation.
+    """
+    def to_representation(self, instance):
+        try:
+            if self.context['request'].path == VALIDATION_MOCK_ENDPOINT and hasattr(instance, 'family'):
+                representation = super().to_representation(instance)
+                family_serializer = self.fields['family'].child_serializer_class
+                if isinstance(family_serializer, str):
+                    family_serializer = serializer_class_from_string(family_serializer)
+                representation.pop('family')
+                return {**family_serializer(instance.family, context=self.context).data, **representation}
+        except Exception as e:
+            print(e)
+            pass
         return super().to_representation(instance)

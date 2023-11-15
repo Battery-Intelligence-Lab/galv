@@ -16,20 +16,34 @@ class Command(BaseCommand):
     Trawl the database and update any UNCHECKED schema validations by running their validation.
     """
 
+    def add_arguments(self, parser):
+        # Positional arguments
+        parser.add_argument("statuses", nargs="*", type=str, default=[ValidationStatus.UNCHECKED])
+
+        # Named (optional) arguments
+        parser.add_argument(
+            "--halt-on-error",
+            action="store_true",
+            help="Halt when an error is encountered instead of marking the validation as ERROR and continuing.",
+            default=False,
+        )
+
     def handle(self, *args, **options):
-        to_check = SchemaValidation.objects.filter(status=ValidationStatus.UNCHECKED)
+        statuses = options["statuses"]
+        to_check = SchemaValidation.objects.filter(status__in=statuses)
         if len(to_check) == 0:
-            self.stdout.write(f"No UNCHECKED schema validations found.")
+            self.stdout.write(f"No schema validations found with status {'|'.join(statuses)}.")
             return
-        self.stdout.write(f"Found {len(to_check)} UNCHECKED schema validations.")
+        self.stdout.write(f"Found {len(to_check)} schema validations with status {'|'.join(statuses)}.")
         statuses = {
             ValidationStatus.VALID: 0,
             ValidationStatus.INVALID: 0,
             ValidationStatus.SKIPPED: 0,
             ValidationStatus.ERROR: 0,
+            ValidationStatus.UNCHECKED: 0,
         }
         for sv in to_check:
-            sv.validate()
+            sv.validate(halt_on_error=options["halt_on_error"])
             sv.save()
             statuses[sv.status] += 1
 

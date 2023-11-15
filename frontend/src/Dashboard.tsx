@@ -1,9 +1,9 @@
-import {DISPLAY_NAMES_PLURAL, ICONS, LookupKey, PATHS} from "./constants";
+import {DISPLAY_NAMES_PLURAL, ICONS, LOOKUP_KEYS, LookupKey, PATHS} from "./constants";
 import useStyles from "./styles/UseStyles";
 import {AxiosError, AxiosResponse} from "axios";
 import {useQuery, useQueryClient} from "@tanstack/react-query";
 import {PaginatedSchemaValidationList, SchemaValidation, SchemaValidationsApi} from "./api_codegen";
-import {get_url_components} from "./Components/misc";
+import {get_url_components, id_from_ref_props} from "./Components/misc";
 import TableContainer from "@mui/material/TableContainer";
 import Table from "@mui/material/Table";
 import TableRow from "@mui/material/TableRow";
@@ -20,6 +20,10 @@ import Tooltip from "@mui/material/Tooltip";
 import {ResourceChip} from "./Components/ResourceChip";
 import Stack from "@mui/material/Stack";
 import {useState} from "react";
+import PrettyObject from "./Components/prettify/PrettyObject";
+import {SerializableObject} from "./Components/TypeChanger";
+import {PrettyString} from "./Components/prettify/Prettify";
+import Typography from "@mui/material/Typography";
 
 type SchemaValidationSummary = {
     detail: SchemaValidation
@@ -40,6 +44,25 @@ const get_color = (status: SchemaValidation["status"]) => {
     }
 }
 
+function IssueSummary(
+    {lookupKey, data, status}:
+        {lookupKey: LookupKey, data?: SchemaValidationSummary, status: SchemaValidation["status"]}
+) {
+    if (!lookupKey || !data || !status || data.resource_id === undefined) return null
+    return <Stack>
+        <ResourceChip
+            key={data.resource_id}
+            lookup_key={lookupKey}
+            resource_id={data.resource_id}
+        />
+        <ResourceChip key="schema" resource_id={id_from_ref_props(data.detail.schema)} lookup_key={LOOKUP_KEYS.VALIDATION_SCHEMA} />
+        {data.detail.detail instanceof Object ?
+            <PrettyObject key="details" target={data.detail.detail as unknown as SerializableObject}/> :
+            <Typography>{data.detail.detail as string}</Typography>
+        }
+    </Stack>
+}
+
 function StatusSummary(
     {lookupKey, data, statuses}:
         {lookupKey: LookupKey, data?: SchemaValidationSummary[], statuses: SchemaValidation["status"][]}
@@ -48,7 +71,7 @@ function StatusSummary(
     const status_counts: {[key in SchemaValidation["status"]]?: number} = {}
     subset.forEach(d => status_counts[d.detail.status] = (status_counts[d.detail.status] || 0) + 1)
 
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
 
     return <TableRow>
         <TableCell key="label">
@@ -63,24 +86,25 @@ function StatusSummary(
         </TableCell>
         <TableCell key="details" onClick={() => setOpen(!open)}>
             <Tooltip title="Click to show resources" describeChild={true}>
-                {open? <ICONS.EXPAND_LESS fontsize="large" /> : <ICONS.EXPAND_MORE fontSize="large"/>}
+                {open? <ICONS.EXPAND_LESS fontSize="large" /> : <ICONS.EXPAND_MORE fontSize="large"/>}
             </Tooltip>
         </TableCell>
         {statuses.map(status => <TableCell
             className={clsx(`status_summary_${status}`)}
             key={status}
         >
-            {status_counts[status] || 0}
-            {open && <Stack>
-                {subset.filter(d => d.detail.status === status)
-                        .map(d => d.resource_id)
-                        .filter((id): id is string => id !== undefined)
-                        .map(id => <ResourceChip
-                            key={id}
-                            lookup_key={lookupKey}
-                            resource_id={id}
+            {open?
+                <Stack>
+                    {subset.filter(d => d.detail.status === status)
+                        .map((d, i) => <IssueSummary
+                            lookupKey={lookupKey}
+                            status={status}
+                            data={d}
+                            key={i}
                         />)}
-            </Stack>}
+                </Stack> :
+                (status_counts[status] || 0)
+            }
         </TableCell>)}
     </TableRow>
 }

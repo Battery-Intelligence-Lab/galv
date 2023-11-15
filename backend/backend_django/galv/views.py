@@ -1718,3 +1718,12 @@ class SchemaValidationViewSet(viewsets.ReadOnlyModelViewSet):
     filter_fields = ['schema__uuid', 'object_id', 'content_type__model']
     serializer_class = SchemaValidationSerializer
     queryset = SchemaValidation.objects.all().order_by('-last_update')
+
+    # def list(self, request, *args, **kwargs):
+    #     """
+    #     List SchemaValidations, optionally filtering by schema, object, or content type.
+    #     """
+    #     for sv in self.queryset:
+    #         sv.validate()
+    #         sv.save()
+    #     return super().list(request, *args, **kwargs)

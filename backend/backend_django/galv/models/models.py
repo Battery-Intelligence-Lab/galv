@@ -41,6 +41,9 @@ class ValidationStatus(models.TextChoices):
     ERROR = "ERROR"
 
 
+VALIDATION_MOCK_ENDPOINT = "/validation_mock_request_target/"
+
+
 # Proxy User and Group models so that we can apply DRYPermissions
 class UserProxy(User):
     class Meta:
@@ -403,7 +406,7 @@ class BibliographicInfo(models.Model):
         return f"{self.user.username} byline"
 
 
-class CellFamily(AdditionalPropertiesModel, ValidatableBySchemaMixin, ResourceModelPermissionsMixin):
+class CellFamily(AdditionalPropertiesModel, ResourceModelPermissionsMixin):
     manufacturer = models.ForeignKey(to=CellManufacturers, help_text="Name of the manufacturer", null=True, blank=True, on_delete=models.CASCADE)
     model = models.ForeignKey(to=CellModels, help_text="Model number for the cells", null=False, on_delete=models.CASCADE)
     chemistry = models.ForeignKey(to=CellChemistries, help_text="Chemistry of the cells", null=True, blank=True, on_delete=models.CASCADE)
@@ -458,7 +461,7 @@ class Cell(JSONModel, ValidatableBySchemaMixin, ResourceModelPermissionsMixin):
         unique_together = [['identifier', 'family']]
 
 
-class EquipmentFamily(AdditionalPropertiesModel, ValidatableBySchemaMixin, ResourceModelPermissionsMixin):
+class EquipmentFamily(AdditionalPropertiesModel, ResourceModelPermissionsMixin):
     type = models.ForeignKey(to=EquipmentTypes, on_delete=models.CASCADE, null=False, help_text="Type of equipment")
     manufacturer = models.ForeignKey(to=EquipmentManufacturers, on_delete=models.CASCADE, null=False, help_text="Manufacturer of equipment")
     model = models.ForeignKey(to=EquipmentModels, on_delete=models.CASCADE, null=False, help_text="Model of equipment")
@@ -490,7 +493,7 @@ class Equipment(JSONModel, ValidatableBySchemaMixin, ResourceModelPermissionsMix
         }
 
 
-class ScheduleFamily(AdditionalPropertiesModel, ValidatableBySchemaMixin, ResourceModelPermissionsMixin):
+class ScheduleFamily(AdditionalPropertiesModel, ResourceModelPermissionsMixin):
     identifier = models.OneToOneField(to=ScheduleIdentifiers, unique=True, blank=False, null=False, help_text="Type of experiment, e.g. Constant-Current Discharge", on_delete=models.CASCADE)
     description = models.TextField(help_text="Description of the schedule")
     ambient_temperature = models.FloatField(help_text="Ambient temperature during the experiment (in degrees Celsius)", null=True, blank=True)
@@ -1135,7 +1138,7 @@ class SchemaValidation(models.Model):
     def __str__(self):
         return f"{self.validation_target.__str__} vs {self.schema.__str__}: {self.status}"
 
-    def validate(self):
+    def validate(self, halt_on_error = False):
         """
         Validate the component against the schema.
         """
@@ -1160,7 +1163,7 @@ class SchemaValidation(models.Model):
                 return
 
             # Serialize the object and validate against the schema
-            mock_request = RequestFactory().get('/')
+            mock_request = RequestFactory().get(VALIDATION_MOCK_ENDPOINT)
             mock_request.META['SERVER_NAME'] = settings.ALLOWED_HOSTS[0]
             mock_request.user = User.objects.filter(is_superuser=True).first()
             data = serializer(self.validation_target, context={'request': mock_request}).data
@@ -1172,20 +1175,27 @@ class SchemaValidation(models.Model):
                 s['items'] = {'$ref': f"#/$defs/{model_class.__name__}"}
                 jsonschema.validate(d, s)
                 self.status = ValidationStatus.VALID
+                self.detail = None
             except jsonschema.exceptions.ValidationError as e:
+                def unwrap_validationerror(err):
+                    if isinstance(err, jsonschema.exceptions.ValidationError):
+                        return {
+                            'message': err.message,
+                            'context': [unwrap_validationerror(c) for c in err.context],
+                            'cause': err.cause,
+                            'json_path': err.json_path,
+                            'validator': err.validator,
+                            'validator_value': err.validator_value
+                        }
+                    return err
                 self.status = ValidationStatus.INVALID
-                self.detail = {
-                    'message': e.message,
-                    'context': e.context,
-                    'cause': e.cause,
-                    'json_path': e.json_path,
-                    'validator': e.validator,
-                    'validator_value': e.validator_value
-                }
+                self.detail = unwrap_validationerror(e)
             except _WrappedReferencingError:
                 self.status = ValidationStatus.SKIPPED
 
         except Exception as e:
+            if halt_on_error:
+                raise e
             self.status = ValidationStatus.ERROR
             self.detail = f"Error during validation: {e}"
 

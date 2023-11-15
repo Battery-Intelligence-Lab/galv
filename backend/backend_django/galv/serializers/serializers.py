@@ -33,7 +33,7 @@ from knox.models import AuthToken
 from .utils import AdditionalPropertiesModelSerializer, GetOrCreateTextField, augment_extra_kwargs, url_help_text, \
     get_model_field, PermissionsMixin, TruncatedUserHyperlinkedRelatedIdField, \
     TruncatedGroupHyperlinkedRelatedIdField, TruncatedHyperlinkedRelatedIdField, \
-    CreateOnlyMixin
+    CreateOnlyMixin, ValidationPresentationMixin
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer, PermissionsMixin):
@@ -276,7 +276,7 @@ class WithTeamMixin(serializers.Serializer):
                 raise ValidationError("You may only edit resources in your own team(s)")
         return value
 
-class CellSerializer(AdditionalPropertiesModelSerializer, PermissionsMixin, WithTeamMixin):
+class CellSerializer(AdditionalPropertiesModelSerializer, PermissionsMixin, WithTeamMixin, ValidationPresentationMixin):
     family = TruncatedHyperlinkedRelatedIdField(
         'CellFamilySerializer',
         ['manufacturer', 'model', 'chemistry', 'form_factor'],
@@ -1023,6 +1023,6 @@ class SchemaValidationSerializer(serializers.HyperlinkedModelSerializer, Permiss
 
     class Meta:
         model = SchemaValidation
-        fields = ['url', 'id', 'schema', 'validation_target', 'status', 'permissions', 'detail']
+        fields = ['url', 'id', 'schema', 'validation_target', 'status', 'permissions', 'detail', 'last_update']
         read_only_fields = [*fields]
         extra_kwargs = augment_extra_kwargs()
