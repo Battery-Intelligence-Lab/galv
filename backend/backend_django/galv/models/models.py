@@ -343,7 +343,7 @@ class ResourceModelPermissionsMixin(models.Model):
         return True
 
     def save(
-        self, force_insert=False, force_update=False, using=None, update_fields=None
+            self, force_insert=False, force_update=False, using=None, update_fields=None
     ):
         if self.any_user_can_edit and not self.any_user_can_read:
             self.any_user_can_read = True
@@ -368,16 +368,16 @@ class ValidatableBySchemaMixin(models.Model):
             self, force_insert=False, force_update=False, using=None, update_fields=None
     ):
         super(ValidatableBySchemaMixin, self).save(force_insert, force_update, using, update_fields)
+        # TODO: stop this happening for minor updates to Files, e.g. when last checked time is updated
         for schema in ValidationSchema.objects.all():
-            SchemaValidation.objects.filter(
-                content_type=ContentType.objects.get_for_model(self),
-                object_id=self.pk
-            ).update_or_create(
+            SchemaValidation.objects.update_or_create(
+                defaults={
+                    "status": ValidationStatus.UNCHECKED,
+                    "detail": None
+                },
                 schema=schema,
                 content_type=ContentType.objects.get_for_model(self),
-                object_id=self.pk,
-                status=ValidationStatus.UNCHECKED,
-                detail=None
+                object_id=self.pk
             )
 
     class Meta:
@@ -429,7 +429,7 @@ class CellFamily(AdditionalPropertiesModel, ResourceModelPermissionsMixin):
         unique_together = [['model', 'manufacturer']]
 
     def save(
-        self, force_insert=False, force_update=False, using=None, update_fields=None
+            self, force_insert=False, force_update=False, using=None, update_fields=None
     ):
         super(CellFamily, self).save(force_insert, force_update, using, update_fields)
 
@@ -1197,7 +1197,7 @@ class SchemaValidation(models.Model):
             if halt_on_error:
                 raise e
             self.status = ValidationStatus.ERROR
-            self.detail = f"Error during validation: {e}"
+            self.detail = {'message': f"Error running validation: {e}"}
 
     class Meta:
         indexes = [

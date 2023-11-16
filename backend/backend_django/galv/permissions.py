@@ -101,8 +101,9 @@ class ResourceFilterBackend(DRYPermissionFiltersBase):
 class SchemaValidationFilterBackend(ResourceFilterBackend):
     action_routing = True
     def filter_list_queryset(self, request, queryset, view):
-        schemas = [q.schema for q in queryset]
+        schemas = {q.schema for q in queryset}
+        included_schemas = [s for s in schemas]
         for schema in schemas:
             if not schema.has_object_read_permission(request):
-                schemas.pop(schemas.index(schema))
-        return queryset.filter(schema__in=schemas)
+                included_schemas.remove(schema)
+        return queryset.filter(schema__in=included_schemas)

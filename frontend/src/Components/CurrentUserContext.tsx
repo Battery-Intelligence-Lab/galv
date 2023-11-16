@@ -53,10 +53,12 @@ export default function CurrentUserContextProvider({children}: {children: React.
     })
 
     const Logout = () => {
-        window.localStorage.removeItem('user')
-        setUser(null)
-        axios.defaults.headers.common['Authorization'] = undefined
-        queryClient.invalidateQueries({predicate: (q: any) => true})
+        if (user) {
+            window.localStorage.removeItem('user')
+            setUser(null)
+            axios.defaults.headers.common['Authorization'] = undefined
+            queryClient.invalidateQueries({predicate: (q: any) => true})
+        }
     }
 
     const do_login = (username: string, password: string) => {
