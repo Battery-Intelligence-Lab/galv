@@ -366,7 +366,7 @@ class EquipmentFamilySerializer(AdditionalPropertiesModelSerializer, Permissions
         read_only_fields = ['url', 'uuid', 'in_use', 'equipment', 'permissions']
 
 
-class EquipmentSerializer(AdditionalPropertiesModelSerializer, PermissionsMixin, WithTeamMixin):
+class EquipmentSerializer(AdditionalPropertiesModelSerializer, PermissionsMixin, WithTeamMixin, ValidationPresentationMixin):
     family = TruncatedHyperlinkedRelatedIdField(
         'EquipmentFamilySerializer',
         ['type', 'manufacturer', 'model'],
@@ -413,7 +413,7 @@ class ScheduleFamilySerializer(AdditionalPropertiesModelSerializer, PermissionsM
         read_only_fields = ['url', 'uuid', 'in_use', 'schedules', 'permissions']
 
 
-class ScheduleSerializer(AdditionalPropertiesModelSerializer, PermissionsMixin, WithTeamMixin):
+class ScheduleSerializer(AdditionalPropertiesModelSerializer, PermissionsMixin, WithTeamMixin, ValidationPresentationMixin):
     family = TruncatedHyperlinkedRelatedIdField(
         'ScheduleFamilySerializer',
         ['identifier'],

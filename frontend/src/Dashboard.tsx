@@ -28,6 +28,7 @@ import Typography from "@mui/material/Typography";
 import Container from "@mui/material/Container";
 import Chip from "@mui/material/Chip";
 import Representation from "./Components/Representation";
+import ListSubheader from "@mui/material/ListSubheader";
 
 type SchemaValidationSummary = {
     detail: SchemaValidation
@@ -77,6 +78,7 @@ function KeySummary(
     const [open, setOpen] = useState(false);
 
     const tooltip = (status: SchemaValidation["status"]) => <List>
+        <ListSubheader>{status}</ListSubheader>
         {status_counts[status] && Object.entries(status_counts[status]!).map(([schema_id, count]) =>
             <ListItem key={schema_id}>
                 <ListItemText key="count">
@@ -257,7 +259,7 @@ export function DatasetStatus() {
     }
 
     return <Container maxWidth="lg">
-        <Card>
+        {query.isLoading? "Loading..." : <Card>
             <CardHeader
                 avatar={<LookupKeyIcon lookupKey={LOOKUP_KEYS.FILE} />}
                 title={DISPLAY_NAMES_PLURAL[LOOKUP_KEYS.FILE]}
@@ -279,7 +281,8 @@ export function DatasetStatus() {
                         </Tooltip>)}
                 </Stack>}
             />
-        </Card>
+        </Card>}
+
     </Container>
 }
 
