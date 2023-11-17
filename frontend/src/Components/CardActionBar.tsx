@@ -26,9 +26,12 @@ import {SvgIconProps} from "@mui/material/SvgIcon";
 import {id_from_ref_props} from "./misc";
 import clsx from "clsx";
 import UseStyles from "../styles/UseStyles";
+import {useSelectionManagement} from "./SelectionManagementContext";
+import Checkbox from "@mui/material/Checkbox";
 
 type CardActionBarProps = {
     lookup_key: LookupKey
+    selectable?: boolean
     resource_id?: string|number
     excludeContext?: boolean
     editable?: boolean
@@ -61,6 +64,8 @@ export default function CardActionBar(props: CardActionBarProps) {
         fontSize: "large",
         ...props.iconProps
     }
+    const selectable = props.selectable ?? true
+    const {toggleSelected, isSelected} = useSelectionManagement()
 
     const context_section = <>{
         Object.entries(FIELDS[props.lookup_key])
@@ -160,6 +165,15 @@ export default function CardActionBar(props: CardActionBarProps) {
         }
     }
 
+    const select_section = selectable && apiResource && apiResource?.url && <Tooltip
+        title={`${isSelected(apiResource)? 'Deselect' : 'Select'} this ${DISPLAY_NAMES[props.lookup_key]}`}
+        arrow
+        describeChild
+        key="select"
+        >
+        <Checkbox checked={isSelected(apiResource)} onChange={() => toggleSelected(apiResource!)}/>
+    </Tooltip>
+
     return <Stack direction="row" spacing={1} alignItems="center">
         {!props.excludeContext && context_section}
         {props.editable && edit_section}
@@ -173,6 +187,7 @@ export default function CardActionBar(props: CardActionBarProps) {
                 <EditIcon className={clsx(classes.deleteIcon)} {...iconProps}/>
             </IconButton>
         </Tooltip>}
+        {select_section}
         {props.expanded !== undefined &&
             props.setExpanded !== undefined &&
             <Tooltip title={props.expanded ? "Hide Details" : "Show Details"} arrow describeChild key="expand">

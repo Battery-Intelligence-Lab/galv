@@ -23,6 +23,7 @@ import ErrorIcon from '@mui/icons-material/Error';
 import HideSourceIcon from '@mui/icons-material/HideSource';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import DownloadIcon from '@mui/icons-material/Download';
 
 import {
     CellChemistriesApi,
@@ -105,8 +106,10 @@ export const ICONS = {
     LOGOUT: LogoutIcon,
     CREATE: AddCircleIcon,
     CANCEL: CancelIcon,
+    CHECK: CheckCircleIcon,
     EXPAND_MORE: ExpandMoreIcon,
     EXPAND_LESS: ExpandLessIcon,
+    DOWNLOAD: DownloadIcon,
     validation_status_ERROR: ErrorIcon,
     validation_status_UNCHECKED: PendingIcon,
     validation_status_VALID: CheckCircleIcon,

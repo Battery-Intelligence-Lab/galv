@@ -43,6 +43,8 @@ import {SnackbarMessenger, SnackbarMessengerContextProvider} from "./Components/
 import Tooltip from "@mui/material/Tooltip";
 import LookupKeyIcon from "./Components/LookupKeyIcon";
 import Dashboard from "./Dashboard";
+import SelectionManagementContextProvider from "./Components/SelectionManagementContext";
+import {SelectedResourcesPane} from "./Components/SelectedResourcesPane";
 
 export const pathMatches = (path: string, pathname: string) => matchPath({path: path, end: true}, pathname) !== null
 
@@ -148,6 +150,7 @@ export function Core() {
             <main className={classes.content}>
                 <FilterContextProvider>
                     <FilterBar key="filter_bar" />
+                    <SelectedResourcesPane />
                     <Outlet key="main_content" />
                 </FilterContextProvider>
             </main>
@@ -221,7 +224,9 @@ export default function WrappedCore() {
     // the user is logged out by the server
     return <SnackbarMessengerContextProvider>
         <CurrentUserContextProvider>
-            <Core />
+            <SelectionManagementContextProvider>
+                <Core />
+            </SelectionManagementContextProvider>
         </CurrentUserContextProvider>
     </SnackbarMessengerContextProvider>
 }
