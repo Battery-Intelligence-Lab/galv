@@ -159,19 +159,15 @@ export default makeStyles()((theme) => {
     filterBar: {
       justifyContent: "space-between",
       margin: theme.spacing(0.5),
-      maxHeight: theme.spacing(15),
+      maxHeight: theme.spacing(30),
       overflowY: "auto",
-      "& .create_form, & .new_filter": {
-        position: "sticky",
-        top: 0,
-        marginTop: theme.spacing(1),
-        height: "min-content",
-        "& .summary": {
-          justifyContent: "space-between",
-        }
-      },
       "& .horizontal": {
         alignItems: "center",
+      }
+    },
+    filterCreate: {
+      "& .MuiInputBase-root": {
+        height: "3em",
       }
     },
     itemChip: {
@@ -253,6 +249,14 @@ export default makeStyles()((theme) => {
     },
     prettySelect: {
       width: 300,
+    },
+    selectedResources: {},
+    selectedResourcesList: {},
+    tool: {
+      width: "100%",
+      border: "none",
+      boxShadow: "none",
+      borderRadius: 0,
     },
     typeChangerButton: {},
     typeChangerPopover: {

@@ -21,7 +21,6 @@ import {
     LOOKUP_KEYS,
     LookupKey
 } from "../../constants";
-import Grid from "@mui/material/Unstable_Grid2";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import ToggleButton from "@mui/material/ToggleButton";
 import MenuItem from "@mui/material/MenuItem";
@@ -31,9 +30,12 @@ import Autocomplete from "@mui/material/Autocomplete";
 import Typography from "@mui/material/Typography";
 import clsx from "clsx";
 import useStyles from "../../styles/UseStyles";
-import {ButtonGroup} from "@mui/material";
+import ButtonGroup from "@mui/material/ButtonGroup";
 import Button from "@mui/material/Button";
 import LookupKeyIcon from "../LookupKeyIcon";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import CardHeader from "@mui/material/CardHeader";
 
 type FilterChipProps = {
     filter: Filter
@@ -53,6 +55,7 @@ type FilterCreateFormProps = {
 const isFilterableField = (field: Field) => ["string", "number"].includes(field.type)
 
 function FilterCreateForm({onCreate, onCancel}: FilterCreateFormProps) {
+    const {classes} = useStyles()
     const [value, setValue] = useState<Serializable>("")
     const [key, setKey] = useState<string>("")
     const [lookupKey, setLookupKey] =
@@ -76,8 +79,8 @@ function FilterCreateForm({onCreate, onCancel}: FilterCreateFormProps) {
         return family.applies_to.includes(type as any)
     }
 
-    return <Stack className={clsx("create_form")} spacing={0.5}>
-        <Stack direction="row" spacing={0.5} key="properties" className={clsx('properties')}>
+    return <Stack spacing={0.5} className={clsx(classes.filterCreate)}>
+        <Stack direction="row" spacing={0.5}>
             <Select
                 value={lookupKey}
                 onChange={(e) =>
@@ -142,23 +145,14 @@ function FilterCreateForm({onCreate, onCancel}: FilterCreateFormProps) {
                 onChange={(e) => setValue(e.currentTarget.value || "")}
                 label="Y"
             />
-        </Stack>
-        <Stack direction="row" spacing={0.5} key="summary" className={clsx('summary')}>
-            <Typography key="summary" className={clsx('summary-text')}>
-                {
-                    family !== "" &&
-                    `View ${DISPLAY_NAMES_PLURAL[lookupKey]} where 
-                    ${family.get_name({key: key || 'X', test_versus: value || 'Y', family}, false)}`
-                }
-            </Typography>
             <ButtonGroup>
                 <Button
                     key="create"
                     onClick={() => {
-                    if (family === "" || value === "" || key === "") return
-                    onCreate(lookupKey, {key, family, test_versus: value})
-                    reset()
-                }}
+                        if (family === "" || value === "" || key === "") return
+                        onCreate(lookupKey, {key, family, test_versus: value})
+                        reset()
+                    }}
                     disabled={family === "" || value === "" || key === ""}
                 >
                     Add filter
@@ -171,52 +165,27 @@ function FilterCreateForm({onCreate, onCancel}: FilterCreateFormProps) {
                 </Button>
             </ButtonGroup>
         </Stack>
+        <Typography key="summary" className={clsx('summary-text')}>
+            {
+                family !== "" &&
+                `View ${DISPLAY_NAMES_PLURAL[lookupKey]} where 
+                    ${family.get_name({key: key || 'X', test_versus: value || 'Y', family}, false)}`
+            }
+        </Typography>
     </Stack>
 }
 
 export default function FilterBar() {
 
-    const {activeFilters, setActiveFilters} = useContext(FilterContext)
-    const [creating, setCreating] = useState<boolean>(false)
+    const {activeFilters, setActiveFilters, clearActiveFilters} = useContext(FilterContext)
+    const [creating, setCreating] = useState<boolean>(true)
+    const [open, setOpen] = useState<boolean>(false)
 
     const {classes} = useStyles()
 
-    return <Grid container key="filter_bar_content" className={clsx(classes.filterBar)}>
-        <Stack spacing={1} key="existing_filters" className={clsx("existing_filters")}>
-            {
-                Object.entries(activeFilters).map(([lookup_key, content]) => {
-                    const _key = lookup_key as LookupKey
-                    if (content.filters.length === 0) return <Fragment key={_key}></Fragment>
-                    return <Stack direction="row" spacing={1} key={_key} className={clsx("horizontal")}>
-                        <LookupKeyIcon key='icon' lookupKey={_key} fontSize="small" />
-                        <ToggleButtonGroup
-                            key='mode'
-                            value={content.mode}
-                            exclusive
-                            onChange={(_, v) => setActiveFilters({
-                                ...activeFilters,
-                                [_key]: {...content, mode: v as FilterMode}
-                            })}
-                            aria-label="Filter mode"
-                            size="small"
-                        >
-                            <ToggleButton key={'any'} value={FILTER_MODES.ANY}>{FILTER_MODES.ANY}</ToggleButton>
-                            <ToggleButton key={'all'} value={FILTER_MODES.ALL}>{FILTER_MODES.ALL}</ToggleButton>
-                        </ToggleButtonGroup>
-                        {content.filters.map((filter, i) =>
-                            <FilterChip
-                                key={`filter_${_key}-${i}`}
-                                filter={filter}
-                                onDelete={() => setActiveFilters({
-                                    ...activeFilters,
-                                    [_key]: {...content, filters: content.filters.filter(f => f !== filter)}
-                                })}
-                            />
-                        )}
-                    </Stack>
-                })
-            }
-        </Stack>
+    const filter_count = Object.values(activeFilters).map(f => f.filters.length).reduce((a, b) => a + b, 0)
+
+    const actions = <Stack direction="row" spacing={1} onClick={e => e.stopPropagation()}>
         {
             creating?
                 <FilterCreateForm
@@ -230,6 +199,8 @@ export default function FilterBar() {
                                 filters: [...activeFilters[lookup_key].filters, filter]
                             }
                         })
+                        setCreating(false)
+                        setOpen(true)
                     }}
                     onCancel={() => setCreating(false)}
                 /> :
@@ -240,5 +211,61 @@ export default function FilterBar() {
                     onClick={() => setCreating(true)}
                 >New filter</Button>
         }
-    </Grid>
+        {
+            filter_count > 0 &&
+            <Button
+                key='clear'
+                className={clsx("clear")}
+                endIcon={<ICONS.CANCEL fontSize="small"/>}
+                onClick={() => clearActiveFilters()}
+            >Clear</Button>
+        }
+    </Stack>
+
+    return <Card key="filter_bar_content" className={clsx(classes.filterBar, classes.tool)}>
+        <CardHeader
+            title={filter_count > 0? `${filter_count} filters applied` : ""}
+            subheader={filter_count > 0? open? "Hide details" : "Show all" : ""}
+            onClick={() => setOpen(!open)}
+            action={actions}
+            sx={{cursor: filter_count > 0? "pointer" : "default"}}
+        />
+        {open && filter_count > 0 && <CardContent>
+            <Stack spacing={1} key="existing_filters" className={clsx("existing_filters")}>
+                {
+                    Object.entries(activeFilters).map(([lookup_key, content]) => {
+                        const _key = lookup_key as LookupKey
+                        if (content.filters.length === 0) return <Fragment key={_key}></Fragment>
+                        return <Stack direction="row" spacing={1} key={_key} className={clsx("horizontal")}>
+                            <LookupKeyIcon key='icon' lookupKey={_key} fontSize="small" />
+                            <ToggleButtonGroup
+                                key='mode'
+                                value={content.mode}
+                                exclusive
+                                onChange={(_, v) => setActiveFilters({
+                                    ...activeFilters,
+                                    [_key]: {...content, mode: v as FilterMode}
+                                })}
+                                aria-label="Filter mode"
+                                size="small"
+                            >
+                                <ToggleButton key={'any'} value={FILTER_MODES.ANY}>{FILTER_MODES.ANY}</ToggleButton>
+                                <ToggleButton key={'all'} value={FILTER_MODES.ALL}>{FILTER_MODES.ALL}</ToggleButton>
+                            </ToggleButtonGroup>
+                            {content.filters.map((filter, i) =>
+                                <FilterChip
+                                    key={`filter_${_key}-${i}`}
+                                    filter={filter}
+                                    onDelete={() => setActiveFilters({
+                                        ...activeFilters,
+                                        [_key]: {...content, filters: content.filters.filter(f => f !== filter)}
+                                    })}
+                                />
+                            )}
+                        </Stack>
+                    })
+                }
+            </Stack>
+        </CardContent>}
+    </Card>
 }
