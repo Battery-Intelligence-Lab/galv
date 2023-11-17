@@ -984,6 +984,13 @@
                     },
                     {
                         "in": "query",
+                        "name": "type__is_required",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "in": "query",
                         "name": "type__name",
                         "schema": {
                             "type": "string"
@@ -3927,7 +3934,7 @@
         "/schema_validations/": {
             "get": {
                 "operationId": "schema_validations_list",
-                "description": "SchemaValidations are the results of validating Galv objects against ValidationSchemas.",
+                "description": "List SchemaValidations, optionally filtering by schema, object, or content type.",
                 "parameters": [
                     {
                         "name": "limit",
@@ -8401,11 +8408,18 @@
                         "readOnly": true,
                         "nullable": true,
                         "description": "Validation detail"
+                    },
+                    "last_update": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "description": "Date and time of last status update"
                     }
                 },
                 "required": [
                     "detail",
                     "id",
+                    "last_update",
                     "permissions",
                     "schema",
                     "status",

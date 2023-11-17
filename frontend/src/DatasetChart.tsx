@@ -1,50 +1,18 @@
-// // SPDX-License-Identifier: BSD-2-Clause
-// // Copyright  (c) 2020-2023, The Chancellor, Masters and Scholars of the University
-// // of Oxford, and the 'Galv' Developers. All rights reserved.
-//
-// import React, { useEffect, useState, Fragment } from "react";
-// import { ResponsiveLine, Datum } from '@nivo/line'
-// import Connection from "./APIConnection";
-// import CircularProgress from "@mui/material/CircularProgress";
-// import Typography from "@mui/material/Typography";
-// import Stack from "@mui/material/Stack";
-// import Box from "@mui/material/Box";
-// import TextField from "@mui/material/TextField";
-//
-// export type UnitFields = {
-//   url: string;
-//   id: number;
-//   name: string;
-//   symbol: string;
-//   description: string;
-// }
-//
-// export type ColumnFields = {
-//   id: number;
-//   url: string;
-//   name: string;
-//   dataset: string;
-//   is_numeric: boolean;
-//   type_name: string;
-//   data_type: string;
-//   description: string;
-//   official_sample_counter: boolean;
-//   unit: UnitFields;
-//   values: string;
-// }
-//
-// export type DatasetChartProps = any
-//
-// export type ColumnDataFields<T extends string | number> = {
-//   id: number;
-//   url: string;
-//   observations: T[];
-// }
-//
-// type keyColumnMap = {
-//   [column_name in "time" | "volts" | "amps"]: ColumnFields | undefined;
-// };
-//
+// SPDX-License-Identifier: BSD-2-Clause
+// Copyright  (c) 2020-2023, The Chancellor, Masters and Scholars of the University
+// of Oxford, and the 'Galv' Developers. All rights reserved.
+
+import React, {useEffect, useRef, useState} from "react";
+import {ResponsiveLine} from '@nivo/line'
+import Typography from "@mui/material/Typography";
+import Stack from "@mui/material/Stack";
+import CardHeader from "@mui/material/CardHeader";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import {ColumnsApi, DataColumn} from "./api_codegen";
+import {useQueries, useQuery} from "@tanstack/react-query";
+import {AxiosResponse} from "axios";
+
 // // These values come from the fixtures injected into Galv's backend
 // const TEST_TIME_COLUMN = "Time"
 // const VOLTAGE_COLUMN = "Volts"
@@ -251,60 +219,105 @@
 //   )
 //
 // }
-//
-// export default function DatasetChart(props: DatasetChartProps) {
-//   const [filterMin, setFilterMin] = useState<number>(0)
-//   const [filterMod, setFilterMod] = useState<number>(1)
-//   const [filterMax, setFilterMax] = useState<number|undefined>(2000)
-//   const [filter, setFilter] = useState<string>(get_filter_str())
-//
-//   function get_filter_str() {
-//     const max = filterMax === undefined ? '' : `&max=${filterMax}`
-//     const mod = filterMod === undefined ? '' : `&mod=${filterMod}`
-//     return `min=${filterMin}${max}${mod}`
-//   }
-//
-//   useEffect(
-//     () => setFilter(get_filter_str()),
-//     [filterMin, filterMax, filterMod]
-//   )
-//
-//   return (
-//     <Stack spacing={1} sx={{width: '100%'}} justifyContent="center" alignItems="center">
-//       <Chart dataset={props.dataset} filter={filter}/>
-//       <Stack
-//         spacing={4}
-//         direction="row"
-//         alignItems="center"
-//         justifyContent="center"
-//       >
-//         <TextField
-//           name="filter_min"
-//           label="Start at record"
-//           type={"number"}
-//           value={filterMin}
-//           onChange={e => setFilterMin(parseInt(e.target.value))}
-//         />
-//         <TextField
-//           name="filter_max"
-//           label="End at record"
-//           type={"number"}
-//           value={filterMax}
-//           onChange={e => {
-//             const v = parseInt(e.target.value)
-//             setFilterMax(v? v : undefined)
-//           }}
-//         />
-//         <TextField
-//           name="filter_mod"
-//           label="Show every Nth record"
-//           type={"number"}
-//           value={filterMod}
-//           onChange={e => setFilterMod(parseInt(e.target.value))}
-//         />
-//       </Stack>
-//     </Stack>
-//   )
-//
-// }
-export {}
+
+export function DatasetChart({file_uuid}: {file_uuid: string}) {
+    const [maxDataPoints, setMaxDataPoints] = useState<number>(10)
+    const [chartKey, setChartKey] = useState<number[]>([])
+
+    const api_handler = new ColumnsApi()
+    const columns_query = useQuery({
+        queryKey: ["COLUMNS", file_uuid, "list"],
+        queryFn: () => api_handler.columnsList(
+            undefined,
+            file_uuid,
+            undefined,
+            undefined,
+            undefined,
+            true
+        )
+    })
+    const value_queries = useQueries({
+        queries: (columns_query.data?.data.results ?? []).map((col) => ({
+            queryKey: ["COLUMNS", file_uuid, col.id, "values"],
+            queryFn: () => api_handler.columnsValuesRetrieve(col.id, {params: {max: maxDataPoints}})
+        }))
+    })
+
+    const time_column = columns_query.data?.data.results?.findIndex((col) => col.type_name === "Time")
+
+    const stream_to_numbers = (stream: any): (number|null)[] => {
+        if (typeof stream !== "string") return []
+        try {
+            const lines = (stream as string).split("\n")
+            return lines.map((line) => {
+                try {
+                    return Number(line)
+                } catch (e) {
+                    return null
+                }
+            })
+        } catch (e) {
+            console.error(`Error parsing stream to numbers`, {stream, e})
+        }
+        return []
+    }
+
+    const chart_data = value_queries
+    .filter((_, i) => i !== time_column)
+        .map((query, i) => {
+        if (!query.data?.data || time_column === undefined) return {
+            id: `Col ${i}`,
+            data: []
+        }
+        if (!chartKey.includes(i)) setChartKey(prevState => [...prevState, i])
+        const values = stream_to_numbers(query.data?.data)
+        return {
+            id: columns_query.data?.data.results?.[i]?.name ?? "Loading...",
+            data: stream_to_numbers(value_queries[time_column]?.data?.data).map((t, n) => {
+                return {
+                    x: t,
+                    y: values[n] ?? 0
+                }
+            })
+        }
+    }, {})
+
+    return <CardContent>
+        <Stack spacing={1}>
+            <Typography>Max data points: {maxDataPoints}</Typography>
+            {columns_query.data?
+                columns_query.data.data.results?.map((col, i) => <Stack key={i}>
+                    <Typography>{col.name}</Typography>
+                    <textarea
+                        rows={10}
+                        value={(value_queries[i].data?.data as string[]|undefined) ?? "Loading..."}
+                        readOnly={true}
+                    />
+                </Stack>) : "Loading..."
+            }
+            {chart_data && <ResponsiveLine
+                key={chartKey.reduce((a, b) => a + b, 0)}
+                data={chart_data}
+                margin={{ top: 50, right: 160, bottom: 50, left: 60 }}
+                enablePoints={false}
+                xScale={{ type: 'linear' }}
+                yScale={{ type: 'linear', min: 'auto', max: 'auto'}}
+                lineWidth={2}
+            />}
+        </Stack>
+    </CardContent>
+}
+
+export default function DatasetChartWrapper({file_uuid}: {file_uuid: string}) {
+    const [open, setOpen] = useState<boolean>(false)
+
+    return <Card>
+        <CardHeader
+            title={<Typography variant="h5">Dataset Chart</Typography>}
+            subheader={<Typography variant="body1">View a chart of a dataset</Typography>}
+            onClick={() => setOpen(!open)}
+            sx={{cursor: "pointer"}}
+        />
+        {open && <DatasetChart file_uuid={file_uuid} />}
+    </Card>
+}

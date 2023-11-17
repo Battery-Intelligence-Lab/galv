@@ -3329,6 +3329,12 @@ export interface SchemaValidation {
      * @memberof SchemaValidation
      */
     'detail': { [key: string]: any; } | null;
+    /**
+     * Date and time of last status update
+     * @type {string}
+     * @memberof SchemaValidation
+     */
+    'last_update': string;
 }
 
 export const SchemaValidationStatusEnum = {
@@ -5210,12 +5216,13 @@ export const ColumnsApiAxiosParamCreator = function (configuration?: Configurati
          * @param {number} [limit] Number of results to return per page.
          * @param {number} [offset] The initial index from which to return the results.
          * @param {number} [typeId] 
+         * @param {boolean} [typeIsRequired] 
          * @param {string} [typeName] 
          * @param {string} [typeUnitSymbol] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        columnsList: async (fileName?: string, fileUuid?: string, limit?: number, offset?: number, typeId?: number, typeName?: string, typeUnitSymbol?: string, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+        columnsList: async (fileName?: string, fileUuid?: string, limit?: number, offset?: number, typeId?: number, typeIsRequired?: boolean, typeName?: string, typeUnitSymbol?: string, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
             const localVarPath = `/columns/`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -5252,6 +5259,10 @@ export const ColumnsApiAxiosParamCreator = function (configuration?: Configurati
 
             if (typeId !== undefined) {
                 localVarQueryParameter['type__id'] = typeId;
+            }
+
+            if (typeIsRequired !== undefined) {
+                localVarQueryParameter['type__is_required'] = typeIsRequired;
             }
 
             if (typeName !== undefined) {
@@ -5371,13 +5382,14 @@ export const ColumnsApiFp = function(configuration?: Configuration) {
          * @param {number} [limit] Number of results to return per page.
          * @param {number} [offset] The initial index from which to return the results.
          * @param {number} [typeId] 
+         * @param {boolean} [typeIsRequired] 
          * @param {string} [typeName] 
          * @param {string} [typeUnitSymbol] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async columnsList(fileName?: string, fileUuid?: string, limit?: number, offset?: number, typeId?: number, typeName?: string, typeUnitSymbol?: string, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<PaginatedDataColumnList>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.columnsList(fileName, fileUuid, limit, offset, typeId, typeName, typeUnitSymbol, options);
+        async columnsList(fileName?: string, fileUuid?: string, limit?: number, offset?: number, typeId?: number, typeIsRequired?: boolean, typeName?: string, typeUnitSymbol?: string, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<PaginatedDataColumnList>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.columnsList(fileName, fileUuid, limit, offset, typeId, typeIsRequired, typeName, typeUnitSymbol, options);
             return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
         },
         /**
@@ -5420,13 +5432,14 @@ export const ColumnsApiFactory = function (configuration?: Configuration, basePa
          * @param {number} [limit] Number of results to return per page.
          * @param {number} [offset] The initial index from which to return the results.
          * @param {number} [typeId] 
+         * @param {boolean} [typeIsRequired] 
          * @param {string} [typeName] 
          * @param {string} [typeUnitSymbol] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        columnsList(fileName?: string, fileUuid?: string, limit?: number, offset?: number, typeId?: number, typeName?: string, typeUnitSymbol?: string, options?: any): AxiosPromise<PaginatedDataColumnList> {
-            return localVarFp.columnsList(fileName, fileUuid, limit, offset, typeId, typeName, typeUnitSymbol, options).then((request) => request(axios, basePath));
+        columnsList(fileName?: string, fileUuid?: string, limit?: number, offset?: number, typeId?: number, typeIsRequired?: boolean, typeName?: string, typeUnitSymbol?: string, options?: any): AxiosPromise<PaginatedDataColumnList> {
+            return localVarFp.columnsList(fileName, fileUuid, limit, offset, typeId, typeIsRequired, typeName, typeUnitSymbol, options).then((request) => request(axios, basePath));
         },
         /**
          *  Column instances link Column Types to the TimeseriesData they contain.  Searchable fields: - dataset__name - type__name (Column Type name)         
@@ -5466,14 +5479,15 @@ export class ColumnsApi extends BaseAPI {
      * @param {number} [limit] Number of results to return per page.
      * @param {number} [offset] The initial index from which to return the results.
      * @param {number} [typeId] 
+     * @param {boolean} [typeIsRequired] 
      * @param {string} [typeName] 
      * @param {string} [typeUnitSymbol] 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ColumnsApi
      */
-    public columnsList(fileName?: string, fileUuid?: string, limit?: number, offset?: number, typeId?: number, typeName?: string, typeUnitSymbol?: string, options?: AxiosRequestConfig) {
-        return ColumnsApiFp(this.configuration).columnsList(fileName, fileUuid, limit, offset, typeId, typeName, typeUnitSymbol, options).then((request) => request(this.axios, this.basePath));
+    public columnsList(fileName?: string, fileUuid?: string, limit?: number, offset?: number, typeId?: number, typeIsRequired?: boolean, typeName?: string, typeUnitSymbol?: string, options?: AxiosRequestConfig) {
+        return ColumnsApiFp(this.configuration).columnsList(fileName, fileUuid, limit, offset, typeId, typeIsRequired, typeName, typeUnitSymbol, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -10609,7 +10623,7 @@ export class SchedulesApi extends BaseAPI {
 export const SchemaValidationsApiAxiosParamCreator = function (configuration?: Configuration) {
     return {
         /**
-         * SchemaValidations are the results of validating Galv objects against ValidationSchemas.
+         * List SchemaValidations, optionally filtering by schema, object, or content type.
          * @param {number} [limit] Number of results to return per page.
          * @param {number} [offset] The initial index from which to return the results.
          * @param {*} [options] Override http request option.
@@ -10703,7 +10717,7 @@ export const SchemaValidationsApiFp = function(configuration?: Configuration) {
     const localVarAxiosParamCreator = SchemaValidationsApiAxiosParamCreator(configuration)
     return {
         /**
-         * SchemaValidations are the results of validating Galv objects against ValidationSchemas.
+         * List SchemaValidations, optionally filtering by schema, object, or content type.
          * @param {number} [limit] Number of results to return per page.
          * @param {number} [offset] The initial index from which to return the results.
          * @param {*} [options] Override http request option.
@@ -10734,7 +10748,7 @@ export const SchemaValidationsApiFactory = function (configuration?: Configurati
     const localVarFp = SchemaValidationsApiFp(configuration)
     return {
         /**
-         * SchemaValidations are the results of validating Galv objects against ValidationSchemas.
+         * List SchemaValidations, optionally filtering by schema, object, or content type.
          * @param {number} [limit] Number of results to return per page.
          * @param {number} [offset] The initial index from which to return the results.
          * @param {*} [options] Override http request option.
@@ -10763,7 +10777,7 @@ export const SchemaValidationsApiFactory = function (configuration?: Configurati
  */
 export class SchemaValidationsApi extends BaseAPI {
     /**
-     * SchemaValidations are the results of validating Galv objects against ValidationSchemas.
+     * List SchemaValidations, optionally filtering by schema, object, or content type.
      * @param {number} [limit] Number of results to return per page.
      * @param {number} [offset] The initial index from which to return the results.
      * @param {*} [options] Override http request option.

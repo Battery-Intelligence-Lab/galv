@@ -29,7 +29,7 @@ import {
     FAMILY_LOOKUP_KEYS,
     FIELDS,
     ICONS, is_lookup_key,
-    PATHS, PRIORITY_LEVELS, LookupKey, get_has_family, get_is_family
+    PATHS, PRIORITY_LEVELS, LookupKey, get_has_family, get_is_family, LOOKUP_KEYS
 } from "../constants";
 import ResourceChip from "./ResourceChip";
 import ErrorBoundary from "./ErrorBoundary";
@@ -39,6 +39,7 @@ import {FilterContext} from "./filtering/FilterContext";
 import ApiResourceContextProvider, {useApiResource} from "./ApiResourceContext";
 import Prettify from "./prettify/Prettify";
 import {useSnackbarMessenger} from "./SnackbarMessengerContext";
+import DatasetChart from "../DatasetChart";
 
 export type Permissions = { read?: boolean, write?: boolean, create?: boolean, destroy?: boolean }
 type child_keys = "cells"|"equipment"|"schedules"
@@ -269,6 +270,7 @@ function ResourceCard<T extends BaseResource>(
                 .filter(([_, v]) => v.priority === PRIORITY_LEVELS.SUMMARY)
                 .map(([k, v]) => <Grid key={k}>{summarise(apiResource[k], v.many, k, v.type)}</Grid>)
         }</Grid>}
+        {lookup_key === LOOKUP_KEYS.FILE && <DatasetChart file_uuid={resource_id as string} />}
     </CardContent>
 
     const cardContent = !passesFilters({apiResource, family}, lookup_key)? <Fragment key={resource_id} /> :

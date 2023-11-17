@@ -1500,7 +1500,10 @@ View the TimeseriesData contents of the Column.
 Data are presented as a stream of values separated by newlines.
 
 Can be filtered with querystring parameters `min` and `max`, and `mod` (modulo) by specifying a sample number.
-        """
+        """,
+        responses={
+            200: StreamingHttpResponse
+        }
     )
 )
 class DataColumnViewSet(viewsets.ReadOnlyModelViewSet):
@@ -1508,7 +1511,7 @@ class DataColumnViewSet(viewsets.ReadOnlyModelViewSet):
     DataColumns describe which columns are in a Dataset's data.
     """
     serializer_class = DataColumnSerializer
-    filterset_fields = ['file__name', 'type__unit__symbol', 'file__uuid', 'type__id', 'type__name']
+    filterset_fields = ['file__uuid', 'type__is_required', 'file__name', 'type__unit__symbol', 'type__id', 'type__name']
     search_fields = ['@file__name', '@type__name']
     queryset = DataColumn.objects.all().order_by('-file__uuid', '-id')
 
