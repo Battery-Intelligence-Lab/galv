@@ -156,6 +156,9 @@ export default makeStyles()((theme) => {
       marginBottom: theme.spacing(2),
       color: theme.palette.text.secondary,
     },
+    chart: {
+      height: 300,
+    },
     filterBar: {
       justifyContent: "space-between",
       margin: theme.spacing(0.5),

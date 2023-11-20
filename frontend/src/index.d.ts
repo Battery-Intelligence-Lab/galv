@@ -8,3 +8,5 @@ declare module "@mui/private-theming" {
 
   interface DefaultTheme extends Theme {}
 }
+
+declare module "@canvasjs/react-charts";
