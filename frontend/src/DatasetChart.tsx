@@ -31,6 +31,9 @@ const COLORS = {
     [COL_KEYS[2]]: "#5d5dab"
 }
 
+/**
+ * TODO: handle incoming data stream and render in response to new data chunks
+ */
 export function DatasetChart({file_uuid}: {file_uuid: string}) {
     const {classes} = useStyles()
     const maxDataPoints = 10000

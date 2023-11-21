@@ -40,6 +40,8 @@ import ApiResourceContextProvider, {useApiResource} from "./ApiResourceContext";
 import Prettify from "./prettify/Prettify";
 import {useSnackbarMessenger} from "./SnackbarMessengerContext";
 import DatasetChart from "../DatasetChart";
+import {Modal} from "@mui/material";
+import {ResourceCreator, get_modal_title} from "./ResourceCreator";
 
 export type Permissions = { read?: boolean, write?: boolean, create?: boolean, destroy?: boolean }
 type child_keys = "cells"|"equipment"|"schedules"
@@ -70,8 +72,6 @@ function ResourceCard<T extends BaseResource>(
         ...cardProps
     }: ResourceCardProps & CardProps
 ) {
-    // console.log("ResourceCard", {uuid: uuid, lookup_key: lookup_key, read_only_fields, editing, expanded, cardProps})
-
     const { classes } = useStyles();
     const [isEditMode, _setIsEditMode] = useState<boolean>(editing || false)
     const [isExpanded, setIsExpanded] = useState<boolean>(expanded || isEditMode)
@@ -81,6 +81,8 @@ function ResourceCard<T extends BaseResource>(
     // useContext is wrapped in useRef because we update the context in our useEffect API data hook
     const UndoRedo = useContext(UndoRedoContext)
     const UndoRedoRef = useRef(UndoRedo)
+
+    const [forking, setForking] = useState<boolean>(false)
 
     const setEditing = (e: boolean) => {
         _setIsEditMode(e)
@@ -149,6 +151,7 @@ function ResourceCard<T extends BaseResource>(
         editable={!!apiResource?.permissions?.write}
         editing={isEditMode}
         setEditing={setEditing}
+        onFork={apiResource?.permissions?.create? () => setForking(true) : undefined}
         onUndo={UndoRedo.undo}
         onRedo={UndoRedo.redo}
         undoable={UndoRedo.can_undo}
@@ -273,6 +276,39 @@ function ResourceCard<T extends BaseResource>(
         {lookup_key === LOOKUP_KEYS.FILE && <DatasetChart file_uuid={resource_id as string} />}
     </CardContent>
 
+    const forkModal = passesFilters({apiResource, family}, lookup_key) &&
+        <Modal
+            open={forking}
+            onClose={() => setForking(false)}
+            aria-labelledby={get_modal_title(lookup_key, 'title')}
+            sx={{padding: (t) => t.spacing(4)}}
+        >
+            <div>
+                <ErrorBoundary
+                    fallback={(error: Error) => <ErrorCard
+                        message={error.message}
+                        header={
+                            <CardHeader
+                                avatar={<Avatar variant="square">E</Avatar>}
+                                title="Error"
+                                subheader={`Error with ResourceCard for forking ${resource_id}`
+                                }
+                            />
+                        }
+                    />}
+                >
+                    <UndoRedoProvider>
+                        <ResourceCreator<T>
+                            onCreate={() => setForking(false)}
+                            onDiscard={() => setForking(false)}
+                            lookup_key={lookup_key}
+                            initial_data={{...apiResource, team: undefined}}
+                        />
+                    </UndoRedoProvider>
+                </ErrorBoundary>
+            </div>
+        </Modal>
+
     const cardContent = !passesFilters({apiResource, family}, lookup_key)? <Fragment key={resource_id} /> :
         <Card key={resource_id} className={clsx(classes.itemCard)} {...cardProps}>
             <CardHeader
@@ -300,6 +336,7 @@ function ResourceCard<T extends BaseResource>(
                 action={action}
             />
             {isExpanded? cardBody : cardSummary}
+            {forkModal}
         </Card>
 
     const getErrorBody: QueryDependentElement = (queries) => <ErrorCard

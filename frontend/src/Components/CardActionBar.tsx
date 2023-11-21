@@ -15,6 +15,7 @@ import {
     DISPLAY_NAMES,
     DISPLAY_NAMES_PLURAL,
     FIELDS,
+    ICONS,
     is_lookup_key,
     LookupKey,
     PATHS,
@@ -28,6 +29,7 @@ import clsx from "clsx";
 import UseStyles from "../styles/UseStyles";
 import {useSelectionManagement} from "./SelectionManagementContext";
 import Checkbox from "@mui/material/Checkbox";
+import {representation} from "./Representation";
 
 type CardActionBarProps = {
     lookup_key: LookupKey
@@ -39,6 +41,7 @@ type CardActionBarProps = {
     setEditing?: (editing: boolean) => void
     onEditSave?: () => boolean
     onEditDiscard?: () => boolean
+    onFork?: () => void
     undoable?: boolean
     redoable?: boolean
     onUndo?: () => void
@@ -170,13 +173,22 @@ export default function CardActionBar(props: CardActionBarProps) {
         arrow
         describeChild
         key="select"
-        >
+    >
         <Checkbox checked={isSelected(apiResource)} onChange={() => toggleSelected(apiResource!)}/>
     </Tooltip>
 
     return <Stack direction="row" spacing={1} alignItems="center">
         {!props.excludeContext && context_section}
         {props.editable && edit_section}
+        {props.onFork && <Tooltip
+            title={`
+            Create your own copy of ${representation({data: apiResource, lookup_key: props.lookup_key})}
+            `}
+            arrow
+            describeChild
+        >
+            <IconButton onClick={props.onFork}><ICONS.FORK {...iconProps}/></IconButton>
+        </Tooltip>}
         {props.destroyable && <Tooltip
             title={`Delete this ${DISPLAY_NAMES[props.lookup_key]}`}
             arrow

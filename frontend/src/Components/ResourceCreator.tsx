@@ -22,9 +22,10 @@ import Tooltip from "@mui/material/Tooltip";
 import Stack from "@mui/material/Stack";
 import {useSnackbarMessenger} from "./SnackbarMessengerContext";
 
-function ResourceCreator<T extends BaseResource>(
-    { lookup_key, onCreate, onDiscard, ...cardProps}:
-        {lookup_key: LookupKey, onCreate: (error?: any) => void, onDiscard: () => void} & CardProps
+export function ResourceCreator<T extends BaseResource>(
+    { lookup_key, initial_data, onCreate, onDiscard, ...cardProps}:
+        {lookup_key: LookupKey, initial_data?: any, onCreate: (error?: any) => void, onDiscard: () => void} &
+        CardProps
 ) {
     const { classes } = useStyles();
 
@@ -38,11 +39,20 @@ function ResourceCreator<T extends BaseResource>(
             .filter(([_, v]) => v.priority !== PRIORITY_LEVELS.HIDDEN)
             .forEach(([k, v]) => {
                 if (!v.readonly || v.createonly) {
-                    template_object[k] = v.many? [] : ""
+                    if (initial_data?.[k] !== undefined)
+                        template_object[k] = initial_data[k]
+                    else
+                        template_object[k] = v.many? [] : ""
                 }
             })
+        if (initial_data !== undefined) {
+            Object.entries(initial_data).forEach(([k, v]) => {
+                if (!(k in FIELDS[lookup_key]))
+                    template_object[k] = v as Serializable
+            })
+        }
         UndoRedoRef.current.set(template_object)
-    }, [lookup_key])
+    }, [initial_data, lookup_key])
 
     const api_handler = new API_HANDLERS[lookup_key]()
     const post = api_handler[
@@ -99,6 +109,7 @@ function ResourceCreator<T extends BaseResource>(
     const action = <CardActionBar
         lookup_key={lookup_key}
         excludeContext={true}
+        selectable={false}
         editable={true}
         editing={true}
         setEditing={() => {}}
@@ -152,7 +163,7 @@ function ResourceCreator<T extends BaseResource>(
     </Card>
 }
 
-const get_modal_title = (lookup_key: LookupKey, suffix: string) => `create-${lookup_key}-modal-${suffix}`
+export const get_modal_title = (lookup_key: LookupKey, suffix: string) => `create-${lookup_key}-modal-${suffix}`
 
 export default function WrappedResourceCreator<T extends BaseResource>(props: {lookup_key: LookupKey} & CardProps) {
     const [modalOpen, setModalOpen] = useState(false)

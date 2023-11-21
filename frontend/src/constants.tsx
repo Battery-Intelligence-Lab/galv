@@ -24,6 +24,7 @@ import HideSourceIcon from '@mui/icons-material/HideSource';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import DownloadIcon from '@mui/icons-material/Download';
+import ForkRightIcon from '@mui/icons-material/ForkRight';
 
 import {
     CellChemistriesApi,
@@ -105,6 +106,7 @@ export const ICONS = {
     MANAGE_ACCOUNT: ManageAccountsIcon,
     LOGOUT: LogoutIcon,
     CREATE: AddCircleIcon,
+    FORK: ForkRightIcon,
     CANCEL: CancelIcon,
     CHECK: CheckCircleIcon,
     EXPAND_MORE: ExpandMoreIcon,
