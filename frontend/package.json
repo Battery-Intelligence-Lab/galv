@@ -46,7 +46,8 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "test": "react-scripts test --CI=true --watchAll=false --noStackTrace",
+    "initMockserverExpectations": "curl -X PUT \"http://mockserver:1080/mockserver/openapi\" -d '{\"specUrlOrPayload\": \"file:/schema.json\"}'",
+    "test": "yarn initMockserverExpectations && echo \"\n\" && react-scripts test --CI=true --watchAll=false --noStackTrace",
     "eject": "react-scripts eject",
     "styleguide": "styleguidist server",
     "styleguide:build": "styleguidist build"
