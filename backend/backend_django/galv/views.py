@@ -9,6 +9,7 @@ import knox.auth
 import os
 from django.http import StreamingHttpResponse
 from django.urls import NoReverseMatch
+from drf_spectacular.types import OpenApiTypes
 from dry_rest_permissions.generics import DRYPermissions
 from rest_framework.mixins import ListModelMixin
 from rest_framework.reverse import reverse
@@ -1502,7 +1503,7 @@ Data are presented as a stream of values separated by newlines.
 Can be filtered with querystring parameters `min` and `max`, and `mod` (modulo) by specifying a sample number.
         """,
         responses={
-            200: StreamingHttpResponse
+            (200, 'text/html'): OpenApiTypes.STR,
         }
     )
 )
@@ -1510,6 +1511,7 @@ class DataColumnViewSet(viewsets.ReadOnlyModelViewSet):
     """
     DataColumns describe which columns are in a Dataset's data.
     """
+    permission_classes = [DRYPermissions]
     serializer_class = DataColumnSerializer
     filterset_fields = ['file__uuid', 'type__is_required', 'file__name', 'type__unit__symbol', 'type__id', 'type__name']
     search_fields = ['@file__name', '@type__name']

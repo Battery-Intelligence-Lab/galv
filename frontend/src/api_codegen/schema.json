@@ -47,6 +47,9 @@
                     {
                         "cookieAuth": []
                     },
+                    {
+                        "harvesterAuth": []
+                    },
                     {}
                 ],
                 "responses": {
@@ -121,6 +124,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -169,6 +175,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -211,6 +220,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -270,6 +282,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -310,6 +325,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -352,6 +370,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     },
                     {}
                 ],
@@ -427,6 +448,9 @@
                     {
                         "cookieAuth": []
                     },
+                    {
+                        "harvesterAuth": []
+                    },
                     {}
                 ],
                 "responses": {
@@ -500,6 +524,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     },
                     {}
                 ],
@@ -575,6 +602,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -623,6 +653,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -665,6 +698,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -724,6 +760,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -764,6 +803,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -799,6 +841,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -878,6 +923,9 @@
                     {
                         "cookieAuth": []
                     },
+                    {
+                        "harvesterAuth": []
+                    },
                     {}
                 ],
                 "responses": {
@@ -919,6 +967,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     },
                     {}
                 ],
@@ -1014,6 +1065,9 @@
                     {
                         "cookieAuth": []
                     },
+                    {
+                        "harvesterAuth": []
+                    },
                     {}
                 ],
                 "responses": {
@@ -1055,6 +1109,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     },
                     {}
                 ],
@@ -1098,14 +1155,17 @@
                     {
                         "cookieAuth": []
                     },
+                    {
+                        "harvesterAuth": []
+                    },
                     {}
                 ],
                 "responses": {
                     "200": {
                         "content": {
-                            "application/json": {
+                            "text/html": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/DataColumn"
+                                    "type": "string"
                                 }
                             }
                         },
@@ -1148,6 +1208,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -1197,6 +1260,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -1244,6 +1310,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -1285,6 +1354,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -1343,6 +1415,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -1382,6 +1457,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -1425,6 +1503,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -1473,6 +1554,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -1515,6 +1599,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -1574,6 +1661,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -1614,6 +1704,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -1657,6 +1750,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -1705,6 +1801,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -1747,6 +1846,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -1806,6 +1908,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -1846,6 +1951,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -1888,6 +1996,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     },
                     {}
                 ],
@@ -1963,6 +2074,9 @@
                     {
                         "cookieAuth": []
                     },
+                    {
+                        "harvesterAuth": []
+                    },
                     {}
                 ],
                 "responses": {
@@ -2036,6 +2150,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     },
                     {}
                 ],
@@ -2111,6 +2228,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -2159,6 +2279,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -2201,6 +2324,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -2259,6 +2385,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -2298,6 +2427,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -2341,6 +2473,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -2383,6 +2518,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -2441,6 +2579,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -2483,6 +2624,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -2532,6 +2676,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -2572,6 +2719,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -2629,6 +2779,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -2695,6 +2848,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -2736,6 +2892,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -2786,6 +2945,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -2828,6 +2990,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -2887,6 +3052,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -2937,6 +3105,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -2985,6 +3156,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -3026,6 +3200,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -3084,6 +3261,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -3121,6 +3301,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -3195,6 +3378,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -3243,6 +3429,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -3285,6 +3474,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -3344,6 +3536,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -3384,6 +3579,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -3427,6 +3625,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -3475,6 +3676,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -3517,6 +3721,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -3576,6 +3783,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -3616,6 +3826,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -3658,6 +3871,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     },
                     {}
                 ],
@@ -3733,6 +3949,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -3781,6 +4000,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -3823,6 +4045,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -3882,6 +4107,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -3922,6 +4150,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -3964,6 +4195,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -4004,6 +4238,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -4054,6 +4291,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -4102,6 +4342,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -4143,6 +4386,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -4201,6 +4447,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -4238,6 +4487,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -4282,6 +4534,9 @@
                     {
                         "cookieAuth": []
                     },
+                    {
+                        "harvesterAuth": []
+                    },
                     {}
                 ],
                 "responses": {
@@ -4323,6 +4578,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     },
                     {}
                 ],
@@ -4383,6 +4641,9 @@
                     {
                         "cookieAuth": []
                     },
+                    {
+                        "harvesterAuth": []
+                    },
                     {}
                 ],
                 "responses": {
@@ -4422,6 +4683,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     },
                     {}
                 ],
@@ -4488,6 +4752,9 @@
                     {
                         "cookieAuth": []
                     },
+                    {
+                        "harvesterAuth": []
+                    },
                     {}
                 ],
                 "responses": {
@@ -4529,6 +4796,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     },
                     {}
                 ],
@@ -4579,6 +4849,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -4626,6 +4899,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -4666,6 +4942,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -4724,6 +5003,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -4794,6 +5076,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -4840,6 +5125,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -4880,6 +5168,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -4938,6 +5229,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -4995,6 +5289,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -5033,6 +5330,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -5056,6 +5356,9 @@
                     },
                     {
                         "cookieAuth": []
+                    },
+                    {
+                        "harvesterAuth": []
                     }
                 ],
                 "responses": {
@@ -6206,7 +6509,11 @@
                         "type": "boolean"
                     },
                     "files": {
-                        "type": "string",
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "format": "uri"
+                        },
                         "readOnly": true,
                         "description": "Files on this MonitoredPath"
                     },
@@ -7682,7 +7989,11 @@
                         "type": "boolean"
                     },
                     "files": {
-                        "type": "string",
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "format": "uri"
+                        },
                         "readOnly": true,
                         "description": "Files on this MonitoredPath"
                     },
@@ -8372,6 +8683,7 @@
                     },
                     "validation_target": {
                         "type": "string",
+                        "format": "uri",
                         "readOnly": true,
                         "description": "Target of validation"
                     },
@@ -8758,6 +9070,12 @@
                 "type": "apiKey",
                 "in": "cookie",
                 "name": "sessionid"
+            },
+            "harvesterAuth": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "Authorization",
+                "description": "Harvester API key"
             },
             "knoxTokenAuth": {
                 "type": "http",

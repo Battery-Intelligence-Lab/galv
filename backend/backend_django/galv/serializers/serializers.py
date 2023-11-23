@@ -5,6 +5,7 @@ import os.path
 import re
 
 import jsonschema
+from drf_spectacular.types import OpenApiTypes
 from rest_framework.reverse import reverse
 from drf_spectacular.utils import extend_schema_field
 from rest_framework.exceptions import ValidationError
@@ -579,7 +580,7 @@ class HarvesterSerializer(serializers.HyperlinkedModelSerializer, PermissionsMix
 class MonitoredPathSerializer(serializers.HyperlinkedModelSerializer, PermissionsMixin, WithTeamMixin, CreateOnlyMixin):
     files = serializers.SerializerMethodField(help_text="Files on this MonitoredPath")
 
-    def get_files(self, instance):
+    def get_files(self, instance) -> list[OpenApiTypes.URI]:
         request = self.context['request']
         files = ObservedFile.objects.filter(harvester__lab=instance.team.lab)
         file_ids = []
@@ -1014,7 +1015,7 @@ class SchemaValidationSerializer(serializers.HyperlinkedModelSerializer, Permiss
 
     validation_target = serializers.SerializerMethodField(help_text="Target of validation")
 
-    def get_validation_target(self, instance):
+    def get_validation_target(self, instance) -> OpenApiTypes.URI:
         return reverse(
             f"{instance.content_type.model}-detail",
             args=(instance.object_id,),

@@ -1100,10 +1100,10 @@ export interface MonitoredPath {
     'active'?: boolean;
     /**
      * Files on this MonitoredPath
-     * @type {string}
+     * @type {Array<string>}
      * @memberof MonitoredPath
      */
-    'files': string;
+    'files': Array<string>;
     /**
      * Harvester this MonitoredPath is on
      * @type {string}
@@ -2593,10 +2593,10 @@ export interface PatchedMonitoredPath {
     'active'?: boolean;
     /**
      * Files on this MonitoredPath
-     * @type {string}
+     * @type {Array<string>}
      * @memberof PatchedMonitoredPath
      */
-    'files'?: string;
+    'files'?: Array<string>;
     /**
      * Harvester this MonitoredPath is on
      * @type {string}
@@ -3626,6 +3626,9 @@ export const CellChemistriesApiAxiosParamCreator = function (configuration?: Con
 
             // authentication cookieAuth required
 
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
             // authentication knoxTokenAuth required
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
@@ -3744,6 +3747,9 @@ export const CellFamiliesApiAxiosParamCreator = function (configuration?: Config
 
             // authentication cookieAuth required
 
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
             // authentication knoxTokenAuth required
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
@@ -3787,6 +3793,9 @@ export const CellFamiliesApiAxiosParamCreator = function (configuration?: Config
 
             // authentication cookieAuth required
 
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
             // authentication knoxTokenAuth required
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
@@ -3824,6 +3833,9 @@ export const CellFamiliesApiAxiosParamCreator = function (configuration?: Config
             const localVarQueryParameter = {} as any;
 
             // authentication cookieAuth required
+
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
             // authentication knoxTokenAuth required
             // http bearer authentication required
@@ -3874,6 +3886,9 @@ export const CellFamiliesApiAxiosParamCreator = function (configuration?: Config
 
             // authentication cookieAuth required
 
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
             // authentication knoxTokenAuth required
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
@@ -3916,6 +3931,9 @@ export const CellFamiliesApiAxiosParamCreator = function (configuration?: Config
             const localVarQueryParameter = {} as any;
 
             // authentication cookieAuth required
+
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
             // authentication knoxTokenAuth required
             // http bearer authentication required
@@ -4163,6 +4181,9 @@ export const CellFormFactorsApiAxiosParamCreator = function (configuration?: Con
 
             // authentication cookieAuth required
 
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
             // authentication knoxTokenAuth required
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
@@ -4279,6 +4300,9 @@ export const CellManufacturersApiAxiosParamCreator = function (configuration?: C
 
             // authentication cookieAuth required
 
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
             // authentication knoxTokenAuth required
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
@@ -4394,6 +4418,9 @@ export const CellModelsApiAxiosParamCreator = function (configuration?: Configur
             const localVarQueryParameter = {} as any;
 
             // authentication cookieAuth required
+
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
             // authentication knoxTokenAuth required
             // http bearer authentication required
@@ -4513,6 +4540,9 @@ export const CellsApiAxiosParamCreator = function (configuration?: Configuration
 
             // authentication cookieAuth required
 
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
             // authentication knoxTokenAuth required
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
@@ -4556,6 +4586,9 @@ export const CellsApiAxiosParamCreator = function (configuration?: Configuration
 
             // authentication cookieAuth required
 
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
             // authentication knoxTokenAuth required
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
@@ -4593,6 +4626,9 @@ export const CellsApiAxiosParamCreator = function (configuration?: Configuration
             const localVarQueryParameter = {} as any;
 
             // authentication cookieAuth required
+
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
             // authentication knoxTokenAuth required
             // http bearer authentication required
@@ -4643,6 +4679,9 @@ export const CellsApiAxiosParamCreator = function (configuration?: Configuration
 
             // authentication cookieAuth required
 
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
             // authentication knoxTokenAuth required
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
@@ -4686,6 +4725,9 @@ export const CellsApiAxiosParamCreator = function (configuration?: Configuration
 
             // authentication cookieAuth required
 
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
             // authentication knoxTokenAuth required
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
@@ -4725,6 +4767,9 @@ export const CellsApiAxiosParamCreator = function (configuration?: Configuration
             const localVarQueryParameter = {} as any;
 
             // authentication cookieAuth required
+
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
             // authentication knoxTokenAuth required
             // http bearer authentication required
@@ -5010,6 +5055,9 @@ export const ColumnTypesApiAxiosParamCreator = function (configuration?: Configu
 
             // authentication cookieAuth required
 
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
             // authentication knoxTokenAuth required
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
@@ -5073,6 +5121,9 @@ export const ColumnTypesApiAxiosParamCreator = function (configuration?: Configu
             const localVarQueryParameter = {} as any;
 
             // authentication cookieAuth required
+
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
             // authentication knoxTokenAuth required
             // http bearer authentication required
@@ -5237,6 +5288,9 @@ export const ColumnsApiAxiosParamCreator = function (configuration?: Configurati
 
             // authentication cookieAuth required
 
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
             // authentication knoxTokenAuth required
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
@@ -5309,6 +5363,9 @@ export const ColumnsApiAxiosParamCreator = function (configuration?: Configurati
 
             // authentication cookieAuth required
 
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
             // authentication knoxTokenAuth required
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
@@ -5348,6 +5405,9 @@ export const ColumnsApiAxiosParamCreator = function (configuration?: Configurati
             const localVarQueryParameter = {} as any;
 
             // authentication cookieAuth required
+
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
             // authentication knoxTokenAuth required
             // http bearer authentication required
@@ -5410,7 +5470,7 @@ export const ColumnsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async columnsValuesRetrieve(id: number, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DataColumn>> {
+        async columnsValuesRetrieve(id: number, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.columnsValuesRetrieve(id, options);
             return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
         },
@@ -5458,7 +5518,7 @@ export const ColumnsApiFactory = function (configuration?: Configuration, basePa
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        columnsValuesRetrieve(id: number, options?: any): AxiosPromise<DataColumn> {
+        columnsValuesRetrieve(id: number, options?: any): AxiosPromise<string> {
             return localVarFp.columnsValuesRetrieve(id, options).then((request) => request(axios, basePath));
         },
     };
@@ -5545,6 +5605,9 @@ export const CreateTokenApiAxiosParamCreator = function (configuration?: Configu
             const localVarQueryParameter = {} as any;
 
             // authentication cookieAuth required
+
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
             // authentication knoxTokenAuth required
             // http bearer authentication required
@@ -5658,6 +5721,9 @@ export const CyclerTestsApiAxiosParamCreator = function (configuration?: Configu
 
             // authentication cookieAuth required
 
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
             // authentication knoxTokenAuth required
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
@@ -5700,6 +5766,9 @@ export const CyclerTestsApiAxiosParamCreator = function (configuration?: Configu
 
             // authentication cookieAuth required
 
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
             // authentication knoxTokenAuth required
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
@@ -5736,6 +5805,9 @@ export const CyclerTestsApiAxiosParamCreator = function (configuration?: Configu
             const localVarQueryParameter = {} as any;
 
             // authentication cookieAuth required
+
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
             // authentication knoxTokenAuth required
             // http bearer authentication required
@@ -5785,6 +5857,9 @@ export const CyclerTestsApiAxiosParamCreator = function (configuration?: Configu
 
             // authentication cookieAuth required
 
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
             // authentication knoxTokenAuth required
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
@@ -5826,6 +5901,9 @@ export const CyclerTestsApiAxiosParamCreator = function (configuration?: Configu
             const localVarQueryParameter = {} as any;
 
             // authentication cookieAuth required
+
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
             // authentication knoxTokenAuth required
             // http bearer authentication required
@@ -6060,6 +6138,9 @@ export const EquipmentApiAxiosParamCreator = function (configuration?: Configura
 
             // authentication cookieAuth required
 
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
             // authentication knoxTokenAuth required
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
@@ -6103,6 +6184,9 @@ export const EquipmentApiAxiosParamCreator = function (configuration?: Configura
 
             // authentication cookieAuth required
 
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
             // authentication knoxTokenAuth required
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
@@ -6140,6 +6224,9 @@ export const EquipmentApiAxiosParamCreator = function (configuration?: Configura
             const localVarQueryParameter = {} as any;
 
             // authentication cookieAuth required
+
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
             // authentication knoxTokenAuth required
             // http bearer authentication required
@@ -6190,6 +6277,9 @@ export const EquipmentApiAxiosParamCreator = function (configuration?: Configura
 
             // authentication cookieAuth required
 
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
             // authentication knoxTokenAuth required
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
@@ -6232,6 +6322,9 @@ export const EquipmentApiAxiosParamCreator = function (configuration?: Configura
             const localVarQueryParameter = {} as any;
 
             // authentication cookieAuth required
+
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
             // authentication knoxTokenAuth required
             // http bearer authentication required
@@ -6481,6 +6574,9 @@ export const EquipmentFamiliesApiAxiosParamCreator = function (configuration?: C
 
             // authentication cookieAuth required
 
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
             // authentication knoxTokenAuth required
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
@@ -6524,6 +6620,9 @@ export const EquipmentFamiliesApiAxiosParamCreator = function (configuration?: C
 
             // authentication cookieAuth required
 
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
             // authentication knoxTokenAuth required
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
@@ -6561,6 +6660,9 @@ export const EquipmentFamiliesApiAxiosParamCreator = function (configuration?: C
             const localVarQueryParameter = {} as any;
 
             // authentication cookieAuth required
+
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
             // authentication knoxTokenAuth required
             // http bearer authentication required
@@ -6611,6 +6713,9 @@ export const EquipmentFamiliesApiAxiosParamCreator = function (configuration?: C
 
             // authentication cookieAuth required
 
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
             // authentication knoxTokenAuth required
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
@@ -6653,6 +6758,9 @@ export const EquipmentFamiliesApiAxiosParamCreator = function (configuration?: C
             const localVarQueryParameter = {} as any;
 
             // authentication cookieAuth required
+
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
             // authentication knoxTokenAuth required
             // http bearer authentication required
@@ -6900,6 +7008,9 @@ export const EquipmentManufacturersApiAxiosParamCreator = function (configuratio
 
             // authentication cookieAuth required
 
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
             // authentication knoxTokenAuth required
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
@@ -7016,6 +7127,9 @@ export const EquipmentModelsApiAxiosParamCreator = function (configuration?: Con
 
             // authentication cookieAuth required
 
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
             // authentication knoxTokenAuth required
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
@@ -7131,6 +7245,9 @@ export const EquipmentTypesApiAxiosParamCreator = function (configuration?: Conf
             const localVarQueryParameter = {} as any;
 
             // authentication cookieAuth required
+
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
             // authentication knoxTokenAuth required
             // http bearer authentication required
@@ -7250,6 +7367,9 @@ export const ExperimentsApiAxiosParamCreator = function (configuration?: Configu
 
             // authentication cookieAuth required
 
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
             // authentication knoxTokenAuth required
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
@@ -7292,6 +7412,9 @@ export const ExperimentsApiAxiosParamCreator = function (configuration?: Configu
 
             // authentication cookieAuth required
 
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
             // authentication knoxTokenAuth required
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
@@ -7329,6 +7452,9 @@ export const ExperimentsApiAxiosParamCreator = function (configuration?: Configu
             const localVarQueryParameter = {} as any;
 
             // authentication cookieAuth required
+
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
             // authentication knoxTokenAuth required
             // http bearer authentication required
@@ -7378,6 +7504,9 @@ export const ExperimentsApiAxiosParamCreator = function (configuration?: Configu
 
             // authentication cookieAuth required
 
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
             // authentication knoxTokenAuth required
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
@@ -7420,6 +7549,9 @@ export const ExperimentsApiAxiosParamCreator = function (configuration?: Configu
             const localVarQueryParameter = {} as any;
 
             // authentication cookieAuth required
+
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
             // authentication knoxTokenAuth required
             // http bearer authentication required
@@ -7662,6 +7794,9 @@ export const FilesApiAxiosParamCreator = function (configuration?: Configuration
 
             // authentication cookieAuth required
 
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
             // authentication knoxTokenAuth required
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
@@ -7710,6 +7845,9 @@ export const FilesApiAxiosParamCreator = function (configuration?: Configuration
 
             // authentication cookieAuth required
 
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
             // authentication knoxTokenAuth required
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
@@ -7753,6 +7891,9 @@ export const FilesApiAxiosParamCreator = function (configuration?: Configuration
 
             // authentication cookieAuth required
 
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
             // authentication knoxTokenAuth required
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
@@ -7792,6 +7933,9 @@ export const FilesApiAxiosParamCreator = function (configuration?: Configuration
             const localVarQueryParameter = {} as any;
 
             // authentication cookieAuth required
+
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
             // authentication knoxTokenAuth required
             // http bearer authentication required
@@ -8003,6 +8147,9 @@ export const GroupsApiAxiosParamCreator = function (configuration?: Configuratio
 
             // authentication cookieAuth required
 
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
             // authentication knoxTokenAuth required
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
@@ -8051,6 +8198,9 @@ export const GroupsApiAxiosParamCreator = function (configuration?: Configuratio
 
             // authentication cookieAuth required
 
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
             // authentication knoxTokenAuth required
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
@@ -8092,6 +8242,9 @@ export const GroupsApiAxiosParamCreator = function (configuration?: Configuratio
             const localVarQueryParameter = {} as any;
 
             // authentication cookieAuth required
+
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
             // authentication knoxTokenAuth required
             // http bearer authentication required
@@ -8267,6 +8420,9 @@ export const HarvestErrorsApiAxiosParamCreator = function (configuration?: Confi
 
             // authentication cookieAuth required
 
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
             // authentication knoxTokenAuth required
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
@@ -8322,6 +8478,9 @@ export const HarvestErrorsApiAxiosParamCreator = function (configuration?: Confi
             const localVarQueryParameter = {} as any;
 
             // authentication cookieAuth required
+
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
             // authentication knoxTokenAuth required
             // http bearer authentication required
@@ -8474,6 +8633,9 @@ export const HarvestersApiAxiosParamCreator = function (configuration?: Configur
 
             // authentication cookieAuth required
 
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
             // authentication knoxTokenAuth required
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
@@ -8523,6 +8685,9 @@ export const HarvestersApiAxiosParamCreator = function (configuration?: Configur
 
             // authentication cookieAuth required
 
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
             // authentication knoxTokenAuth required
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
@@ -8565,6 +8730,9 @@ export const HarvestersApiAxiosParamCreator = function (configuration?: Configur
             const localVarQueryParameter = {} as any;
 
             // authentication cookieAuth required
+
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
             // authentication knoxTokenAuth required
             // http bearer authentication required
@@ -8748,6 +8916,9 @@ export const LabsApiAxiosParamCreator = function (configuration?: Configuration)
 
             // authentication cookieAuth required
 
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
             // authentication knoxTokenAuth required
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
@@ -8790,6 +8961,9 @@ export const LabsApiAxiosParamCreator = function (configuration?: Configuration)
 
             // authentication cookieAuth required
 
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
             // authentication knoxTokenAuth required
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
@@ -8827,6 +9001,9 @@ export const LabsApiAxiosParamCreator = function (configuration?: Configuration)
             const localVarQueryParameter = {} as any;
 
             // authentication cookieAuth required
+
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
             // authentication knoxTokenAuth required
             // http bearer authentication required
@@ -8877,6 +9054,9 @@ export const LabsApiAxiosParamCreator = function (configuration?: Configuration)
 
             // authentication cookieAuth required
 
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
             // authentication knoxTokenAuth required
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
@@ -8919,6 +9099,9 @@ export const LabsApiAxiosParamCreator = function (configuration?: Configuration)
             const localVarQueryParameter = {} as any;
 
             // authentication cookieAuth required
+
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
             // authentication knoxTokenAuth required
             // http bearer authentication required
@@ -9267,6 +9450,9 @@ export const MonitoredPathsApiAxiosParamCreator = function (configuration?: Conf
 
             // authentication cookieAuth required
 
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
             // authentication knoxTokenAuth required
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
@@ -9310,6 +9496,9 @@ export const MonitoredPathsApiAxiosParamCreator = function (configuration?: Conf
 
             // authentication cookieAuth required
 
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
             // authentication knoxTokenAuth required
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
@@ -9347,6 +9536,9 @@ export const MonitoredPathsApiAxiosParamCreator = function (configuration?: Conf
             const localVarQueryParameter = {} as any;
 
             // authentication cookieAuth required
+
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
             // authentication knoxTokenAuth required
             // http bearer authentication required
@@ -9397,6 +9589,9 @@ export const MonitoredPathsApiAxiosParamCreator = function (configuration?: Conf
 
             // authentication cookieAuth required
 
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
             // authentication knoxTokenAuth required
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
@@ -9439,6 +9634,9 @@ export const MonitoredPathsApiAxiosParamCreator = function (configuration?: Conf
             const localVarQueryParameter = {} as any;
 
             // authentication cookieAuth required
+
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
             // authentication knoxTokenAuth required
             // http bearer authentication required
@@ -9688,6 +9886,9 @@ export const ScheduleFamiliesApiAxiosParamCreator = function (configuration?: Co
 
             // authentication cookieAuth required
 
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
             // authentication knoxTokenAuth required
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
@@ -9731,6 +9932,9 @@ export const ScheduleFamiliesApiAxiosParamCreator = function (configuration?: Co
 
             // authentication cookieAuth required
 
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
             // authentication knoxTokenAuth required
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
@@ -9768,6 +9972,9 @@ export const ScheduleFamiliesApiAxiosParamCreator = function (configuration?: Co
             const localVarQueryParameter = {} as any;
 
             // authentication cookieAuth required
+
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
             // authentication knoxTokenAuth required
             // http bearer authentication required
@@ -9818,6 +10025,9 @@ export const ScheduleFamiliesApiAxiosParamCreator = function (configuration?: Co
 
             // authentication cookieAuth required
 
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
             // authentication knoxTokenAuth required
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
@@ -9860,6 +10070,9 @@ export const ScheduleFamiliesApiAxiosParamCreator = function (configuration?: Co
             const localVarQueryParameter = {} as any;
 
             // authentication cookieAuth required
+
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
             // authentication knoxTokenAuth required
             // http bearer authentication required
@@ -10107,6 +10320,9 @@ export const ScheduleIdentifiersApiAxiosParamCreator = function (configuration?:
 
             // authentication cookieAuth required
 
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
             // authentication knoxTokenAuth required
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
@@ -10225,6 +10441,9 @@ export const SchedulesApiAxiosParamCreator = function (configuration?: Configura
 
             // authentication cookieAuth required
 
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
             // authentication knoxTokenAuth required
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
@@ -10268,6 +10487,9 @@ export const SchedulesApiAxiosParamCreator = function (configuration?: Configura
 
             // authentication cookieAuth required
 
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
             // authentication knoxTokenAuth required
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
@@ -10305,6 +10527,9 @@ export const SchedulesApiAxiosParamCreator = function (configuration?: Configura
             const localVarQueryParameter = {} as any;
 
             // authentication cookieAuth required
+
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
             // authentication knoxTokenAuth required
             // http bearer authentication required
@@ -10355,6 +10580,9 @@ export const SchedulesApiAxiosParamCreator = function (configuration?: Configura
 
             // authentication cookieAuth required
 
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
             // authentication knoxTokenAuth required
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
@@ -10397,6 +10625,9 @@ export const SchedulesApiAxiosParamCreator = function (configuration?: Configura
             const localVarQueryParameter = {} as any;
 
             // authentication cookieAuth required
+
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
             // authentication knoxTokenAuth required
             // http bearer authentication required
@@ -10644,6 +10875,9 @@ export const SchemaValidationsApiAxiosParamCreator = function (configuration?: C
 
             // authentication cookieAuth required
 
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
             // authentication knoxTokenAuth required
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
@@ -10690,6 +10924,9 @@ export const SchemaValidationsApiAxiosParamCreator = function (configuration?: C
             const localVarQueryParameter = {} as any;
 
             // authentication cookieAuth required
+
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
             // authentication knoxTokenAuth required
             // http bearer authentication required
@@ -10831,6 +11068,9 @@ export const TeamsApiAxiosParamCreator = function (configuration?: Configuration
 
             // authentication cookieAuth required
 
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
             // authentication knoxTokenAuth required
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
@@ -10873,6 +11113,9 @@ export const TeamsApiAxiosParamCreator = function (configuration?: Configuration
 
             // authentication cookieAuth required
 
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
             // authentication knoxTokenAuth required
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
@@ -10910,6 +11153,9 @@ export const TeamsApiAxiosParamCreator = function (configuration?: Configuration
             const localVarQueryParameter = {} as any;
 
             // authentication cookieAuth required
+
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
             // authentication knoxTokenAuth required
             // http bearer authentication required
@@ -10960,6 +11206,9 @@ export const TeamsApiAxiosParamCreator = function (configuration?: Configuration
 
             // authentication cookieAuth required
 
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
             // authentication knoxTokenAuth required
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
@@ -11002,6 +11251,9 @@ export const TeamsApiAxiosParamCreator = function (configuration?: Configuration
             const localVarQueryParameter = {} as any;
 
             // authentication cookieAuth required
+
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
             // authentication knoxTokenAuth required
             // http bearer authentication required
@@ -11249,6 +11501,9 @@ export const TokensApiAxiosParamCreator = function (configuration?: Configuratio
 
             // authentication cookieAuth required
 
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
             // authentication knoxTokenAuth required
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
@@ -11286,6 +11541,9 @@ export const TokensApiAxiosParamCreator = function (configuration?: Configuratio
             const localVarQueryParameter = {} as any;
 
             // authentication cookieAuth required
+
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
             // authentication knoxTokenAuth required
             // http bearer authentication required
@@ -11336,6 +11594,9 @@ export const TokensApiAxiosParamCreator = function (configuration?: Configuratio
 
             // authentication cookieAuth required
 
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
             // authentication knoxTokenAuth required
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
@@ -11378,6 +11639,9 @@ export const TokensApiAxiosParamCreator = function (configuration?: Configuratio
             const localVarQueryParameter = {} as any;
 
             // authentication cookieAuth required
+
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
             // authentication knoxTokenAuth required
             // http bearer authentication required
@@ -11596,6 +11860,9 @@ export const UnitsApiAxiosParamCreator = function (configuration?: Configuration
 
             // authentication cookieAuth required
 
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
             // authentication knoxTokenAuth required
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
@@ -11655,6 +11922,9 @@ export const UnitsApiAxiosParamCreator = function (configuration?: Configuration
             const localVarQueryParameter = {} as any;
 
             // authentication cookieAuth required
+
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
             // authentication knoxTokenAuth required
             // http bearer authentication required
@@ -11810,6 +12080,9 @@ export const UsersApiAxiosParamCreator = function (configuration?: Configuration
 
             // authentication cookieAuth required
 
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
             // authentication knoxTokenAuth required
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
@@ -11849,6 +12122,9 @@ export const UsersApiAxiosParamCreator = function (configuration?: Configuration
             const localVarQueryParameter = {} as any;
 
             // authentication cookieAuth required
+
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
             // authentication knoxTokenAuth required
             // http bearer authentication required
@@ -11899,6 +12175,9 @@ export const UsersApiAxiosParamCreator = function (configuration?: Configuration
 
             // authentication cookieAuth required
 
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
             // authentication knoxTokenAuth required
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
@@ -11940,6 +12219,9 @@ export const UsersApiAxiosParamCreator = function (configuration?: Configuration
             const localVarQueryParameter = {} as any;
 
             // authentication cookieAuth required
+
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
             // authentication knoxTokenAuth required
             // http bearer authentication required
@@ -12146,6 +12428,9 @@ export const ValidationSchemasApiAxiosParamCreator = function (configuration?: C
 
             // authentication cookieAuth required
 
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
             // authentication knoxTokenAuth required
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
@@ -12188,6 +12473,9 @@ export const ValidationSchemasApiAxiosParamCreator = function (configuration?: C
 
             // authentication cookieAuth required
 
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
             // authentication knoxTokenAuth required
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
@@ -12223,6 +12511,9 @@ export const ValidationSchemasApiAxiosParamCreator = function (configuration?: C
             const localVarQueryParameter = {} as any;
 
             // authentication cookieAuth required
+
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
             // authentication knoxTokenAuth required
             // http bearer authentication required
@@ -12261,6 +12552,9 @@ export const ValidationSchemasApiAxiosParamCreator = function (configuration?: C
             const localVarQueryParameter = {} as any;
 
             // authentication cookieAuth required
+
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
             // authentication knoxTokenAuth required
             // http bearer authentication required
@@ -12310,6 +12604,9 @@ export const ValidationSchemasApiAxiosParamCreator = function (configuration?: C
 
             // authentication cookieAuth required
 
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
             // authentication knoxTokenAuth required
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
@@ -12352,6 +12649,9 @@ export const ValidationSchemasApiAxiosParamCreator = function (configuration?: C
 
             // authentication cookieAuth required
 
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
             // authentication knoxTokenAuth required
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
@@ -12393,6 +12693,9 @@ export const ValidationSchemasApiAxiosParamCreator = function (configuration?: C
             const localVarQueryParameter = {} as any;
 
             // authentication cookieAuth required
+
+            // authentication harvesterAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
             // authentication knoxTokenAuth required
             // http bearer authentication required

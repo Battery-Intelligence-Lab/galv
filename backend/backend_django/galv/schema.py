@@ -25,6 +25,20 @@ class KnoxTokenScheme(OpenApiAuthenticationExtension):
                 'description': 'Token-based authentication with required prefix "%s"' % knox_settings.AUTH_HEADER_PREFIX
             }
 
+class HarvesterAuthenticationScheme(OpenApiAuthenticationExtension):
+    target_class = 'galv.auth.HarvesterAuthentication'
+    name = 'harvesterAuth'
+    match_subclasses = True
+    priority = 1
+
+    def get_security_definition(self, auto_schema):
+        return {
+            'type': 'apiKey',
+            'in': 'header',
+            'name': 'Authorization',
+            'description': 'Harvester API key'
+        }
+
 def custom_preprocessing_hook(endpoints):
     # your modifications to the list of operations that are exposed in the schema
     for (path, path_regex, method, callback) in endpoints:

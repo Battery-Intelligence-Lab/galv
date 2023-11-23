@@ -956,6 +956,9 @@ class DataColumn(models.Model):
     def has_read_permission(request):
         return True
 
+    def has_object_read_permission(self, request):
+        return self.file.has_object_read_permission(request)
+
     def has_object_write_permission(self, request):
         return self.file.has_object_write_permission(request)
 
