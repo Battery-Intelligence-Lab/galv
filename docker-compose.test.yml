@@ -49,13 +49,6 @@ services:
     working_dir: /usr
     command: python -m unittest discover -s /usr/harvester/test
 
-  mockserver:
-    image: mockserver/mockserver
-    ports:
-      - "1080:1080"
-    volumes:
-      - ./frontend/src/api_codegen/schema.json:/schema.json
-
   frontend_test:
     build:
       dockerfile: Dockerfile_dev
@@ -66,9 +59,8 @@ services:
       - ./frontend:/app
     working_dir: /app
     command: >
-      bash -c "yarn test"
+        tail -F anything
+#      bash -c "yarn test"
     env_file:
       - ./.env
     restart: "no"
-    depends_on:
-      - mockserver
