@@ -6,7 +6,7 @@
 
 import {LOOKUP_KEYS} from "../constants";
 import React from 'react';
-import { act, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import axios from 'axios';
 import {QueryClient, QueryClientProvider} from "@tanstack/react-query";
 
@@ -16,8 +16,8 @@ const mockedAxios = axios as jest.Mocked<typeof axios>;
 
 const Representation = jest.requireActual('../Components/Representation').default;
 
-it('Representation renders', async () => {
-  mockedAxios.get.mockResolvedValue({
+it('renders', async () => {
+  mockedAxios.request.mockResolvedValue({
     data: {
       id: 1,
       name: 'Joe Doe'
@@ -26,10 +26,10 @@ it('Representation renders', async () => {
 
   const queryClient = new QueryClient();
 
-  await act(async () => render(
+  render(
       <QueryClientProvider client={queryClient}>
-        <Representation lookup_key={LOOKUP_KEYS.TEAM} resource_id={1} />
+        <Representation lookup_key={LOOKUP_KEYS.TEAM} resource_id={1} prefix="T" suffix="!" />
       </QueryClientProvider>
-  ));
-  screen.debug();
+  )
+  expect(screen.getByText('T1!')).toBeInTheDocument();
 })

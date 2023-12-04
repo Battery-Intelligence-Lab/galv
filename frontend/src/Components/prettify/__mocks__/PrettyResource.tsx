@@ -2,11 +2,8 @@
 // Copyright  (c) 2020-2023, The Chancellor, Masters and Scholars of the University
 // of Oxford, and the 'Galv' Developers. All rights reserved.
 
-import React from "react";
+import dummy from "../../__mocks__/DummyComponent"
 
 export default function PrettyResource(props: any) {
-    return <div>
-        <p>PrettyResource</p>
-        <p>{JSON.stringify(props)}</p>
-    </div>
+    return dummy("PrettyResource", props)
 }

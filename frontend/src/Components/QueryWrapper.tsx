@@ -14,6 +14,7 @@ export default function QueryWrapper(props: QueryWrapperProps) {
     const loading = props.queries.some((query) => query.isLoading)
     const error = props.queries.some((query) => query.isError)
     const success = props.queries.every((query) => query.isSuccess)
+
     if (loading) return props.loading
     if (error)
         return typeof props.error === 'function' ?

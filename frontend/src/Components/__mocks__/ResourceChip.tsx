@@ -2,13 +2,8 @@
 // Copyright  (c) 2020-2023, The Chancellor, Masters and Scholars of the University
 // of Oxford, and the 'Galv' Developers. All rights reserved.
 
-import React from "react";
+import dummy from "./DummyComponent"
 
-export default function DummyResourceChip({params}: any) {
-    return (
-        <div>
-            <p>ResourceChip</p>
-            <p>{JSON.stringify({params})}</p>
-        </div>
-    )
+export default function ResourceChip(params: any) {
+	return dummy("ResourceChip", params)
 }

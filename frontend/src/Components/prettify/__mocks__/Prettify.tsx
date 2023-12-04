@@ -2,12 +2,9 @@
 // Copyright  (c) 2020-2023, The Chancellor, Masters and Scholars of the University
 // of Oxford, and the 'Galv' Developers. All rights reserved.
 
-import React from "react";
+import dummy from "../../__mocks__/DummyComponent"
 
-const f = (v: any) => (props: any) => <div>
-    <p>{v}</p>
-    <p>{JSON.stringify(props)}</p>
-</div>
+const f = (v: any) => (props: any) => dummy(v, props)
 
 export const PrettyString = f("PrettyString")
 export const PrettyNumber = f("PrettyNumber")

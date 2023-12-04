@@ -2,11 +2,12 @@
 // Copyright  (c) 2020-2023, The Chancellor, Masters and Scholars of the University
 // of Oxford, and the 'Galv' Developers. All rights reserved.
 
-import React from "react";
+import dummy from "../../__mocks__/DummyComponent"
+
+export function PrettyObjectFromQuery(props: any) {
+    return PrettyObject({...props, via: "PrettyObjectFromQuery"})
+}
 
 export default function PrettyObject(props: any) {
-    return <div>
-        <p>PrettyObject</p>
-        <p>{JSON.stringify(props)}</p>
-    </div>
+    return dummy('PrettyObject', props)
 }
