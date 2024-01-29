@@ -34,7 +34,7 @@ First you will need to clone the galv repository using ``git``:
 
 .. code-block:: bash
 
-	git clone https://gitlab.com/battery-intelligence-lab/galv-project/galv.git
+	git clone https://github.com/Battery-Intelligence-Lab/galv.git
 	cd galv
 
 
