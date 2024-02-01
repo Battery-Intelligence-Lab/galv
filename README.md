@@ -2,7 +2,7 @@
 
 # 🚨Galv has moved🚨
 
-Galv has moved to separate repositories for the [backend](/Battery-Intelligence-Lab/galv-backend), [frontend](/Battery-Intelligence-Lab/galv-frontend), and [harvester](/Battery-Intelligence-Lab/galv-harvester).
+Galv has moved to separate repositories for the [backend](https://github.com/Battery-Intelligence-Lab/galv-backend), [frontend](https://github.com/Battery-Intelligence-Lab/galv-frontend), and [harvester](https://github.com/Battery-Intelligence-Lab/galv-harvester).
 Future changes will be made to those repositories rather than this one. 
 Please target issues at the relevant one of those repositories. 
 
