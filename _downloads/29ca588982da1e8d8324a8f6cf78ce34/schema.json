@@ -1,0 +1,4030 @@
+{
+    "openapi": "3.0.3",
+    "info": {
+        "title": "Battery Data API",
+        "version": "2.0.0",
+        "description": "A standard API for accessing battery experiment datasets and metadata",
+        "contact": {
+            "email": "martin.robinson@cs.ox.ac.uk"
+        },
+        "license": {
+            "name": "Apache 2.0",
+            "url": "https://www.apache.org/licenses/LICENSE-2.0.html"
+        }
+    },
+    "paths": {
+        "/cell_families/": {
+            "get": {
+                "operationId": "cell_families_list",
+                "description": "\nCell Families group together the general properties of a type of Cell.\nEach Cell is associated with a Cell Family.\n\nSearchable fields:\n- name\n- manufacturer\n- form_factor\n        ",
+                "summary": "View Cell Families",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "anode_chemistry",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "cathode_chemistry",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "form_factor",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "manufacturer",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "name",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "nominal_capacity",
+                        "schema": {
+                            "type": "number",
+                            "format": "float"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "nominal_cell_weight",
+                        "schema": {
+                            "type": "number",
+                            "format": "float"
+                        }
+                    }
+                ],
+                "tags": [
+                    "cell_families"
+                ],
+                "security": [
+                    {
+                        "knoxTokenAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/CellFamily"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "post": {
+                "operationId": "cell_families_create",
+                "description": "\nCell Families group together the general properties of a type of Cell.\nEach Cell is associated with a Cell Family.\n        ",
+                "summary": "Create a Cell Family",
+                "tags": [
+                    "cell_families"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CellFamily"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CellFamily"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CellFamily"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "knoxTokenAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CellFamily"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/cell_families/{id}/": {
+            "get": {
+                "operationId": "cell_families_retrieve",
+                "description": "\nCell Families group together the general properties of a type of Cell.\nEach Cell is associated with a Cell Family.\n        ",
+                "summary": "View a Cell Family",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this cell family.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "cell_families"
+                ],
+                "security": [
+                    {
+                        "knoxTokenAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CellFamily"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "patch": {
+                "operationId": "cell_families_partial_update",
+                "description": "\nCell Families that do not have any Cells associated with them may be edited.\nCell Families that _do_ have Cells associated with them are locked,\nto prevent accidental updating.\n        ",
+                "summary": "Update a Cell Family",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this cell family.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "cell_families"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedCellFamily"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedCellFamily"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedCellFamily"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "knoxTokenAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CellFamily"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "cell_families_destroy",
+                "description": "\nCell Families that do not have any Cells associated with them may be deleted.\nCell Families that _do_ have Cells associated with them are locked,\nto prevent accidental updating.\n        ",
+                "summary": "Delete a Cell Family",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this cell family.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "cell_families"
+                ],
+                "security": [
+                    {
+                        "knoxTokenAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/cells/": {
+            "get": {
+                "operationId": "cells_list",
+                "description": "\nCells are specific cells which generate data stored in Datasets/observed Files.\n\nSearchable fields:\n- display_name\n        ",
+                "summary": "View Cells",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "display_name",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "family__id",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "uid",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "tags": [
+                    "cells"
+                ],
+                "security": [
+                    {
+                        "knoxTokenAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Cell"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "post": {
+                "operationId": "cells_create",
+                "description": "\nCreate an instance of a Cell by declaring its unique identifier and associated Cell Family.\n        ",
+                "summary": "Create a Cell",
+                "tags": [
+                    "cells"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Cell"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Cell"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Cell"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "knoxTokenAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Cell"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/cells/{id}/": {
+            "get": {
+                "operationId": "cells_retrieve",
+                "description": "\nCells are specific cells which generate data stored in Datasets/observed Files.\n        ",
+                "summary": "View a Cell",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this cell.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "cells"
+                ],
+                "security": [
+                    {
+                        "knoxTokenAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Cell"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "patch": {
+                "operationId": "cells_partial_update",
+                "description": "\nCells that are not used in any Dataset may be edited.\nCells that _are_ used in a Dataset are locked to prevent accidental updating.\n        ",
+                "summary": "Update a Cell",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this cell.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "cells"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedCell"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedCell"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedCell"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "knoxTokenAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Cell"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "cells_destroy",
+                "description": "\nCells that are not used in any Dataset may be deleted.\nCells that _are_ used in a Dataset are locked to prevent accidental updating.\n        ",
+                "summary": "Delete a Cell",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this cell.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "cells"
+                ],
+                "security": [
+                    {
+                        "knoxTokenAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/column_types/": {
+            "get": {
+                "operationId": "column_types_list",
+                "description": "\nColumn Types are generic Column templates. They hold the metadata for a Column,\nwhile the individual Column instances link Column Types to the TimeseriesData they contain.\n\nSome Column Types are innately recognised by Galv and its harvester parsers,\nwhile others can be defined by the parsers during data processing.\n\nSearchable fields:\n- name\n- description\n        ",
+                "summary": "View Column Types",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "is_default",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "name",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "unit__name",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "unit__symbol",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "tags": [
+                    "column_types"
+                ],
+                "security": [
+                    {
+                        "knoxTokenAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/DataColumnType"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/column_types/{id}/": {
+            "get": {
+                "operationId": "column_types_retrieve",
+                "description": "\nColumn Types are generic Column templates. They hold the metadata for a Column,\nwhile the individual Column instances link Column Types to the TimeseriesData they contain.\n\nSome Column Types are innately recognised by Galv and its harvester parsers,\nwhile others can be defined by the parsers during data processing.\n\nSearchable fields:\n- name\n- description\n        ",
+                "summary": "View a Column Type",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this data column type.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "column_types"
+                ],
+                "security": [
+                    {
+                        "knoxTokenAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DataColumnType"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/columns/": {
+            "get": {
+                "operationId": "columns_list",
+                "description": "\nColumn instances link Column Types to the TimeseriesData they contain.\nYou can access any Column in any Dataset to which you have access.\n\nSearchable fields:\n- dataset__name\n- type__name (Column Type name)\n        ",
+                "summary": "View Columns to which you have access",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "dataset__id",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "dataset__name",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "type__id",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "type__name",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "type__unit__symbol",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "tags": [
+                    "columns"
+                ],
+                "security": [
+                    {
+                        "knoxTokenAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/DataColumn"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/columns/{id}/": {
+            "get": {
+                "operationId": "columns_retrieve",
+                "description": "\nColumn instances link Column Types to the TimeseriesData they contain.\n\nSearchable fields:\n- dataset__name\n- type__name (Column Type name)\n        ",
+                "summary": "View a Column",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this data column.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "columns"
+                ],
+                "security": [
+                    {
+                        "knoxTokenAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DataColumn"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/columns/{id}/values/": {
+            "get": {
+                "operationId": "columns_values_retrieve",
+                "description": "\nView the TimeseriesData contents of the Column.\n\nData are presented as a stream of values separated by newlines.\n\nCan be filtered with querystring parameters `min` and `max`, and `mod` (modulo) by specifying a sample number.\n        ",
+                "summary": "View Column data as newline-separated stream of values",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this data column.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "columns"
+                ],
+                "security": [
+                    {
+                        "knoxTokenAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DataColumn"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/create_token/": {
+            "post": {
+                "operationId": "create_token_create",
+                "description": "\nAccess to the API is authenticated by API Tokens.\nWhen you log into the web frontend, you are issued with a temporary token\nto allow your browser session to function.\nIf you wish to access the API via the Python client, or similar programmatically routes,\nyou will likely want a token with a longer expiry time. Those tokens are created using\nthis endpoint.\n    ",
+                "summary": "Create a new API Token",
+                "tags": [
+                    "create_token"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateKnoxToken"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateKnoxToken"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateKnoxToken"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "knoxTokenAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/KnoxTokenFull"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/datasets/": {
+            "get": {
+                "operationId": "datasets_list",
+                "description": "\nView the Datasets extracted from Files on Paths to which you have access.\n\nDatasets consist of metadata and links to the Columns that link to the actual data themselves.\n\nSearchable fields:\n- name\n- type\n        ",
+                "summary": "View Datasets",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "cell__family__name",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "name",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "type",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "tags": [
+                    "datasets"
+                ],
+                "security": [
+                    {
+                        "knoxTokenAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Dataset"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/datasets/{id}/": {
+            "get": {
+                "operationId": "datasets_retrieve",
+                "description": "\nDatasets consist of metadata and links to the Columns that link to the actual data themselves.\n        ",
+                "summary": "View a Dataset",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this dataset.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "datasets"
+                ],
+                "security": [
+                    {
+                        "knoxTokenAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Dataset"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "patch": {
+                "operationId": "datasets_partial_update",
+                "description": "\nUpdate a Dataset's metadata to associate it with the Cell or Experimental equipment that were\nused in the experiment that generated the data, describe that experiment's purpose,\nor amend an incorrect name or file type value.\n        ",
+                "summary": "Alter a Dataset's metadata",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this dataset.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "datasets"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedDataset"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedDataset"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedDataset"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "knoxTokenAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Dataset"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/equipment/": {
+            "get": {
+                "operationId": "equipment_list",
+                "description": "\nExperimental equipment used in experiments which generate Files and their Datasets.\n\nSearchable fields:\n- name\n- type\n        ",
+                "summary": "View Equipment",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "type",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "tags": [
+                    "equipment"
+                ],
+                "security": [
+                    {
+                        "knoxTokenAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Equipment"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "post": {
+                "operationId": "equipment_create",
+                "description": "\nCreate Equipment by describing its role and purpose.\n        ",
+                "summary": "Create Equipment",
+                "tags": [
+                    "equipment"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Equipment"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Equipment"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Equipment"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "knoxTokenAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Equipment"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/equipment/{id}/": {
+            "get": {
+                "operationId": "equipment_retrieve",
+                "description": "\nExperimental equipment used in experiments which generate Files and their Datasets.\n        ",
+                "summary": "View specific Equipment",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this equipment.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "equipment"
+                ],
+                "security": [
+                    {
+                        "knoxTokenAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Equipment"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "patch": {
+                "operationId": "equipment_partial_update",
+                "description": "\nEquipment that is not used in any Dataset may be edited.\nEquipment that _is_ used in a Dataset is locked to prevent accidental updating.\n        ",
+                "summary": "Update Equipment",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this equipment.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "equipment"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedEquipment"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedEquipment"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedEquipment"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "knoxTokenAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Equipment"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "equipment_destroy",
+                "description": "\nEquipment that is not used in any Dataset may be deleted.\nEquipment that _is_ used in a Dataset is locked to prevent accidental updating.\n        ",
+                "summary": "Delete Equipment",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this equipment.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "equipment"
+                ],
+                "security": [
+                    {
+                        "knoxTokenAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/files/": {
+            "get": {
+                "operationId": "files_list",
+                "description": "\nFiles are files in a directory marked as a monitored Path for a Harvester.\n\nThey are reported to Galv by the harvester program.\nAn File will have file metadata (size, modification time), and a\nstatus representing its import state. It may be linked to HarvestErrors\nencountered while importing the file, and/or to Datasets representing the content\nof imported files.\n\nYou can see all files on any Path on which you are an Administrator or User.\nHarvester Administrators have access to all Files on the Harvester's Paths.\n\nSearchable fields:\n- path\n- state\n        ",
+                "summary": "View Files on a Path you can access",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "harvester__id",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "state",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "GROWING",
+                                "IMPORT FAILED",
+                                "IMPORTED",
+                                "IMPORTING",
+                                "RETRY IMPORT",
+                                "STABLE",
+                                "UNSTABLE"
+                            ]
+                        },
+                        "description": "File status; autogenerated but can be manually set to RETRY IMPORT"
+                    }
+                ],
+                "tags": [
+                    "files"
+                ],
+                "security": [
+                    {
+                        "knoxTokenAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/ObservedFile"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/files/{id}/": {
+            "get": {
+                "operationId": "files_retrieve",
+                "description": "\nFiles are files in a directory marked as a monitored Path for a Harvester.\n        ",
+                "summary": "View a File",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this observed file.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "files"
+                ],
+                "security": [
+                    {
+                        "knoxTokenAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ObservedFile"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/files/{id}/reimport/": {
+            "get": {
+                "operationId": "files_reimport_retrieve",
+                "description": "\nA File will usually only be imported once, provided it is created, written to,\nand then left alone. Files will naturally be reimported if they grow in size\nagain.\nIf an error was encountered while processing a file, or you have other reasons\nfor wishing to repeat the import process, you can use this endpoint to force the\nharvester program to rerun the import process when it next scans the file.\n\n*Note*: This request may be overwritten if the file changes size before it is next scanned.\n        ",
+                "summary": "Force a File to be re-imported",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this observed file.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "files"
+                ],
+                "security": [
+                    {
+                        "knoxTokenAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ObservedFile"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/groups/{id}/add/": {
+            "post": {
+                "operationId": "groups_add_create",
+                "description": "Add a user to a group",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this group.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "groups"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/GroupUpdate"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/GroupUpdate"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/GroupUpdate"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "knoxTokenAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Group"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/groups/{id}/remove/": {
+            "post": {
+                "operationId": "groups_remove_create",
+                "description": "Remove a user from a group.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this group.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "groups"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/GroupUpdate"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/GroupUpdate"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/GroupUpdate"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "knoxTokenAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Group"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/harvest_errors/": {
+            "get": {
+                "operationId": "harvest_errors_list",
+                "description": "\nView the Errors encountered by Harvesters to which you have access.\n\nHarvesters report errors when they encounter them, either in crawling or in processing files.\nIf a File or Dataset is not appearing on a Path where you think it should be, this is the first place to check.\n\nSearchable fields:\n- error\n        ",
+                "summary": "View Errors encountered while Harvesting",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "file",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "harvester",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "tags": [
+                    "harvest_errors"
+                ],
+                "security": [
+                    {
+                        "knoxTokenAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/HarvestError"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/harvest_errors/{id}/": {
+            "get": {
+                "operationId": "harvest_errors_retrieve",
+                "description": "\nView an Error reported by a Harvester.\n        ",
+                "summary": "View Error details",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this harvest error.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "harvest_errors"
+                ],
+                "security": [
+                    {
+                        "knoxTokenAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HarvestError"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/harvesters/": {
+            "get": {
+                "operationId": "harvesters_list",
+                "description": "\nHarvesters monitor a set of MonitoredPaths and send reports about ObservedFiles within those paths.\nYou can view all Harvesters on which you are an Administrator or User,\nand those which have MonitoredPaths on which you are an Administrator or User.\n\nSearchable fields:\n- name\n        ",
+                "summary": "View all Harvesters",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "name",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "tags": [
+                    "harvesters"
+                ],
+                "security": [
+                    {
+                        "knoxTokenAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Harvester"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/harvesters/{id}/": {
+            "get": {
+                "operationId": "harvesters_retrieve",
+                "description": "\nHarvesters monitor a set of MonitoredPaths and send reports about ObservedFiles within those paths.\n        ",
+                "summary": "View a single Harvester",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this harvester.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "harvesters"
+                ],
+                "security": [
+                    {
+                        "knoxTokenAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Harvester"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "patch": {
+                "operationId": "harvesters_partial_update",
+                "description": "\nSome Harvester details can be updated after the Harvester is created.\nThose details are updated using this endpoint.\n\nOnly Harvester Administrators are authorised to make these changes.\n        ",
+                "summary": "Update Harvester details",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this harvester.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "harvesters"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedHarvester"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedHarvester"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedHarvester"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "knoxTokenAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Harvester"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "harvesters_destroy",
+                "description": "\n**Use with caution.**\n\nOnly Harvester Administrators are authorised to delete harvesters.\nDeleting a Harvester will not stop the harvester program running,\nit will instead deactivate its API access.\nCurrently, harvesters cannot be recreated easily, so don't delete them if you might want them later.\nGenerally, a better solution is to stop the harvester program instead.\n        ",
+                "summary": "Delete a Harvester",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this harvester.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "harvesters"
+                ],
+                "security": [
+                    {
+                        "knoxTokenAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/harvesters/mine/": {
+            "get": {
+                "operationId": "harvesters_mine_retrieve",
+                "description": "\nView only Harvesters to which you have access.\nOn systems with multiple Harvesters, this view is more useful than /harvesters/.\n\nThis view will include Harvester environment variables, while /harvesters/ will not.\n\nSearchable fields:\n- name\n        ",
+                "summary": "View Harvesters to which you have access",
+                "tags": [
+                    "harvesters"
+                ],
+                "security": [
+                    {
+                        "knoxTokenAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Harvester"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/inactive_users/": {
+            "get": {
+                "operationId": "inactive_users_list",
+                "description": "\nUsers can be created freely, but cannot use the API until they are approved by an existing user account.\n        ",
+                "summary": "View Users awaiting approval",
+                "tags": [
+                    "inactive_users"
+                ],
+                "security": [
+                    {
+                        "knoxTokenAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/User"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "post": {
+                "operationId": "inactive_users_create",
+                "description": "\nUsers can be created freely, but cannot use the API until they are approved by an existing user account.\n        ",
+                "summary": "Create a new User account",
+                "tags": [
+                    "inactive_users"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/User"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/User"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/User"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "knoxTokenAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/User"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/inactive_users/{id}/": {
+            "get": {
+                "operationId": "inactive_users_retrieve",
+                "description": "\nUsers can be created freely, but cannot use the API until they are approved by an existing user account.\n        ",
+                "summary": "View a User awaiting approval",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this user.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "inactive_users"
+                ],
+                "security": [
+                    {
+                        "knoxTokenAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/User"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/inactive_users/{id}/vouch_for/": {
+            "get": {
+                "operationId": "inactive_users_vouch_for_retrieve",
+                "description": "\nApproving a User will allow them to access the API. A record will be kept of the approval.\n        ",
+                "summary": "Approve a User awaiting activation",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this user.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "inactive_users"
+                ],
+                "security": [
+                    {
+                        "knoxTokenAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/User"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/login/": {
+            "post": {
+                "operationId": "login_create",
+                "description": "\nSign in with a username and password to obtain an API Token.\nThe token will allow you access to appropriate parts of the API in subsequent requests.\n\nSubsequent requests should include the Authorization header with the content `Bearer token`\nwhere token is the token you received in exchange for your credentials here.\n    ",
+                "summary": "Log in to retrieve an API Token for use elsewhere in the API.",
+                "tags": [
+                    "login"
+                ],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/KnoxUser"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "401": {
+                        "description": "Invalid username/password"
+                    }
+                }
+            }
+        },
+        "/monitored_paths/": {
+            "get": {
+                "operationId": "monitored_paths_list",
+                "description": "\nA Path refers to a directory accessible by a Harvester in which\ndata files will reside. Those files will be scanned periodically by the Harvester,\nbecoming ObservedFiles once they are reported to Galv by the Harvester.\n\nPaths can be created or updated by a Harvester's admins and users, as\nwell as any users who have been given explicit permissions to edit the MonitoredPath.\n\nSearchable fields:\n- path\n        ",
+                "summary": "View Paths to which you have access",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "harvester__id",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "harvester__name",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "tags": [
+                    "monitored_paths"
+                ],
+                "security": [
+                    {
+                        "knoxTokenAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/MonitoredPath"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "post": {
+                "operationId": "monitored_paths_create",
+                "description": "\nRegister a new directory on for a Harvester to crawl.\nFiles in that directory will be scanned periodically by the Harvester,\nbecoming ObservedFiles once they are reported to Galv by the Harvester.\n        ",
+                "summary": "Create a new Path",
+                "tags": [
+                    "monitored_paths"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/MonitoredPathCreate"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/MonitoredPathCreate"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/MonitoredPathCreate"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "knoxTokenAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MonitoredPath"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/monitored_paths/{id}/": {
+            "get": {
+                "operationId": "monitored_paths_retrieve",
+                "description": "\nA Path refers to a directory accessible by a Harvester in which\ndata files will reside. Those files will be scanned periodically by the Harvester,\nbecoming ObservedFiles once they are reported to Galv by the Harvester.\n        ",
+                "summary": "View the details of a Path",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this monitored path.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "monitored_paths"
+                ],
+                "security": [
+                    {
+                        "knoxTokenAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MonitoredPath"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "patch": {
+                "operationId": "monitored_paths_partial_update",
+                "description": "\nAlter the path to the monitored directory,\nor the time for which files need to be stable before being imported.\n        ",
+                "summary": "Update a Path",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this monitored path.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "monitored_paths"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedMonitoredPath"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedMonitoredPath"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedMonitoredPath"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "knoxTokenAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MonitoredPath"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "monitored_paths_destroy",
+                "description": "\nDelete a directory from a Harvester's list of directories to crawl.\nFiles in that directory will no longer be scanned periodically by the Harvester,\nand will no longer become ObservedFiles once they are reported to Galv by the Harvester.\n        ",
+                "summary": "Delete a Path",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this monitored path.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "monitored_paths"
+                ],
+                "security": [
+                    {
+                        "knoxTokenAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/monitored_paths/{id}/files/": {
+            "get": {
+                "operationId": "monitored_paths_files_retrieve",
+                "description": "Fetch files matched by this Path's path and RegEx.",
+                "summary": "List of files matched by this Path",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this monitored path.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "monitored_paths"
+                ],
+                "security": [
+                    {
+                        "knoxTokenAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MonitoredPath"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/tokens/": {
+            "get": {
+                "operationId": "tokens_list",
+                "description": "\nList all API tokens associated with this user account.\nYou will not be able to see the value of the tokens themselves,\nbecause these values are encrypted, but you can see the names you gave them and their expiry dates.\n\nNew Tokens cannot be created at this endpoint, use /create_token/ instead.\n        ",
+                "summary": "View tokens associated with your account.",
+                "tags": [
+                    "tokens"
+                ],
+                "security": [
+                    {
+                        "knoxTokenAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/KnoxToken"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/tokens/{id}/": {
+            "get": {
+                "operationId": "tokens_retrieve",
+                "description": "\nYou will not be able to see the value of the token,\nbut you can see the name you gave it and its creation/expiry date.\n        ",
+                "summary": "View a token associated with your account.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this knox auth token.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "tokens"
+                ],
+                "security": [
+                    {
+                        "knoxTokenAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/KnoxToken"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "patch": {
+                "operationId": "tokens_partial_update",
+                "description": "\nToken values and expiry dates are immutable, but you can change the name you\nassociated with a token.\n        ",
+                "summary": "Change the name of a token associated with your account.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this knox auth token.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "tokens"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedKnoxToken"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedKnoxToken"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedKnoxToken"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "knoxTokenAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/KnoxToken"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "tokens_destroy",
+                "description": "\nRevoking a token renders that token invalid for authenticating requests to the API.\nIf you have tokens that are no longer needed, or that have been leaked (for example\nby being included in a public Git Repository), you can should revoke them so that\nother people cannot use them to access the API under your credentials.\n        ",
+                "summary": "Revoke a token associated with your account.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this knox auth token.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "tokens"
+                ],
+                "security": [
+                    {
+                        "knoxTokenAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/units/": {
+            "get": {
+                "operationId": "units_list",
+                "description": "\nUnits are scientific (typically SI) units which describe how data map to quantities in the world.\nSome Units are predefined (e.g. seconds, volts, amps, unitless quantities),\nwhile others can be defined in experimental data.\n\nSearchable fields:\n- name\n- symbol\n- description\n        ",
+                "summary": "View Units",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "is_default",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "name",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "symbol",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "tags": [
+                    "units"
+                ],
+                "security": [
+                    {
+                        "knoxTokenAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/DataUnit"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/units/{id}/": {
+            "get": {
+                "operationId": "units_retrieve",
+                "description": "\nUnits are scientific (typically SI) units which describe how data map to quantities in the world.\nSome Units are predefined (e.g. seconds, volts, amps, unitless quantities),\nwhile others can be defined in experimental data.\n        ",
+                "summary": "View a Unit",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this data unit.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "units"
+                ],
+                "security": [
+                    {
+                        "knoxTokenAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DataUnit"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/users/": {
+            "get": {
+                "operationId": "users_list",
+                "description": "Users are Django User instances custom-serialized for convenience.",
+                "tags": [
+                    "users"
+                ],
+                "security": [
+                    {
+                        "knoxTokenAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/User"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/users/{id}/": {
+            "get": {
+                "operationId": "users_retrieve",
+                "description": "Users are Django User instances custom-serialized for convenience.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this user.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "users"
+                ],
+                "security": [
+                    {
+                        "knoxTokenAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/User"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "patch": {
+                "operationId": "users_partial_update",
+                "description": "\nYour User profile can be updated. You may change your email address and password.\nAll changes require your current password to be accepted.\n        ",
+                "summary": "Update User profile",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this user.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "users"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedUserUpdate"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedUserUpdate"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedUserUpdate"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "knoxTokenAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/User"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "Cell": {
+                "type": "object",
+                "properties": {
+                    "url": {
+                        "type": "string",
+                        "format": "uri",
+                        "readOnly": true,
+                        "description": "Canonical URL for this object"
+                    },
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "description": "Auto-assigned object identifier"
+                    },
+                    "uid": {
+                        "type": "string",
+                        "description": "Serial number or similar. Should be globally unique"
+                    },
+                    "display_name": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Human-friendly identifier"
+                    },
+                    "family": {
+                        "type": "string",
+                        "format": "uri",
+                        "description": "Cell Family to which this Cell belongs"
+                    },
+                    "datasets": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "format": "uri"
+                        },
+                        "readOnly": true,
+                        "description": "Datasets generated in experiments using this Cell"
+                    },
+                    "in_use": {
+                        "type": "boolean",
+                        "readOnly": true
+                    }
+                },
+                "required": [
+                    "datasets",
+                    "family",
+                    "id",
+                    "in_use",
+                    "uid",
+                    "url"
+                ]
+            },
+            "CellFamily": {
+                "type": "object",
+                "properties": {
+                    "url": {
+                        "type": "string",
+                        "format": "uri",
+                        "readOnly": true,
+                        "description": "Canonical URL for this object"
+                    },
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "description": "Auto-assigned object identifier"
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "Human-friendly identifier"
+                    },
+                    "form_factor": {
+                        "type": "string",
+                        "description": "Physical shape of the cells"
+                    },
+                    "link_to_datasheet": {
+                        "type": "string",
+                        "description": "Link to a detailed datasheet for these cells"
+                    },
+                    "anode_chemistry": {
+                        "type": "string",
+                        "description": "Chemistry of the cells' anode"
+                    },
+                    "cathode_chemistry": {
+                        "type": "string",
+                        "description": "Chemistry of the cells' cathode"
+                    },
+                    "nominal_capacity": {
+                        "type": "number",
+                        "format": "double",
+                        "description": "Nominal capacity of the cells (in amp hours)"
+                    },
+                    "nominal_cell_weight": {
+                        "type": "number",
+                        "format": "double",
+                        "description": "Nominal weight of the cells (in kilograms)"
+                    },
+                    "manufacturer": {
+                        "type": "string",
+                        "description": "Name of the cells' manufacturer"
+                    },
+                    "cells": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "format": "uri"
+                        },
+                        "readOnly": true,
+                        "description": "Cells in this Family"
+                    },
+                    "in_use": {
+                        "type": "boolean",
+                        "readOnly": true
+                    }
+                },
+                "required": [
+                    "anode_chemistry",
+                    "cathode_chemistry",
+                    "cells",
+                    "form_factor",
+                    "id",
+                    "in_use",
+                    "link_to_datasheet",
+                    "manufacturer",
+                    "name",
+                    "nominal_capacity",
+                    "nominal_cell_weight",
+                    "url"
+                ]
+            },
+            "CreateKnoxToken": {
+                "type": "object",
+                "properties": {
+                    "ttl": {
+                        "type": "integer",
+                        "description": "Time to live (s)"
+                    },
+                    "name": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "name"
+                ]
+            },
+            "DataColumn": {
+                "type": "object",
+                "description": "A column contains metadata and data. Data are an ordered list of values.",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "description": "Auto-assigned object identifier"
+                    },
+                    "url": {
+                        "type": "string",
+                        "format": "uri",
+                        "readOnly": true,
+                        "description": "Canonical URL for this object"
+                    },
+                    "name": {
+                        "type": "string",
+                        "readOnly": true,
+                        "description": "Column title e.g. in .tsv file headers"
+                    },
+                    "dataset": {
+                        "type": "string",
+                        "readOnly": true,
+                        "description": "Dataset in which this Column appears"
+                    },
+                    "data_type": {
+                        "type": "string",
+                        "readOnly": true,
+                        "description": "Type of the data in this column"
+                    },
+                    "type_name": {
+                        "type": "string",
+                        "readOnly": true,
+                        "description": "Human-friendly identifier"
+                    },
+                    "description": {
+                        "type": "string",
+                        "readOnly": true,
+                        "description": "Origins and purpose"
+                    },
+                    "official_sample_counter": {
+                        "type": "boolean",
+                        "readOnly": true
+                    },
+                    "unit": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/DataUnit"
+                            }
+                        ],
+                        "readOnly": true,
+                        "description": "Unit used for measuring the values in this column"
+                    },
+                    "values": {
+                        "type": "string",
+                        "readOnly": true,
+                        "description": "Column values"
+                    }
+                },
+                "required": [
+                    "data_type",
+                    "dataset",
+                    "description",
+                    "id",
+                    "name",
+                    "official_sample_counter",
+                    "type_name",
+                    "unit",
+                    "url",
+                    "values"
+                ]
+            },
+            "DataColumnType": {
+                "type": "object",
+                "properties": {
+                    "url": {
+                        "type": "string",
+                        "format": "uri",
+                        "readOnly": true,
+                        "description": "Canonical URL for this object"
+                    },
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "description": "Auto-assigned object identifier"
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "Human-friendly identifier"
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "Origins and purpose"
+                    },
+                    "is_default": {
+                        "type": "boolean",
+                        "description": "Whether the Column is included in the initial list of known Column Types"
+                    },
+                    "unit": {
+                        "type": "string",
+                        "format": "uri",
+                        "nullable": true,
+                        "description": "Unit used for measuring the values in this column"
+                    }
+                },
+                "required": [
+                    "description",
+                    "id",
+                    "name",
+                    "unit",
+                    "url"
+                ]
+            },
+            "DataUnit": {
+                "type": "object",
+                "properties": {
+                    "url": {
+                        "type": "string",
+                        "format": "uri",
+                        "readOnly": true,
+                        "description": "Canonical URL for this object"
+                    },
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "description": "Auto-assigned object identifier"
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "Common name"
+                    },
+                    "symbol": {
+                        "type": "string",
+                        "description": "Symbol"
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "What the Unit signifies, and how it is used"
+                    }
+                },
+                "required": [
+                    "description",
+                    "id",
+                    "name",
+                    "symbol",
+                    "url"
+                ]
+            },
+            "Dataset": {
+                "type": "object",
+                "properties": {
+                    "url": {
+                        "type": "string",
+                        "format": "uri",
+                        "readOnly": true,
+                        "description": "Canonical URL for this object"
+                    },
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "description": "Auto-assigned object identifier"
+                    },
+                    "name": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Human-friendly identifier"
+                    },
+                    "date": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "description": "Date and time of experiment. Time will be midnight if not specified in raw data"
+                    },
+                    "type": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Format of the raw data"
+                    },
+                    "purpose": {
+                        "type": "string",
+                        "description": "Type of the experiment"
+                    },
+                    "cell": {
+                        "type": "string",
+                        "format": "uri",
+                        "nullable": true,
+                        "description": "Cell that generated this Dataset"
+                    },
+                    "equipment": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "format": "uri"
+                        },
+                        "description": "Equipment used in this Dataset's experiment"
+                    },
+                    "file": {
+                        "type": "string",
+                        "format": "uri",
+                        "readOnly": true,
+                        "description": "File storing raw data"
+                    },
+                    "user_sets": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/UserSet"
+                        },
+                        "readOnly": true,
+                        "description": "Roles and the Users assigned to them"
+                    },
+                    "columns": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "format": "uri"
+                        },
+                        "readOnly": true,
+                        "description": "Columns in this Dataset"
+                    }
+                },
+                "required": [
+                    "columns",
+                    "date",
+                    "equipment",
+                    "file",
+                    "id",
+                    "purpose",
+                    "url",
+                    "user_sets"
+                ]
+            },
+            "Equipment": {
+                "type": "object",
+                "properties": {
+                    "url": {
+                        "type": "string",
+                        "format": "uri",
+                        "readOnly": true,
+                        "description": "Canonical URL for this object"
+                    },
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "description": "Auto-assigned object identifier"
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "Specific identifier"
+                    },
+                    "type": {
+                        "type": "string",
+                        "description": "Generic name"
+                    },
+                    "datasets": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "format": "uri"
+                        },
+                        "readOnly": true,
+                        "description": "Datasets generated in experiments using this Equipment"
+                    },
+                    "in_use": {
+                        "type": "boolean",
+                        "readOnly": true
+                    }
+                },
+                "required": [
+                    "datasets",
+                    "id",
+                    "in_use",
+                    "name",
+                    "type",
+                    "url"
+                ]
+            },
+            "Error": {
+                "type": "object",
+                "properties": {
+                    "error": {
+                        "type": "string",
+                        "description": "Description of the error"
+                    }
+                },
+                "required": [
+                    "error"
+                ]
+            },
+            "Group": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "description": "Auto-assigned object identifier"
+                    },
+                    "url": {
+                        "type": "string",
+                        "format": "uri",
+                        "readOnly": true,
+                        "description": "Canonical URL for this object"
+                    },
+                    "name": {
+                        "type": "string",
+                        "maxLength": 150
+                    },
+                    "users": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/User"
+                        },
+                        "readOnly": true,
+                        "description": "Users in the group"
+                    },
+                    "readable_paths": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "format": "uri"
+                        },
+                        "description": "Paths on which this Group are Users"
+                    },
+                    "editable_paths": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "format": "uri"
+                        },
+                        "description": "Paths on which this Group are Admins"
+                    },
+                    "readable_harvesters": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "format": "uri"
+                        },
+                        "description": "Harvesters for which this Group are Users"
+                    },
+                    "editable_harvesters": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "format": "uri"
+                        },
+                        "description": "Harvesters for which this Group are Admins"
+                    }
+                },
+                "required": [
+                    "editable_harvesters",
+                    "editable_paths",
+                    "id",
+                    "name",
+                    "readable_harvesters",
+                    "readable_paths",
+                    "url",
+                    "users"
+                ]
+            },
+            "GroupUpdate": {
+                "type": "object",
+                "properties": {
+                    "user": {
+                        "type": "string",
+                        "description": "Canonical URL of User to add"
+                    }
+                },
+                "required": [
+                    "user"
+                ]
+            },
+            "HarvestError": {
+                "type": "object",
+                "properties": {
+                    "url": {
+                        "type": "string",
+                        "format": "uri",
+                        "readOnly": true,
+                        "description": "Canonical URL for this object"
+                    },
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "description": "Auto-assigned object identifier"
+                    },
+                    "harvester": {
+                        "type": "string",
+                        "format": "uri",
+                        "description": "Harvester which reported the error"
+                    },
+                    "file": {
+                        "type": "string",
+                        "format": "uri",
+                        "nullable": true,
+                        "description": "File where error originated"
+                    },
+                    "error": {
+                        "type": "string",
+                        "description": "Text of the error report"
+                    },
+                    "timestamp": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "nullable": true,
+                        "description": "Date and time error was logged in the database"
+                    }
+                },
+                "required": [
+                    "error",
+                    "harvester",
+                    "id",
+                    "timestamp",
+                    "url"
+                ]
+            },
+            "Harvester": {
+                "type": "object",
+                "properties": {
+                    "url": {
+                        "type": "string",
+                        "format": "uri",
+                        "readOnly": true,
+                        "description": "Canonical URL for this object"
+                    },
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "description": "Auto-assigned object identifier"
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "Human-friendly Harvester identifier"
+                    },
+                    "sleep_time": {
+                        "type": "integer",
+                        "maximum": 2147483647,
+                        "minimum": -2147483648,
+                        "description": "Seconds to sleep between Harvester cycles"
+                    },
+                    "last_check_in": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "nullable": true,
+                        "description": "Date and time of last Harvester contact"
+                    },
+                    "user_sets": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/UserSet"
+                        },
+                        "readOnly": true,
+                        "description": "Roles and the Users assigned to them"
+                    },
+                    "environment_variables": {
+                        "type": "object",
+                        "additionalProperties": {},
+                        "description": "Environment variables set on this Harvester"
+                    }
+                },
+                "required": [
+                    "environment_variables",
+                    "id",
+                    "last_check_in",
+                    "name",
+                    "url",
+                    "user_sets"
+                ]
+            },
+            "KnoxToken": {
+                "type": "object",
+                "properties": {
+                    "url": {
+                        "type": "string",
+                        "readOnly": true,
+                        "description": "Canonical URL for this object"
+                    },
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "description": "Auto-assigned object identifier"
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "Convenient human-friendly name"
+                    },
+                    "created": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "description": "Date and time of creation"
+                    },
+                    "expiry": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true,
+                        "readOnly": true,
+                        "description": "Date and time token expires (blank = never)"
+                    }
+                },
+                "required": [
+                    "created",
+                    "expiry",
+                    "id",
+                    "name",
+                    "url"
+                ]
+            },
+            "KnoxTokenFull": {
+                "type": "object",
+                "properties": {
+                    "url": {
+                        "type": "string",
+                        "readOnly": true,
+                        "description": "Canonical URL for this object"
+                    },
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "description": "Auto-assigned object identifier"
+                    },
+                    "name": {
+                        "type": "string",
+                        "readOnly": true,
+                        "description": "Convenient human-friendly name"
+                    },
+                    "created": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "description": "Date and time of creation"
+                    },
+                    "expiry": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true,
+                        "readOnly": true,
+                        "description": "Date and time token expires (blank = never)"
+                    },
+                    "token": {
+                        "type": "string",
+                        "readOnly": true,
+                        "description": "Token value"
+                    }
+                },
+                "required": [
+                    "created",
+                    "expiry",
+                    "id",
+                    "name",
+                    "token",
+                    "url"
+                ]
+            },
+            "KnoxUser": {
+                "type": "object",
+                "properties": {
+                    "expiry": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "token": {
+                        "type": "string"
+                    },
+                    "user": {
+                        "$ref": "#/components/schemas/User"
+                    }
+                },
+                "required": [
+                    "expiry",
+                    "token",
+                    "user"
+                ]
+            },
+            "MonitoredPath": {
+                "type": "object",
+                "properties": {
+                    "url": {
+                        "type": "string",
+                        "format": "uri",
+                        "readOnly": true,
+                        "description": "Canonical URL for this object"
+                    },
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "description": "Auto-assigned object identifier"
+                    },
+                    "path": {
+                        "type": "string",
+                        "description": "Directory location on Harvester"
+                    },
+                    "regex": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "\n    Python.re regular expression to filter files by, \n    applied to full file name starting from this Path's directory"
+                    },
+                    "stable_time": {
+                        "type": "integer",
+                        "maximum": 32767,
+                        "minimum": 0,
+                        "description": "Number of seconds files must remain stable to be processed"
+                    },
+                    "active": {
+                        "type": "boolean"
+                    },
+                    "harvester": {
+                        "type": "string",
+                        "format": "uri",
+                        "readOnly": true,
+                        "nullable": true,
+                        "description": "Harvester with access to this directory"
+                    },
+                    "user_sets": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/UserSet"
+                        },
+                        "readOnly": true,
+                        "description": "Roles and the Users assigned to them"
+                    }
+                },
+                "required": [
+                    "harvester",
+                    "id",
+                    "path",
+                    "regex",
+                    "url",
+                    "user_sets"
+                ]
+            },
+            "MonitoredPathCreate": {
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string",
+                        "description": "Directory location on Harvester"
+                    },
+                    "regex": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "\n    Python.re regular expression to filter files by, \n    applied to full file name starting from this Path's directory"
+                    },
+                    "stable_time": {
+                        "type": "integer",
+                        "maximum": 32767,
+                        "minimum": 0,
+                        "description": "Number of seconds files must remain stable to be processed"
+                    },
+                    "harvester": {
+                        "type": "string",
+                        "format": "uri",
+                        "nullable": true,
+                        "description": "Harvester with access to this directory"
+                    }
+                },
+                "required": [
+                    "harvester",
+                    "path",
+                    "regex"
+                ]
+            },
+            "ObservedFile": {
+                "type": "object",
+                "properties": {
+                    "url": {
+                        "type": "string",
+                        "format": "uri",
+                        "readOnly": true,
+                        "description": "Canonical URL for this object"
+                    },
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "description": "Auto-assigned object identifier"
+                    },
+                    "harvester": {
+                        "type": "string",
+                        "format": "uri",
+                        "readOnly": true,
+                        "description": "Harvester that harvested the File"
+                    },
+                    "path": {
+                        "type": "string",
+                        "readOnly": true,
+                        "description": "Absolute file path"
+                    },
+                    "state": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/StateEnum"
+                            }
+                        ],
+                        "description": "File status; autogenerated but can be manually set to RETRY IMPORT"
+                    },
+                    "last_observed_time": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "nullable": true,
+                        "description": "Date and time of last Harvester report on file"
+                    },
+                    "last_observed_size": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "description": "Size of the file as last reported by Harvester"
+                    },
+                    "errors": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "format": "uri"
+                        },
+                        "readOnly": true,
+                        "description": "Errors associated with this File"
+                    },
+                    "datasets": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "format": "uri"
+                        },
+                        "readOnly": true,
+                        "description": "Datasets extracted from this File"
+                    },
+                    "upload_info": {
+                        "type": "object",
+                        "additionalProperties": {},
+                        "nullable": true,
+                        "readOnly": true,
+                        "description": "Metadata required for harvester program to resume file parsing"
+                    }
+                },
+                "required": [
+                    "datasets",
+                    "errors",
+                    "harvester",
+                    "id",
+                    "last_observed_size",
+                    "last_observed_time",
+                    "path",
+                    "upload_info",
+                    "url"
+                ]
+            },
+            "PatchedCell": {
+                "type": "object",
+                "properties": {
+                    "url": {
+                        "type": "string",
+                        "format": "uri",
+                        "readOnly": true,
+                        "description": "Canonical URL for this object"
+                    },
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "description": "Auto-assigned object identifier"
+                    },
+                    "uid": {
+                        "type": "string",
+                        "description": "Serial number or similar. Should be globally unique"
+                    },
+                    "display_name": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Human-friendly identifier"
+                    },
+                    "family": {
+                        "type": "string",
+                        "format": "uri",
+                        "description": "Cell Family to which this Cell belongs"
+                    },
+                    "datasets": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "format": "uri"
+                        },
+                        "readOnly": true,
+                        "description": "Datasets generated in experiments using this Cell"
+                    },
+                    "in_use": {
+                        "type": "boolean",
+                        "readOnly": true
+                    }
+                }
+            },
+            "PatchedCellFamily": {
+                "type": "object",
+                "properties": {
+                    "url": {
+                        "type": "string",
+                        "format": "uri",
+                        "readOnly": true,
+                        "description": "Canonical URL for this object"
+                    },
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "description": "Auto-assigned object identifier"
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "Human-friendly identifier"
+                    },
+                    "form_factor": {
+                        "type": "string",
+                        "description": "Physical shape of the cells"
+                    },
+                    "link_to_datasheet": {
+                        "type": "string",
+                        "description": "Link to a detailed datasheet for these cells"
+                    },
+                    "anode_chemistry": {
+                        "type": "string",
+                        "description": "Chemistry of the cells' anode"
+                    },
+                    "cathode_chemistry": {
+                        "type": "string",
+                        "description": "Chemistry of the cells' cathode"
+                    },
+                    "nominal_capacity": {
+                        "type": "number",
+                        "format": "double",
+                        "description": "Nominal capacity of the cells (in amp hours)"
+                    },
+                    "nominal_cell_weight": {
+                        "type": "number",
+                        "format": "double",
+                        "description": "Nominal weight of the cells (in kilograms)"
+                    },
+                    "manufacturer": {
+                        "type": "string",
+                        "description": "Name of the cells' manufacturer"
+                    },
+                    "cells": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "format": "uri"
+                        },
+                        "readOnly": true,
+                        "description": "Cells in this Family"
+                    },
+                    "in_use": {
+                        "type": "boolean",
+                        "readOnly": true
+                    }
+                }
+            },
+            "PatchedDataset": {
+                "type": "object",
+                "properties": {
+                    "url": {
+                        "type": "string",
+                        "format": "uri",
+                        "readOnly": true,
+                        "description": "Canonical URL for this object"
+                    },
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "description": "Auto-assigned object identifier"
+                    },
+                    "name": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Human-friendly identifier"
+                    },
+                    "date": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "description": "Date and time of experiment. Time will be midnight if not specified in raw data"
+                    },
+                    "type": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Format of the raw data"
+                    },
+                    "purpose": {
+                        "type": "string",
+                        "description": "Type of the experiment"
+                    },
+                    "cell": {
+                        "type": "string",
+                        "format": "uri",
+                        "nullable": true,
+                        "description": "Cell that generated this Dataset"
+                    },
+                    "equipment": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "format": "uri"
+                        },
+                        "description": "Equipment used in this Dataset's experiment"
+                    },
+                    "file": {
+                        "type": "string",
+                        "format": "uri",
+                        "readOnly": true,
+                        "description": "File storing raw data"
+                    },
+                    "user_sets": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/UserSet"
+                        },
+                        "readOnly": true,
+                        "description": "Roles and the Users assigned to them"
+                    },
+                    "columns": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "format": "uri"
+                        },
+                        "readOnly": true,
+                        "description": "Columns in this Dataset"
+                    }
+                }
+            },
+            "PatchedEquipment": {
+                "type": "object",
+                "properties": {
+                    "url": {
+                        "type": "string",
+                        "format": "uri",
+                        "readOnly": true,
+                        "description": "Canonical URL for this object"
+                    },
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "description": "Auto-assigned object identifier"
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "Specific identifier"
+                    },
+                    "type": {
+                        "type": "string",
+                        "description": "Generic name"
+                    },
+                    "datasets": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "format": "uri"
+                        },
+                        "readOnly": true,
+                        "description": "Datasets generated in experiments using this Equipment"
+                    },
+                    "in_use": {
+                        "type": "boolean",
+                        "readOnly": true
+                    }
+                }
+            },
+            "PatchedHarvester": {
+                "type": "object",
+                "properties": {
+                    "url": {
+                        "type": "string",
+                        "format": "uri",
+                        "readOnly": true,
+                        "description": "Canonical URL for this object"
+                    },
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "description": "Auto-assigned object identifier"
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "Human-friendly Harvester identifier"
+                    },
+                    "sleep_time": {
+                        "type": "integer",
+                        "maximum": 2147483647,
+                        "minimum": -2147483648,
+                        "description": "Seconds to sleep between Harvester cycles"
+                    },
+                    "last_check_in": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "nullable": true,
+                        "description": "Date and time of last Harvester contact"
+                    },
+                    "user_sets": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/UserSet"
+                        },
+                        "readOnly": true,
+                        "description": "Roles and the Users assigned to them"
+                    },
+                    "environment_variables": {
+                        "type": "object",
+                        "additionalProperties": {},
+                        "description": "Environment variables set on this Harvester"
+                    }
+                }
+            },
+            "PatchedKnoxToken": {
+                "type": "object",
+                "properties": {
+                    "url": {
+                        "type": "string",
+                        "readOnly": true,
+                        "description": "Canonical URL for this object"
+                    },
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "description": "Auto-assigned object identifier"
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "Convenient human-friendly name"
+                    },
+                    "created": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "description": "Date and time of creation"
+                    },
+                    "expiry": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true,
+                        "readOnly": true,
+                        "description": "Date and time token expires (blank = never)"
+                    }
+                }
+            },
+            "PatchedMonitoredPath": {
+                "type": "object",
+                "properties": {
+                    "url": {
+                        "type": "string",
+                        "format": "uri",
+                        "readOnly": true,
+                        "description": "Canonical URL for this object"
+                    },
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "description": "Auto-assigned object identifier"
+                    },
+                    "path": {
+                        "type": "string",
+                        "description": "Directory location on Harvester"
+                    },
+                    "regex": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "\n    Python.re regular expression to filter files by, \n    applied to full file name starting from this Path's directory"
+                    },
+                    "stable_time": {
+                        "type": "integer",
+                        "maximum": 32767,
+                        "minimum": 0,
+                        "description": "Number of seconds files must remain stable to be processed"
+                    },
+                    "active": {
+                        "type": "boolean"
+                    },
+                    "harvester": {
+                        "type": "string",
+                        "format": "uri",
+                        "readOnly": true,
+                        "nullable": true,
+                        "description": "Harvester with access to this directory"
+                    },
+                    "user_sets": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/UserSet"
+                        },
+                        "readOnly": true,
+                        "description": "Roles and the Users assigned to them"
+                    }
+                }
+            },
+            "PatchedUserUpdate": {
+                "type": "object",
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "description": "Your updated email"
+                    },
+                    "password": {
+                        "type": "string",
+                        "description": "Your new password"
+                    },
+                    "currentPassword": {
+                        "type": "string",
+                        "description": "Your current password"
+                    }
+                }
+            },
+            "StateEnum": {
+                "enum": [
+                    "RETRY IMPORT",
+                    "IMPORT FAILED",
+                    "UNSTABLE",
+                    "GROWING",
+                    "STABLE",
+                    "IMPORTING",
+                    "IMPORTED"
+                ],
+                "type": "string"
+            },
+            "User": {
+                "type": "object",
+                "properties": {
+                    "username": {
+                        "type": "string",
+                        "description": "Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.",
+                        "pattern": "^[\\w.@+-]+$",
+                        "maxLength": 150
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "title": "Email address",
+                        "maxLength": 254
+                    },
+                    "first_name": {
+                        "type": "string",
+                        "maxLength": 150
+                    },
+                    "last_name": {
+                        "type": "string",
+                        "maxLength": 150
+                    },
+                    "url": {
+                        "type": "string",
+                        "readOnly": true,
+                        "description": "Canonical URL for this object"
+                    },
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "description": "Auto-assigned object identifier"
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "readOnly": true,
+                        "title": "Active",
+                        "description": "Designates whether this user should be treated as active. Unselect this instead of deleting accounts."
+                    },
+                    "is_staff": {
+                        "type": "boolean",
+                        "readOnly": true,
+                        "title": "Staff status",
+                        "description": "Designates whether the user can log into this admin site."
+                    },
+                    "is_superuser": {
+                        "type": "boolean",
+                        "readOnly": true,
+                        "title": "Superuser status",
+                        "description": "Designates that this user has all permissions without explicitly assigning them."
+                    }
+                },
+                "required": [
+                    "id",
+                    "is_active",
+                    "is_staff",
+                    "is_superuser",
+                    "url",
+                    "username"
+                ]
+            },
+            "UserSet": {
+                "type": "object",
+                "properties": {
+                    "url": {
+                        "type": "string",
+                        "format": "uri",
+                        "readOnly": true,
+                        "description": "Canonical URL for this object"
+                    },
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "description": "Auto-assigned object identifier"
+                    },
+                    "name": {
+                        "type": "string",
+                        "readOnly": true,
+                        "description": "Group name"
+                    },
+                    "description": {
+                        "type": "string",
+                        "nullable": true,
+                        "readOnly": true,
+                        "description": "Permissions granted to users with this role"
+                    },
+                    "is_admin": {
+                        "type": "boolean",
+                        "readOnly": true,
+                        "description": "Whether this is an administrator group"
+                    },
+                    "users": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/User"
+                        },
+                        "readOnly": true,
+                        "description": "Users in this group"
+                    }
+                },
+                "required": [
+                    "description",
+                    "id",
+                    "is_admin",
+                    "name",
+                    "url",
+                    "users"
+                ]
+            }
+        },
+        "securitySchemes": {
+            "basicAuth": {
+                "type": "http",
+                "scheme": "basic"
+            },
+            "cookieAuth": {
+                "type": "apiKey",
+                "in": "cookie",
+                "name": "sessionid"
+            },
+            "knoxTokenAuth": {
+                "type": "http",
+                "scheme": "bearer"
+            }
+        }
+    }
+}

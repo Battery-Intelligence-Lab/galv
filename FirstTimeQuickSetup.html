@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>First Time Quick Setup &#8212; Galv 2.0.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d1102ebc" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=12dfc556" />
+    <script src="_static/documentation_options.js?v=51b770b3"></script>
+    <script src="_static/doctools.js?v=888ff710"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Galvalanyser User Guide" href="UserGuide.html" />
+    <link rel="prev" title="Welcome to Galv’s documentation!" href="index.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="first-time-quick-setup">
+<h1>First Time Quick Setup<a class="headerlink" href="#first-time-quick-setup" title="Link to this heading">¶</a></h1>
+<p>This section describes how to set up the system for the first time.
+It is assumed you are logged into the server machine that you
+wish to use, using the user account that you want to run the server with.
+The entire application has been dockerised, so can in theory be used on
+any major operating system with minimal modification.</p>
+<section id="installing-required-tools">
+<h2>Installing required tools<a class="headerlink" href="#installing-required-tools" title="Link to this heading">¶</a></h2>
+<p>You need to have <code class="docutils literal notranslate"><span class="pre">docker</span></code>, <code class="docutils literal notranslate"><span class="pre">docker-compose</span></code> and <code class="docutils literal notranslate"><span class="pre">git</span></code> installed and available on your
+command-line.</p>
+<p>You can find installation instructions for <code class="docutils literal notranslate"><span class="pre">docker</span></code> on all major operating systems
+<a class="reference external" href="https://docs.docker.com/engine/install/">here</a>, and for <code class="docutils literal notranslate"><span class="pre">docker-compose</span></code>
+<a class="reference external" href="https://docs.docker.com/compose/install/">here</a>. For linux hosts, it is useful to be
+able to use <code class="docutils literal notranslate"><span class="pre">docker</span></code> as a non-root user, and you can find instructions on how to set
+this up <a class="reference external" href="https://docs.docker.com/engine/install/linux-postinstall/">here</a>. If you don’t,
+note that you will need to add <code class="docutils literal notranslate"><span class="pre">sudo</span> <span class="pre">...</span></code> in front of every <code class="docutils literal notranslate"><span class="pre">docker</span></code> and
+<code class="docutils literal notranslate"><span class="pre">docker-compose</span></code> command listed below.</p>
+<p>Installation instructions for <code class="docutils literal notranslate"><span class="pre">git</span></code> for all major OSs can be found
+<a class="reference external" href="https://git-scm.com/book/en/v2/Getting-Started-Installing-Git">here</a>.</p>
+<section id="get-the-galv-source-code">
+<h3>Get the galv source code<a class="headerlink" href="#get-the-galv-source-code" title="Link to this heading">¶</a></h3>
+<p>First you will need to clone the galv repository using <code class="docutils literal notranslate"><span class="pre">git</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/Battery-Intelligence-Lab/galv.git
+<span class="nb">cd</span><span class="w"> </span>galv
+</pre></div>
+</div>
+</section>
+<section id="setup-environment-variables">
+<h3>Setup environment variables<a class="headerlink" href="#setup-environment-variables" title="Link to this heading">¶</a></h3>
+<p>The Galv project uses two <code class="docutils literal notranslate"><span class="pre">.env</span></code> files, <code class="docutils literal notranslate"><span class="pre">.env</span></code> and <code class="docutils literal notranslate"><span class="pre">.env.secret</span></code>.</p>
+<p>You will already have a <code class="docutils literal notranslate"><span class="pre">.env</span></code> file in the repository you cloned, with sensible defaults.</p>
+<p>If you’re running a <strong>production deployment</strong>, you will want to set the value of the
+<code class="docutils literal notranslate"><span class="pre">VIRTUAL_HOST_ROOT</span></code> to your domain name, e.g. <code class="docutils literal notranslate"><span class="pre">VIRTUAL_HOST_ROOT=example.com</span></code>.
+This will serve the Galv web application from the root of your domain,
+e.g. at <code class="docutils literal notranslate"><span class="pre">http://example.com/</span></code>; and the API from the subdomain, e.g. <code class="docutils literal notranslate"><span class="pre">http://api.example.com</span></code>.
+You will likely also want to enable HTTPS, for which we use LetsEncrypt to generate SSL certificates.
+By default, the staging (test) server is used, which generates certificates that are not trusted by browsers.
+When your production setup appears to work correctly, you can switch to fetching real certificates
+by setting <code class="docutils literal notranslate"><span class="pre">LETSENCRYPT_TEST=false</span></code> and restarting the nginx-proxy container.</p>
+<p>If you wish to change where the database is saved, you can change the first entry
+in <code class="docutils literal notranslate"><span class="pre">.env</span></code>, <code class="docutils literal notranslate"><span class="pre">GALV_DATA_PATH</span></code> to the directory where you want the postgres database.</p>
+</section>
+<section id="create-env-secret">
+<h3>Create <code class="docutils literal notranslate"><span class="pre">.env.secret</span></code><a class="headerlink" href="#create-env-secret" title="Link to this heading">¶</a></h3>
+<p>The second <code class="docutils literal notranslate"><span class="pre">.env</span></code> file is a secrets file.
+This is not included because you should come up with your own secret values for the
+entries within it.
+Create the file and edit it so that it has the following keys:</p>
+<ul class="simple">
+<li><p>DJANGO_SECRET_KEY</p></li>
+<li><p>DJANGO_SUPERUSER_PASSWORD</p></li>
+<li><p>POSTGRES_PASSWORD</p></li>
+</ul>
+<p>All of these values should be unguessable secure passwords.
+DJANGO_SECRET_KEY should be very long and complex, consider 60+ characters
+with a mixture of special characters (avoid $), upper- and lower-case letters,
+and numbers.
+The only one of these you will need to use again will be the superuser password.</p>
+<p>If you would like the Django superuser to have a name that is not ‘admin’,
+you can also specify DJANGO_SUPERUSER_USERNAME.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>vi<span class="w"> </span>.env.secret<span class="w">  </span><span class="c1"># could also use nano, emacs, etc.</span>
+</pre></div>
+</div>
+</section>
+<section id="build-docker-images-only-when-upgrading-to-a-new-version-of-galv">
+<h3>Build docker images (only when upgrading to a new version of galv)<a class="headerlink" href="#build-docker-images-only-when-upgrading-to-a-new-version-of-galv" title="Link to this heading">¶</a></h3>
+<p>If you have previously installed and run galv you might already have old docker
+images already built. To rebuild the images, run the following command:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>docker-compose<span class="w"> </span>build
+</pre></div>
+</div>
+</section>
+</section>
+<section id="running-galv">
+<h2>Running Galv<a class="headerlink" href="#running-galv" title="Link to this heading">¶</a></h2>
+<p>You can run the galv server and web application frontend using the following
+<code class="docutils literal notranslate"><span class="pre">docker-compose</span></code> command from the root folder of the repository.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>docker-compose<span class="w"> </span>up
+</pre></div>
+</div>
+<p>Now view the ‘localhost’ IP address <a class="reference external" href="http://127.0.0.1/">http://127.0.0.1/</a> in your
+browser and you should see the Galv login page.
+This is the web frontend.
+If you wish to use the frontend from another machine,
+use the IP address or URL of the server instead.</p>
+<section id="creating-a-user-account">
+<h3>Creating a user account<a class="headerlink" href="#creating-a-user-account" title="Link to this heading">¶</a></h3>
+<p>It’s not a good idea to do everything with the Django superuser,
+so create a new account on the login page.
+You’ll see that you get a message telling you that the account
+needs to be approved by an existing account.</p>
+<ul class="simple">
+<li><p>Refresh the page, and login using the _superuser_ credentials.</p></li>
+<li><p>Once logged in, go to the bottom tab in the menu (Approve Users), and click the button next to your new user account</p></li>
+<li><p>Now, click the logout button in the top right, and log back in with your new user account</p></li>
+</ul>
+</section>
+</section>
+<section id="setting-up-a-harvester">
+<h2>Setting up a Harvester<a class="headerlink" href="#setting-up-a-harvester" title="Link to this heading">¶</a></h2>
+<p>Harvesters are set up using a part of the code of the main Galv repository.
+The first step, then, is to log onto the machine that will run the harvesters and
+clone the repository again.
+If you are using the same server for the harvester and the rest of Galv,
+you can skip this step.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://gitlab.com/battery-intelligence-lab/galv-project/galv.git
+<span class="nb">cd</span><span class="w"> </span>galv
+</pre></div>
+</div>
+<p>Next, launch the harvester container, specifying the Harvester’s docker-compose configuration file:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>docker-compose<span class="w"> </span>-f<span class="w"> </span>docker-compose.harvester.yml<span class="w"> </span>run<span class="w"> </span>harvester<span class="w"> </span>bash
+python<span class="w"> </span>start.py
+</pre></div>
+</div>
+<p>This will launch into an interactive shell which will guide you through the Harvester setup process.</p>
+<p>First, you’ll be asked for the Galv server URL.
+If you’re running on the same server as the Galv server, this will be <code class="docutils literal notranslate"><span class="pre">http://app</span></code>,
+otherwise it will be the path you entered above to connect to the web frontend,
+but using the <code class="docutils literal notranslate"><span class="pre">api</span></code> subdomain. So if you went to <code class="docutils literal notranslate"><span class="pre">http://example.com</span></code>, go to <code class="docutils literal notranslate"><span class="pre">http://api.example.com</span></code>.</p>
+<p>Next, you’ll be asked to specify a name for the new Harvester.</p>
+<p>Each Harvester needs at least one administrator.
+You’ll be given a list of (approved) user accounts, and will select one to be the
+Harvester administrator.
+If you’re following this guide, you’ll see the Django superuser account and the
+regular user account you just created.
+Select the regular user account.
+You can add other administrators and users to the Harvester using the web frontend later.</p>
+<p>When an administrator has been selected the Harvester will register itself with
+the Galv server and begin to monitor for data files.
+Of course, it currently has no directories to monitor, so the last step is to
+go to the web frontend and configure at least one monitored path for the Harvester.</p>
+<p>Open up the web frontend in a browser, log in as the Harvester administrator user,
+and select the ‘Harvesters’ tab.
+Click on the magnifying glass icon to see details for your new Harvester.
+Enter a path for the Harvester to monitor (relative to the Harvester’s system),
+and click the plus icon to save your new path.</p>
+<p>The Harvester will now crawl the directory, observing files and importing them
+when they have been stable for a sufficiently long time.</p>
+</section>
+<section id="maintenance">
+<h2>Maintenance<a class="headerlink" href="#maintenance" title="Link to this heading">¶</a></h2>
+<p>To run the server in detached mode (i.e. run containers in the background) using the
+<code class="docutils literal notranslate"><span class="pre">-d</span></code> option</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>docker-compose<span class="w"> </span>up<span class="w"> </span>-d
+</pre></div>
+</div>
+<p>To start the server side system again after it has been stopped simply run
+<code class="docutils literal notranslate"><span class="pre">docker-compose</span> <span class="pre">up</span></code> in the root folder.</p>
+<p>A template SystemD service file is included in the repository root directory
+<code class="docutils literal notranslate"><span class="pre">galv.service</span></code> that can be used to automatically start the system on Linux servers.</p>
+<p>If Harvesters go down, they can be restarted.
+.. code-block:: shell</p>
+<blockquote>
+<div><p>docker-compose -f docker-compose.harvester.yml run harvester python start.py –restart</p>
+</div></blockquote>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">Galv</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">First Time Quick Setup</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#installing-required-tools">Installing required tools</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#running-galv">Running Galv</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#setting-up-a-harvester">Setting up a Harvester</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#maintenance">Maintenance</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="UserGuide.html">Galvalanyser User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DevelopmentGuide.html">Gavanalyser Development Guide</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">Welcome to Galv’s documentation!</a></li>
+      <li>Next: <a href="UserGuide.html" title="next chapter">Galvalanyser User Guide</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2023, Oxford RSE.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.2.6</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+      |
+      <a href="_sources/FirstTimeQuickSetup.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

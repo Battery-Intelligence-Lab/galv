@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Gavanalyser Development Guide &#8212; Galv 2.0.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d1102ebc" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=12dfc556" />
+    <script src="_static/documentation_options.js?v=51b770b3"></script>
+    <script src="_static/doctools.js?v=888ff710"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Galvalanyser User Guide" href="UserGuide.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="gavanalyser-development-guide">
+<h1>Gavanalyser Development Guide<a class="headerlink" href="#gavanalyser-development-guide" title="Link to this heading">¶</a></h1>
+<section id="project-folder-structure">
+<h2>Project Folder Structure<a class="headerlink" href="#project-folder-structure" title="Link to this heading">¶</a></h2>
+<p>Below is a tree diagram of the folder structure of this project and a short description of what is in each folder.</p>
+<div class="line-block">
+<div class="line">├ .env – configuration environment variables for the server</div>
+<div class="line">├ [.env.secret] – secret configuration environment varaibles for server</div>
+<div class="line">├ docker-compose.yml – docker-compose file for production</div>
+<div class="line">├ docker-compose.dev.yml – development docker-compose file. Symlink to docker-compose.override.yml for automatic inclusion.</div>
+<div class="line">├ docker-compose.test.yml – docker-compose file for running Django tests</div>
+<div class="line">├ docker-compose.harvester.yml – docker-compose file for running harvester instances. Production.</div>
+<div class="line">├ backend/ – The Django backend</div>
+<div class="line">│   ├ Dockerfile – docker file for production and development</div>
+<div class="line">│   ├ Dockerfile_test – docker file for unit testing</div>
+<div class="line">│   ├ requirements.txt – Python library definition</div>
+<div class="line">│   ├ requirements-test.txt – Additional Python libraries required for unit testing</div>
+<div class="line">│   ├ server.sh – Initilisation shell script (waits on database, then launches Django)</div>
+<div class="line">│   ├ config/ – Django configuration files</div>
+<div class="line">│   ├ galv/ – Django application</div>
+<div class="line">│   └ tests/ – unit tests for backend</div>
+<div class="line">├ docs/ – documentation</div>
+<div class="line">├ frontend/ – The react frontend code</div>
+<div class="line">│   ├ Dockerfile – docker file for production</div>
+<div class="line">│   ├ Dockerfile_dev – docker file for development</div>
+<div class="line">│   └ src/ – source code for react components and app</div>
+<div class="line">└ harvester/ – The react frontend code</div>
+<div class="line-block">
+<div class="line">├ Dockerfile – docker file for production and development</div>
+<div class="line">├ harvester/ – harvester code</div>
+<div class="line">│   └ parse/ – code for parsing specific battery cycling data files</div>
+<div class="line">└ test/ – unit tests for harvester</div>
+</div>
+</div>
+</section>
+<section id="running">
+<h2>Running<a class="headerlink" href="#running" title="Link to this heading">¶</a></h2>
+<section id="to-run-the-entire-stack-for-development">
+<h3>To run the entire stack for development<a class="headerlink" href="#to-run-the-entire-stack-for-development" title="Link to this heading">¶</a></h3>
+<p>Follow the <a class="reference internal" href="FirstTimeQuickSetup.html"><span class="doc">First Time Quick Setup</span></a> guide first.</p>
+<p>Next, create a link for <code class="docutils literal notranslate"><span class="pre">docker-compose.dev.yml</span></code> to <code class="docutils literal notranslate"><span class="pre">docker-compose.override.yml</span></code>.
+If your operating system does not provide link capability, create a copy of
+<code class="docutils literal notranslate"><span class="pre">docker-compose.dev.yml</span></code> but remember to copy any changes you make to
+<code class="docutils literal notranslate"><span class="pre">docker-compose.override.yml</span></code> back to <code class="docutils literal notranslate"><span class="pre">docker-compose.dev.yml</span></code> or they will
+be lost (<code class="docutils literal notranslate"><span class="pre">docker-compose.override.yml</span></code> is <a href="#id1"><span class="problematic" id="id2">``</span></a>.gitignore``d):</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ln<span class="w"> </span>-s<span class="w"> </span>docker-compose.dev.yml<span class="w"> </span>docker-compose.override.yml
+docker-compose<span class="w"> </span>up<span class="w"> </span>--build
+</pre></div>
+</div>
+<p>The main difference from the production <code class="docutils literal notranslate"><span class="pre">docker-compose.yml</span></code> file is that the developer
+can edit all the code in the frontend and backend files, and this will automatically
+compile and restart the dockerised frontend and backend servers appropriately, useful in
+development. Additionally, the development configuration includes a Harvester instance so that
+you do not have to create Harvesters in an additional step.</p>
+<p>You may wish to edit the <cite>.env</cite> file to change the <cite>FRONTEND_PORT</cite>.
+If you do so, remember to change the <cite>FRONTEND_VIRTUAL_HOST</cite> to include the new port.
+You will have to rebuild the frontend container for port changes to take effect
+(otherwise they’ll change for Django but not for the frontend).</p>
+</section>
+</section>
+<section id="testing">
+<h2>Testing<a class="headerlink" href="#testing" title="Link to this heading">¶</a></h2>
+<p>Tests are run automatically with a GitHub Action (<code class="docutils literal notranslate"><span class="pre">.github/workflows/unit-test.yml</span></code>),
+and can also be run manually during development.</p>
+<section id="harvester-unit-tests">
+<h3>Harvester unit tests<a class="headerlink" href="#harvester-unit-tests" title="Link to this heading">¶</a></h3>
+<p>The test-suite runs over a set of battery tester files in the directory specified by
+<code class="docutils literal notranslate"><span class="pre">GALV_HARVESTER_TEST_PATH</span></code>.
+To access the test-suite, contact Martin who can provide the necessary credentials to
+acquire the files from the remote repository.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>docker-compose<span class="w"> </span>-f<span class="w"> </span>docker-compose.test.yml<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>harvester_test
+</pre></div>
+</div>
+</section>
+<section id="backend-unit-tests">
+<h3>Backend unit tests<a class="headerlink" href="#backend-unit-tests" title="Link to this heading">¶</a></h3>
+<p>The Django backend has Django Rest Framework tests, using <code class="docutils literal notranslate"><span class="pre">FactoryBoy</span></code> and <code class="docutils literal notranslate"><span class="pre">Faker</span></code>.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>docker-compose<span class="w"> </span>-f<span class="w"> </span>docker-compose.test.yml<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>app_test<span class="w"> </span>python<span class="w"> </span>manage.py<span class="w"> </span><span class="nb">test</span>
+</pre></div>
+</div>
+</section>
+<section id="frontend-unit-tests">
+<h3>Frontend unit tests<a class="headerlink" href="#frontend-unit-tests" title="Link to this heading">¶</a></h3>
+<p>Frontend unit tests are run with <code class="docutils literal notranslate"><span class="pre">Jest</span></code>.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>docker-compose<span class="w"> </span>-f<span class="w"> </span>docker-compose.test.yml<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>frontend_test<span class="w"> </span>npm<span class="w"> </span><span class="nb">test</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="components-and-technology">
+<h2>Components and Technology<a class="headerlink" href="#components-and-technology" title="Link to this heading">¶</a></h2>
+<p>This section provides a brief overview of the technology
+used to implement the different parts of the project.</p>
+<section id="docker">
+<h3>Docker<a class="headerlink" href="#docker" title="Link to this heading">¶</a></h3>
+<p>Dockerfiles are provided to run all components of this project in containers.
+A docker-compose file exists to simplify starting the complete server side
+system including the database, the web app and the Nginx server.
+All components of the project can be run natively,
+however using Docker simplifies this greatly.</p>
+<p>A Docker container is also used for building the web app and its dependencies
+to simplify cross platform deployment and ensure a consistent and reliable
+build process.</p>
+</section>
+<section id="backend-server">
+<h3>Backend server<a class="headerlink" href="#backend-server" title="Link to this heading">¶</a></h3>
+<p>The server is a <a class="reference external" href="https://docs.djangoproject.com/en/4.1/">Django</a> web application,
+which uses the <a class="reference external" href="https://www.django-rest-framework.org/">Django REST Framework</a>
+to provide a REST API.
+The following 3rd party additions are also included:</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://james1345.github.io/django-rest-knox/">django-rest-knox</a></p>
+<ul>
+<li><p>Token authentication</p></li>
+</ul>
+</li>
+<li><p><a class="reference external" href="https://django-filter.readthedocs.io/en/main/">django-filter</a></p>
+<ul>
+<li><p>Record filtering and searching</p></li>
+</ul>
+</li>
+<li><p><a class="reference external" href="https://pypi.org/project/django-cors-headers/">django-cors-headers</a></p>
+<ul>
+<li><p>CORS handling</p></li>
+</ul>
+</li>
+<li><p><a class="reference external" href="https://drf-spectacular.readthedocs.io/en/latest/readme.html">drf-spectacular</a></p></li>
+<li><p>OpenAPI REST API specification</p></li>
+</ul>
+<p>There are tweaks to the basic Django systems for:</p>
+<ul class="simple">
+<li><p>providing an unmanaged database table for Timeseries data</p>
+<ul>
+<li><p>table created in <code class="docutils literal notranslate"><span class="pre">backend/backend_django/galv/management/commands/init_db.py</span></code></p>
+<ul>
+<li><p>called in <code class="docutils literal notranslate"><span class="pre">backend/server.sh</span></code></p></li>
+<li><p>unmanaged model included in <code class="docutils literal notranslate"><span class="pre">backend/backend_django/galv/models.py</span></code></p></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>prefilling the database with default columns and units</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">backend/backend_django/galv/fixtures/</span></code> contains fixture files</p>
+<ul>
+<li><p>loaded in <code class="docutils literal notranslate"><span class="pre">backend/server.sh</span></code></p></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>creating superuser account</p>
+<ul>
+<li><p>created by <code class="docutils literal notranslate"><span class="pre">backend/backend_django/galv/management/commands/create_superuser.py</span></code></p>
+<ul>
+<li><p>called in <code class="docutils literal notranslate"><span class="pre">backend/server.sh</span></code></p></li>
+<li><p>configuration via <code class="docutils literal notranslate"><span class="pre">.env.secret</span></code>’s <code class="docutils literal notranslate"><span class="pre">DJANGO_SUPERUSER_PASSWORD</span></code> entry</p></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>providing custom permission mechanisms for Harvesters and Cell/Cell Family/Equipment</p>
+<ul>
+<li><p>code in <code class="docutils literal notranslate"><span class="pre">backend/backend_django/galv/permissions.py</span></code></p>
+<ul>
+<li><p>used in <code class="docutils literal notranslate"><span class="pre">backend/backend_django/galv/views.py</span></code></p></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>extending <code class="docutils literal notranslate"><span class="pre">drf-spectacular</span></code> to play nicely with <code class="docutils literal notranslate"><span class="pre">django-rest-knox</span></code></p>
+<ul>
+<li><p>code in <code class="docutils literal notranslate"><span class="pre">backend/backend_django/galv/schema.py</span></code></p></li>
+</ul>
+</li>
+<li><p>providing a mechanism for yielding data rapidly into the database via SQL’s COPY directive</p>
+<ul>
+<li><p>code in <code class="docutils literal notranslate"><span class="pre">backend/backend_django/galv/utils.py</span></code></p></li>
+</ul>
+</li>
+</ul>
+<p>Additionally, there are some tricks here and there in
+<code class="docutils literal notranslate"><span class="pre">backend/backend_django/galv/serializers.py</span></code> and
+<code class="docutils literal notranslate"><span class="pre">backend/backend_django/galv/models.py</span></code>.
+It’s hard to say what’s counterintuitive off the bat, however,
+so if something confuses you and you figure it out, please document it here!</p>
+<p>Generally speaking, most of the logic is taken care of in <code class="docutils literal notranslate"><span class="pre">serializers.py</span></code>,
+with endpoint control and documentation mostly handled in <code class="docutils literal notranslate"><span class="pre">views.py</span></code>.
+A major exception is the Harvester <code class="docutils literal notranslate"><span class="pre">report/</span></code> endpoint which has its
+logic in <code class="docutils literal notranslate"><span class="pre">views.py</span></code>.</p>
+<p>Harvesters have an <code class="docutils literal notranslate"><span class="pre">api_key</span></code> they use to authenticate with the server.
+This is created the first time the Harvester model is saved in <code class="docutils literal notranslate"><span class="pre">models.py</span></code>.</p>
+</section>
+<section id="harvesters">
+<h3>Harvesters<a class="headerlink" href="#harvesters" title="Link to this heading">¶</a></h3>
+<p>The harvesters are python scripts which monitor directories for tester datafiles,
+parse them according to their format, and send the data and any metadata to the Django REST API.
+The harvesters run continually, with an optional sleep duration in their cycle.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">docker-compose.dev.yml</span></code> file has an example of how to automatically configure
+a new harvester instance in the initial docker compose command.</p>
+</section>
+<section id="frontend-web-application">
+<h3>Frontend web application<a class="headerlink" href="#frontend-web-application" title="Link to this heading">¶</a></h3>
+<p>The frontend is written using TypeScript, the <a class="reference external" href="https://reactjs.org/">React</a> framework
+and <a class="reference external" href="https://material-ui.com/">Material-UI</a> components.</p>
+<p>It has its own caching system to reduce calls made to the REST API and their
+consequent loading times.</p>
+</section>
+<section id="database">
+<h3>Database<a class="headerlink" href="#database" title="Link to this heading">¶</a></h3>
+<p>The project uses PostgreSQL for its database. Other databases are currently not
+supported. An entity relationship diagram is shown below.</p>
+<img alt="_images/ERD.png" src="_images/ERD.png" />
+</section>
+<section id="documentation">
+<h3>Documentation<a class="headerlink" href="#documentation" title="Link to this heading">¶</a></h3>
+<p>Documentation is written in <a class="reference external" href="https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html">Sphinx’ reStructured Text</a>
+and produced by <a class="reference external" href="https://www.sphinx-doc.org/en/master/index.html">Sphinx</a>.</p>
+<p>Documentation is located in the <code class="docutils literal notranslate"><span class="pre">/docs/source</span></code> directory.</p>
+</section>
+</section>
+<section id="contributor-guide">
+<h2>Contributor guide<a class="headerlink" href="#contributor-guide" title="Link to this heading">¶</a></h2>
+<p>We very much welcome contributions.
+Please feel free to participate in discussion around the issues listed on GitHub,
+submit new bugs or feature requests, or help contribute to the codebase.</p>
+<p>If you are contributing to the codebase, we request that your pull requests
+identify and solve a specific problem, and include unit tests for code that
+has been added or modified, and updated documentation if relevant.</p>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">Galv</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="FirstTimeQuickSetup.html">First Time Quick Setup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="UserGuide.html">Galvalanyser User Guide</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Gavanalyser Development Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#project-folder-structure">Project Folder Structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#running">Running</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#testing">Testing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#components-and-technology">Components and Technology</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#contributor-guide">Contributor guide</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="UserGuide.html" title="previous chapter">Galvalanyser User Guide</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2023, Oxford RSE.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.2.6</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+      |
+      <a href="_sources/DevelopmentGuide.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

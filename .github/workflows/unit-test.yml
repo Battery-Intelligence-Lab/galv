@@ -1,0 +1,114 @@
+name: Unit Tests (Docker)
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - '**'
+  workflow_dispatch:
+    inputs:
+      debug_enabled:
+        type: boolean
+        description: 'Run the build with tmate debugging enabled (https://github.com/marketplace/actions/debugging-with-tmate)'
+        required: false
+        default: false
+
+jobs:
+  test-harvester:
+    runs-on: ubuntu-latest
+    env:
+      GALV_HARVESTER_TEST_PATH: .test_datafiles
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install smbclient
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y smbclient
+
+      - name: Restore cached test suite
+        id: cache-restore
+        uses: actions/cache/restore@v3
+        with:
+          path: ${{ env.GALV_HARVESTER_TEST_PATH }}
+          key: liionsden-test-suite
+
+      - name: Download test suite
+        if: steps.cache-restore.outputs.cache-hit != 'true'
+        env:
+          LIIONSDEN_SMB_PATH: ${{ secrets.LIIONSDEN_SMB_PATH }}
+          LIIONSDEN_SMB_USERNAME: ${{ secrets.LIIONSDEN_SMB_USERNAME}}
+          LIIONSDEN_SMB_PASSWORD: ${{ secrets.LIIONSDEN_SMB_PASSWORD}}
+        run: |
+          sudo mkdir -p $GALV_HARVESTER_TEST_PATH 
+          cd $GALV_HARVESTER_TEST_PATH
+          sudo smbget -R $LIIONSDEN_SMB_PATH/test-suite-small -U "$LIIONSDEN_SMB_USERNAME%$LIIONSDEN_SMB_PASSWORD"
+
+      - name: Cache test suite
+        id: cache-save
+        if: steps.cache-restore.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v3
+        with:
+          path: ${{ env.GALV_HARVESTER_TEST_PATH }}
+          key: ${{ steps.cache-restore.outputs.cache-primary-key }}
+
+      - name: Build the stack
+        run: touch .env.secret && docker-compose -f docker-compose.test.yml build harvester_test
+
+      # Enable tmate debugging of manually-triggered workflows if the input option was provided
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
+
+      - name: Run tests
+        run: docker-compose -f docker-compose.test.yml up harvester_test
+
+  test-backend:
+    runs-on: ubuntu-latest
+    env:
+      POSTGRES_PASSWORD: "galv"
+      DJANGO_SECRET_KEY: "long-and-insecure-key-12345"
+      FRONTEND_VIRTUAL_HOST: "http://localhost"
+      VIRTUAL_HOST: "localhost"
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up secrets
+        run: |
+          touch .env.secret
+          echo "POSTGRES_PASSWORD=$POSTGRES_PASSWORD" > .env.secret
+          echo "DJANGO_SECRET_KEY=$DJANGO_SECRET_KEY" >> .env.secret
+          echo "FRONTEND_VIRTUAL_HOST=$FRONTEND_VIRTUAL_HOST" >> .env.secret
+          echo "VIRTUAL_HOST=$VIRTUAL_HOST" >> .env.secret
+          echo "POSTGRES_HOST=postgres_test" >> .env.secret
+
+      # Enable tmate debugging of manually-triggered workflows if the input option was provided
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
+
+      - name: Build the stack
+        run: docker-compose -f docker-compose.test.yml up -d --build app_test
+
+      - name: Run tests
+        run: docker-compose -f docker-compose.test.yml run --rm app_test bash -c "cd .. && ./server.sh"
+
+  test-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up secrets
+        run: touch .env.secret
+
+      - name: Build the stack
+        run: docker-compose -f docker-compose.test.yml build frontend_test
+
+      # Enable tmate debugging of manually-triggered workflows if the input option was provided
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
+
+      - name: Run tests
+        run: docker-compose -f docker-compose.test.yml run --rm frontend_test bash -c "./src/test/run_tests.sh"
