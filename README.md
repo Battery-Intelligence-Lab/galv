@@ -1,5 +1,15 @@
 <img src="docs/source/img/Galv-logo-shortened.png" width="225" />
 
+# 🚨Galv has moved🚨
+
+Galv has moved to separate repositories for the [backend](/Battery-Intelligence-Lab/galv-backend), [frontend](/Battery-Intelligence-Lab/galv-frontend), and [harvester](/Battery-Intelligence-Lab/galv-harvester).
+Future changes will be made to those repositories rather than this one. 
+Please target issues at the relevant one of those repositories. 
+
+Galv v2 has a rewritten structure providing more flexibility, better interlinking of resources, and a more streamlined codebase.
+
+# Readme
+
 [![Unit Tests (Docker)](https://github.com/Battery-Intelligence-Lab/galv/actions/workflows/unit-test.yml/badge.svg?branch=main)](https://github.com/Battery-Intelligence-Lab/galv/actions/workflows/unit-test.yml)
 [![Docs](https://github.com/Battery-Intelligence-Lab/galv/actions/workflows/side-effects.yml/badge.svg?branch=main)](https://battery-intelligence-lab.github.io/galv/index.html)
 <a href="https://Battery-Intelligence-Lab.github.io/galv/" target="_blank">
